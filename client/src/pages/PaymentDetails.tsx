@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { CopyIcon, CheckIcon, Building, BanknoteIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import CustomerLayout from '@/components/layouts/CustomerLayout';
 
 export default function PaymentDetails() {
   const { t } = useTranslation();
@@ -78,7 +79,8 @@ export default function PaymentDetails() {
   }
 
   return (
-    <div className="container max-w-4xl mx-auto py-10">
+    <CustomerLayout title={t('PaymentDetails')}>
+      <h1 className="text-3xl font-montserrat font-bold mb-6">{t('PaymentDetails')}</h1>
       <Card>
         <CardHeader>
           <CardTitle>{t('PaymentDetails')}</CardTitle>
@@ -240,6 +242,6 @@ export default function PaymentDetails() {
           </Button>
         </CardFooter>
       </Card>
-    </div>
+    </CustomerLayout>
   );
 }
