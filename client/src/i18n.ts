@@ -307,7 +307,7 @@ const resources = {
       // CTA
       "EnjoyBrazil": "¡Ven a Disfrutar de la Auténtica Gastronomía Brasileña!",
       "GuaranteeTable": "Reserva tu mesa y experimenta los sabores que hacen de Brasil un país tan especial. ¡Reserva ahora y asegura una experiencia gastronómica única durante la Convención MSBN Europa!",
-      "BookNow": "Reservar Ahora",
+      "BookNowCTA": "Reservar Ahora",
       
       // Footer
       "QuickLinks": "Enlaces Rápidos",
