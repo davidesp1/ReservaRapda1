@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useQuery } from '@tanstack/react-query';
 import { Search, UserPlus, Eye, Edit, Trash2 } from 'lucide-react';
+import AdminLayout from '@/components/layouts/AdminLayout';
 import {
   Table,
   TableBody,
@@ -26,17 +27,10 @@ const Customers: React.FC = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   
   // Fetch customers
-  const { data: customers, isLoading: customersLoading } = useQuery({
+  const { data: customers, isLoading: customersLoading } = useQuery<any>({
     queryKey: ['/api/users'],
     enabled: isAuthenticated && isAdmin,
   });
-  
-  // Redirect if not authenticated or not admin
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !isAdmin)) {
-      setLocation('/');
-    }
-  }, [isAuthenticated, isAdmin, isLoading, setLocation]);
 
   // Filter customers based on search
   const filteredCustomers = React.useMemo(() => {

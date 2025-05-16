@@ -10,23 +10,18 @@ import { format } from 'date-fns';
 import { UsersRound, CalendarDays, AlertOctagon, EuroIcon, FileText } from 'lucide-react';
 import ReportExport from '@/components/admin/ReportExport';
 
+import AdminLayout from '@/components/layouts/AdminLayout';
+
 const Dashboard: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
   const [_, setLocation] = useLocation();
   
   // Fetch dashboard stats
-  const { data: dashboardStats, isLoading: statsLoading } = useQuery({
+  const { data: dashboardStats, isLoading: statsLoading } = useQuery<any>({
     queryKey: ['/api/stats/dashboard'],
     enabled: isAuthenticated && isAdmin,
   });
-  
-  // Redirect if not authenticated or not admin
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !isAdmin)) {
-      setLocation('/');
-    }
-  }, [isAuthenticated, isAdmin, isLoading, setLocation]);
   
   if (statsLoading) {
     return (
@@ -56,7 +51,7 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="p-6 h-full">
+    <AdminLayout title={t('Dashboard')}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-montserrat font-bold">{t('Dashboard')}</h1>
         <p className="text-gray-500">{format(new Date(), 'PPP')}</p>
@@ -234,7 +229,7 @@ const Dashboard: React.FC = () => {
           <ReportExport />
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
