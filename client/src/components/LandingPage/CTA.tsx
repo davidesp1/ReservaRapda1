@@ -25,7 +25,7 @@ const CTA: React.FC = () => {
           className="bg-brasil-yellow hover:bg-yellow-400 text-brasil-blue text-xl font-bold py-8 px-10 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg animate-slide-up"
           onClick={scrollToContact}
         >
-          {t('BookNow')}
+          {t('BookNowCTA')}
         </Button>
       </div>
     </section>

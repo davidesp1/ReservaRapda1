@@ -45,13 +45,13 @@ const Footer: React.FC = () => {
               <li><a href="#home" className="text-gray-400 hover:text-brasil-yellow transition-colors duration-300">{t('Home')}</a></li>
               <li><a href="#sobre" className="text-gray-400 hover:text-brasil-yellow transition-colors duration-300">{t('About')}</a></li>
               <li><a href="#menu" className="text-gray-400 hover:text-brasil-yellow transition-colors duration-300">{t('Menu')}</a></li>
-              <li><a href="#contato" className="text-gray-400 hover:text-brasil-yellow transition-colors duration-300">{t('Contact')}</a></li>
+              <li><a href="#contato" className="text-gray-400 hover:text-brasil-yellow transition-colors duration-300">{t('ContactHeader')}</a></li>
               <li><a href="#" className="text-gray-400 hover:text-brasil-yellow transition-colors duration-300">{t('Reservations')}</a></li>
             </ul>
           </div>
           
           <div>
-            <h3 className="font-montserrat font-bold text-xl mb-6">{t('Contact')}</h3>
+            <h3 className="font-montserrat font-bold text-xl mb-6">{t('ContactInfo')}</h3>
             <ul className="space-y-3">
               <li className="flex items-start">
                 <i className="fas fa-map-marker-alt text-brasil-yellow mr-3 mt-1"></i>

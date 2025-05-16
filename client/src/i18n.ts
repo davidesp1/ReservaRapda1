@@ -139,7 +139,7 @@ const resources = {
       "Home": "Home",
       "About": "About",
       "Menu": "Menu",
-      "Contact": "Contact",
+      "ContactHeader": "Contact",
       "Login": "Login",
       "Register": "Sign Up",
       
@@ -266,7 +266,7 @@ const resources = {
       "Home": "Inicio",
       "About": "Sobre Nosotros",
       "Menu": "Menú",
-      "Contact": "Contacto",
+      "ContactHeader": "Contacto",
       "Login": "Iniciar Sesión",
       "Register": "Registrarse",
       

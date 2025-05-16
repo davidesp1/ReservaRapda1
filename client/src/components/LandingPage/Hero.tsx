@@ -32,7 +32,7 @@ const Hero: React.FC = () => {
           className="bg-brasil-yellow text-brasil-blue text-xl font-bold py-8 px-8 rounded-lg hover:bg-yellow-400 transition-all duration-300 transform hover:scale-105 shadow-lg"
           onClick={scrollToContact}
         >
-          {t('BookNow')}
+          {t('BookNowHero')}
         </Button>
       </div>
     </section>
