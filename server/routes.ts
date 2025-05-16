@@ -566,7 +566,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       method,
       status: "pending",
       transactionId: paymentResponse.reference,
-      paymentDate: new Date()
+      paymentDate: new Date(),
+      eupagoDetails: {
+        paymentUrl: paymentResponse.paymentUrl,
+        reference: paymentResponse.reference,
+        entity: paymentResponse.entity,
+        mbwayAlias: paymentResponse.mbwayAlias,
+        status: paymentResponse.status
+      }
     });
     
     const newPayment = await storage.createPayment(paymentData);
