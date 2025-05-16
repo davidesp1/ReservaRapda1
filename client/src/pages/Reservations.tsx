@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
-import CustomerSidebar from '@/components/customer/Sidebar';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +18,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Helmet } from 'react-helmet';
+import CustomerLayout from '@/components/layouts/CustomerLayout';
 
 const Reservations: React.FC = () => {
   const { t } = useTranslation();
@@ -143,32 +142,11 @@ const Reservations: React.FC = () => {
     createReservationMutation.mutate(reservationData);
   };
   
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brasil-green"></div>
-      </div>
-    );
-  }
-  
-  if (!isAuthenticated) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-pattern">
-      <Helmet>
-        <title>{t('MakeReservation')} - Opa que delicia</title>
-        <meta name="description" content="Reserve uma mesa no restaurante Opa que delicia." />
-      </Helmet>
-      
-      <div className="flex flex-col md:flex-row">
-        <CustomerSidebar />
-        
-        <main className="flex-1 p-6">
-          <h1 className="text-3xl font-montserrat font-bold mb-6">
-            {t('MakeReservation')}
-          </h1>
+    <CustomerLayout title={t('MakeReservation')}>
+      <h1 className="text-3xl font-montserrat font-bold mb-6">
+        {t('MakeReservation')}
+      </h1>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2">
@@ -486,9 +464,7 @@ const Reservations: React.FC = () => {
               </CardFooter>
             </Card>
           </div>
-        </main>
-      </div>
-    </div>
+    </CustomerLayout>
   );
 };
 
