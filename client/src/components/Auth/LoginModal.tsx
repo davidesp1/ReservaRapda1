@@ -58,7 +58,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
       if (userData && userData.role === 'admin') {
         setLocation('/admin/dashboard');
       } else {
-        setLocation('/customer/dashboard');
+        setLocation('/dashboard');
       }
     } catch (error) {
       console.error('Login error:', error);
