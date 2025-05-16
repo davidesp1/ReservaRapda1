@@ -82,6 +82,7 @@ export class MemStorage implements IStorage {
   private reservations: Map<number, Reservation>;
   private payments: Map<number, Payment>;
   private orders: Map<number, Order>;
+  private settings: Map<string, Map<string, string>>;
   
   private userCurrentId: number;
   private menuCategoryCurrentId: number;
@@ -99,6 +100,7 @@ export class MemStorage implements IStorage {
     this.reservations = new Map();
     this.payments = new Map();
     this.orders = new Map();
+    this.settings = new Map();
     
     this.userCurrentId = 1;
     this.menuCategoryCurrentId = 1;
@@ -109,6 +111,7 @@ export class MemStorage implements IStorage {
     this.orderCurrentId = 1;
     
     this.initializeData();
+    this.initializeSettings();
   }
 
   private initializeData() {
