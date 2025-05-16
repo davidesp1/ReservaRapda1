@@ -1,8 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useRoute } from 'wouter';
+import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
-import CustomerSidebar from '@/components/customer/Sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { User, CreditCard, FileText, MessageSquare } from 'lucide-react';
-import { Helmet } from 'react-helmet';
+import CustomerLayout from '@/components/layouts/CustomerLayout';
 
 const CustomerDashboard: React.FC = () => {
   const { t } = useTranslation();
