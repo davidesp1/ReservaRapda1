@@ -765,6 +765,78 @@ export class DatabaseStorage implements IStorage {
       .from(orders)
       .where(eq(orders.reservationId, reservationId));
   }
+  
+  // Settings
+  async getSettingsByCategory(category: string): Promise<Record<string, string>> {
+    const settingsData = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.category, category));
+    
+    const result: Record<string, string> = {};
+    settingsData.forEach(setting => {
+      result[setting.key] = setting.value || '';
+    });
+    
+    return result;
+  }
+  
+  async getAllSettings(): Promise<Record<string, Record<string, string>>> {
+    const settingsData = await db.select().from(settings);
+    
+    const result: Record<string, Record<string, string>> = {};
+    
+    settingsData.forEach(setting => {
+      if (!result[setting.category]) {
+        result[setting.category] = {};
+      }
+      result[setting.category][setting.key] = setting.value || '';
+    });
+    
+    return result;
+  }
+  
+  async updateSettings(category: string, settingsValues: Record<string, string>): Promise<boolean> {
+    // Use transaction to ensure all settings are updated consistently
+    await db.transaction(async (tx) => {
+      for (const [key, value] of Object.entries(settingsValues)) {
+        // Check if setting exists
+        const [existingSetting] = await tx
+          .select()
+          .from(settings)
+          .where(and(
+            eq(settings.category, category),
+            eq(settings.key, key)
+          ));
+        
+        if (existingSetting) {
+          // Update existing setting
+          await tx
+            .update(settings)
+            .set({ 
+              value, 
+              updatedAt: new Date() 
+            })
+            .where(and(
+              eq(settings.category, category),
+              eq(settings.key, key)
+            ));
+        } else {
+          // Insert new setting
+          await tx
+            .insert(settings)
+            .values({
+              category,
+              key,
+              value,
+              updatedAt: new Date()
+            });
+        }
+      }
+    });
+    
+    return true;
+  }
 }
 
 // Initialize the database storage

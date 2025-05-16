@@ -759,6 +759,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health", (req: Request, res: Response) => {
     res.json({ status: "ok", env: process.env.NODE_ENV });
   });
+  
+  // Settings routes
+  app.get("/api/settings", isAdmin, handleErrors(async (req: Request, res: Response) => {
+    const settings = await storage.getAllSettings();
+    res.json(settings);
+  }));
+
+  app.get("/api/settings/:category", isAdmin, handleErrors(async (req: Request, res: Response) => {
+    const { category } = req.params;
+    const settings = await storage.getSettingsByCategory(category);
+    res.json(settings);
+  }));
+
+  app.put("/api/settings/:category", isAdmin, handleErrors(async (req: Request, res: Response) => {
+    const { category } = req.params;
+    const settingsData = req.body;
+    
+    await storage.updateSettings(category, settingsData);
+    
+    res.json({ success: true, message: `${category} settings updated successfully` });
+  }));
 
   const httpServer = createServer(app);
   
