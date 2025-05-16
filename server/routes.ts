@@ -480,23 +480,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(403).json({ message: "Forbidden" });
     }
     
-    // Create payment
+    // Get total amount from the request or calculate from reservation
+    const amount = req.body.amount || 0;
+    const method = req.body.method;
+    
+    if (!method || !['card', 'mbway', 'multibanco', 'transfer'].includes(method)) {
+      return res.status(400).json({ message: "Invalid payment method" });
+    }
+    
+    // Import the eupago service
+    const eupagoService = await import("./services/eupagoService").then(m => m.default);
+    
+    // Generate a unique reference for this payment
+    const reference = `RES${reservationId}-${Date.now()}`;
+    const description = `Payment for Reservation #${reservationId} at Opa Que Delicia`;
+    let paymentResponse;
+    
+    // Process payment based on method
+    if (method === 'card') {
+      // Get return and cancel URLs from request
+      const { returnUrl, cancelUrl } = req.body;
+      
+      if (!returnUrl || !cancelUrl) {
+        return res.status(400).json({ message: "Return and cancel URLs are required for card payments" });
+      }
+      
+      paymentResponse = await eupagoService.createCardPayment({
+        amount,
+        reference,
+        description,
+        email: user?.email || '',
+        name: `${user?.firstName} ${user?.lastName}`,
+        returnUrl,
+        cancelUrl
+      });
+    } else if (method === 'mbway') {
+      // Get phone number from request
+      const { phoneNumber } = req.body;
+      
+      if (!phoneNumber) {
+        return res.status(400).json({ message: "Phone number is required for MBWay payments" });
+      }
+      
+      paymentResponse = await eupagoService.createMbwayPayment({
+        amount,
+        reference,
+        description,
+        email: user?.email || '',
+        name: `${user?.firstName} ${user?.lastName}`,
+        phoneNumber
+      });
+    } else if (method === 'multibanco') {
+      paymentResponse = await eupagoService.createMultibancoPayment({
+        amount,
+        reference,
+        description,
+        email: user?.email || '',
+        name: `${user?.firstName} ${user?.lastName}`,
+        phone: user?.phone,
+        validDays: 5 // Valid for 5 days
+      });
+    } else if (method === 'transfer') {
+      paymentResponse = await eupagoService.createTransferPayment({
+        amount,
+        reference,
+        description,
+        email: user?.email || '',
+        name: `${user?.firstName} ${user?.lastName}`,
+        phone: user?.phone,
+        validDays: 5 // Valid for 5 days
+      });
+    }
+    
+    if (!paymentResponse || !paymentResponse.success) {
+      return res.status(500).json({ 
+        message: "Failed to create payment", 
+        error: paymentResponse?.message || "Unknown error" 
+      });
+    }
+    
+    // Create payment in our database
     const paymentData = insertPaymentSchema.parse({
-      ...req.body,
       reservationId,
+      amount, // Amount in cents
+      method,
+      status: "pending",
+      transactionId: paymentResponse.reference,
       paymentDate: new Date()
     });
     
-    // TODO: In a real app, integrate with eupago.pt API here
-    
     const newPayment = await storage.createPayment(paymentData);
     
-    // Update reservation status if payment is completed
-    if (paymentData.status === "completed") {
-      await storage.updateReservation(reservationId, { status: "confirmed" });
-    }
-    
-    res.status(201).json(newPayment);
+    // Return payment information with additional details from eupago
+    res.status(201).json({
+      ...newPayment,
+      eupagoDetails: {
+        paymentUrl: paymentResponse.paymentUrl,
+        reference: paymentResponse.reference,
+        entity: paymentResponse.entity,
+        mbwayAlias: paymentResponse.mbwayAlias
+      }
+    });
   }));
 
   // Order routes

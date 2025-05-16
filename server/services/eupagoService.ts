@@ -1,6 +1,11 @@
 import fetch from 'node-fetch';
 import { URLSearchParams } from 'url';
 
+// Create a function to convert URLSearchParams to string
+const urlSearchParamsToString = (params: URLSearchParams): string => {
+  return params.toString();
+};
+
 interface EupagoPaymentRequest {
   amount: number;
   reference: string;
