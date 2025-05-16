@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import AdminLayout from '@/components/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -237,7 +238,7 @@ const TableManager: React.FC = () => {
   const reservedTables = sortedTables.filter((table: any) => isTableReserved(table.id)).length;
 
   return (
-    <div className="p-6 h-full">
+    <AdminLayout title={t('TableManagement')}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-montserrat font-bold">{t('TableManagement')}</h1>
       </div>
