@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, json, pgEnum } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -25,6 +26,8 @@ export const users = pgTable("users", {
     favoriteItems?: number[]
   }>(),
 });
+
+// The relations will be defined after all the tables are created
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -138,3 +141,50 @@ export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  reservations: many(reservations),
+}));
+
+export const menuCategoriesRelations = relations(menuCategories, ({ many }) => ({
+  menuItems: many(menuItems),
+}));
+
+export const menuItemsRelations = relations(menuItems, ({ one }) => ({
+  category: one(menuCategories, {
+    fields: [menuItems.categoryId],
+    references: [menuCategories.id],
+  }),
+}));
+
+export const tablesRelations = relations(tables, ({ many }) => ({
+  reservations: many(reservations),
+}));
+
+export const reservationsRelations = relations(reservations, ({ one, many }) => ({
+  user: one(users, {
+    fields: [reservations.userId],
+    references: [users.id],
+  }),
+  table: one(tables, {
+    fields: [reservations.tableId],
+    references: [tables.id],
+  }),
+  payments: many(payments),
+  orders: many(orders),
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  reservation: one(reservations, {
+    fields: [payments.reservationId],
+    references: [reservations.id],
+  }),
+}));
+
+export const ordersRelations = relations(orders, ({ one }) => ({
+  reservation: one(reservations, {
+    fields: [orders.reservationId],
+    references: [reservations.id],
+  }),
+}));
