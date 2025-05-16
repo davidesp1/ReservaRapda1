@@ -1,0 +1,88 @@
+Descrição Detalhada da Landing Page do Restaurante "Opa que delicia"
+Vou criar uma descrição completa para uma landing page moderna e atrativa para o restaurante "Opa que delicia" em parceria com a igreja MSBN Portugal durante o evento "Convenção MSBN Europa" em Santa Iria.
+Informações do Evento
+* Nome do Evento: Convenção MSBN Europa
+* Local: Centro de Eventos MSBN, Rua das Marinhas do Tejo nº 51 CP: 2690-366 Santa Iria de Azóia, Portugal
+* Data: 29/05 a 01/06/2025
+* Restaurante: Opa que delicia
+* Parceria: Igreja MSBN Portugal
+Estrutura da Landing Page
+1. Cabeçalho
+* Logo do restaurante "Opa que delicia" à esquerda
+* Menu de navegação: Início, Sobre, Menu, Contato
+* Botão de login e Cadastro no canto superior direito (verde e amarelo)
+2. Hero Section
+* Imagem de fundo: Pratos brasileiros coloridos e apetitosos
+* Título principal: "Sabores do Brasil na Convenção MSBN Europa"
+* Subtítulo: "O restaurante Opa que delicia traz a autêntica culinária brasileira para Convenção MSBN Europa"
+* Destaque para as datas: 29/05 a 01/06/2025
+* Botão CTA grande: "Faça já sua reserva!" (cores verde e amarelo do Brasil)
+3. Seção Sobre o Restaurante
+* Breve história do "Opa que delicia" do Carregado
+* Destaque para a parceria especial com a MSBN Portugal
+* Imagens dos pratos signature
+* Elementos visuais com cores vibrantes brasileiras: verde, amarelo, azul
+4. Seção Menu Especial para o Evento
+* Cards com categorias: Entradas, Pratos Principais, Sobremesas, Bebidas
+* Imagens dos pratos mais populares
+* Descrições sucintas e preços
+* Destaque para especiais do evento
+5. Seção Depoimentos
+* Avaliações de clientes anteriores
+* Estrelas e comentários
+* Imagens de clientes satisfeitos
+6. Seção Localização e Contato
+* Mapa embutido do local do evento
+* Endereço completo do Centro de Eventos MSBN
+* Contatos: telefone, e-mail, WhatsApp
+* Horário de funcionamento durante o evento
+7. Rodapé
+* Logos do restaurante
+* Links para redes sociais
+* Política de privacidade e termos de uso
+* Direitos autorais
+Paleta de Cores
+* Verde: #009c3b (verde da bandeira do Brasil)
+* Amarelo: #ffdf00 (amarelo da bandeira do Brasil)
+* Azul: #002776 (azul da bandeira do Brasil)
+* Branco: #ffffff (para textos e fundos)
+* Preto: #000000 (para alguns textos)
+* Vermelho: #c8102e (para destaques)
+Funcionalidades do Sistema
+Área de Clientes
+* Tela de Login: Interface simples para login ou cadastro
+* Dashboard do Cliente:
+    1. Perfil: Informações pessoais e preferências
+    2. Menu: Visualização completa do cardápio com opções para favoritos
+    3. Reservas: Histórico e gerenciamento de reservas
+    4. Pagamento: Integração com eupago.pt, opções, cartão, MBWay, Multibanco e transferência bancaria.
+    5. Aviso de Cancelamento: Destaque para política de cancelamento (72h)
+    6. Suporte: Canal de comunicação em tempo real com o admin
+Área de Administração
+* Tela de Login Admin: Acesso restrito à equipe do restaurante
+* Dashboard Administrativo:
+    1. Dashboard: Informações gerais, Cards com (Reservas Hoje, Reservas canceladas, Total de clientes, Receita diária), gráficos barras (Reservas na Semana Últimos 7 dias), gráfico pizza (Pratos Populares), gráfico linha (Receita Diária Últimos 7 dias), tabela (Pagamentos Pendentes/Processados)
+    2. Gestão de Clientes: Cadastro, histórico, preferências, tabela com filtro, pesquisa e ações
+    3. Gestão do Menu: Adicionar, editar, remover itens do cardápio, filtro, pesquisa, separação por categorias
+    4. Gestão de Mesas: Configuração e visualização de mesas, cards (Mesas disponíveis, Mesas VIP e Capacidade total)
+    5. Gestão Financeira: Relatórios completo de vendas, receita, pagamentos
+    6. Configuração de Pagamentos: Integração com eupago API com os métodos de pagamento: cartão, MBWay, Multibanco e transferência bancaria
+    7. Notificações: Alertas de novas mensagens, reservas ou cancelamentos
+    8. Suporte: Canal de comunicação em tempo real com os clientes.
+    9. Relatórios: Filtro e exportações em Pdf, Xls, Total reservas, Total clientes, pratos mais pedidos, Reservas diárias, gráfico por categorias,Itens mais populares
+Tecnologias Implementadas
+* Frontend: React + Vite
+* Estilização: Tailwind CSS
+* Backend/Banco de Dados: Supabase
+* Pagamentos: Integração com eupago.pt
+* Autenticação: Sistema de login e autorização via Supabase Auth
+* Armazenamento: Supabase Storage para imagens e arquivos
+Recursos Adicionais
+* Responsividade: Adaptação para todos os dispositivos
+* Animações: Transições suaves entre seções
+* Multilíngue: Português, Inglês e espanhol (considerando o evento europeu)
+* Chat Online: Suporte para dúvidas em tempo real
+* Notificações: E-mails de confirmação de reserva
+* Compartilhamento: Botões para redes sociais
+Mensagem de Convite
+"Venha desfrutar da autêntica gastronomia brasileira durante a Convenção MSBN Europa! O restaurante Opa que delicia estará presente no Centro de Eventos MSBN em Santa Iria, entre os dias 29/05 e 01/06/2025. Garanta já sua mesa e experimente os sabores que fazem do Brasil um país tão especial. Faça sua reserva agora e assegure uma experiência gastronômica única!"
