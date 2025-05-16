@@ -71,7 +71,7 @@ export interface IStorage {
   // Settings
   getSettingsByCategory(category: string): Promise<Record<string, string>>;
   getAllSettings(): Promise<Record<string, Record<string, string>>>;
-  updateSettings(category: string, settings: Record<string, string>): Promise<boolean>;
+  updateSettings(category: string, settingsData: Record<string, string>): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -127,6 +127,54 @@ export class MemStorage implements IStorage {
       preferences: { language: "pt" }
     });
     
+    // Add some menu categories
+    const entradas = this.createMenuCategory({ name: "Entradas", description: "Appetizers and starters" });
+    const pratosPrincipais = this.createMenuCategory({ name: "Pratos Principais", description: "Main dishes" });
+    const sobremesas = this.createMenuCategory({ name: "Sobremesas", description: "Desserts" });
+    const bebidas = this.createMenuCategory({ name: "Bebidas", description: "Drinks" });
+    
+    // Add some menu items
+    this.createMenuItem({
+      categoryId: entradas.id,
+      name: "Coxinha de Frango",
+      description: "Tradicional salgado brasileiro recheado com frango desfiado",
+      price: 350, // €3.50
+      imageUrl: "",
+      featured: true
+    });
+    
+    this.createMenuItem({
+      categoryId: entradas.id,
+      name: "Pastéis (3 unidades)",
+      description: "Pastéis fritos crocantes com recheio à escolha",
+      price: 500, // €5.00
+      imageUrl: "",
+      featured: true
+    });
+    
+    this.createMenuItem({
+      categoryId: pratosPrincipais.id,
+      name: "Feijoada Completa",
+      description: "Tradicional prato brasileiro com feijão preto, carnes variadas e acompanhamentos",
+      price: 1850, // €18.50
+      imageUrl: "",
+      featured: true
+    });
+    
+    this.createMenuItem({
+      categoryId: pratosPrincipais.id,
+      name: "Picanha Grelhada",
+      description: "Corte nobre brasileiro grelhado no ponto, acompanhado de farofa e vinagrete",
+      price: 2200, // €22.00
+      imageUrl: "",
+      featured: true
+    });
+    
+    // Add some tables
+    this.createTable({ number: 1, capacity: 2, category: "standard", available: true });
+    this.createTable({ number: 2, capacity: 4, category: "standard", available: true });
+    this.createTable({ number: 3, capacity: 6, category: "standard", available: true });
+    this.createTable({ number: 4, capacity: 8, category: "vip", available: true });
   }
   
   private initializeSettings() {
@@ -181,12 +229,6 @@ export class MemStorage implements IStorage {
     notificationSettings.set('collectCustomerFeedback', 'true');
     this.settings.set('notifications', notificationSettings);
   }
-    
-    // Add some menu categories
-    const entradas = this.createMenuCategory({ name: "Entradas", description: "Appetizers and starters" });
-    const pratosPrincipais = this.createMenuCategory({ name: "Pratos Principais", description: "Main dishes" });
-    const sobremesas = this.createMenuCategory({ name: "Sobremesas", description: "Desserts" });
-    const bebidas = this.createMenuCategory({ name: "Bebidas", description: "Drinks" });
     
     // Add some menu items
     this.createMenuItem({
