@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import AdminLayout from '@/components/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -66,23 +67,16 @@ const MenuManager: React.FC = () => {
   const [itemToDelete, setItemToDelete] = useState<{id: number, type: 'item' | 'category'} | null>(null);
 
   // Fetch menu categories
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
+  const { data: categories, isLoading: categoriesLoading } = useQuery<any>({
     queryKey: ['/api/menu-categories'],
     enabled: isAuthenticated && isAdmin,
   });
 
   // Fetch menu items
-  const { data: menuItems, isLoading: menuItemsLoading } = useQuery({
+  const { data: menuItems, isLoading: menuItemsLoading } = useQuery<any>({
     queryKey: ['/api/menu-items', currentCategoryId ? { categoryId: currentCategoryId } : undefined],
     enabled: isAuthenticated && isAdmin,
   });
-
-  // Redirect if not authenticated or not admin
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !isAdmin)) {
-      setLocation('/');
-    }
-  }, [isAuthenticated, isAdmin, isLoading, setLocation]);
 
   // Setup forms
   const itemForm = useForm<z.infer<typeof menuItemSchema>>({
@@ -361,7 +355,7 @@ const MenuManager: React.FC = () => {
   }
 
   return (
-    <div className="p-6 h-full">
+    <AdminLayout title={t('MenuManagement')}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-montserrat font-bold">{t('MenuManagement')}</h1>
       </div>

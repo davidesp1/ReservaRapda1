@@ -66,7 +66,7 @@ const Customers: React.FC = () => {
   }
 
   return (
-    <div className="p-6 h-full">
+    <AdminLayout title={t('Customers')}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-montserrat font-bold">{t('Customers')}</h1>
       </div>
@@ -203,7 +203,7 @@ const Customers: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AdminLayout>
   );
 };
 
