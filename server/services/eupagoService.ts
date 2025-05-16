@@ -79,7 +79,7 @@ class EupagoService {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: params,
+        body: urlSearchParamsToString(params),
       });
 
       const data = await response.json();
@@ -113,7 +113,7 @@ class EupagoService {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: params,
+        body: urlSearchParamsToString(params),
       });
 
       const data = await response.json();
@@ -148,7 +148,7 @@ class EupagoService {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: params,
+        body: urlSearchParamsToString(params),
       });
 
       const data = await response.json();
@@ -183,7 +183,7 @@ class EupagoService {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: params,
+        body: urlSearchParamsToString(params),
       });
 
       const data = await response.json();
@@ -219,7 +219,7 @@ class EupagoService {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: params,
+        body: urlSearchParamsToString(params),
       });
 
       const data = await response.json();
