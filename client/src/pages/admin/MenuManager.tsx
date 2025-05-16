@@ -654,6 +654,7 @@ const MenuManager: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem value="">{t('SelectCategory')}</SelectItem>
                           {categories?.map((category: any) => (
                             <SelectItem 
                               key={category.id} 
