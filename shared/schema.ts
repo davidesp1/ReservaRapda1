@@ -5,10 +5,11 @@ import { z } from "zod";
 
 // Enums
 export const userRoleEnum = pgEnum('user_role', ['customer', 'admin']);
-export const reservationStatusEnum = pgEnum('reservation_status', ['pending', 'confirmed', 'cancelled']);
+export const reservationStatusEnum = pgEnum('reservation_status', ['pending', 'confirmed', 'cancelled', 'completed', 'no-show']);
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'completed', 'failed', 'refunded']);
 export const paymentMethodEnum = pgEnum('payment_method', ['card', 'mbway', 'multibanco', 'transfer']);
-export const tableCategoryEnum = pgEnum('table_category', ['standard', 'vip']);
+export const tableCategoryEnum = pgEnum('table_category', ['standard', 'vip', 'outdoor', 'private']);
+export const dietaryPreferenceEnum = pgEnum('dietary_preference', ['vegetarian', 'vegan', 'gluten-free', 'lactose-free', 'pescatarian', 'halal', 'kosher', 'none']);
 
 // Users
 export const users = pgTable("users", {
@@ -19,12 +20,34 @@ export const users = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   phone: text("phone"),
+  address: text("address"),
+  city: text("city"),
+  postalCode: text("postal_code"),
+  country: text("country"),
+  birthDate: timestamp("birth_date"),
+  profilePicture: text("profile_picture"),
+  biography: text("biography"),
   role: userRoleEnum("role").notNull().default("customer"),
   preferences: json("preferences").$type<{
     language: string,
     dietaryRestrictions?: string[],
-    favoriteItems?: number[]
+    favoriteItems?: number[],
+    allergies?: string[],
+    spicePreference?: 'mild' | 'medium' | 'hot',
+    preferredSeating?: 'indoor' | 'outdoor' | 'no-preference',
+    preferredDiningTimes?: string[],
+    theme?: 'light' | 'dark' | 'system',
+    notifications?: {
+      email?: boolean,
+      sms?: boolean,
+      promotions?: boolean,
+      reservationReminders?: boolean
+    }
   }>(),
+  memberSince: timestamp("member_since").defaultNow(),
+  lastLogin: timestamp("last_login"),
+  status: text("status").default("active"),
+  loyaltyPoints: integer("loyalty_points").default(0),
 });
 
 // The relations will be defined after all the tables are created
@@ -81,6 +104,14 @@ export const reservations = pgTable("reservations", {
   status: reservationStatusEnum("status").default("pending"),
   notes: text("notes"),
   specialRequests: text("special_requests"),
+  duration: integer("duration").default(120), // Duration in minutes, default 2 hours
+  confirmationCode: text("confirmation_code"),
+  confirmationDate: timestamp("confirmation_date"),
+  reminderSent: boolean("reminder_sent").default(false),
+  checkInTime: timestamp("check_in_time"),
+  checkOutTime: timestamp("check_out_time"),
+  dietaryRequirements: text("dietary_requirements"),
+  occasion: text("occasion"), // Aniversário, aniversário de casamento, etc.
 });
 
 export const insertReservationSchema = createInsertSchema(reservations).omit({
@@ -111,17 +142,40 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
   id: true,
 });
 
+// Dietary Preferences
+export const userDietaryPreferences = pgTable("user_dietary_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  preference: dietaryPreferenceEnum("preference").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertUserDietaryPreferenceSchema = createInsertSchema(userDietaryPreferences).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Orders (for future implementation)
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   reservationId: integer("reservation_id").notNull(),
+  userId: integer("user_id").notNull(),
+  status: text("status").default("pending"),
   items: json("items").$type<Array<{
     menuItemId: number,
     quantity: number,
     price: number,
-    notes?: string
+    notes?: string,
+    modifications?: string[]
   }>>(),
   totalAmount: integer("total_amount").notNull(), // Amount in cents
+  specialInstructions: text("special_instructions"),
+  orderTime: timestamp("order_time").defaultNow(),
+  estimatedDeliveryTime: timestamp("estimated_delivery_time"),
+  actualDeliveryTime: timestamp("actual_delivery_time"),
+  rating: integer("rating"), // Customer rating (1-5)
+  feedback: text("feedback"), // Customer feedback
   createdAt: timestamp("created_at").defaultNow(),
 });
 
