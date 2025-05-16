@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'wouter';
 import { 
   Dialog, 
   DialogContent, 
@@ -29,6 +30,7 @@ interface LoginModalProps {
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClick }) => {
   const { t } = useTranslation();
   const { login } = useAuth();
+  const [_, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loginSchema = z.object({
@@ -49,8 +51,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
-      await login(data.username, data.password);
+      const user = await login(data.username, data.password);
       onClose();
+      
+      // Redirecionar baseado no papel do usuário
+      if (user && user.role === 'admin') {
+        setLocation('/admin/dashboard');
+      } else {
+        setLocation('/customer/dashboard');
+      }
     } catch (error) {
       console.error('Login error:', error);
     } finally {
