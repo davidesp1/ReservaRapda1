@@ -74,7 +74,12 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onLoginC
         lastName: data.lastName,
         email: data.email,
         phone: data.phone,
-        // Additional fields from schema.ts will use defaults
+        role: "customer",
+        status: "active",
+        // Definir algumas preferências básicas para evitar problemas com a estrutura esperada
+        preferences: { 
+          language: navigator.language.split('-')[0] || 'pt'
+        }
       };
       
       await register(userData);

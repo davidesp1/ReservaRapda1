@@ -1,5 +1,6 @@
 import * as React from "react";
 import { format } from "date-fns";
+import { ptBR, enUS, es } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useTranslation } from "react-i18next";
+import type { Locale } from "date-fns";
 
 interface DatePickerProps {
   date: Date | undefined;
@@ -22,14 +24,14 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
   
   // Get locale from i18n
   const getLocale = () => {
-    const lang = i18n.language || 'pt-BR';
+    const lang = i18n.language || 'pt';
     switch (lang) {
       case 'en':
-        return 'en-US';
+        return enUS;
       case 'es':
-        return 'es-ES';
+        return es;
       default:
-        return 'pt-BR';
+        return ptBR;
     }
   };
   
