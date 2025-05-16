@@ -458,7 +458,7 @@ const CustomerDashboard: React.FC = () => {
                       <select 
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         value={user?.preferences?.preferredSeating || 'no-preference'}
-                        readOnly
+                        disabled
                       >
                         <option value="indoor">{t('Indoor')}</option>
                         <option value="outdoor">{t('Outdoor')}</option>
@@ -473,7 +473,7 @@ const CustomerDashboard: React.FC = () => {
                       <textarea
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         rows={2}
-                        value={user?.preferences?.allergies?.join(', ') || ''}
+                        value={user?.preferences?.allergies ? user.preferences.allergies.join(', ') : ''}
                         readOnly
                       />
                     </div>
