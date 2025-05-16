@@ -85,7 +85,7 @@ const MenuManager: React.FC = () => {
       name: '',
       description: '',
       price: 0,
-      categoryId: 0,
+      categoryId: undefined, // inicialmente indefinido para evitar problemas com o Select
       featured: false,
       imageUrl: '',
     },
@@ -115,7 +115,7 @@ const MenuManager: React.FC = () => {
         name: '',
         description: '',
         price: 0,
-        categoryId: currentCategoryId ? parseInt(currentCategoryId) : 0,
+        categoryId: currentCategoryId ? parseInt(currentCategoryId) : undefined,
         featured: false,
         imageUrl: '',
       });
@@ -645,8 +645,11 @@ const MenuManager: React.FC = () => {
                     <FormItem>
                       <FormLabel>{t('Category')}</FormLabel>
                       <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value ? field.value.toString() : ""}
+                        onValueChange={(value) => {
+                          // Convert string to number if it's not empty
+                          field.onChange(value ? parseInt(value) : undefined);
+                        }} 
+                        value={field.value ? field.value.toString() : ""}
                       >
                         <FormControl>
                           <SelectTrigger>
