@@ -1,5 +1,6 @@
-import { Pool } from 'pg';
+import { createClient } from '@supabase/supabase-js';
 import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import * as schema from "@shared/schema";
 
 if (!process.env.DATABASE_URL) {
@@ -8,10 +9,15 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Configuração para conexão com Supabase
-export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
+// Para conexão direta com PostgreSQL no Supabase
+const connectionString = process.env.DATABASE_URL;
+// Para queries SQL usando postgres-js
+const queryClient = postgres(connectionString, { ssl: 'require' });
+// Para o Drizzle ORM
+export const db = drizzle(queryClient);
 
-export const db = drizzle(pool, { schema });
+// Expor o cliente Supabase para funcionalidades adicionais quando necessário
+export const supabase = createClient(
+  'https://wtykoitqlndqyglpogux.supabase.co',
+  process.env.SUPABASE_KEY || '' // Isso é um placeholder, idealmente deveria ser configurado
+);
