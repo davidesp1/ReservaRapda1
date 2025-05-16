@@ -31,9 +31,9 @@ import { Badge } from '@/components/ui/badge';
 
 // Table form schema
 const tableSchema = z.object({
-  number: z.string().transform(val => parseInt(val)),
-  capacity: z.string().transform(val => parseInt(val)),
-  category: z.string(),
+  number: z.coerce.number().min(1, 'Table number is required'),
+  capacity: z.coerce.number().min(1, 'Capacity must be at least 1'),
+  category: z.string().min(1, 'Category is required'),
   available: z.boolean().default(true),
 });
 
@@ -72,8 +72,8 @@ const TableManager: React.FC = () => {
   const form = useForm<z.infer<typeof tableSchema>>({
     resolver: zodResolver(tableSchema),
     defaultValues: {
-      number: '',
-      capacity: '4',
+      number: 0,
+      capacity: 4,
       category: 'standard',
       available: true,
     },
