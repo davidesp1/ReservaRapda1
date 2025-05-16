@@ -537,7 +537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description,
         email: user?.email || '',
         name: `${user?.firstName} ${user?.lastName}`,
-        phone: user?.phone,
+        phone: user && user.phone ? user.phone : undefined,
         validDays: 5 // Valid for 5 days
       });
     } else if (method === 'transfer') {
@@ -547,7 +547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description,
         email: user?.email || '',
         name: `${user?.firstName} ${user?.lastName}`,
-        phone: user?.phone,
+        phone: user && user.phone ? user.phone : undefined,
         validDays: 5 // Valid for 5 days
       });
     }
