@@ -40,8 +40,8 @@ import { Switch } from '@/components/ui/switch';
 const menuItemSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   description: z.string().optional(),
-  price: z.string().transform(val => parseInt(val) * 100), // Convert to cents
-  categoryId: z.string().transform(val => parseInt(val)),
+  price: z.coerce.number().min(0, 'Price must be a positive number'),
+  categoryId: z.coerce.number().min(1, 'Category is required'),
   featured: z.boolean().default(false),
   imageUrl: z.string().optional(),
 });
@@ -84,8 +84,8 @@ const MenuManager: React.FC = () => {
     defaultValues: {
       name: '',
       description: '',
-      price: '0',
-      categoryId: '',
+      price: 0,
+      categoryId: 0,
       featured: false,
       imageUrl: '',
     },
@@ -105,8 +105,8 @@ const MenuManager: React.FC = () => {
       itemForm.reset({
         name: editItem.name,
         description: editItem.description || '',
-        price: (editItem.price / 100).toString(),
-        categoryId: editItem.categoryId.toString(),
+        price: editItem.price / 100,
+        categoryId: editItem.categoryId,
         featured: editItem.featured,
         imageUrl: editItem.imageUrl || '',
       });
@@ -114,8 +114,8 @@ const MenuManager: React.FC = () => {
       itemForm.reset({
         name: '',
         description: '',
-        price: '0',
-        categoryId: currentCategoryId || '',
+        price: 0,
+        categoryId: currentCategoryId ? parseInt(currentCategoryId) : 0,
         featured: false,
         imageUrl: '',
       });
@@ -138,7 +138,7 @@ const MenuManager: React.FC = () => {
 
   // Filter menu items based on search
   const filteredMenuItems = React.useMemo(() => {
-    if (!menuItems) return [];
+    if (!menuItems || !Array.isArray(menuItems)) return [];
     
     return menuItems.filter((item: any) => {
       const searchLower = searchText.toLowerCase();
