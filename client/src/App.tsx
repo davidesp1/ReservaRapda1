@@ -25,6 +25,7 @@ import MenuManager from "@/pages/admin/MenuManager";
 import TableManager from "@/pages/admin/TableManager";
 import Finance from "@/pages/admin/Finance";
 import ReportsManager from "@/pages/admin/ReportsManager";
+import Settings from "@/pages/admin/Settings";
 
 // Loading spinner component
 const LoadingSpinner = () => (
@@ -72,6 +73,7 @@ function Router() {
       <Route path="/admin/tables" component={TableManager} />
       <Route path="/admin/finance" component={Finance} />
       <Route path="/admin/reports" component={ReportsManager} />
+      <Route path="/admin/settings" component={Settings} />
       
       {/* Error pages */}
       <Route path="/error/:code" component={CustomError} />

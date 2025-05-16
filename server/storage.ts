@@ -67,6 +67,11 @@ export interface IStorage {
   updateOrder(id: number, orderData: Partial<Order>): Promise<Order | undefined>;
   getAllOrders(): Promise<Order[]>;
   getReservationOrders(reservationId: number): Promise<Order[]>;
+  
+  // Settings
+  getSettingsByCategory(category: string): Promise<Record<string, string>>;
+  getAllSettings(): Promise<Record<string, Record<string, string>>>;
+  updateSettings(category: string, settings: Record<string, string>): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {

@@ -267,3 +267,20 @@ export const userDietaryPreferencesRelations = relations(userDietaryPreferences,
     references: [users.id],
   }),
 }));
+
+// Settings table for the system
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  category: text("category").notNull(), // 'general', 'reservations', 'payments', 'notifications'
+  key: text("key").notNull(),
+  value: text("value"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertSettingsSchema = createInsertSchema(settings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type Setting = typeof settings.$inferSelect;
+export type InsertSetting = z.infer<typeof insertSettingsSchema>;
