@@ -202,12 +202,17 @@ export type InsertReservation = z.infer<typeof insertReservationSchema>;
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 
+export type UserDietaryPreference = typeof userDietaryPreferences.$inferSelect;
+export type InsertUserDietaryPreference = z.infer<typeof insertUserDietaryPreferenceSchema>;
+
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   reservations: many(reservations),
+  dietaryPreferences: many(userDietaryPreferences),
+  orders: many(orders),
 }));
 
 export const menuCategoriesRelations = relations(menuCategories, ({ many }) => ({
@@ -249,5 +254,16 @@ export const ordersRelations = relations(orders, ({ one }) => ({
   reservation: one(reservations, {
     fields: [orders.reservationId],
     references: [reservations.id],
+  }),
+  user: one(users, {
+    fields: [orders.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userDietaryPreferencesRelations = relations(userDietaryPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [userDietaryPreferences.userId],
+    references: [users.id],
   }),
 }));
