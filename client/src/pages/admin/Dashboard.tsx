@@ -7,7 +7,8 @@ import DashboardStats from '@/components/admin/DashboardStats';
 import { BarChart, AreaChart, PieChart } from '@/components/admin/Charts';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { UsersRound, CalendarDays, AlertOctagon, EuroIcon } from 'lucide-react';
+import { UsersRound, CalendarDays, AlertOctagon, EuroIcon, FileText } from 'lucide-react';
+import ReportExport from '@/components/admin/ReportExport';
 
 const Dashboard: React.FC = () => {
   const { t } = useTranslation();
@@ -146,7 +147,7 @@ const Dashboard: React.FC = () => {
         )}
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {dashboardStats && (
           <>
             <Card>
@@ -226,6 +227,12 @@ const Dashboard: React.FC = () => {
             </Card>
           </>
         )}
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-3">
+          <ReportExport />
+        </div>
       </div>
     </div>
   );
