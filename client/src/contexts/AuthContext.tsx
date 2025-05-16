@@ -1,0 +1,163 @@
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient, apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+
+interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  isAdmin: boolean;
+  login: (username: string, password: string) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
+  logout: () => Promise<void>;
+}
+
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  preferences?: {
+    language: string;
+    dietaryRestrictions?: string[];
+    favoriteItems?: number[];
+  };
+}
+
+interface RegisterData {
+  username: string;
+  password: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const { toast } = useToast();
+
+  // Fetch current user on mount
+  const { isLoading, isError } = useQuery({
+    queryKey: ['/api/auth/me'],
+    onSuccess: (data) => {
+      setUser(data);
+    },
+    onError: () => {
+      setUser(null);
+    }
+  });
+
+  // Login mutation
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: { username: string; password: string }) => {
+      const response = await apiRequest('POST', '/api/auth/login', credentials);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setUser(data);
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({
+        title: "Login bem-sucedido",
+        description: `Bem-vindo, ${data.firstName}!`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Falha no login",
+        description: error.message || "Credenciais inválidas. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Register mutation
+  const registerMutation = useMutation({
+    mutationFn: async (userData: RegisterData) => {
+      const response = await apiRequest('POST', '/api/auth/register', userData);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setUser(data);
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({
+        title: "Registro bem-sucedido",
+        description: `Bem-vindo, ${data.firstName}!`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Falha no registro",
+        description: error.message || "Não foi possível criar a conta. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/auth/logout', {});
+      return response.json();
+    },
+    onSuccess: () => {
+      setUser(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Falha ao fazer logout",
+        description: error.message || "Não foi possível desconectar. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const login = async (username: string, password: string) => {
+    await loginMutation.mutateAsync({ username, password });
+  };
+
+  const register = async (userData: RegisterData) => {
+    await registerMutation.mutateAsync(userData);
+  };
+
+  const logout = async () => {
+    await logoutMutation.mutateAsync();
+  };
+
+  const isAuthenticated = !!user;
+  const isAdmin = isAuthenticated && user?.role === 'admin';
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isAuthenticated,
+        isAdmin,
+        login,
+        register,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}

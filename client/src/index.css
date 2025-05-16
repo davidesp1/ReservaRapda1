@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 20 14.3% 4.1%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 14.3% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 14.3% 4.1%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  --primary: 142 70% 29%; /* Brasil green: #009c3b */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 52 100% 50%; /* Brasil yellow: #ffdf00 */
+  --secondary-foreground: 222 79% 23%; /* Brasil blue: #002776 */
+  --accent: 222 79% 23%; /* Brasil blue: #002776 */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 142 70% 29%;
+  --radius: 0.5rem;
+  
+  /* Chart colors */
+  --chart-1: 142 70% 29%;
+  --chart-2: 52 100% 50%;
+  --chart-3: 222 79% 23%;
+  --chart-4: 0 84.2% 60.2%;
+  --chart-5: 25 5.3% 44.7%;
+  
+  /* Sidebar colors */
+  --sidebar-background: 222 79% 23%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 52 100% 50%;
+  --sidebar-primary-foreground: 222 79% 23%;
+  --sidebar-accent: 142 70% 29%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 222 47% 35%;
+  --sidebar-ring: 52 100% 50%;
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 142 70% 35%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 52 90% 45%;
+  --secondary-foreground: 222 79% 23%;
+  --accent: 222 79% 33%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 240 4.9% 83.9%;
+  
+  /* Chart colors - dark mode */
+  --chart-1: 142 70% 35%;
+  --chart-2: 52 90% 45%;
+  --chart-3: 222 79% 33%;
+  --chart-4: 0 62.8% 30.6%;
+  --chart-5: 240 5% 64.9%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-roboto bg-background text-foreground;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-montserrat;
+  }
+}
+
+/* Hero section gradient overlay */
+.hero-gradient {
+  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7));
+}
+
+/* Background pattern for the main content */
+.bg-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23009c3b' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Dancing Script font for the logo and accents */
+.font-dancing {
+  font-family: 'Dancing Script', cursive;
+}
+
+/* Montserrat font for headings */
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Roboto font for body text */
+.font-roboto {
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Brasil flag colors as utility classes */
+.text-brasil-green {
+  color: #009c3b;
+}
+
+.bg-brasil-green {
+  background-color: #009c3b;
+}
+
+.text-brasil-yellow {
+  color: #ffdf00;
+}
+
+.bg-brasil-yellow {
+  background-color: #ffdf00;
+}
+
+.text-brasil-blue {
+  color: #002776;
+}
+
+.bg-brasil-blue {
+  background-color: #002776;
+}
+
+.text-brasil-red {
+  color: #c8102e;
+}
+
+.bg-brasil-red {
+  background-color: #c8102e;
+}
+
+/* Animations */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-in-out;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
