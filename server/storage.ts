@@ -435,4 +435,329 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  // Users
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser || undefined;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  // Menu Categories
+  async getMenuCategory(id: number): Promise<MenuCategory | undefined> {
+    const [category] = await db.select().from(menuCategories).where(eq(menuCategories.id, id));
+    return category || undefined;
+  }
+
+  async createMenuCategory(category: InsertMenuCategory): Promise<MenuCategory> {
+    const [newCategory] = await db
+      .insert(menuCategories)
+      .values(category)
+      .returning();
+    return newCategory;
+  }
+
+  async updateMenuCategory(id: number, categoryData: Partial<MenuCategory>): Promise<MenuCategory | undefined> {
+    const [updatedCategory] = await db
+      .update(menuCategories)
+      .set(categoryData)
+      .where(eq(menuCategories.id, id))
+      .returning();
+    return updatedCategory || undefined;
+  }
+
+  async deleteMenuCategory(id: number): Promise<boolean> {
+    const result = await db
+      .delete(menuCategories)
+      .where(eq(menuCategories.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getAllMenuCategories(): Promise<MenuCategory[]> {
+    return await db.select().from(menuCategories);
+  }
+
+  // Menu Items
+  async getMenuItem(id: number): Promise<MenuItem | undefined> {
+    const [item] = await db.select().from(menuItems).where(eq(menuItems.id, id));
+    return item || undefined;
+  }
+
+  async createMenuItem(item: InsertMenuItem): Promise<MenuItem> {
+    const [newItem] = await db
+      .insert(menuItems)
+      .values(item)
+      .returning();
+    return newItem;
+  }
+
+  async updateMenuItem(id: number, itemData: Partial<MenuItem>): Promise<MenuItem | undefined> {
+    const [updatedItem] = await db
+      .update(menuItems)
+      .set(itemData)
+      .where(eq(menuItems.id, id))
+      .returning();
+    return updatedItem || undefined;
+  }
+
+  async deleteMenuItem(id: number): Promise<boolean> {
+    const result = await db
+      .delete(menuItems)
+      .where(eq(menuItems.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getAllMenuItems(): Promise<MenuItem[]> {
+    return await db.select().from(menuItems);
+  }
+
+  async getMenuItemsByCategory(categoryId: number): Promise<MenuItem[]> {
+    return await db
+      .select()
+      .from(menuItems)
+      .where(eq(menuItems.categoryId, categoryId));
+  }
+
+  async getFeaturedMenuItems(): Promise<MenuItem[]> {
+    return await db
+      .select()
+      .from(menuItems)
+      .where(eq(menuItems.featured, true));
+  }
+
+  // Tables
+  async getTable(id: number): Promise<Table | undefined> {
+    const [table] = await db.select().from(tables).where(eq(tables.id, id));
+    return table || undefined;
+  }
+
+  async createTable(table: InsertTable): Promise<Table> {
+    const [newTable] = await db
+      .insert(tables)
+      .values(table)
+      .returning();
+    return newTable;
+  }
+
+  async updateTable(id: number, tableData: Partial<Table>): Promise<Table | undefined> {
+    const [updatedTable] = await db
+      .update(tables)
+      .set(tableData)
+      .where(eq(tables.id, id))
+      .returning();
+    return updatedTable || undefined;
+  }
+
+  async deleteTable(id: number): Promise<boolean> {
+    const result = await db
+      .delete(tables)
+      .where(eq(tables.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getAllTables(): Promise<Table[]> {
+    return await db.select().from(tables);
+  }
+
+  async getAvailableTables(date: Date, partySize: number): Promise<Table[]> {
+    // Get all tables with enough capacity
+    const allTables = await db
+      .select()
+      .from(tables)
+      .where(
+        and(
+          eq(tables.available, true),
+          gte(tables.capacity, partySize)
+        )
+      );
+    
+    // Get reservations for the given date
+    const dateStart = new Date(date);
+    dateStart.setHours(0, 0, 0, 0);
+    const dateEnd = new Date(date);
+    dateEnd.setHours(23, 59, 59, 999);
+    
+    const reservationsOnDate = await db
+      .select()
+      .from(reservations)
+      .where(
+        and(
+          gte(reservations.date, dateStart),
+          lte(reservations.date, dateEnd),
+          sql`${reservations.status} != 'cancelled'`
+        )
+      );
+    
+    // Get IDs of tables that are already reserved
+    const reservedTableIds = reservationsOnDate.map(res => res.tableId);
+    
+    // Filter out reserved tables
+    return allTables.filter(table => !reservedTableIds.includes(table.id));
+  }
+
+  // Reservations
+  async getReservation(id: number): Promise<Reservation | undefined> {
+    const [reservation] = await db.select().from(reservations).where(eq(reservations.id, id));
+    return reservation || undefined;
+  }
+
+  async createReservation(reservation: InsertReservation): Promise<Reservation> {
+    const [newReservation] = await db
+      .insert(reservations)
+      .values(reservation)
+      .returning();
+    return newReservation;
+  }
+
+  async updateReservation(id: number, reservationData: Partial<Reservation>): Promise<Reservation | undefined> {
+    const [updatedReservation] = await db
+      .update(reservations)
+      .set(reservationData)
+      .where(eq(reservations.id, id))
+      .returning();
+    return updatedReservation || undefined;
+  }
+
+  async deleteReservation(id: number): Promise<boolean> {
+    const result = await db
+      .delete(reservations)
+      .where(eq(reservations.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getAllReservations(): Promise<Reservation[]> {
+    return await db.select().from(reservations);
+  }
+
+  async getUserReservations(userId: number): Promise<Reservation[]> {
+    return await db
+      .select()
+      .from(reservations)
+      .where(eq(reservations.userId, userId));
+  }
+
+  async getReservationsByDate(date: Date): Promise<Reservation[]> {
+    const dateStart = new Date(date);
+    dateStart.setHours(0, 0, 0, 0);
+    const dateEnd = new Date(date);
+    dateEnd.setHours(23, 59, 59, 999);
+    
+    return await db
+      .select()
+      .from(reservations)
+      .where(
+        and(
+          gte(reservations.date, dateStart),
+          lte(reservations.date, dateEnd)
+        )
+      );
+  }
+
+  async getReservationsByStatus(status: string): Promise<Reservation[]> {
+    return await db
+      .select()
+      .from(reservations)
+      .where(eq(reservations.status, status));
+  }
+
+  // Payments
+  async getPayment(id: number): Promise<Payment | undefined> {
+    const [payment] = await db.select().from(payments).where(eq(payments.id, id));
+    return payment || undefined;
+  }
+
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    const [newPayment] = await db
+      .insert(payments)
+      .values(payment)
+      .returning();
+    return newPayment;
+  }
+
+  async updatePayment(id: number, paymentData: Partial<Payment>): Promise<Payment | undefined> {
+    const [updatedPayment] = await db
+      .update(payments)
+      .set(paymentData)
+      .where(eq(payments.id, id))
+      .returning();
+    return updatedPayment || undefined;
+  }
+
+  async getAllPayments(): Promise<Payment[]> {
+    return await db.select().from(payments);
+  }
+
+  async getReservationPayments(reservationId: number): Promise<Payment[]> {
+    return await db
+      .select()
+      .from(payments)
+      .where(eq(payments.reservationId, reservationId));
+  }
+
+  // Orders
+  async getOrder(id: number): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order || undefined;
+  }
+
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const [newOrder] = await db
+      .insert(orders)
+      .values(order)
+      .returning();
+    return newOrder;
+  }
+
+  async updateOrder(id: number, orderData: Partial<Order>): Promise<Order | undefined> {
+    const [updatedOrder] = await db
+      .update(orders)
+      .set(orderData)
+      .where(eq(orders.id, id))
+      .returning();
+    return updatedOrder || undefined;
+  }
+
+  async getAllOrders(): Promise<Order[]> {
+    return await db.select().from(orders);
+  }
+
+  async getReservationOrders(reservationId: number): Promise<Order[]> {
+    return await db
+      .select()
+      .from(orders)
+      .where(eq(orders.reservationId, reservationId));
+  }
+}
+
+// Initialize the database storage
+export const storage = new DatabaseStorage();
