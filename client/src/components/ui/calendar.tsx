@@ -35,6 +35,11 @@ function Calendar({
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       locale={getLocale()}
+      formatters={{
+        formatCaption: (date, options) => {
+          return format(date, "LLLL yyyy", { locale: options.locale });
+        }
+      }}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",

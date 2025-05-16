@@ -8,7 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<User>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -66,18 +66,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   // Fetch current user on mount
-  const { isLoading, isError } = useQuery({
+  const { isLoading, isError } = useQuery<User>({
     queryKey: ['/api/auth/me'],
-    onSuccess: (data) => {
-      setUser(data);
-    },
-    onError: () => {
-      setUser(null);
-    }
+    refetchOnWindowFocus: false,
+    retry: false
   });
 
+  // Update user state when the query data changes
+  useEffect(() => {
+    if (isError) {
+      setUser(null);
+    } else if (!isLoading) {
+      const userData = queryClient.getQueryData<User>(['/api/auth/me']);
+      if (userData) {
+        setUser(userData);
+      }
+    }
+  }, [isLoading, isError]);
+
   // Login mutation
-  const loginMutation = useMutation({
+  const loginMutation = useMutation<User, Error, { username: string; password: string }>({
     mutationFn: async (credentials: { username: string; password: string }) => {
       const response = await apiRequest('POST', '/api/auth/login', credentials);
       return response.json();
@@ -145,8 +153,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   });
 
-  const login = async (username: string, password: string) => {
-    await loginMutation.mutateAsync({ username, password });
+  const login = async (username: string, password: string): Promise<User> => {
+    const userData = await loginMutation.mutateAsync({ username, password });
+    return userData;
   };
 
   const register = async (userData: RegisterData) => {

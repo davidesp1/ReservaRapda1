@@ -51,11 +51,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
-      const user = await login(data.username, data.password);
+      const userData = await login(data.username, data.password);
       onClose();
       
       // Redirecionar baseado no papel do usuário
-      if (user && user.role === 'admin') {
+      if (userData && userData.role === 'admin') {
         setLocation('/admin/dashboard');
       } else {
         setLocation('/customer/dashboard');
