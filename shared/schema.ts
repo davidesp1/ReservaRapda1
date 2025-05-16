@@ -96,6 +96,15 @@ export const payments = pgTable("payments", {
   status: paymentStatusEnum("status").default("pending"),
   transactionId: text("transaction_id"),
   paymentDate: timestamp("payment_date"),
+  eupagoDetails: json("eupago_details").$type<{
+    entity?: string;
+    reference?: string;
+    status?: string;
+    mbwayAlias?: string;
+    paymentUrl?: string;
+    iban?: string;
+    bankName?: string;
+  }>(),
 });
 
 export const insertPaymentSchema = createInsertSchema(payments).omit({

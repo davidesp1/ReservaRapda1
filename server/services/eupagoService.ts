@@ -222,13 +222,13 @@ class EupagoService {
         body: urlSearchParamsToString(params),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
       return {
         success: true,
-        reference: data.referencia,
-        status: data.estado,
-        amount: parseFloat(data.valor),
-        transactionId: data.transacao,
+        reference: data.referencia || '',
+        status: data.estado || 'pending',
+        amount: data.valor ? parseFloat(data.valor) : 0,
+        transactionId: data.transacao || '',
         method: method,
       };
     } catch (error) {
