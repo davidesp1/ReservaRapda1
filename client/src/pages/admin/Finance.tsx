@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import AdminLayout from '@/components/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -41,17 +42,10 @@ const Finance: React.FC = () => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   // Fetch payments
-  const { data: payments, isLoading: paymentsLoading } = useQuery({
+  const { data: payments, isLoading: paymentsLoading } = useQuery<any>({
     queryKey: ['/api/payments'],
     enabled: isAuthenticated && isAdmin,
   });
-
-  // Redirect if not authenticated or not admin
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !isAdmin)) {
-      setLocation('/');
-    }
-  }, [isAuthenticated, isAdmin, isLoading, setLocation]);
 
   // Filter payments based on search, date range, status, and method
   const filteredPayments = React.useMemo(() => {
@@ -205,18 +199,18 @@ const Finance: React.FC = () => {
 
   if (paymentsLoading) {
     return (
-      <div className="p-6 h-full">
+      <AdminLayout title={t('Finance')}>
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/3"></div>
           <div className="h-12 bg-gray-200 rounded"></div>
           <div className="h-96 bg-gray-200 rounded"></div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="p-6 h-full">
+    <AdminLayout title={t('Finance')}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-montserrat font-bold">{t('Finance')}</h1>
       </div>
@@ -534,7 +528,7 @@ const Finance: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </AdminLayout>
   );
 };
 
