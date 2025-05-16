@@ -11,6 +11,12 @@ import CustomerDashboard from "@/pages/CustomerDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Reservations from "@/pages/Reservations";
 import { ThemeProvider } from "next-themes";
+import { lazy, Suspense } from "react";
+
+// Lazy loaded components
+const PaymentDetails = lazy(() => import("@/pages/PaymentDetails"));
+const PaymentSuccess = lazy(() => import("@/pages/PaymentSuccess"));
+const PaymentCancel = lazy(() => import("@/pages/PaymentCancel"));
 
 // Admin pages
 import Dashboard from "@/pages/admin/Dashboard";
@@ -19,6 +25,13 @@ import MenuManager from "@/pages/admin/MenuManager";
 import TableManager from "@/pages/admin/TableManager";
 import Finance from "@/pages/admin/Finance";
 import ReportsManager from "@/pages/admin/ReportsManager";
+
+// Loading spinner component
+const LoadingSpinner = () => (
+  <div className="h-screen flex items-center justify-center">
+    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+  </div>
+);
 
 function Router() {
   return (
@@ -29,6 +42,27 @@ function Router() {
       {/* Customer routes */}
       <Route path="/dashboard" component={CustomerDashboard} />
       <Route path="/reservations" component={Reservations} />
+      <Route path="/payment-details/:id">
+        {() => (
+          <Suspense fallback={<LoadingSpinner />}>
+            <PaymentDetails />
+          </Suspense>
+        )}
+      </Route>
+      <Route path="/payment-success">
+        {() => (
+          <Suspense fallback={<LoadingSpinner />}>
+            <PaymentSuccess />
+          </Suspense>
+        )}
+      </Route>
+      <Route path="/payment-cancel">
+        {() => (
+          <Suspense fallback={<LoadingSpinner />}>
+            <PaymentCancel />
+          </Suspense>
+        )}
+      </Route>
       
       {/* Admin routes */}
       <Route path="/admin" component={AdminDashboard} />
