@@ -49,14 +49,33 @@ const TableManager: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [viewMode, setViewMode] = useState<'table' | 'layout'>('table');
 
+  // Define Table type
+  type Table = {
+    id: number;
+    number: number;
+    capacity: number;
+    category: string;
+    available: boolean;
+  };
+  
   // Fetch tables
-  const { data: tables, isLoading: tablesLoading } = useQuery({
+  const { data: tables = [], isLoading: tablesLoading } = useQuery<Table[]>({
     queryKey: ['/api/tables'],
     enabled: isAuthenticated && isAdmin,
   });
 
+  // Define Reservation type
+  type Reservation = {
+    id: number;
+    tableId: number;
+    date: string;
+    time: string;
+    status: string;
+    partySize: number;
+  };
+  
   // Fetch reservations for selected date
-  const { data: reservations, isLoading: reservationsLoading } = useQuery({
+  const { data: reservations = [], isLoading: reservationsLoading } = useQuery<Reservation[]>({
     queryKey: ['/api/reservations', { date: selectedDate }],
     enabled: isAuthenticated && isAdmin && !!selectedDate,
   });
@@ -83,8 +102,8 @@ const TableManager: React.FC = () => {
   useEffect(() => {
     if (isTableModalOpen && editTable) {
       form.reset({
-        number: editTable.number.toString(),
-        capacity: editTable.capacity.toString(),
+        number: parseInt(editTable.number),
+        capacity: parseInt(editTable.capacity),
         category: editTable.category,
         available: editTable.available,
       });
@@ -93,15 +112,15 @@ const TableManager: React.FC = () => {
       if (tables && tables.length > 0) {
         const maxTableNumber = Math.max(...tables.map((table: any) => table.number));
         form.reset({
-          number: (maxTableNumber + 1).toString(),
-          capacity: '4',
+          number: maxTableNumber + 1,
+          capacity: 4,
           category: 'standard',
           available: true,
         });
       } else {
         form.reset({
-          number: '1',
-          capacity: '4',
+          number: 1,
+          capacity: 4,
           category: 'standard',
           available: true,
         });
@@ -197,8 +216,7 @@ const TableManager: React.FC = () => {
 
   // Check if table is reserved for the selected date
   const isTableReserved = (tableId: number) => {
-    if (!reservations) return false;
-    return reservations.some((reservation: any) => 
+    return reservations.some((reservation) => 
       reservation.tableId === tableId && reservation.status !== 'cancelled'
     );
   };
