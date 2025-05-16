@@ -132,7 +132,12 @@ const Reservations: React.FC = () => {
       tableId: data.tableId,
       partySize: data.partySize,
       specialRequests: data.specialRequests,
-      notes: data.specialRequests // Map to notes field in the schema
+      notes: data.specialRequests, // Map to notes field in the schema
+      duration: data.duration,
+      dietaryRequirements: data.dietaryRequirements,
+      occasion: data.occasion,
+      // Gerar código de confirmação aleatório
+      confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase()
     };
     
     createReservationMutation.mutate(reservationData);
@@ -324,10 +329,10 @@ const Reservations: React.FC = () => {
                                 <SelectValue placeholder={t('SelectDuration')} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="90">1.5 {t('Hours')}</SelectItem>
-                                <SelectItem value="120">2 {t('Hours')}</SelectItem>
-                                <SelectItem value="150">2.5 {t('Hours')}</SelectItem>
-                                <SelectItem value="180">3 {t('Hours')}</SelectItem>
+                                <SelectItem value="90">1.5 {t('ReservationHours')}</SelectItem>
+                                <SelectItem value="120">2 {t('ReservationHours')}</SelectItem>
+                                <SelectItem value="150">2.5 {t('ReservationHours')}</SelectItem>
+                                <SelectItem value="180">3 {t('ReservationHours')}</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormDescription>
