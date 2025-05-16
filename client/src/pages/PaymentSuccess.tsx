@@ -35,27 +35,28 @@ export default function PaymentSuccess() {
     <CustomerLayout title={t('PaymentSuccessful')}>
       <div className="max-w-md mx-auto">
         <Card>
-        <CardHeader>
-          <div className="flex justify-center mb-4">
-            <CheckCircle className="h-16 w-16 text-green-500" />
-          </div>
-          <CardTitle className="text-center">{t('PaymentSuccessful')}</CardTitle>
-          <CardDescription className="text-center">
-            {t('PaymentSuccessfulDescription')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-center">
-          <p className="mb-4">{t('ThankYouForYourOrder')}</p>
-          <p className="text-sm text-muted-foreground">
-            {t('ReservationConfirmationInfo')}
-          </p>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <Button onClick={() => navigate('/reservations')}>
-            {t('ViewReservations')}
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+          <CardHeader>
+            <div className="flex justify-center mb-4">
+              <CheckCircle className="h-16 w-16 text-green-500" />
+            </div>
+            <CardTitle className="text-center">{t('PaymentSuccessful')}</CardTitle>
+            <CardDescription className="text-center">
+              {t('PaymentSuccessfulDescription')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="mb-4">{t('ThankYouForYourOrder')}</p>
+            <p className="text-sm text-muted-foreground">
+              {t('ReservationConfirmationInfo')}
+            </p>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button onClick={() => navigate('/reservations')}>
+              {t('ViewReservations')}
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    </CustomerLayout>
   );
 }
