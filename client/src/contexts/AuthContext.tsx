@@ -19,12 +19,35 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
+  birthDate?: string;
+  profilePicture?: string;
+  biography?: string;
   role: string;
   preferences?: {
     language: string;
     dietaryRestrictions?: string[];
     favoriteItems?: number[];
+    allergies?: string[];
+    spicePreference?: 'mild' | 'medium' | 'hot';
+    preferredSeating?: 'indoor' | 'outdoor' | 'no-preference';
+    preferredDiningTimes?: string[];
+    theme?: 'light' | 'dark' | 'system';
+    notifications?: {
+      email?: boolean;
+      sms?: boolean;
+      promotions?: boolean;
+      reservationReminders?: boolean;
+    };
   };
+  memberSince?: string;
+  lastLogin?: string;
+  status?: string;
+  loyaltyPoints?: number;
 }
 
 interface RegisterData {

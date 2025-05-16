@@ -299,9 +299,98 @@ const CustomerDashboard: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
                       />
                     </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-1">
+                        {t('Phone')}
+                      </label>
+                      <input
+                        type="text"
+                        value={user?.phone || ''}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-1">
+                        {t('Address')}
+                      </label>
+                      <input
+                        type="text"
+                        value={user?.address || ''}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-1">
+                        {t('City')}
+                      </label>
+                      <input
+                        type="text"
+                        value={user?.city || ''}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-1">
+                        {t('PostalCode')}
+                      </label>
+                      <input
+                        type="text"
+                        value={user?.postalCode || ''}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-1">
+                        {t('Country')}
+                      </label>
+                      <input
+                        type="text"
+                        value={user?.country || ''}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-1">
+                        {t('MemberSince')}
+                      </label>
+                      <input
+                        type="text"
+                        value={user?.memberSince ? format(new Date(user.memberSince), 'dd/MM/yyyy') : ''}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-1">
+                        {t('LoyaltyPoints')}
+                      </label>
+                      <input
+                        type="text"
+                        value={user?.loyaltyPoints || '0'}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      />
+                    </div>
                   </div>
                   
-                  <Button variant="outline">
+                  <div className="mt-4">
+                    <label className="text-sm font-medium text-gray-700 block mb-1">
+                      {t('Biography')}
+                    </label>
+                    <textarea
+                      value={user?.biography || ''}
+                      readOnly
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                    />
+                  </div>
+                  
+                  <Button variant="outline" className="mt-4">
                     {t('EditProfile')}
                   </Button>
                 </CardContent>
@@ -323,6 +412,70 @@ const CustomerDashboard: React.FC = () => {
                         <option value="en">English</option>
                         <option value="es">Español</option>
                       </select>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-2">
+                        {t('DietaryPreferences')}
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['vegetarian', 'vegan', 'gluten-free', 'lactose-free', 'pescatarian', 'halal', 'kosher', 'none'].map((preference) => (
+                          <div key={preference} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id={`pref-${preference}`}
+                              className="mr-2 h-4 w-4 rounded border-gray-300 text-brasil-green focus:ring-brasil-green"
+                              checked={user?.preferences?.dietaryRestrictions?.includes(preference) || false}
+                              readOnly
+                            />
+                            <label htmlFor={`pref-${preference}`} className="text-sm text-gray-700">
+                              {t(preference.charAt(0).toUpperCase() + preference.slice(1).replace('-', ''))}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-1">
+                        {t('SpicePreference')}
+                      </label>
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        value={user?.preferences?.spicePreference || 'medium'}
+                        disabled
+                      >
+                        <option value="mild">{t('Mild')}</option>
+                        <option value="medium">{t('Medium')}</option>
+                        <option value="hot">{t('Hot')}</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-1">
+                        {t('PreferredSeating')}
+                      </label>
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        value={user?.preferences?.preferredSeating || 'no-preference'}
+                        readOnly
+                      >
+                        <option value="indoor">{t('Indoor')}</option>
+                        <option value="outdoor">{t('Outdoor')}</option>
+                        <option value="no-preference">{t('NoPreference')}</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-2">
+                        {t('Allergies')}
+                      </label>
+                      <textarea
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        rows={2}
+                        value={user?.preferences?.allergies?.join(', ') || ''}
+                        readOnly
+                      />
                     </div>
                     
                     <div>
