@@ -23,7 +23,7 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
   const { t, i18n } = useTranslation();
   
   // Get locale from i18n
-  const getLocale = () => {
+  const getLocale = (): Locale => {
     const lang = i18n.language || 'pt';
     switch (lang) {
       case 'en':
