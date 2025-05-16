@@ -646,7 +646,7 @@ const MenuManager: React.FC = () => {
                       <FormLabel>{t('Category')}</FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
-                        defaultValue={field.value.toString()}
+                        defaultValue={field.value ? field.value.toString() : ""}
                       >
                         <FormControl>
                           <SelectTrigger>
