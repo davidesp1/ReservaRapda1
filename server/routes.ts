@@ -10,7 +10,8 @@ import {
   insertTableSchema, 
   insertReservationSchema, 
   insertPaymentSchema,
-  insertOrderSchema
+  insertOrderSchema,
+  settings
 } from "@shared/schema";
 import { z } from "zod";
 import { ZodError } from "zod";

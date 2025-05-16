@@ -127,6 +127,61 @@ export class MemStorage implements IStorage {
       preferences: { language: "pt" }
     });
     
+  }
+  
+  private initializeSettings() {
+    // General settings
+    const generalSettings = new Map<string, string>();
+    generalSettings.set('restaurantName', 'Opa que delicia');
+    generalSettings.set('address', 'MSBN Europe Convention Center, Barcelona');
+    generalSettings.set('phone', '+34 612 345 678');
+    generalSettings.set('email', 'contact@opaquedelicia.com');
+    generalSettings.set('website', 'https://opaquedelicia.com');
+    generalSettings.set('openingTime', '11:00');
+    generalSettings.set('closingTime', '23:00');
+    generalSettings.set('description', 'Autêntica comida brasileira durante a convenção MSBN Europe');
+    this.settings.set('general', generalSettings);
+    
+    // Reservation settings
+    const reservationSettings = new Map<string, string>();
+    reservationSettings.set('minReservationTime', '60');
+    reservationSettings.set('maxReservationTime', '180');
+    reservationSettings.set('reservationTimeInterval', '30');
+    reservationSettings.set('maxPartySize', '12');
+    reservationSettings.set('reservationLeadHours', '2');
+    reservationSettings.set('maxAdvanceReservationDays', '30');
+    reservationSettings.set('allowCustomersToCancel', 'true');
+    reservationSettings.set('requireConfirmation', 'true');
+    reservationSettings.set('autoConfirmReservations', 'false');
+    this.settings.set('reservations', reservationSettings);
+    
+    // Payment settings
+    const paymentSettings = new Map<string, string>();
+    paymentSettings.set('currency', 'EUR');
+    paymentSettings.set('acceptCreditCards', 'true');
+    paymentSettings.set('acceptDebitCards', 'true');
+    paymentSettings.set('acceptCash', 'true');
+    paymentSettings.set('acceptMBWay', 'true');
+    paymentSettings.set('acceptMultibanco', 'true');
+    paymentSettings.set('acceptBankTransfer', 'true');
+    paymentSettings.set('requirePrepayment', 'false');
+    paymentSettings.set('requirePrepaymentAmount', '0');
+    paymentSettings.set('showPricesWithTax', 'true');
+    paymentSettings.set('taxRate', '23');
+    this.settings.set('payments', paymentSettings);
+    
+    // Notification settings
+    const notificationSettings = new Map<string, string>();
+    notificationSettings.set('sendEmailConfirmation', 'true');
+    notificationSettings.set('sendSmsConfirmation', 'false');
+    notificationSettings.set('sendEmailReminders', 'true');
+    notificationSettings.set('sendSmsReminders', 'false');
+    notificationSettings.set('reminderHoursBeforeReservation', '24');
+    notificationSettings.set('allowCustomerFeedback', 'true');
+    notificationSettings.set('collectCustomerFeedback', 'true');
+    this.settings.set('notifications', notificationSettings);
+  }
+    
     // Add some menu categories
     const entradas = this.createMenuCategory({ name: "Entradas", description: "Appetizers and starters" });
     const pratosPrincipais = this.createMenuCategory({ name: "Pratos Principais", description: "Main dishes" });
