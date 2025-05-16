@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { 
+  Check, 
+  X, 
+  Users, 
+  Coffee,
+  Circle,
+  Triangle,
+  Square 
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Users, Check, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-interface TableItem {
+interface TableShape {
   id: number;
   number: number;
   capacity: number;
@@ -15,127 +21,129 @@ interface TableItem {
 }
 
 interface RestaurantLayoutProps {
-  tables: TableItem[];
+  tables: TableShape[];
   reservedTables: number[];
-  onTableClick?: (tableId: number) => void;
+  onTableClick: (tableId: number) => void;
 }
 
-const RestaurantLayout: React.FC<RestaurantLayoutProps> = ({
-  tables,
-  reservedTables,
-  onTableClick
+const RestaurantLayout: React.FC<RestaurantLayoutProps> = ({ 
+  tables, 
+  reservedTables, 
+  onTableClick 
 }) => {
   const { t } = useTranslation();
-
-  // Define table size based on capacity
-  const getTableSize = (capacity: number) => {
-    if (capacity <= 2) return 'sm';
-    if (capacity <= 4) return 'md';
-    if (capacity <= 6) return 'lg';
-    return 'xl';
+  
+  // Calculate grid size dynamically based on table count
+  const gridSize = Math.ceil(Math.sqrt(tables.length)) + 1;
+  
+  // Group tables by area (we'll simulate areas based on table numbers)
+  const areas = {
+    dining: tables.filter(table => table.number <= 10),
+    bar: tables.filter(table => table.number > 10 && table.number <= 15),
+    patio: tables.filter(table => table.number > 15),
   };
 
-  // Get table status class
-  const getTableStatusClass = (table: TableItem) => {
-    const isReserved = reservedTables.includes(table.id);
-    
-    if (isReserved) return 'bg-red-100 border-red-400 text-red-800';
-    if (!table.available) return 'bg-gray-100 border-gray-400 text-gray-800';
-    return 'bg-green-100 border-green-400 text-green-800';
+  // Function to determine table status color
+  const getTableColor = (table: TableShape) => {
+    if (!table.available) return 'bg-gray-400'; // Inactive table
+    if (reservedTables.includes(table.id)) return 'bg-red-500'; // Reserved table
+    return 'bg-green-500'; // Available table
   };
 
-  // Get table icon
-  const getTableIcon = (table: TableItem) => {
-    const isReserved = reservedTables.includes(table.id);
-    
-    if (isReserved) return <X className="h-3 w-3 mr-1" />;
-    if (!table.available) return <X className="h-3 w-3 mr-1" />;
-    return <Check className="h-3 w-3 mr-1" />;
-  };
-
-  // Get table status text
-  const getTableStatus = (table: TableItem) => {
-    const isReserved = reservedTables.includes(table.id);
-    
-    if (isReserved) return t('Reserved');
-    if (!table.available) return t('Unavailable');
-    return t('Available');
+  // Function to get icon based on table capacity
+  const getTableIcon = (capacity: number) => {
+    if (capacity <= 2) return Circle;
+    if (capacity <= 4) return Square;
+    return Triangle;
   };
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle>{t('RestaurantLayout')}</CardTitle>
-        <CardDescription>{t('VisualRepresentationOfTables')}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="p-4 border rounded-md bg-gray-50 relative">
-          {/* Legend */}
-          <div className="absolute top-4 right-4 flex flex-col gap-2 bg-white p-3 rounded-md border shadow-sm">
-            <div className="text-sm font-semibold mb-1">{t('Legend')}:</div>
-            <div className="flex items-center text-xs">
-              <div className="w-4 h-4 bg-green-100 border border-green-400 rounded-md mr-2"></div>
-              <span>{t('Available')}</span>
-            </div>
-            <div className="flex items-center text-xs">
-              <div className="w-4 h-4 bg-red-100 border border-red-400 rounded-md mr-2"></div>
-              <span>{t('Reserved')}</span>
-            </div>
-            <div className="flex items-center text-xs">
-              <div className="w-4 h-4 bg-gray-100 border border-gray-400 rounded-md mr-2"></div>
-              <span>{t('Unavailable')}</span>
-            </div>
-            <div className="flex items-center text-xs mt-2">
-              <div className="w-4 h-4 bg-purple-100 border border-purple-400 rounded-md mr-2"></div>
-              <span>{t('VIP')}</span>
-            </div>
+    <div className="p-4 bg-white rounded-md border">
+      <div className="flex justify-between mb-6">
+        <div className="flex space-x-4">
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+            <span className="text-sm">{t('Available')}</span>
           </div>
-          
-          {/* Restaurant Layout Grid */}
-          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 p-8">
-            {tables.map((table) => {
-              const tableSize = getTableSize(table.capacity);
-              const statusClass = getTableStatusClass(table);
-              const isVip = table.category === 'vip';
-              const vipClass = isVip ? 'border-purple-400 bg-purple-50' : '';
-              
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
+            <span className="text-sm">{t('Reserved')}</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-gray-400 rounded-full mr-2"></div>
+            <span className="text-sm">{t('Inactive')}</span>
+          </div>
+        </div>
+        <div className="flex space-x-4">
+          <div className="flex items-center">
+            <Circle className="text-gray-500 mr-2 h-4 w-4" />
+            <span className="text-sm">{t('SmallTable')}</span>
+          </div>
+          <div className="flex items-center">
+            <Square className="text-gray-500 mr-2 h-4 w-4" />
+            <span className="text-sm">{t('MediumTable')}</span>
+          </div>
+          <div className="flex items-center">
+            <Triangle className="text-gray-500 mr-2 h-4 w-4" />
+            <span className="text-sm">{t('LargeTable')}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 gap-6">
+        {/* Dining Area */}
+        <div className="p-4 border rounded-md bg-gray-50">
+          <h3 className="font-semibold mb-4 flex items-center">
+            <Coffee className="mr-2 h-5 w-5 text-brasil-green" /> 
+            {t('DiningArea')}
+          </h3>
+          <div className="grid grid-cols-5 gap-4">
+            {areas.dining.map(table => {
+              const TableIcon = getTableIcon(table.capacity);
               return (
                 <TooltipProvider key={table.id}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div 
-                        className={`table-item relative cursor-pointer border-2 ${statusClass} ${vipClass} rounded-md 
-                                   hover:shadow-md transition-all duration-200 transform hover:scale-105`}
-                        onClick={() => onTableClick && onTableClick(table.id)}
+                      <button
+                        onClick={() => onTableClick(table.id)}
+                        className={`relative flex justify-center items-center w-16 h-16 rounded-md ${getTableColor(table)} hover:opacity-80 transition-opacity`}
                       >
-                        <div className={`
-                          ${tableSize === 'sm' ? 'w-16 h-16' : ''}
-                          ${tableSize === 'md' ? 'w-20 h-20' : ''}
-                          ${tableSize === 'lg' ? 'w-24 h-24' : ''}
-                          ${tableSize === 'xl' ? 'w-28 h-28' : ''}
-                          flex flex-col items-center justify-center p-2
-                        `}>
-                          <div className="font-bold text-lg">{table.number}</div>
-                          <div className="flex items-center text-xs mt-1">
-                            <Users className="h-3 w-3 mr-1" /> {table.capacity}
-                          </div>
-                          <div className="absolute bottom-1 right-1 flex items-center text-xs">
-                            {getTableIcon(table)}
-                          </div>
-                          {isVip && (
-                            <Badge variant="secondary" className="absolute top-1 right-1 text-[9px] py-0 px-1">
-                              VIP
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
+                        <TableIcon className="text-white h-8 w-8" />
+                        <span className="absolute top-1 left-1 text-xs font-bold text-white">
+                          {table.number}
+                        </span>
+                        <span className="absolute bottom-1 right-1 text-xs font-bold text-white flex items-center">
+                          <Users className="mr-1 h-3 w-3" />
+                          {table.capacity}
+                        </span>
+                      </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <div className="text-sm">
-                        <p className="font-semibold">{t('Table')} {table.number}</p>
-                        <p>{t('Capacity')}: {table.capacity}</p>
-                        <p>{t('Category')}: {table.category === 'vip' ? t('VIP') : t('Standard')}</p>
-                        <p>{t('Status')}: {getTableStatus(table)}</p>
+                      <div className="p-2">
+                        <div className="font-semibold">{t('Table')} {table.number}</div>
+                        <div className="flex items-center text-sm">
+                          <Users className="mr-1 h-3 w-3" /> {table.capacity} {t('People')}
+                        </div>
+                        <div className="mt-1">
+                          <Badge variant={table.category === 'vip' ? 'secondary' : 'outline'}>
+                            {table.category === 'vip' ? t('VIP') : t('Standard')}
+                          </Badge>
+                        </div>
+                        <div className="mt-1 text-sm">
+                          {!table.available ? (
+                            <span className="flex items-center text-red-600">
+                              <X className="mr-1 h-3 w-3" /> {t('Inactive')}
+                            </span>
+                          ) : reservedTables.includes(table.id) ? (
+                            <span className="flex items-center text-red-600">
+                              <X className="mr-1 h-3 w-3" /> {t('Reserved')}
+                            </span>
+                          ) : (
+                            <span className="flex items-center text-green-600">
+                              <Check className="mr-1 h-3 w-3" /> {t('Available')}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </TooltipContent>
                   </Tooltip>
@@ -144,8 +152,136 @@ const RestaurantLayout: React.FC<RestaurantLayoutProps> = ({
             })}
           </div>
         </div>
-      </CardContent>
-    </Card>
+        
+        {/* Bar Area */}
+        {areas.bar.length > 0 && (
+          <div className="p-4 border rounded-md bg-gray-50">
+            <h3 className="font-semibold mb-4 flex items-center">
+              <Coffee className="mr-2 h-5 w-5 text-brasil-green" /> 
+              {t('BarArea')}
+            </h3>
+            <div className="grid grid-cols-5 gap-4">
+              {areas.bar.map(table => {
+                const TableIcon = getTableIcon(table.capacity);
+                return (
+                  <TooltipProvider key={table.id}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => onTableClick(table.id)}
+                          className={`relative flex justify-center items-center w-16 h-16 rounded-md ${getTableColor(table)} hover:opacity-80 transition-opacity`}
+                        >
+                          <TableIcon className="text-white h-8 w-8" />
+                          <span className="absolute top-1 left-1 text-xs font-bold text-white">
+                            {table.number}
+                          </span>
+                          <span className="absolute bottom-1 right-1 text-xs font-bold text-white flex items-center">
+                            <Users className="mr-1 h-3 w-3" />
+                            {table.capacity}
+                          </span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="p-2">
+                          <div className="font-semibold">{t('Table')} {table.number}</div>
+                          <div className="flex items-center text-sm">
+                            <Users className="mr-1 h-3 w-3" /> {table.capacity} {t('People')}
+                          </div>
+                          <div className="mt-1">
+                            <Badge variant={table.category === 'vip' ? 'secondary' : 'outline'}>
+                              {table.category === 'vip' ? t('VIP') : t('Standard')}
+                            </Badge>
+                          </div>
+                          <div className="mt-1 text-sm">
+                            {!table.available ? (
+                              <span className="flex items-center text-red-600">
+                                <X className="mr-1 h-3 w-3" /> {t('Inactive')}
+                              </span>
+                            ) : reservedTables.includes(table.id) ? (
+                              <span className="flex items-center text-red-600">
+                                <X className="mr-1 h-3 w-3" /> {t('Reserved')}
+                              </span>
+                            ) : (
+                              <span className="flex items-center text-green-600">
+                                <Check className="mr-1 h-3 w-3" /> {t('Available')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        
+        {/* Patio Area */}
+        {areas.patio.length > 0 && (
+          <div className="p-4 border rounded-md bg-gray-50">
+            <h3 className="font-semibold mb-4 flex items-center">
+              <Coffee className="mr-2 h-5 w-5 text-brasil-green" /> 
+              {t('PatioArea')}
+            </h3>
+            <div className="grid grid-cols-5 gap-4">
+              {areas.patio.map(table => {
+                const TableIcon = getTableIcon(table.capacity);
+                return (
+                  <TooltipProvider key={table.id}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => onTableClick(table.id)}
+                          className={`relative flex justify-center items-center w-16 h-16 rounded-md ${getTableColor(table)} hover:opacity-80 transition-opacity`}
+                        >
+                          <TableIcon className="text-white h-8 w-8" />
+                          <span className="absolute top-1 left-1 text-xs font-bold text-white">
+                            {table.number}
+                          </span>
+                          <span className="absolute bottom-1 right-1 text-xs font-bold text-white flex items-center">
+                            <Users className="mr-1 h-3 w-3" />
+                            {table.capacity}
+                          </span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="p-2">
+                          <div className="font-semibold">{t('Table')} {table.number}</div>
+                          <div className="flex items-center text-sm">
+                            <Users className="mr-1 h-3 w-3" /> {table.capacity} {t('People')}
+                          </div>
+                          <div className="mt-1">
+                            <Badge variant={table.category === 'vip' ? 'secondary' : 'outline'}>
+                              {table.category === 'vip' ? t('VIP') : t('Standard')}
+                            </Badge>
+                          </div>
+                          <div className="mt-1 text-sm">
+                            {!table.available ? (
+                              <span className="flex items-center text-red-600">
+                                <X className="mr-1 h-3 w-3" /> {t('Inactive')}
+                              </span>
+                            ) : reservedTables.includes(table.id) ? (
+                              <span className="flex items-center text-red-600">
+                                <X className="mr-1 h-3 w-3" /> {t('Reserved')}
+                              </span>
+                            ) : (
+                              <span className="flex items-center text-green-600">
+                                <Check className="mr-1 h-3 w-3" /> {t('Available')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
