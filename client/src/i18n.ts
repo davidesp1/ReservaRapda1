@@ -12,7 +12,7 @@ const resources = {
       "Home": "Início",
       "About": "Sobre",
       "Menu": "Menu",
-      "Contact": "Contato",
+      "ContactHeader": "Contato",
       "Login": "Entrar",
       "Register": "Cadastrar",
       
@@ -47,7 +47,7 @@ const resources = {
       "Address": "Endereço",
       "EventDate": "Data do Evento",
       "Hours": "Horário de Funcionamento",
-      "Contact": "Contato",
+      "ContactInfo": "Contato",
       "WhatsAppContact": "Fale conosco no WhatsApp",
       
       // CTA
@@ -146,7 +146,7 @@ const resources = {
       // Hero
       "FlavorsOfBrazil": "Flavors of Brazil at MSBN Europe Convention",
       "AuthenticCuisine": "The restaurant Opa que delicia brings authentic Brazilian cuisine to the MSBN Europe Convention",
-      "BookNow": "Book your table now!",
+      "BookNowHero": "Book your table now!",
       
       // About
       "AboutUs": "About Opa que delícia!",
@@ -174,13 +174,13 @@ const resources = {
       "Address": "Address",
       "EventDate": "Event Date",
       "Hours": "Opening Hours",
-      "Contact": "Contact",
+      "ContactInfo": "Contact",
       "WhatsAppContact": "Contact us on WhatsApp",
       
       // CTA
       "EnjoyBrazil": "Come Enjoy Authentic Brazilian Gastronomy!",
       "GuaranteeTable": "Reserve your table and experience the flavors that make Brazil such a special country. Book now and ensure a unique gastronomic experience during the MSBN Europe Convention!",
-      "BookNow": "Book Now",
+      "BookNowCTA": "Book Now",
       
       // Footer
       "QuickLinks": "Quick Links",
@@ -273,7 +273,7 @@ const resources = {
       // Hero
       "FlavorsOfBrazil": "Sabores de Brasil en la Convención MSBN Europa",
       "AuthenticCuisine": "El restaurante Opa que delicia trae la auténtica cocina brasileña a la Convención MSBN Europa",
-      "BookNow": "¡Reserva tu mesa ahora!",
+      "BookNowHero": "¡Reserva tu mesa ahora!",
       
       // About
       "AboutUs": "Sobre Opa que delícia!",
@@ -301,7 +301,7 @@ const resources = {
       "Address": "Dirección",
       "EventDate": "Fecha del Evento",
       "Hours": "Horario de Apertura",
-      "Contact": "Contacto",
+      "ContactInfo": "Contacto",
       "WhatsAppContact": "Contáctanos por WhatsApp",
       
       // CTA
