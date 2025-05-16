@@ -14,7 +14,8 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { PlusCircle, Pencil, Trash2, Users, Check, X, CheckSquare, XSquare, Edit } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Users, Check, X, CheckSquare, XSquare, Edit, LayoutGrid, List } from 'lucide-react';
+import RestaurantLayout from '@/components/admin/RestaurantLayout';
 import {
   Table,
   TableBody,
@@ -45,6 +46,7 @@ const TableManager: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [tableToDelete, setTableToDelete] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [viewMode, setViewMode] = useState<'table' | 'layout'>('table');
 
   // Fetch tables
   const { data: tables, isLoading: tablesLoading } = useQuery({
@@ -300,114 +302,149 @@ const TableManager: React.FC = () => {
                 <XSquare className="mr-1 h-4 w-4" /> {t('Reserved')}: {reservedTables}
               </span>
             </div>
-            <Button 
-              className="bg-brasil-green text-white"
-              onClick={() => {
-                setEditTable(null);
-                setIsTableModalOpen(true);
-              }}
-            >
-              <PlusCircle className="mr-2 h-4 w-4" /> {t('AddTable')}
-            </Button>
+            <div className="flex space-x-2">
+              <div className="border rounded-md flex overflow-hidden">
+                <Button 
+                  variant={viewMode === 'table' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('table')}
+                >
+                  <List className="h-4 w-4 mr-1" /> {t('List')}
+                </Button>
+                <Button 
+                  variant={viewMode === 'layout' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('layout')}
+                >
+                  <LayoutGrid className="h-4 w-4 mr-1" /> {t('Layout')}
+                </Button>
+              </div>
+              <Button 
+                className="bg-brasil-green text-white"
+                onClick={() => {
+                  setEditTable(null);
+                  setIsTableModalOpen(true);
+                }}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" /> {t('AddTable')}
+              </Button>
+            </div>
           </div>
 
-          <div className="border rounded-md">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('TableNumber')}</TableHead>
-                  <TableHead>{t('Capacity')}</TableHead>
-                  <TableHead>{t('Category')}</TableHead>
-                  <TableHead>{t('Status')}</TableHead>
-                  <TableHead>{t('Availability')}</TableHead>
-                  <TableHead className="text-right">{t('Actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedTables.length > 0 ? (
-                  sortedTables.map((table: any) => {
-                    const reserved = isTableReserved(table.id);
-                    const reservation = getTableReservation(table.id);
-                    return (
-                      <TableRow key={table.id}>
-                        <TableCell className="font-medium">
-                          {table.number}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <Users className="mr-2 h-4 w-4 text-gray-500" />
-                            {table.capacity}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={table.category === 'vip' ? 'secondary' : 'outline'}>
-                            {table.category === 'vip' ? t('VIP') : t('Standard')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {table.available ? (
-                            <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center w-fit">
-                              <Check className="mr-1 h-3 w-3" /> {t('Active')}
-                            </span>
-                          ) : (
-                            <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs flex items-center w-fit">
-                              <X className="mr-1 h-3 w-3" /> {t('Inactive')}
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {reserved ? (
-                            <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs flex items-center w-fit">
-                              <X className="mr-1 h-3 w-3" /> {t('Reserved')}
-                            </span>
-                          ) : !table.available ? (
-                            <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs flex items-center w-fit">
-                              <X className="mr-1 h-3 w-3" /> {t('Unavailable')}
-                            </span>
-                          ) : (
-                            <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center w-fit">
-                              <Check className="mr-1 h-3 w-3" /> {t('Available')}
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end space-x-2">
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => {
-                                setEditTable(table);
-                                setIsTableModalOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => {
-                                setTableToDelete(table.id);
-                                setIsDeleteModalOpen(true);
-                              }}
-                              disabled={reserved}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })
-                ) : (
+          {viewMode === 'table' ? (
+            <div className="border rounded-md">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-6 text-gray-500">
-                      {t('NoTables')}
-                    </TableCell>
+                    <TableHead>{t('TableNumber')}</TableHead>
+                    <TableHead>{t('Capacity')}</TableHead>
+                    <TableHead>{t('Category')}</TableHead>
+                    <TableHead>{t('Status')}</TableHead>
+                    <TableHead>{t('Availability')}</TableHead>
+                    <TableHead className="text-right">{t('Actions')}</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {sortedTables.length > 0 ? (
+                    sortedTables.map((table: any) => {
+                      const reserved = isTableReserved(table.id);
+                      const reservation = getTableReservation(table.id);
+                      return (
+                        <TableRow key={table.id}>
+                          <TableCell className="font-medium">
+                            {table.number}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <Users className="mr-2 h-4 w-4 text-gray-500" />
+                              {table.capacity}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={table.category === 'vip' ? 'secondary' : 'outline'}>
+                              {table.category === 'vip' ? t('VIP') : t('Standard')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {table.available ? (
+                              <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center w-fit">
+                                <Check className="mr-1 h-3 w-3" /> {t('Active')}
+                              </span>
+                            ) : (
+                              <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs flex items-center w-fit">
+                                <X className="mr-1 h-3 w-3" /> {t('Inactive')}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {reserved ? (
+                              <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs flex items-center w-fit">
+                                <X className="mr-1 h-3 w-3" /> {t('Reserved')}
+                              </span>
+                            ) : !table.available ? (
+                              <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs flex items-center w-fit">
+                                <X className="mr-1 h-3 w-3" /> {t('Unavailable')}
+                              </span>
+                            ) : (
+                              <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center w-fit">
+                                <Check className="mr-1 h-3 w-3" /> {t('Available')}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end space-x-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => {
+                                  setEditTable(table);
+                                  setIsTableModalOpen(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => {
+                                  setTableToDelete(table.id);
+                                  setIsDeleteModalOpen(true);
+                                }}
+                                disabled={reserved}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                        {t('NoTables')}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <RestaurantLayout 
+              tables={sortedTables} 
+              reservedTables={sortedTables
+                .filter((table: any) => isTableReserved(table.id))
+                .map((table: any) => table.id)
+              }
+              onTableClick={(tableId) => {
+                const table = sortedTables.find((t: any) => t.id === tableId);
+                if (table) {
+                  setEditTable(table);
+                  setIsTableModalOpen(true);
+                }
+              }}
+            />
+          )}
         </CardContent>
       </Card>
 
