@@ -37,7 +37,7 @@ function Calendar({
       locale={getLocale()}
       formatters={{
         formatCaption: (date, options) => {
-          return format(date, "LLLL yyyy", { locale: options.locale });
+          return format(date, "LLLL yyyy", { locale: options?.locale });
         }
       }}
       classNames={{

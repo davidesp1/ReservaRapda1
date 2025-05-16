@@ -52,10 +52,10 @@ const Reservations: React.FC = () => {
   const reservationSchema = z.object({
     date: z.date({ required_error: 'Please select a date' }),
     time: z.string({ required_error: 'Please select a time' }),
-    partySize: z.string().transform(val => parseInt(val)),
-    tableId: z.string().transform(val => parseInt(val)),
+    partySize: z.coerce.number(),
+    tableId: z.coerce.number(),
     specialRequests: z.string().optional(),
-    duration: z.string().transform(val => parseInt(val)).default('120'),
+    duration: z.coerce.number().default(120),
     dietaryRequirements: z.string().optional(),
     occasion: z.string().optional(),
   });
@@ -67,10 +67,10 @@ const Reservations: React.FC = () => {
     defaultValues: {
       date: undefined,
       time: '',
-      partySize: '2',
-      tableId: '',
+      partySize: 2,
+      tableId: undefined,
       specialRequests: '',
-      duration: '120',
+      duration: 120,
       dietaryRequirements: '',
       occasion: '',
     },
@@ -93,7 +93,7 @@ const Reservations: React.FC = () => {
   const onPartySizeChange = (value: string) => {
     const size = parseInt(value);
     setPartySize(size);
-    form.setValue('partySize', value);
+    form.setValue('partySize', size);
   };
   
   // Create reservation mutation
@@ -272,7 +272,7 @@ const Reservations: React.FC = () => {
                                   <SelectItem value="loading" disabled>
                                     {t('Loading')}...
                                   </SelectItem>
-                                ) : availableTables && availableTables.length > 0 ? (
+                                ) : availableTables && Array.isArray(availableTables) && availableTables.length > 0 ? (
                                   availableTables.map((table: any) => (
                                     <SelectItem key={table.id} value={table.id.toString()}>
                                       {t('Table')} {table.number} ({table.capacity} {t('Seats')})
