@@ -64,11 +64,11 @@ const CustomerSidebar: React.FC = () => {
   };
 
   const Sidebar = () => (
-    <div className="flex flex-col h-full bg-brazil-blue text-white">
+    <div className="flex flex-col h-full bg-brasil-blue text-white">
       <div className="p-6">
         <div className="flex items-center">
-          <div className="w-10 h-10 bg-brazil-yellow rounded-full flex items-center justify-center mr-2">
-            <Utensils className="h-5 w-5 text-brazil-blue" />
+          <div className="w-10 h-10 bg-brasil-yellow rounded-full flex items-center justify-center mr-2">
+            <Utensils className="h-5 w-5 text-brasil-blue" />
           </div>
           <span className="text-xl font-semibold text-white font-montserrat">
             Opa que delicia
@@ -85,11 +85,11 @@ const CustomerSidebar: React.FC = () => {
                 onClick={closeMenu}
                 className={`flex items-center text-white rounded-lg p-2 transition cursor-pointer ${
                   location === item.path 
-                    ? 'bg-brazil-blue bg-opacity-40' 
-                    : 'hover:bg-brazil-blue hover:bg-opacity-40'
+                    ? 'bg-brasil-blue bg-opacity-40' 
+                    : 'hover:bg-brasil-blue hover:bg-opacity-40'
                 }`}
               >
-                <span className="text-brazil-yellow w-6">
+                <span className="text-brasil-yellow w-6">
                   {React.cloneElement(item.icon, { className: 'h-5 w-5' })}
                 </span>
                 <span className="ml-2 font-medium">{item.label}</span>
@@ -102,10 +102,10 @@ const CustomerSidebar: React.FC = () => {
       <div className="mt-auto border-t border-blue-400 p-4">
         <Button 
           variant="ghost" 
-          className="w-full justify-start text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2"
+          className="w-full justify-start text-white hover:bg-brasil-blue hover:bg-opacity-40 rounded-lg p-2"
           onClick={handleLogout}
         >
-          <LogOut className="text-brazil-yellow h-5 w-5 mr-2" />
+          <LogOut className="text-brasil-yellow h-5 w-5 mr-2" />
           <span className="ml-2 font-medium">{t('Logout')}</span>
         </Button>
       </div>
