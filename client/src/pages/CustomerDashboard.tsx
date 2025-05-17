@@ -231,7 +231,7 @@ const CustomerDashboard: React.FC = () => {
                   alt={item.name} 
                 />
                 {item.popular && (
-                  <div className="absolute top-2 right-2 bg-brazil-red text-white text-xs font-bold px-2 py-1 rounded">
+                  <div className="absolute top-2 right-2 bg-brasil-red text-white text-xs font-bold px-2 py-1 rounded">
                     {t('POPULAR')}
                   </div>
                 )}
