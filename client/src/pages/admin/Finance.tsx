@@ -11,8 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useQuery } from '@tanstack/react-query';
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { BarChart, AreaChart } from '@/components/admin/Charts';
 import { Download, Filter, Search, ChevronDown, Calendar, Euro } from 'lucide-react';
+import { PAYMENT_METHODS, PAYMENT_STATUS } from '@/constants';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { FinanceSummary, PaymentTable, FinanceAnalytics } from '@/components/admin/Finance';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -21,11 +26,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { PAYMENT_METHODS, PAYMENT_STATUS } from '@/constants';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 
 const Finance: React.FC = () => {
   const { t } = useTranslation();
@@ -215,48 +215,12 @@ const Finance: React.FC = () => {
         <h1 className="text-3xl font-montserrat font-bold">{t('Finance')}</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <Card className="bg-green-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{t('TotalRevenue')}</p>
-                <h3 className="text-2xl font-bold text-green-700 mt-1">{formatPrice(totals.totalRevenue)}</h3>
-              </div>
-              <div className="p-3 rounded-full bg-green-100 text-green-600">
-                <Euro className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center">
-              <div className="text-2xl font-bold text-green-600">{totals.completedPayments}</div>
-              <p className="text-gray-500 mt-2">{t('CompletedPayments')}</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center">
-              <div className="text-2xl font-bold text-yellow-600">{totals.pendingPayments}</div>
-              <p className="text-gray-500 mt-2">{t('PendingPayments')}</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center">
-              <div className="text-2xl font-bold text-red-600">{totals.failedPayments}</div>
-              <p className="text-gray-500 mt-2">{t('FailedPayments')}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <FinanceSummary 
+        totalRevenue={totals.totalRevenue}
+        completedPayments={totals.completedPayments}
+        pendingPayments={totals.pendingPayments}
+        failedPayments={totals.failedPayments}
+      />
 
       <Tabs defaultValue={currentTab} onValueChange={setCurrentTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
