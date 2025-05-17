@@ -444,6 +444,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const payments = await storage.getAllPayments();
     res.json(payments);
   }));
+  
+  app.get("/api/payments/:id", isAuthenticated, handleErrors(async (req: Request, res: Response) => {
+    const paymentId = parseInt(req.params.id);
+    const userId = req.session.userId!;
+    
+    // Get payment details
+    const payment = await storage.getPayment(paymentId);
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+    
+    // Get reservation to check ownership
+    const reservation = await storage.getReservation(payment.reservationId);
+    if (!reservation) {
+      return res.status(404).json({ message: "Associated reservation not found" });
+    }
+    
+    // Check if user is the owner of the reservation or an admin
+    const user = await storage.getUser(userId);
+    if (reservation.userId !== userId && user?.role !== "admin") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    
+    res.json(payment);
+  }));
 
   app.get("/api/reservations/:reservationId/payments", isAuthenticated, handleErrors(async (req: Request, res: Response) => {
     const reservationId = parseInt(req.params.reservationId);
