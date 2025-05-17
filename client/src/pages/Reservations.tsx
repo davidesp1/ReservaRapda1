@@ -281,7 +281,7 @@ const Reservations: React.FC = () => {
                                     </SelectItem>
                                   ))
                                 ) : (
-                                  <SelectItem value="none" disabled>
+                                  <SelectItem value="no-tables-available" disabled>
                                     {t('NoTablesAvailable')}
                                   </SelectItem>
                                 )}
