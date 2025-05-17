@@ -17,6 +17,9 @@ import { lazy, Suspense } from "react";
 const PaymentDetails = lazy(() => import("@/pages/PaymentDetails"));
 const PaymentSuccess = lazy(() => import("@/pages/PaymentSuccess"));
 const PaymentCancel = lazy(() => import("@/pages/PaymentCancel"));
+const Menu = lazy(() => import("@/pages/Menu"));
+const Profile = lazy(() => import("@/pages/Profile"));
+const Support = lazy(() => import("@/pages/Support"));
 
 // Admin pages
 import Dashboard from "@/pages/admin/Dashboard";
@@ -43,6 +46,27 @@ function Router() {
       {/* Customer routes */}
       <Route path="/dashboard" component={CustomerDashboard} />
       <Route path="/reservations" component={Reservations} />
+      <Route path="/menu">
+        {() => (
+          <Suspense fallback={<LoadingSpinner />}>
+            <Menu />
+          </Suspense>
+        )}
+      </Route>
+      <Route path="/profile">
+        {() => (
+          <Suspense fallback={<LoadingSpinner />}>
+            <Profile />
+          </Suspense>
+        )}
+      </Route>
+      <Route path="/support">
+        {() => (
+          <Suspense fallback={<LoadingSpinner />}>
+            <Support />
+          </Suspense>
+        )}
+      </Route>
       <Route path="/payment-details/:id">
         {() => (
           <Suspense fallback={<LoadingSpinner />}>
