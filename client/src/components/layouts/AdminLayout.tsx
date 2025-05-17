@@ -63,9 +63,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 </button>
               </div>
               <div className="flex items-center">
-                {user?.profileImageUrl ? (
+                {user?.profilePicture ? (
                   <img 
-                    src={user.profileImageUrl} 
+                    src={user.profilePicture} 
                     alt="User Avatar" 
                     className="w-10 h-10 rounded-full border-2 border-brasil-yellow object-cover" 
                   />

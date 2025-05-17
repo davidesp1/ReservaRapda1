@@ -10,6 +10,7 @@ import {
   FaUserPlus, FaDollarSign, FaArrowUp, FaArrowDown 
 } from 'react-icons/fa';
 import AdminLayout from '@/components/layouts/AdminLayout';
+import Chart from 'chart.js/auto';
 
 const Dashboard: React.FC = () => {
   const { t } = useTranslation();
@@ -24,14 +25,17 @@ const Dashboard: React.FC = () => {
   });
   
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.Chart && salesChartRef.current && categoryChartRef.current) {
+    let salesChartInstance: Chart | undefined;
+    let categoryChartInstance: Chart | undefined;
+    
+    if (salesChartRef.current && categoryChartRef.current) {
       // Renderização dos gráficos usando Chart.js
       const salesCtx = salesChartRef.current.getContext('2d');
       const categoryCtx = categoryChartRef.current.getContext('2d');
       
       if (salesCtx && categoryCtx) {
         // Sales Chart
-        new window.Chart(salesCtx, {
+        salesChartInstance = new Chart(salesCtx, {
           type: 'bar',
           data: {
             labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
@@ -70,7 +74,7 @@ const Dashboard: React.FC = () => {
         });
 
         // Category Chart
-        new window.Chart(categoryCtx, {
+        categoryChartInstance = new Chart(categoryCtx, {
           type: 'doughnut',
           data: {
             labels: ['Pratos Principais', 'Bebidas', 'Sobremesas', 'Entradas'],
@@ -102,6 +106,16 @@ const Dashboard: React.FC = () => {
         });
       }
     }
+    
+    // Cleanup function
+    return () => {
+      if (salesChartInstance) {
+        salesChartInstance.destroy();
+      }
+      if (categoryChartInstance) {
+        categoryChartInstance.destroy();
+      }
+    };
   }, [statsLoading]);
 
   if (statsLoading) {
