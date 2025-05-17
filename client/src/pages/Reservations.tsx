@@ -419,48 +419,89 @@ const Reservations: React.FC = () => {
               </CardContent>
             </Card>
             
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('ReservationInformation')}</CardTitle>
+            <Card className="shadow-md">
+              <CardHeader className="md:pb-6 pb-3">
+                <CardTitle className="md:text-xl text-lg">{t('ReservationInformation')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold mb-2">{t('EventDetails')}</h3>
-                  <p className="text-sm text-gray-600 mb-1">
-                    <i className="fas fa-calendar-alt mr-2"></i> 29/05/2025 - 01/06/2025
-                  </p>
-                  <p className="text-sm text-gray-600 mb-1">
-                    <i className="fas fa-clock mr-2"></i> 11:00 às 22:00
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <i className="fas fa-map-marker-alt mr-2"></i> Centro de Eventos MSBN, Santa Iria
-                  </p>
+                {/* Informações do evento - layout aprimorado para mobile */}
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <h3 className="font-semibold mb-3 text-brasil-blue">{t('EventDetails')}</h3>
+                  <div className="flex items-center mb-3">
+                    <div className="bg-brasil-blue/10 p-2 rounded-full mr-3 flex-shrink-0">
+                      <i className="fas fa-calendar-alt text-brasil-blue"></i>
+                    </div>
+                    <p className="text-sm text-gray-600">29/05/2025 - 01/06/2025</p>
+                  </div>
+                  <div className="flex items-center mb-3">
+                    <div className="bg-brasil-blue/10 p-2 rounded-full mr-3 flex-shrink-0">
+                      <i className="fas fa-clock text-brasil-blue"></i>
+                    </div>
+                    <p className="text-sm text-gray-600">11:00 às 22:00</p>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="bg-brasil-blue/10 p-2 rounded-full mr-3 flex-shrink-0">
+                      <i className="fas fa-map-marker-alt text-brasil-blue"></i>
+                    </div>
+                    <p className="text-sm text-gray-600">Centro de Eventos MSBN, Santa Iria</p>
+                  </div>
                 </div>
                 
+                {/* Informações importantes - design adaptado para mobile */}
                 <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                  <h3 className="font-semibold text-yellow-800 mb-2">
-                    <i className="fas fa-exclamation-circle mr-2"></i> {t('ImportantInformation')}
+                  <h3 className="font-semibold text-yellow-800 mb-3 flex items-center">
+                    <div className="bg-yellow-100 p-1.5 rounded-full mr-2 flex-shrink-0">
+                      <i className="fas fa-exclamation-circle text-yellow-600"></i>
+                    </div>
+                    <span>{t('ImportantInformation')}</span>
                   </h3>
-                  <ul className="text-sm text-yellow-700 space-y-1 list-disc list-inside">
-                    <li>{t('CancellationPolicy', { hours: 72 })}</li>
-                    <li>{t('PleaseArriveOnTime', { minutes: 15 })}</li>
-                    <li>{t('MaxDuration', { hours: 2 })}</li>
+                  <ul className="text-sm text-yellow-700 space-y-2 pl-2">
+                    <li className="flex items-start">
+                      <div className="bg-yellow-100 p-1 rounded-full mr-2 mt-0.5 flex-shrink-0">
+                        <i className="fas fa-info text-yellow-600 text-xs"></i>
+                      </div>
+                      <span>{t('CancellationPolicy', { hours: 72 })}</span>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="bg-yellow-100 p-1 rounded-full mr-2 mt-0.5 flex-shrink-0">
+                        <i className="fas fa-info text-yellow-600 text-xs"></i>
+                      </div>
+                      <span>{t('PleaseArriveOnTime', { minutes: 15 })}</span>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="bg-yellow-100 p-1 rounded-full mr-2 mt-0.5 flex-shrink-0">
+                        <i className="fas fa-info text-yellow-600 text-xs"></i>
+                      </div>
+                      <span>{t('MaxDuration', { hours: 2 })}</span>
+                    </li>
                   </ul>
                 </div>
                 
-                <div>
-                  <h3 className="font-semibold mb-2">{t('ContactInformation')}</h3>
-                  <p className="text-sm text-gray-600 mb-1">
-                    <i className="fas fa-phone-alt mr-2"></i> +351 912 345 678
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <i className="fas fa-envelope mr-2"></i> reservas@opaquedelicia.pt
-                  </p>
+                {/* Informações de contato - redesenhado para mobile */}
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <h3 className="font-semibold mb-3 text-brasil-green">{t('ContactInformation')}</h3>
+                  <div className="flex items-center mb-3">
+                    <div className="bg-brasil-green/10 p-2 rounded-full mr-3 flex-shrink-0">
+                      <i className="fas fa-phone-alt text-brasil-green"></i>
+                    </div>
+                    <a href="tel:+351912345678" className="text-sm text-gray-600 hover:text-brasil-green">
+                      +351 912 345 678
+                    </a>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="bg-brasil-green/10 p-2 rounded-full mr-3 flex-shrink-0">
+                      <i className="fas fa-envelope text-brasil-green"></i>
+                    </div>
+                    <a href="mailto:reservas@opaquedelicia.pt" className="text-sm text-gray-600 hover:text-brasil-green">
+                      reservas@opaquedelicia.pt
+                    </a>
+                  </div>
                 </div>
               </CardContent>
-              <CardFooter>
-                <p className="text-sm text-gray-500 italic">
-                  {t('ReservationNote')}
+              <CardFooter className="bg-gray-50 border-t">
+                <p className="text-sm text-gray-600 italic flex items-start">
+                  <i className="fas fa-info-circle mr-2 text-gray-400 mt-1 flex-shrink-0"></i>
+                  <span>{t('ReservationNote')}</span>
                 </p>
               </CardFooter>
             </Card>
