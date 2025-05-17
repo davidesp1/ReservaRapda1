@@ -79,6 +79,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
             <Logo />
           </div>
           <DialogTitle className="text-2xl font-montserrat">{t('AccessAccount')}</DialogTitle>
+          <DialogDescription>{t('EnterYourCredentials')}</DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
