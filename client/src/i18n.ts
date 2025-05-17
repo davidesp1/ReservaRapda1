@@ -36,6 +36,11 @@ const resources = {
       "Desserts": "Sobremesas",
       "Drinks": "Bebidas",
       "ViewFullMenu": "Ver Menu Completo",
+      "All": "Todos",
+      "SpiceLevel": "Nível de Picante",
+      "NoItemsInCategory": "Não há itens nesta categoria",
+      "ViewAllItems": "Ver todos os itens",
+      "ErrorLoadingMenu": "Ocorreu um erro ao carregar o menu. Por favor, tente novamente.",
       
       // Testimonials
       "CustomerSay": "O que Nossos Clientes Dizem",
@@ -313,6 +318,11 @@ const resources = {
       "Desserts": "Desserts",
       "Drinks": "Drinks",
       "ViewFullMenu": "View Full Menu",
+      "All": "All",
+      "SpiceLevel": "Spice Level",
+      "NoItemsInCategory": "No items in this category",
+      "ViewAllItems": "View all items",
+      "ErrorLoadingMenu": "An error occurred while loading the menu. Please try again.",
       
       // Testimonials
       "CustomerSay": "What Our Customers Say",
@@ -569,6 +579,11 @@ const resources = {
       "Desserts": "Postres",
       "Drinks": "Bebidas",
       "ViewFullMenu": "Ver Menú Completo",
+      "All": "Todos",
+      "SpiceLevel": "Nivel de Picante",
+      "NoItemsInCategory": "No hay elementos en esta categoría",
+      "ViewAllItems": "Ver todos los elementos",
+      "ErrorLoadingMenu": "Se produjo un error al cargar el menú. Por favor, inténtelo de nuevo.",
       
       // Testimonials
       "CustomerSay": "Lo que Dicen Nuestros Clientes",
