@@ -104,6 +104,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onLoginC
             <Logo />
           </div>
           <DialogTitle className="text-2xl font-montserrat">{t('CreateAccount')}</DialogTitle>
+          <DialogDescription>{t('FillTheFormToRegister')}</DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
