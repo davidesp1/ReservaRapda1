@@ -1,3 +1,9 @@
-export { default as FinanceSummary } from './FinanceSummary';
-export { default as PaymentTable } from './PaymentTable';
-export { default as FinanceAnalytics } from './FinanceAnalytics';
+import FinanceSummary from './FinanceSummary';
+import PaymentTable from './PaymentTable';
+import FinanceAnalytics from './FinanceAnalytics';
+
+export {
+  FinanceSummary,
+  PaymentTable,
+  FinanceAnalytics
+};

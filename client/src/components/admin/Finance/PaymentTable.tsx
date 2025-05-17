@@ -1,6 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
+import { PAYMENT_METHODS, PAYMENT_STATUS } from '@/constants';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -9,10 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { useLocation } from 'wouter';
-import { Eye } from 'lucide-react';
 
 interface Payment {
   id: number;
@@ -33,7 +31,6 @@ interface PaymentTableProps {
 
 export default function PaymentTable({ payments, isLoading = false }: PaymentTableProps) {
   const { t } = useTranslation();
-  const [, navigate] = useLocation();
 
   // Format price to display as currency
   const formatPrice = (price: number) => {
@@ -44,49 +41,17 @@ export default function PaymentTable({ payments, isLoading = false }: PaymentTab
     }).format(price / 100);
   };
 
-  // Get status badge color based on status
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800 hover:bg-green-200';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
-      case 'failed':
-        return 'bg-red-100 text-red-800 hover:bg-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-    }
-  };
-
-  // Get method display name
-  const getMethodDisplayName = (method: string) => {
-    switch (method) {
-      case 'card':
-        return t('CreditCard');
-      case 'mbway':
-        return 'MBWay';
-      case 'multibanco':
-        return 'Multibanco';
-      case 'transfer':
-        return t('BankTransfer');
-      default:
-        return method;
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-8 bg-gray-200 rounded"></div>
-        <div className="h-8 bg-gray-200 rounded"></div>
-        <div className="h-8 bg-gray-200 rounded"></div>
-        <div className="h-8 bg-gray-200 rounded"></div>
+        <div className="h-12 bg-gray-200 rounded"></div>
+        <div className="h-96 bg-gray-200 rounded"></div>
       </div>
     );
   }
 
   return (
-    <div className="border rounded-md overflow-hidden">
+    <div className="border rounded-md">
       <Table>
         <TableHeader>
           <TableRow>
@@ -96,13 +61,12 @@ export default function PaymentTable({ payments, isLoading = false }: PaymentTab
             <TableHead>{t('Amount')}</TableHead>
             <TableHead>{t('Method')}</TableHead>
             <TableHead>{t('Status')}</TableHead>
-            <TableHead>{t('Actions')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {payments.length > 0 ? (
             payments.map((payment) => (
-              <TableRow key={payment.id} className="hover:bg-gray-50">
+              <TableRow key={payment.id}>
                 <TableCell>
                   {payment.paymentDate ? format(new Date(payment.paymentDate), 'dd/MM/yyyy HH:mm') : '-'}
                 </TableCell>
@@ -112,37 +76,29 @@ export default function PaymentTable({ payments, isLoading = false }: PaymentTab
                 <TableCell>
                   #{payment.reservationId}
                 </TableCell>
-                <TableCell className="font-semibold">
+                <TableCell className="font-medium">
                   {formatPrice(payment.amount)}
                 </TableCell>
                 <TableCell>
-                  {getMethodDisplayName(payment.method)}
+                  {PAYMENT_METHODS.find(m => m.id === payment.method)?.name || payment.method}
                 </TableCell>
                 <TableCell>
-                  <Badge className={getStatusBadgeVariant(payment.status)}>
-                    {payment.status === 'completed' 
-                      ? t('Completed') 
-                      : payment.status === 'pending' 
-                        ? t('Pending') 
-                        : t('Failed')}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => navigate(`/admin/finance/payment/${payment.id}`)}
+                  <Badge 
+                    className={
+                      payment.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                      payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                      'bg-red-100 text-red-800'
+                    }
                   >
-                    <Eye className="h-4 w-4 mr-1" />
-                    {t('View')}
-                  </Button>
+                    {PAYMENT_STATUS.find(s => s.id === payment.status)?.name || payment.status}
+                  </Badge>
                 </TableCell>
               </TableRow>
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                {t('NoPaymentsFound')}
+              <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                {t('NoPaymentsYet')}
               </TableCell>
             </TableRow>
           )}
