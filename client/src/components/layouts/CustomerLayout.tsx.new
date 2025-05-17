@@ -33,7 +33,7 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brasil-green"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brazil-green"></div>
       </div>
     );
   }
@@ -44,25 +44,25 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
 
   // Mobile Header Component
   const MobileHeader = () => (
-    <header className="bg-brasil-green text-white px-4 py-3 flex justify-between items-center shadow-md">
+    <header className="bg-brazil-blue text-white px-4 py-3 flex justify-between items-center shadow-md">
       <div className="flex items-center">
         <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="mr-3 text-white hover:bg-brasil-green/80">
+            <Button variant="ghost" size="icon" className="mr-3 text-white hover:bg-brazil-blue/80">
               <Menu className="text-xl" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-[75%] max-w-xs">
+          <SheetContent side="left" className="p-0 w-[75%] max-w-xs bg-brazil-blue">
             <CustomerSidebar />
           </SheetContent>
         </Sheet>
         <h1 className="text-lg font-bold">Opa que delicia</h1>
       </div>
       <div className="flex items-center">
-        <Button variant="ghost" size="icon" className="relative mr-3 text-white hover:bg-brasil-green/80">
+        <Button variant="ghost" size="icon" className="relative mr-3 text-white hover:bg-brazil-blue/80">
           <Bell className="text-lg" />
-          <span className="absolute -top-1 -right-1 bg-brasil-red text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-            2
+          <span className="absolute -top-1 -right-1 bg-brazil-red text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+            3
           </span>
         </Button>
         {user?.profilePicture ? (
@@ -70,7 +70,7 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
             <img src={user.profilePicture} alt="Profile" className="h-full w-full object-cover" />
           </div>
         ) : (
-          <div className="h-8 w-8 rounded-full bg-brasil-yellow text-brasil-blue flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full bg-brazil-yellow text-brazil-blue flex items-center justify-center">
             <span className="font-semibold text-sm">
               {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
             </span>
@@ -80,19 +80,42 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
     </header>
   );
 
-  // Mobile Dashboard Title
-  const MobilePageTitle = () => (
-    <div className="px-4 py-3 flex justify-between items-center">
-      <h2 className="text-xl font-bold text-gray-800">{title}</h2>
-      <div>
-        <span className="text-sm text-gray-500">{t('Today')}</span>
-        <span className="ml-1 text-sm font-medium text-gray-700">{format(new Date(), 'dd/MM/yyyy')}</span>
+  // Desktop Header Component
+  const DesktopHeader = () => (
+    <header className="flex justify-between items-center mb-8">
+      <h1 className="text-2xl font-bold text-gray-800 font-montserrat">
+        {t('Hello')}, {user?.firstName || t('Client')}!
+      </h1>
+      <div className="flex items-center space-x-4">
+        <div className="relative">
+          <Button variant="ghost" size="icon" className="relative">
+            <Bell className="h-5 w-5 text-gray-600" />
+            <span className="absolute -top-1 -right-1 bg-brazil-red text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+              3
+            </span>
+          </Button>
+        </div>
+        <div className="flex items-center">
+          {user?.profilePicture ? (
+            <img src={user.profilePicture} alt="User Avatar" className="w-10 h-10 rounded-full border-2 border-brazil-yellow" />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-brazil-yellow text-brazil-blue flex items-center justify-center border-2 border-brazil-yellow">
+              <span className="font-semibold text-sm">
+                {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
+              </span>
+            </div>
+          )}
+          <div className="ml-2">
+            <p className="text-sm font-medium text-gray-800">{user?.firstName} {user?.lastName}</p>
+            <p className="text-xs text-gray-500">{t('CustomerSince')} {user?.createdAt ? format(new Date(user.createdAt), 'yyyy') : '2023'}</p>
+          </div>
+        </div>
       </div>
-    </div>
+    </header>
   );
 
   return (
-    <div className="min-h-screen bg-pattern">
+    <div className="min-h-screen bg-gray-100 font-opensans">
       <Helmet>
         <title>{title} - Opa que delicia</title>
         <meta name="description" content={`${title} - Gerencie sua conta no restaurante Opa que delicia.`} />
@@ -101,19 +124,19 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
       {/* Mobile Layout */}
       <div className="md:hidden flex flex-col h-screen">
         <MobileHeader />
-        <MobilePageTitle />
         
         {/* Mobile Main Content */}
-        <main className="flex-1 overflow-y-auto px-4 pb-16">
+        <main className="flex-1 overflow-y-auto px-4 pb-16 pt-4">
           {children}
         </main>
       </div>
       
       {/* Desktop Layout */}
-      <div className="hidden md:flex flex-col md:flex-row h-screen">
+      <div className="hidden md:flex h-screen">
         <CustomerSidebar />
         
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 p-8 overflow-y-auto">
+          <DesktopHeader />
           {children}
         </main>
       </div>

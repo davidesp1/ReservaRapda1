@@ -6,12 +6,13 @@ import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { 
-  Menu, 
+  Menu,
   Home, 
   User, 
-  CalendarDays, 
+  Utensils,
+  CalendarCheck, 
   CreditCard, 
-  MessageSquare, 
+  Headphones, 
   LogOut 
 } from 'lucide-react';
 
@@ -37,9 +38,14 @@ const CustomerSidebar: React.FC = () => {
       icon: <User className="h-5 w-5 mr-3" /> 
     },
     { 
+      path: '/menu', 
+      label: t('Menu'), 
+      icon: <Utensils className="h-5 w-5 mr-3" /> 
+    },
+    { 
       path: '/reservations', 
       label: t('Reservations'), 
-      icon: <CalendarDays className="h-5 w-5 mr-3" /> 
+      icon: <CalendarCheck className="h-5 w-5 mr-3" /> 
     },
     { 
       path: '/payments', 
@@ -49,7 +55,7 @@ const CustomerSidebar: React.FC = () => {
     { 
       path: '/support', 
       label: t('Support'), 
-      icon: <MessageSquare className="h-5 w-5 mr-3" /> 
+      icon: <Headphones className="h-5 w-5 mr-3" /> 
     }
   ];
 
@@ -58,40 +64,35 @@ const CustomerSidebar: React.FC = () => {
   };
 
   const Sidebar = () => (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b">
-        <Logo />
-      </div>
-      
-      <div className="p-4 border-b">
+    <div className="flex flex-col h-full bg-brazil-blue text-white">
+      <div className="p-6">
         <div className="flex items-center">
-          <div className="w-10 h-10 rounded-full bg-brasil-green/10 flex items-center justify-center text-brasil-green">
-            <span className="font-semibold text-lg">
-              {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
-            </span>
+          <div className="w-10 h-10 bg-brazil-yellow rounded-full flex items-center justify-center mr-2">
+            <Utensils className="h-5 w-5 text-brazil-blue" />
           </div>
-          <div className="ml-3">
-            <p className="font-semibold">{user?.firstName} {user?.lastName}</p>
-            <p className="text-sm text-gray-500">{user?.email}</p>
-          </div>
+          <span className="text-xl font-semibold text-white font-montserrat">
+            Opa que delicia
+          </span>
         </div>
       </div>
       
-      <nav className="flex-1 p-4">
-        <ul className="space-y-2">
+      <nav className="flex-1 px-6 overflow-y-auto">
+        <ul>
           {navItems.map((item) => (
-            <li key={item.path}>
+            <li key={item.path} className="py-3">
               <Link href={item.path}>
                 <a 
-                  className={`flex items-center p-2 rounded-md transition-colors ${
+                  className={`flex items-center text-white rounded-lg p-2 transition cursor-pointer ${
                     location === item.path 
-                      ? 'bg-brasil-green text-white' 
-                      : 'hover:bg-brasil-green/10'
+                      ? 'bg-brazil-blue bg-opacity-40' 
+                      : 'hover:bg-brazil-blue hover:bg-opacity-40'
                   }`}
                   onClick={closeMenu}
                 >
-                  {item.icon}
-                  {item.label}
+                  <span className={`${location === item.path ? 'text-brazil-yellow' : 'text-brazil-yellow'} w-6`}>
+                    {React.cloneElement(item.icon, { className: 'h-5 w-5' })}
+                  </span>
+                  <span className="ml-2 font-medium">{item.label}</span>
                 </a>
               </Link>
             </li>
@@ -99,14 +100,14 @@ const CustomerSidebar: React.FC = () => {
         </ul>
       </nav>
       
-      <div className="p-4 border-t mt-auto">
+      <div className="mt-auto border-t border-blue-400 p-4">
         <Button 
           variant="ghost" 
-          className="w-full justify-start text-red-500 hover:text-red-700 hover:bg-red-50"
+          className="w-full justify-start text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2"
           onClick={handleLogout}
         >
-          <LogOut className="h-5 w-5 mr-3" />
-          {t('Logout')}
+          <LogOut className="text-brazil-yellow h-5 w-5 mr-2" />
+          <span className="ml-2 font-medium">{t('Logout')}</span>
         </Button>
       </div>
     </div>
@@ -115,24 +116,16 @@ const CustomerSidebar: React.FC = () => {
   return (
     <>
       {/* Mobile sidebar */}
-      <div className="md:hidden p-4 border-b bg-white sticky top-0 z-10">
-        <div className="flex justify-between items-center">
-          <Logo />
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0">
-              <Sidebar />
-            </SheetContent>
-          </Sheet>
-        </div>
+      <div className="md:hidden">
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetContent side="left" className="p-0 w-64 bg-brazil-blue">
+            <Sidebar />
+          </SheetContent>
+        </Sheet>
       </div>
       
       {/* Desktop sidebar */}
-      <div className="hidden md:block w-64 border-r bg-white h-screen sticky top-0">
+      <div className="hidden md:block w-64 h-full">
         <Sidebar />
       </div>
     </>
