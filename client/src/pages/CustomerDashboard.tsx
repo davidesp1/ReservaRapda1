@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { User, CreditCard, FileText } from 'lucide-react';
+import { format, parseISO, addDays } from 'date-fns';
+import { pt } from 'date-fns/locale';
 import CustomerLayout from '@/components/layouts/CustomerLayout';
+
+// Importe os ícones necessários
+import { CalendarCheck, ChevronRight } from 'lucide-react';
 
 const CustomerDashboard: React.FC = () => {
   const { t } = useTranslation();
@@ -21,310 +22,232 @@ const CustomerDashboard: React.FC = () => {
     queryKey: ['/api/reservations'],
   });
 
+  // Dummy special offers for now - in production, these would come from the API
+  const specialOffers = [
+    {
+      id: 1,
+      title: 'Feijoada Completa',
+      description: '20% de desconto aos sábados',
+      image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/b244fcda5b-4ef65045cac5d7d21c7f.png'
+    }
+  ];
+
+  // Dummy menu highlights - in production, these would come from the API
+  const menuHighlights = [
+    {
+      id: 1,
+      name: 'Moqueca de Camarão',
+      description: 'Prato típico baiano com camarões e leite de coco',
+      price: 2490,
+      image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/14db3df368-c5ada7c592c7a6a484df.png',
+      popular: true
+    },
+    {
+      id: 2,
+      name: 'Picanha na Brasa',
+      description: 'Corte nobre de carne bovina grelhada ao ponto',
+      price: 3290,
+      image: 'https://images.unsplash.com/photo-1579366948929-444eb79881eb?q=80&w=500&auto=format&fit=crop',
+      popular: false
+    },
+    {
+      id: 3,
+      name: 'Açaí na Tigela',
+      description: 'Deliciosa sobremesa com frutas frescas e granola',
+      price: 1590,
+      image: 'https://images.unsplash.com/photo-1590080875238-5496b40f074c?q=80&w=500&auto=format&fit=crop',
+      popular: false
+    },
+    {
+      id: 4,
+      name: 'Coxinha Tradicional',
+      description: 'Salgado brasileiro recheado com frango desfiado',
+      price: 790,
+      image: 'https://images.unsplash.com/photo-1604152135912-04a022e73f33?q=80&w=500&auto=format&fit=crop',
+      popular: true
+    }
+  ];
+
+  // Format price to display as currency
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-PT', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2
+    }).format(price / 100);
+  };
+
+  // Get upcoming reservation from API response
+  const upcomingReservation = Array.isArray(reservations) && reservations.length > 0 
+    ? reservations[0] 
+    : null;
+
   return (
     <CustomerLayout title={t('Dashboard')}>
-      <h1 className="text-3xl font-montserrat font-bold mb-6">
-        {t('Dashboard')}
-      </h1>
-      
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid grid-cols-4 md:w-[400px]">
-          <TabsTrigger value="overview">{t('Overview')}</TabsTrigger>
-          <TabsTrigger value="profile">{t('Profile')}</TabsTrigger>
-          <TabsTrigger value="reservations">{t('Reservations')}</TabsTrigger>
-          <TabsTrigger value="support">{t('Support')}</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                <CardTitle className="text-sm font-medium">
-                  {t('ActiveReservations')}
-                </CardTitle>
-                <User className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {reservationsLoading ? (
-                    <div className="animate-pulse h-7 w-12 bg-gray-200 rounded"></div>
-                  ) : (
-                    (reservations as any[]).filter(r => r.status === 'confirmed')?.length || 0
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                <CardTitle className="text-sm font-medium">
-                  {t('UpcomingReservation')}
-                </CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-xl font-bold">
-                  {reservationsLoading ? (
-                    <div className="animate-pulse h-7 w-32 bg-gray-200 rounded"></div>
-                  ) : (
-                    (reservations as any[]).length > 0
-                      ? format(new Date((reservations as any[])[0].date), 'dd/MM/yyyy')
-                      : t('NoReservations')
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                <CardTitle className="text-sm font-medium">
-                  {t('PendingPayments')}
-                </CardTitle>
-                <CreditCard className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {reservationsLoading ? (
-                    <div className="animate-pulse h-7 w-12 bg-gray-200 rounded"></div>
-                  ) : (
-                    0
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                <CardTitle className="text-sm font-medium">
-                  {t('TotalOrders')}
-                </CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {reservationsLoading ? (
-                    <div className="animate-pulse h-7 w-12 bg-gray-200 rounded"></div>
-                  ) : (
-                    0
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+      {/* Welcome Banner */}
+      <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-r from-brazil-blue to-blue-700 rounded-xl p-6 text-white shadow-lg mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-center">
+          <div className="mb-4 md:mb-0">
+            <h2 className="text-2xl font-bold font-montserrat mb-2">{t('WelcomeToOpaQueDelicia')}</h2>
+            <p className="opacity-90">{t('AuthenticBrazilianCuisineWaitingForYou')}</p>
           </div>
-        </TabsContent>
-        
-        <TabsContent value="profile" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('PersonalInformation')}</CardTitle>
-              <CardDescription>{t('ManageYourPersonalDetails')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">
-                    {t('FirstName')}
-                  </label>
-                  <input
-                    type="text"
-                    value={user?.firstName || ''}
-                    readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  />
+          <Button 
+            onClick={() => setLocation('/reservations')}
+            className="bg-brazil-yellow text-brazil-blue font-bold py-2 px-6 rounded-lg hover:bg-yellow-300 transition shadow-md"
+          >
+            {t('MakeReservation')}
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Upcoming Reservations */}
+        <div className="col-span-1 md:col-span-2 bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="bg-brazil-green px-6 py-4">
+            <h3 className="text-lg font-bold text-white font-montserrat">{t('YourUpcomingReservations')}</h3>
+          </div>
+          <div className="p-6">
+            {reservationsLoading ? (
+              <div className="animate-pulse space-y-4">
+                <div className="h-16 bg-gray-200 rounded"></div>
+                <div className="h-10 w-32 mx-auto bg-gray-200 rounded"></div>
+              </div>
+            ) : upcomingReservation ? (
+              <div className="mb-4 border-b border-gray-100 pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-brazil-green bg-opacity-10 rounded-full flex items-center justify-center text-brazil-green">
+                      <CalendarCheck className="h-6 w-6" />
+                    </div>
+                    <div className="ml-4">
+                      <h4 className="font-semibold text-gray-800">
+                        {upcomingReservation.occasion || t('Dinner')} - {t('Table')} {upcomingReservation.tableId}
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        {format(parseISO(upcomingReservation.date), 'EEEE, d MMMM', { locale: pt })} • {format(parseISO(upcomingReservation.date), 'HH:mm')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button 
+                      onClick={() => setLocation(`/reservations/${upcomingReservation.id}`)}
+                      className="text-sm bg-brazil-blue text-white px-3 py-1 rounded hover:bg-blue-700 transition"
+                    >
+                      {t('Details')}
+                    </Button>
+                    <Button 
+                      onClick={() => {/* Handle cancellation */}}
+                      variant="outline"
+                      className="text-sm bg-white border border-brazil-red text-brazil-red px-3 py-1 rounded hover:bg-red-50 transition"
+                    >
+                      {t('Cancel')}
+                    </Button>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">
-                    {t('LastName')}
-                  </label>
-                  <input
-                    type="text"
-                    value={user?.lastName || ''}
-                    readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">
-                    {t('Email')}
-                  </label>
-                  <input
-                    type="email"
-                    value={user?.email || ''}
-                    readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">
-                    {t('Username')}
-                  </label>
-                  <input
-                    type="text"
-                    value={user?.username || ''}
-                    readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  />
+                <div className="mt-3 flex items-center text-sm text-gray-600">
+                  <span className="mr-2">👥</span>
+                  <span>{upcomingReservation.partySize} {t('people')}</span>
+                  <span className="mx-2">•</span>
+                  <span className="mr-2">🍽️</span>
+                  <span>{upcomingReservation.occasion || t('Dinner')}</span>
                 </div>
               </div>
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => setLocation('/profile')}
-                  className="bg-brasil-green hover:bg-brasil-green/90"
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-gray-500 mb-4">{t('NoUpcomingReservations')}</p>
+                <Button 
+                  onClick={() => setLocation('/reservations')}
+                  className="bg-brazil-green text-white hover:bg-brazil-green/90"
                 >
-                  {t('EditProfile')}
+                  {t('BookTable')}
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="reservations" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('ReservationHistory')}</CardTitle>
-              <CardDescription>{t('ViewYourPastAndUpcomingReservations')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {reservationsLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="animate-pulse flex space-x-4">
-                      <div className="rounded-md bg-gray-200 h-16 w-16"></div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                      </div>
-                    </div>
-                  ))}
+            )}
+            
+            <div className="flex justify-center">
+              <Button 
+                onClick={() => setLocation('/reservations')}
+                variant="link"
+                className="text-brazil-blue font-medium hover:text-brazil-green transition flex items-center"
+              >
+                <span>{t('ViewAllReservations')}</span>
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Special Offers */}
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="bg-brazil-yellow px-6 py-4">
+            <h3 className="text-lg font-bold text-brazil-blue font-montserrat">{t('SpecialOffers')}</h3>
+          </div>
+          <div className="p-6">
+            {specialOffers.map(offer => (
+              <div key={offer.id} className="relative rounded-lg overflow-hidden mb-4">
+                <img className="w-full h-48 object-cover" src={offer.image} alt={offer.title} />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                  <span className="text-white font-bold">{offer.title}</span>
+                  <p className="text-white text-sm">{offer.description}</p>
                 </div>
-              ) : (reservations as any[]).length > 0 ? (
-                <div className="space-y-4">
-                  {(reservations as any[]).map((reservation: any) => (
-                    <div key={reservation.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div>
-                          <h3 className="font-semibold text-lg">
-                            {format(new Date(reservation.date), 'dd/MM/yyyy')}
-                          </h3>
-                          <p className="text-gray-600">
-                            {format(new Date(reservation.date), 'HH:mm')} • {t('Table')} {reservation.tableId} •{' '}
-                            {t('Guests')}: {reservation.partySize}
-                          </p>
-                        </div>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <span 
-                            className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                              reservation.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                              reservation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                              'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {reservation.status === 'confirmed' ? t('Confirmed') :
-                            reservation.status === 'pending' ? t('Pending') : t('Cancelled')}
-                          </span>
-                          <Button
-                            onClick={() => setLocation(`/reservations/${reservation.id}`)}
-                            variant="outline"
-                            size="sm"
-                          >
-                            {t('Details')}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 mb-4">{t('NoReservationsYet')}</p>
+              </div>
+            ))}
+            <Button 
+              onClick={() => setLocation('/menu')}
+              className="w-full bg-brazil-yellow text-brazil-blue font-bold py-2 rounded hover:bg-yellow-300 transition"
+            >
+              {t('ViewPromotions')}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Menu Highlights */}
+      <div className="mt-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800 font-montserrat">{t('MenuHighlights')}</h2>
+          <Button 
+            onClick={() => setLocation('/menu')}
+            variant="link" 
+            className="text-brazil-blue hover:text-brazil-green font-medium"
+          >
+            {t('ViewFullMenu')}
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {menuHighlights.map(item => (
+            <div key={item.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition group">
+              <div className="relative h-48 overflow-hidden">
+                <img 
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
+                  src={item.image} 
+                  alt={item.name} 
+                />
+                {item.popular && (
+                  <div className="absolute top-2 right-2 bg-brazil-red text-white text-xs font-bold px-2 py-1 rounded">
+                    {t('POPULAR')}
+                  </div>
+                )}
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
+                <p className="text-gray-600 text-sm mb-2 line-clamp-2">{item.description}</p>
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-brazil-green">{formatPrice(item.price)}</span>
                   <Button 
-                    onClick={() => setLocation('/reservations')}
-                    className="bg-brasil-green hover:bg-brasil-green/90"
+                    onClick={() => {/* Add to order logic */}}
+                    variant="outline" 
+                    size="sm"
+                    className="text-xs border-brazil-blue text-brazil-blue hover:bg-brazil-blue hover:text-white"
                   >
-                    {t('MakeYourFirstReservation')}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="support" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('ContactSupport')}</CardTitle>
-              <CardDescription>{t('WeAreHereToHelp')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="text-center p-4 rounded-lg border hover:shadow-md transition-shadow">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-brasil-yellow/10 flex items-center justify-center">
-                    <i className="fas fa-phone text-brasil-yellow text-xl"></i>
-                  </div>
-                  <h3 className="font-semibold mb-2">{t('CallUs')}</h3>
-                  <p className="text-gray-600">+351 912 345 678</p>
-                </div>
-                <div className="text-center p-4 rounded-lg border hover:shadow-md transition-shadow">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-brasil-green/10 flex items-center justify-center">
-                    <i className="fas fa-envelope text-brasil-green text-xl"></i>
-                  </div>
-                  <h3 className="font-semibold mb-2">{t('EmailUs')}</h3>
-                  <p className="text-gray-600">suporte@opaquedelicia.pt</p>
-                </div>
-                <div className="text-center p-4 rounded-lg border hover:shadow-md transition-shadow">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-brasil-blue/10 flex items-center justify-center">
-                    <i className="fab fa-whatsapp text-brasil-blue text-xl"></i>
-                  </div>
-                  <h3 className="font-semibold mb-2">WhatsApp</h3>
-                  <p className="text-gray-600">+351 912 345 678</p>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">{t('LeaveUsAMessage')}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 block mb-1">
-                      {t('Subject')}
-                    </label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md">
-                      <option value="">{t('SelectSubject')}</option>
-                      <option value="reservation">{t('ReservationIssue')}</option>
-                      <option value="payment">{t('PaymentIssue')}</option>
-                      <option value="feedback">{t('Feedback')}</option>
-                      <option value="other">{t('Other')}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 block mb-1">
-                      {t('Priority')}
-                    </label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md">
-                      <option value="normal">{t('Normal')}</option>
-                      <option value="high">{t('High')}</option>
-                      <option value="urgent">{t('Urgent')}</option>
-                    </select>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="text-sm font-medium text-gray-700 block mb-1">
-                      {t('Message')}
-                    </label>
-                    <textarea
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md h-32"
-                      placeholder={t('TypeYourMessageHere')}
-                    ></textarea>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <Button className="bg-brasil-green hover:bg-brasil-green/90">
-                    {t('SendMessage')}
+                    {t('AddToOrder')}
                   </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          ))}
+        </div>
+      </div>
     </CustomerLayout>
   );
 };
