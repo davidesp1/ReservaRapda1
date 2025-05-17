@@ -336,7 +336,7 @@ const Reservations: React.FC = () => {
                                 <SelectValue placeholder={t('SelectOccasion')} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">{t('None')}</SelectItem>
+                                <SelectItem value="none">{t('None')}</SelectItem>
                                 <SelectItem value="birthday">{t('Birthday')}</SelectItem>
                                 <SelectItem value="anniversary">{t('Anniversary')}</SelectItem>
                                 <SelectItem value="business">{t('BusinessMeeting')}</SelectItem>
