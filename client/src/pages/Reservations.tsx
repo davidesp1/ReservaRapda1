@@ -36,7 +36,7 @@ const Reservations: React.FC = () => {
   }, [isAuthenticated, isLoading, setLocation]);
   
   // Fetch available tables for the selected date and party size
-  const { data: availableTables, isLoading: tablesLoading, refetch: refetchTables } = useQuery({
+  const { data: availableTables, isLoading: tablesLoading, refetch: refetchTables } = useQuery<any[]>({
     queryKey: ['/api/tables/available', { date: selectedDate?.toISOString(), partySize }],
     enabled: !!selectedDate && partySize > 0 && isAuthenticated,
   });
@@ -144,19 +144,20 @@ const Reservations: React.FC = () => {
   
   return (
     <CustomerLayout title={t('MakeReservation')}>
-      <h1 className="text-3xl font-montserrat font-bold mb-6">
+      {/* Título não aparece no mobile - já está no cabeçalho */}
+      <h1 className="text-3xl font-montserrat font-bold mb-6 md:block hidden">
         {t('MakeReservation')}
       </h1>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle>{t('ReservationDetails')}</CardTitle>
-                <CardDescription>{t('PleaseSelectDateAndPartySize')}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2 shadow-md">
+          <CardHeader className="md:pb-6 pb-3">
+            <CardTitle className="md:text-xl text-lg">{t('ReservationDetails')}</CardTitle>
+            <CardDescription className="md:text-base text-sm">{t('PleaseSelectDateAndPartySize')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormField
                         control={form.control}
@@ -360,7 +361,7 @@ const Reservations: React.FC = () => {
                           <FormLabel>{t('DietaryRequirements')}</FormLabel>
                           <FormControl>
                             <textarea
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brasil-green focus:border-transparent"
                               rows={2}
                               placeholder={t('DietaryRequirementsPlaceholder')}
                               {...field}
@@ -402,7 +403,7 @@ const Reservations: React.FC = () => {
                       disabled={
                         createReservationMutation.isPending || 
                         !availableTables || 
-                        availableTables.length === 0
+                        !(Array.isArray(availableTables) && availableTables.length > 0)
                       }
                     >
                       {createReservationMutation.isPending ? (
