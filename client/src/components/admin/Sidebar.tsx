@@ -2,20 +2,14 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
-import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import {
-  Menu,
-  LayoutDashboard,
-  Users,
-  Utensils,
-  CalendarDays,
-  CreditCard,
-  FileText,
-  Settings,
-  LogOut
-} from 'lucide-react';
+import { Menu } from 'lucide-react';
+import { 
+  FaUtensils, FaChartLine, FaUsers, FaBookOpen, 
+  FaChair, FaCoins, FaCreditCard, FaCalendarCheck, 
+  FaCog, FaSignOutAlt, FaBars
+} from 'react-icons/fa';
 
 const AdminSidebar: React.FC = () => {
   const { t } = useTranslation();
@@ -31,37 +25,42 @@ const AdminSidebar: React.FC = () => {
     {
       path: '/admin/dashboard',
       label: t('Dashboard'),
-      icon: <LayoutDashboard className="h-5 w-5 mr-3" />
+      icon: <FaChartLine className="w-6 text-brasil-yellow" />
     },
     {
       path: '/admin/customers',
       label: t('Customers'),
-      icon: <Users className="h-5 w-5 mr-3" />
+      icon: <FaUsers className="w-6 text-brasil-yellow" />
     },
     {
       path: '/admin/menu',
       label: t('MenuManagement'),
-      icon: <Utensils className="h-5 w-5 mr-3" />
+      icon: <FaBookOpen className="w-6 text-brasil-yellow" />
     },
     {
       path: '/admin/tables',
       label: t('Tables'),
-      icon: <CalendarDays className="h-5 w-5 mr-3" />
+      icon: <FaChair className="w-6 text-brasil-yellow" />
     },
     {
       path: '/admin/finance',
       label: t('Finance'),
-      icon: <CreditCard className="h-5 w-5 mr-3" />
+      icon: <FaCoins className="w-6 text-brasil-yellow" />
     },
     {
-      path: '/admin/reports',
-      label: t('Reports'),
-      icon: <FileText className="h-5 w-5 mr-3" />
+      path: '/admin/payments',
+      label: t('Payments'),
+      icon: <FaCreditCard className="w-6 text-brasil-yellow" />
+    },
+    {
+      path: '/admin/reservations',
+      label: t('Reservations'),
+      icon: <FaCalendarCheck className="w-6 text-brasil-yellow" />
     },
     {
       path: '/admin/settings',
       label: t('Settings'),
-      icon: <Settings className="h-5 w-5 mr-3" />
+      icon: <FaCog className="w-6 text-brasil-yellow" />
     }
   ];
 
@@ -70,56 +69,54 @@ const AdminSidebar: React.FC = () => {
   };
 
   const Sidebar = () => (
-    <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
-      <div className="p-4 border-b border-sidebar-border">
-        <Logo />
-      </div>
-      
-      <div className="p-4 border-b border-sidebar-border">
+    <div className="fixed left-0 top-0 h-full w-64 bg-brasil-blue flex flex-col">
+      <div className="p-6">
         <div className="flex items-center">
-          <div className="w-10 h-10 rounded-full bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground">
-            <span className="font-semibold text-lg">
-              {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
-            </span>
+          <div className="w-10 h-10 bg-brasil-yellow rounded-full flex items-center justify-center mr-2">
+            <FaUtensils className="text-brasil-blue" />
           </div>
-          <div className="ml-3">
-            <p className="font-semibold text-sidebar-foreground">{user?.firstName} {user?.lastName}</p>
-            <p className="text-sm text-sidebar-foreground/70">{t('AdminPanel')}</p>
-          </div>
+          <span className="text-xl font-semibold text-white font-montserrat">
+            Opa que delicia
+          </span>
         </div>
       </div>
       
-      <nav className="flex-1 p-4">
-        <ul className="space-y-2">
-          {navItems.map((item) => (
-            <li key={item.path}>
+      <div className="flex-1 overflow-y-auto">
+        <ul>
+          {navItems.map((item, index) => (
+            <li key={item.path} className="px-6 py-3">
               <Link href={item.path}>
                 <a 
-                  className={`flex items-center p-2 rounded-md transition-colors ${
+                  className={`flex items-center text-white ${
                     location === item.path 
-                      ? 'bg-sidebar-primary text-sidebar-primary-foreground' 
-                      : 'hover:bg-sidebar-accent/20'
-                  }`}
+                      ? 'bg-brasil-blue bg-opacity-40' 
+                      : 'hover:bg-brasil-blue hover:bg-opacity-40'
+                  } rounded-lg p-2 cursor-pointer`}
                   onClick={closeMenu}
                 >
                   {item.icon}
-                  {item.label}
+                  <span className="ml-2 font-medium">{item.label}</span>
                 </a>
               </Link>
             </li>
           ))}
         </ul>
-      </nav>
+      </div>
       
-      <div className="p-4 border-t border-sidebar-border mt-auto">
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start text-white/90 hover:text-white hover:bg-red-500/20"
+      <div className="mt-auto border-t border-blue-400 p-4">
+        <Link href="/admin/settings">
+          <a className="flex items-center text-white hover:bg-brasil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+            <FaCog className="w-6 text-brasil-yellow" />
+            <span className="ml-2 font-medium">{t('Settings')}</span>
+          </a>
+        </Link>
+        <button 
           onClick={handleLogout}
+          className="flex w-full items-center text-white hover:bg-brasil-blue hover:bg-opacity-40 rounded-lg p-2 mt-2 cursor-pointer"
         >
-          <LogOut className="h-5 w-5 mr-3" />
-          {t('Logout')}
-        </Button>
+          <FaSignOutAlt className="w-6 text-brasil-yellow" />
+          <span className="ml-2 font-medium">{t('Logout')}</span>
+        </button>
       </div>
     </div>
   );
@@ -127,16 +124,23 @@ const AdminSidebar: React.FC = () => {
   return (
     <>
       {/* Mobile sidebar */}
-      <div className="md:hidden p-4 border-b bg-sidebar text-sidebar-foreground sticky top-0 z-10">
+      <div className="md:hidden p-4 border-b bg-brasil-blue text-white sticky top-0 z-10">
         <div className="flex justify-between items-center">
-          <Logo />
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-brasil-yellow rounded-full flex items-center justify-center mr-2">
+              <FaUtensils className="text-brasil-blue text-sm" />
+            </div>
+            <span className="text-lg font-semibold text-white font-montserrat">
+              Opa que delicia
+            </span>
+          </div>
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-sidebar-foreground">
-                <Menu className="h-6 w-6" />
+              <Button variant="ghost" size="icon" className="text-white">
+                <FaBars className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 bg-sidebar text-sidebar-foreground">
+            <SheetContent side="left" className="p-0 bg-brasil-blue text-white">
               <Sidebar />
             </SheetContent>
           </Sheet>
@@ -144,7 +148,7 @@ const AdminSidebar: React.FC = () => {
       </div>
       
       {/* Desktop sidebar */}
-      <div className="hidden md:block w-64 bg-sidebar text-sidebar-foreground h-screen sticky top-0">
+      <div className="hidden md:block">
         <Sidebar />
       </div>
     </>

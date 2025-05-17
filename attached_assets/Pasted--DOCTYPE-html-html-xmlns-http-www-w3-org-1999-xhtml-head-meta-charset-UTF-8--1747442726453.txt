@@ -1,0 +1,433 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        
+        <style>::-webkit-scrollbar { display: none;}</style>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            'brazil-green': '#009c3b',
+                            'brazil-yellow': '#ffdf00',
+                            'brazil-blue': '#002776',
+                            'brazil-red': '#c8102e'
+                        },
+                        fontFamily: {
+                            'montserrat': ['Montserrat', 'sans-serif'],
+                            'opensans': ['Open Sans', 'sans-serif']
+                        }
+                    }
+                }
+            }
+        </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" /><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap" /><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+    <body class="bg-gray-100 font-opensans">
+    
+    <div id="admin-dashboard" class="flex h-[900px]">
+        <!-- Sidebar -->
+        <div id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-brazil-blue flex flex-col">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-brazil-yellow rounded-full flex items-center justify-center mr-2">
+                        <i class="fa-solid fa-utensils text-brazil-blue"></i>
+                    </div>
+                    <span class="text-xl font-semibold text-white font-montserrat">
+                        Opa que delicia
+                    </span>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto">
+                <ul>
+                    <li class="px-6 py-3">
+                        <span class="flex items-center text-white bg-brazil-blue bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                            <i class="fa-solid fa-chart-line text-brazil-yellow w-6"></i>
+                            <span class="ml-2 font-medium">Dashboard</span>
+                        </span>
+                    </li>
+                    <li class="px-6 py-3">
+                        <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                            <i class="fa-solid fa-users text-brazil-yellow w-6"></i>
+                            <span class="ml-2 font-medium">Gestão de Clientes</span>
+                        </span>
+                    </li>
+                    <li class="px-6 py-3">
+                        <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                            <i class="fa-solid fa-book-open text-brazil-yellow w-6"></i>
+                            <span class="ml-2 font-medium">Gestão do Menu</span>
+                        </span>
+                    </li>
+                    <li class="px-6 py-3">
+                        <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                            <i class="fa-solid fa-chair text-brazil-yellow w-6"></i>
+                            <span class="ml-2 font-medium">Gestão das Mesas</span>
+                        </span>
+                    </li>
+                    <li class="px-6 py-3">
+                        <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                            <i class="fa-solid fa-coins text-brazil-yellow w-6"></i>
+                            <span class="ml-2 font-medium">Gestão Financeira</span>
+                        </span>
+                    </li>
+                    <li class="px-6 py-3">
+                        <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                            <i class="fa-solid fa-credit-card text-brazil-yellow w-6"></i>
+                            <span class="ml-2 font-medium">Pagamentos</span>
+                        </span>
+                    </li>
+                    <li class="px-6 py-3">
+                        <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                            <i class="fa-solid fa-calendar-check text-brazil-yellow w-6"></i>
+                            <span class="ml-2 font-medium">Reservas</span>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+            <div class="mt-auto border-t border-blue-400 p-4">
+                <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                    <i class="fa-solid fa-gear text-brazil-yellow w-6"></i>
+                    <span class="ml-2 font-medium">Configurações</span>
+                </span>
+                <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 mt-2 cursor-pointer">
+                    <i class="fa-solid fa-right-from-bracket text-brazil-yellow w-6"></i>
+                    <span class="ml-2 font-medium">Sair</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="main-content" class="ml-64 flex-1 p-8">
+            <!-- Header -->
+            <div id="header" class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl font-bold text-gray-800 font-montserrat">Dashboard</h1>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button class="relative">
+                            <i class="fa-regular fa-bell text-xl text-gray-600"></i>
+                            <span class="absolute -top-1 -right-1 bg-brazil-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center">
+                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User Avatar" class="w-10 h-10 rounded-full border-2 border-brazil-yellow" />
+                        <div class="ml-2">
+                            <p class="text-sm font-medium text-gray-800">Carlos Silva</p>
+                            <p class="text-xs text-gray-500">Administrador</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics Cards -->
+            <div id="metrics-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-brazil-green">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm text-gray-500 font-medium">Faturamento Hoje</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">R$ 4.289,00</p>
+                            <div class="flex items-center mt-2 text-sm">
+                                <i class="fa-solid fa-arrow-up text-brazil-green mr-1"></i>
+                                <span class="text-brazil-green font-medium">12%</span>
+                                <span class="text-gray-500 ml-1">vs. semana passada</span>
+                            </div>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-lg">
+                            <i class="fa-solid fa-dollar-sign text-brazil-green text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-brazil-blue">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm text-gray-500 font-medium">Reservas Hoje</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">42</p>
+                            <div class="flex items-center mt-2 text-sm">
+                                <i class="fa-solid fa-arrow-up text-brazil-green mr-1"></i>
+                                <span class="text-brazil-green font-medium">8%</span>
+                                <span class="text-gray-500 ml-1">vs. ontem</span>
+                            </div>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-lg">
+                            <i class="fa-solid fa-calendar-check text-brazil-blue text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-brazil-yellow">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm text-gray-500 font-medium">Ocupação Atual</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">78%</p>
+                            <div class="flex items-center mt-2 text-sm">
+                                <i class="fa-solid fa-arrow-down text-brazil-red mr-1"></i>
+                                <span class="text-brazil-red font-medium">3%</span>
+                                <span class="text-gray-500 ml-1">vs. média semanal</span>
+                            </div>
+                        </div>
+                        <div class="bg-yellow-100 p-3 rounded-lg">
+                            <i class="fa-solid fa-chair text-brazil-yellow text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-brazil-red">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm text-gray-500 font-medium">Novos Clientes</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">16</p>
+                            <div class="flex items-center mt-2 text-sm">
+                                <i class="fa-solid fa-arrow-up text-brazil-green mr-1"></i>
+                                <span class="text-brazil-green font-medium">25%</span>
+                                <span class="text-gray-500 ml-1">vs. semana passada</span>
+                            </div>
+                        </div>
+                        <div class="bg-red-100 p-3 rounded-lg">
+                            <i class="fa-solid fa-user-plus text-brazil-red text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div id="charts-section" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <div id="sales-chart" class="bg-white rounded-xl shadow-md p-6 lg:col-span-2">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold text-gray-800 font-montserrat">Faturamento Semanal</h2>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-sm bg-gray-100 rounded-md text-gray-600 hover:bg-gray-200">Dia</button>
+                            <button class="px-3 py-1 text-sm bg-brazil-blue rounded-md text-white">Semana</button>
+                            <button class="px-3 py-1 text-sm bg-gray-100 rounded-md text-gray-600 hover:bg-gray-200">Mês</button>
+                        </div>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+
+                <div id="category-chart" class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4 font-montserrat">Vendas por Categoria</h2>
+                    <div class="h-64">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity and Alerts -->
+            <div id="activity-alerts" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div id="recent-activity" class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4 font-montserrat">Atividades Recentes</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="bg-green-100 p-2 rounded-full mr-3">
+                                <i class="fa-solid fa-utensils text-brazil-green"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">Novo pedido #1082</p>
+                                <p class="text-xs text-gray-500">Mesa 12 - R$ 243,00</p>
+                                <p class="text-xs text-gray-400 mt-1">Há 5 minutos</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-blue-100 p-2 rounded-full mr-3">
+                                <i class="fa-solid fa-calendar-check text-brazil-blue"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">Nova reserva confirmada</p>
+                                <p class="text-xs text-gray-500">Ana Silva - 4 pessoas - 20:00</p>
+                                <p class="text-xs text-gray-400 mt-1">Há 12 minutos</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-yellow-100 p-2 rounded-full mr-3">
+                                <i class="fa-solid fa-user-plus text-brazil-yellow"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">Novo cliente registrado</p>
+                                <p class="text-xs text-gray-500">Marcos Oliveira</p>
+                                <p class="text-xs text-gray-400 mt-1">Há 25 minutos</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-red-100 p-2 rounded-full mr-3">
+                                <i class="fa-solid fa-triangle-exclamation text-brazil-red"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">Estoque baixo</p>
+                                <p class="text-xs text-gray-500">Picanha - Restam apenas 3kg</p>
+                                <p class="text-xs text-gray-400 mt-1">Há 30 minutos</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-green-100 p-2 rounded-full mr-3">
+                                <i class="fa-solid fa-money-bill-wave text-brazil-green"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">Pagamento recebido</p>
+                                <p class="text-xs text-gray-500">Mesa 8 - R$ 187,50</p>
+                                <p class="text-xs text-gray-400 mt-1">Há 42 minutos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="w-full mt-4 py-2 text-sm text-brazil-blue font-medium border border-brazil-blue rounded-lg hover:bg-blue-50">
+                        Ver Todas as Atividades
+                    </button>
+                </div>
+
+                <div id="alerts-notifications" class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4 font-montserrat">Alertas &amp; Notificações</h2>
+                    <div class="space-y-4">
+                        <div class="bg-red-50 border-l-4 border-brazil-red p-4 rounded-r-lg">
+                            <div class="flex">
+                                <i class="fa-solid fa-circle-exclamation text-brazil-red mr-3 mt-1"></i>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-800">Reserva Cancelada</p>
+                                    <p class="text-xs text-gray-600 mt-1">A reserva #2089 para hoje às 19:30 foi cancelada pelo cliente.</p>
+                                    <p class="text-xs text-gray-500 mt-2">Há 1 hora</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50 border-l-4 border-brazil-yellow p-4 rounded-r-lg">
+                            <div class="flex">
+                                <i class="fa-solid fa-triangle-exclamation text-brazil-yellow mr-3 mt-1"></i>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-800">Capacidade Próxima do Limite</p>
+                                    <p class="text-xs text-gray-600 mt-1">O restaurante está operando com 85% da capacidade para o jantar de hoje.</p>
+                                    <p class="text-xs text-gray-500 mt-2">Há 2 horas</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-green-50 border-l-4 border-brazil-green p-4 rounded-r-lg">
+                            <div class="flex">
+                                <i class="fa-solid fa-circle-check text-brazil-green mr-3 mt-1"></i>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-800">Meta de Vendas Atingida</p>
+                                    <p class="text-xs text-gray-600 mt-1">A meta de vendas semanal foi atingida com 2 dias de antecedência. Parabéns!</p>
+                                    <p class="text-xs text-gray-500 mt-2">Há 3 horas</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="w-full mt-4 py-2 text-sm text-brazil-blue font-medium border border-brazil-blue rounded-lg hover:bg-blue-50">
+                        Ver Todos os Alertas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sales Chart
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        const salesChart = new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
+                datasets: [{
+                    label: 'Faturamento (R$)',
+                    data: [3200, 2800, 3500, 4200, 4800, 6500, 5900],
+                    backgroundColor: 'rgba(0, 39, 118, 0.1)',
+                    borderColor: '#002776',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value;
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Category Chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const categoryChart = new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pratos Principais', 'Bebidas', 'Sobremesas', 'Entradas'],
+                datasets: [{
+                    data: [45, 25, 15, 15],
+                    backgroundColor: [
+                        '#002776', // Brazil Blue
+                        '#009c3b', // Brazil Green
+                        '#ffdf00', // Brazil Yellow
+                        '#c8102e'  // Brazil Red
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15
+                        }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+    </script>
+    
+    
+    </body></html>
