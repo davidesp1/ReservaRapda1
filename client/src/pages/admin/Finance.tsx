@@ -1,23 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { Download, Filter, Search, ChevronDown, Calendar, Euro } from 'lucide-react';
+import { Download, Search, ChevronDown, Calendar } from 'lucide-react';
 import { PAYMENT_METHODS, PAYMENT_STATUS } from '@/constants';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { FinanceSummary, PaymentTable, FinanceAnalytics } from '@/components/admin/Finance';
-import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -26,11 +23,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 
 const Finance: React.FC = () => {
   const { t } = useTranslation();
-  const { isAuthenticated, isAdmin, isLoading } = useAuth();
-  const [_, setLocation] = useLocation();
+  const { isAuthenticated, isAdmin } = useAuth();
   const [currentTab, setCurrentTab] = useState('payments');
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
@@ -82,9 +79,9 @@ const Finance: React.FC = () => {
       failedPayments: 0
     };
     
-    const completed = payments.filter((p: any) => p.status === 'completed');
-    const pending = payments.filter((p: any) => p.status === 'pending');
-    const failed = payments.filter((p: any) => p.status === 'failed');
+    const completed = payments?.filter((p: any) => p.status === 'completed') || [];
+    const pending = payments?.filter((p: any) => p.status === 'pending') || [];
+    const failed = payments?.filter((p: any) => p.status === 'failed') || [];
     
     const totalRevenue = completed.reduce((sum: number, p: any) => sum + p.amount, 0);
     
@@ -378,8 +375,7 @@ const Finance: React.FC = () => {
                               className={
                                 payment.status === 'completed' ? 'bg-green-100 text-green-800' : 
                                 payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                                payment.status === 'failed' ? 'bg-red-100 text-red-800' : 
-                                'bg-gray-100 text-gray-800'
+                                'bg-red-100 text-red-800'
                               }
                             >
                               {PAYMENT_STATUS.find(s => s.id === payment.status)?.name || payment.status}
@@ -391,8 +387,8 @@ const Finance: React.FC = () => {
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-6 text-gray-500">
                           {searchText || statusFilter !== 'all' || methodFilter !== 'all' ? 
-                            t('NoPaymentsFound') : 
-                            t('NoPayments')
+                            t('NoPaymentsMatchingFilters') : 
+                            t('NoPaymentsYet')
                           }
                         </TableCell>
                       </TableRow>
@@ -405,91 +401,10 @@ const Finance: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="analytics">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('RevenueOverTime')}</CardTitle>
-                <CardDescription>{t('Last30DaysRevenue')}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AreaChart 
-                  data={revenueByDay} 
-                  xKey="date" 
-                  yKey="amount" 
-                  xLabel={t('Date')} 
-                  yLabel={t('Revenue')} 
-                  areaColor="#009c3b"
-                  formatY={(value) => formatPrice(value)}
-                />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('PaymentMethods')}</CardTitle>
-                <CardDescription>{t('PaymentMethodDistribution')}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <BarChart
-                  data={paymentsByMethod}
-                  xKey="label"
-                  yKey="value"
-                  xLabel={t('Method')}
-                  yLabel={t('Count')}
-                  barColor="#ffdf00"
-                />
-              </CardContent>
-            </Card>
-          </div>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('PaymentStatistics')}</CardTitle>
-              <CardDescription>{t('PaymentAnalytics')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gray-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-2">{t('SuccessRate')}</h3>
-                  <div className="text-3xl font-bold text-green-600">
-                    {payments && payments.length > 0 ? 
-                      `${((totals.completedPayments / payments.length) * 100).toFixed(1)}%` : 
-                      '0%'
-                    }
-                  </div>
-                  <p className="text-gray-500 mt-2">
-                    {t('SuccessfulTransactions')}: {totals.completedPayments}
-                  </p>
-                </div>
-                
-                <div className="bg-gray-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-2">{t('AverageTransaction')}</h3>
-                  <div className="text-3xl font-bold text-brasil-blue">
-                    {totals.completedPayments > 0 ? 
-                      formatPrice(totals.totalRevenue / totals.completedPayments) : 
-                      formatPrice(0)
-                    }
-                  </div>
-                  <p className="text-gray-500 mt-2">
-                    {t('PerTransaction')}
-                  </p>
-                </div>
-                
-                <div className="bg-gray-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-2">{t('PendingValue')}</h3>
-                  <div className="text-3xl font-bold text-yellow-600">
-                    {formatPrice(
-                      payments?.filter((p: any) => p.status === 'pending')
-                        .reduce((sum: number, p: any) => sum + p.amount, 0) || 0
-                    )}
-                  </div>
-                  <p className="text-gray-500 mt-2">
-                    {t('AwaitingProcessing')}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <FinanceAnalytics 
+            revenueData={revenueByDay}
+            paymentMethodData={paymentsByMethod}
+          />
         </TabsContent>
       </Tabs>
     </AdminLayout>
