@@ -1,0 +1,417 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>::-webkit-scrollbar { display: none;}</style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brazil-green': '#009c3b',
+                        'brazil-yellow': '#ffdf00',
+                        'brazil-blue': '#002776',
+                        'brazil-red': '#c8102e',
+                    },
+                    fontFamily: {
+                        'sans': ['Montserrat', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" /><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap" /><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="font-sans bg-gray-100">
+    <div id="mobile-admin-dashboard" class="flex flex-col h-full w-full">
+        <!-- Header -->
+        <header id="header" class="bg-brazil-blue text-white px-4 py-3 flex justify-between items-center shadow-md">
+            <div class="flex items-center">
+                <button id="sidebar-toggle" class="mr-3">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <h1 class="text-lg font-bold">Opa que delicia</h1>
+            </div>
+            <div class="flex items-center">
+                <button class="relative mr-4">
+                    <i class="fa-solid fa-bell text-lg"></i>
+                    <span class="absolute -top-1 -right-1 bg-brazil-red text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">3</span>
+                </button>
+                <div class="h-8 w-8 rounded-full overflow-hidden">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Profile" class="h-full w-full object-cover" />
+                </div>
+            </div>
+        </header>
+
+        <!-- Mobile Sidebar (hidden by default) -->
+        <div id="mobile-sidebar" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+            <div class="bg-brazil-blue text-white w-3/4 h-full max-w-xs">
+                <div class="flex justify-between items-center p-4 border-b border-blue-700">
+                    <h2 class="font-bold text-lg">Menu</h2>
+                    <button id="close-sidebar">
+                        <i class="fa-solid fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="overflow-y-auto">
+                    <nav class="py-2">
+                        <span class="flex items-center px-4 py-3 bg-blue-800 cursor-pointer">
+                            <i class="fa-solid fa-chart-line text-brazil-yellow mr-3 w-6 text-center"></i>
+                            <span>Dashboard</span>
+                        </span>
+                        <span class="flex items-center px-4 py-3 cursor-pointer">
+                            <i class="fa-solid fa-users text-brazil-yellow mr-3 w-6 text-center"></i>
+                            <span>Gestão de Clientes</span>
+                        </span>
+                        <span class="flex items-center px-4 py-3 cursor-pointer">
+                            <i class="fa-solid fa-utensils text-brazil-yellow mr-3 w-6 text-center"></i>
+                            <span>Gestão do Menu</span>
+                        </span>
+                        <span class="flex items-center px-4 py-3 cursor-pointer">
+                            <i class="fa-solid fa-chair text-brazil-yellow mr-3 w-6 text-center"></i>
+                            <span>Gestão das Mesas</span>
+                        </span>
+                        <span class="flex items-center px-4 py-3 cursor-pointer">
+                            <i class="fa-solid fa-coins text-brazil-yellow mr-3 w-6 text-center"></i>
+                            <span>Gestão Financeira</span>
+                        </span>
+                        <span class="flex items-center px-4 py-3 cursor-pointer">
+                            <i class="fa-solid fa-credit-card text-brazil-yellow mr-3 w-6 text-center"></i>
+                            <span>Configuração de Pagamentos</span>
+                        </span>
+                        <span class="flex items-center px-4 py-3 cursor-pointer">
+                            <i class="fa-solid fa-gear text-brazil-yellow mr-3 w-6 text-center"></i>
+                            <span>Configurações</span>
+                        </span>
+                        <span class="flex items-center px-4 py-3 cursor-pointer">
+                            <i class="fa-solid fa-right-from-bracket text-brazil-yellow mr-3 w-6 text-center"></i>
+                            <span>Sair</span>
+                        </span>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto pb-16">
+            <!-- Dashboard Title -->
+            <div id="dashboard-title" class="px-4 py-3 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-gray-800">Dashboard</h2>
+                <div>
+                    <span class="text-sm text-gray-500">Hoje</span>
+                    <span class="ml-1 text-sm font-medium text-gray-700">17/05/2023</span>
+                </div>
+            </div>
+
+            <!-- Metrics Cards -->
+            <section id="metrics-section" class="px-4 py-2">
+                <div class="grid grid-cols-2 gap-3">
+                    <div id="revenue-card" class="bg-white rounded-lg shadow p-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs text-gray-500">Faturamento</p>
+                                <h3 class="text-lg font-bold">R$ 8.543</h3>
+                                <p class="text-xs text-brazil-green flex items-center">
+                                    <i class="fa-solid fa-arrow-up mr-1"></i> 12%
+                                </p>
+                            </div>
+                            <div class="bg-blue-100 p-2 rounded-full">
+                                <i class="fa-solid fa-money-bill-wave text-brazil-blue"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="bookings-card" class="bg-white rounded-lg shadow p-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs text-gray-500">Reservas</p>
+                                <h3 class="text-lg font-bold">42</h3>
+                                <p class="text-xs text-brazil-green flex items-center">
+                                    <i class="fa-solid fa-arrow-up mr-1"></i> 8%
+                                </p>
+                            </div>
+                            <div class="bg-green-100 p-2 rounded-full">
+                                <i class="fa-solid fa-calendar-check text-brazil-green"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="occupancy-card" class="bg-white rounded-lg shadow p-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs text-gray-500">Ocupação</p>
+                                <h3 class="text-lg font-bold">78%</h3>
+                                <p class="text-xs text-brazil-red flex items-center">
+                                    <i class="fa-solid fa-arrow-down mr-1"></i> 3%
+                                </p>
+                            </div>
+                            <div class="bg-yellow-100 p-2 rounded-full">
+                                <i class="fa-solid fa-chair text-brazil-yellow"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="customers-card" class="bg-white rounded-lg shadow p-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs text-gray-500">Novos Clientes</p>
+                                <h3 class="text-lg font-bold">16</h3>
+                                <p class="text-xs text-brazil-green flex items-center">
+                                    <i class="fa-solid fa-arrow-up mr-1"></i> 24%
+                                </p>
+                            </div>
+                            <div class="bg-red-100 p-2 rounded-full">
+                                <i class="fa-solid fa-users text-brazil-red"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Performance Chart -->
+            <section id="performance-chart-section" class="px-4 py-3">
+                <div class="bg-white rounded-lg shadow p-3">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-semibold">Desempenho</h3>
+                        <select class="text-xs bg-gray-100 rounded px-2 py-1 border border-gray-200">
+                            <option>Últimos 7 dias</option>
+                            <option>Últimos 30 dias</option>
+                            <option>Este ano</option>
+                        </select>
+                    </div>
+                    <div class="h-[200px]">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Alerts & Notifications -->
+            <section id="alerts-section" class="px-4 py-2">
+                <h3 class="font-semibold mb-2">Alertas &amp; Notificações</h3>
+                <div class="space-y-3">
+                    <div class="bg-white rounded-lg shadow p-3 border-l-4 border-brazil-red">
+                        <div class="flex items-start">
+                            <div class="bg-red-100 p-2 rounded-full mr-3">
+                                <i class="fa-solid fa-exclamation text-brazil-red"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-sm">Estoque Baixo</h4>
+                                <p class="text-xs text-gray-600">Picanha e camarão estão com estoque baixo.</p>
+                                <p class="text-xs text-gray-400 mt-1">Há 30 minutos</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-3 border-l-4 border-brazil-yellow">
+                        <div class="flex items-start">
+                            <div class="bg-yellow-100 p-2 rounded-full mr-3">
+                                <i class="fa-solid fa-bell text-brazil-yellow"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-sm">Reserva VIP</h4>
+                                <p class="text-xs text-gray-600">Cliente VIP confirmou reserva para hoje às 20h.</p>
+                                <p class="text-xs text-gray-400 mt-1">Há 2 horas</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-3 border-l-4 border-brazil-green">
+                        <div class="flex items-start">
+                            <div class="bg-green-100 p-2 rounded-full mr-3">
+                                <i class="fa-solid fa-check text-brazil-green"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-sm">Meta Atingida</h4>
+                                <p class="text-xs text-gray-600">Meta de faturamento semanal foi atingida!</p>
+                                <p class="text-xs text-gray-400 mt-1">Há 5 horas</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Activities -->
+            <section id="recent-activities-section" class="px-4 py-3">
+                <h3 class="font-semibold mb-2">Atividades Recentes</h3>
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="border-b border-gray-100 p-3">
+                        <div class="flex items-center">
+                            <div class="h-8 w-8 rounded-full overflow-hidden mr-3">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Profile" class="h-full w-full object-cover" />
+                            </div>
+                            <div>
+                                <p class="text-sm">
+                                    <span class="font-medium">Maria Silva</span> reservou uma mesa para 4 pessoas.
+                                </p>
+                                <p class="text-xs text-gray-500">Hoje, 16:32</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border-b border-gray-100 p-3">
+                        <div class="flex items-center">
+                            <div class="h-8 w-8 rounded-full overflow-hidden mr-3">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-9.jpg" alt="Profile" class="h-full w-full object-cover" />
+                            </div>
+                            <div>
+                                <p class="text-sm">
+                                    <span class="font-medium">João Santos</span> cancelou sua reserva.
+                                </p>
+                                <p class="text-xs text-gray-500">Hoje, 14:15</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border-b border-gray-100 p-3">
+                        <div class="flex items-center">
+                            <div class="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fa-solid fa-utensils text-brazil-green"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm">
+                                    <span class="font-medium">Novo prato</span> adicionado ao menu: Feijoada Completa.
+                                </p>
+                                <p class="text-xs text-gray-500">Hoje, 11:47</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-3">
+                        <div class="flex items-center">
+                            <div class="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fa-solid fa-coins text-brazil-blue"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm">
+                                    <span class="font-medium">Pagamento</span> de R$342,50 processado com sucesso.
+                                </p>
+                                <p class="text-xs text-gray-500">Hoje, 10:23</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 flex justify-around items-center h-14">
+            <span class="flex flex-col items-center justify-center text-brazil-blue cursor-pointer">
+                <i class="fa-solid fa-chart-line text-lg"></i>
+                <span class="text-xs mt-1">Dashboard</span>
+            </span>
+            <span class="flex flex-col items-center justify-center text-gray-500 cursor-pointer">
+                <i class="fa-solid fa-users text-lg"></i>
+                <span class="text-xs mt-1">Clientes</span>
+            </span>
+            <span class="flex flex-col items-center justify-center text-gray-500 cursor-pointer">
+                <i class="fa-solid fa-utensils text-lg"></i>
+                <span class="text-xs mt-1">Menu</span>
+            </span>
+            <span class="flex flex-col items-center justify-center text-gray-500 cursor-pointer">
+                <i class="fa-solid fa-gear text-lg"></i>
+                <span class="text-xs mt-1">Config</span>
+            </span>
+        </nav>
+    </div>
+
+    <script>
+        // Sidebar toggle functionality
+        document.getElementById('sidebar-toggle').addEventListener('click', function() {
+            document.getElementById('mobile-sidebar').classList.remove('hidden');
+        });
+        
+        document.getElementById('close-sidebar').addEventListener('click', function() {
+            document.getElementById('mobile-sidebar').classList.add('hidden');
+        });
+        
+        // Performance Chart
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+                datasets: [
+                    {
+                        label: 'Faturamento (R$)',
+                        data: [1200, 1900, 1500, 2500, 2200, 3100, 2800],
+                        borderColor: '#002776',
+                        backgroundColor: 'rgba(0, 39, 118, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Reservas',
+                        data: [15, 25, 20, 30, 28, 40, 35],
+                        borderColor: '#009c3b',
+                        backgroundColor: 'transparent',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            boxWidth: 10,
+                            font: {
+                                size: 10
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            font: {
+                                size: 10
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                size: 10
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+
+</body></html>
