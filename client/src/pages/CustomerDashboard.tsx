@@ -85,7 +85,7 @@ const CustomerDashboard: React.FC = () => {
   return (
     <CustomerLayout title={t('Dashboard')}>
       {/* Welcome Banner */}
-      <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-r from-brazil-blue to-blue-700 rounded-xl p-6 text-white shadow-lg mb-6">
+      <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-r from-brasil-blue to-blue-700 rounded-xl p-6 text-white shadow-lg mb-6">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
             <h2 className="text-2xl font-bold font-montserrat mb-2">{t('WelcomeToOpaQueDelicia')}</h2>
@@ -93,7 +93,7 @@ const CustomerDashboard: React.FC = () => {
           </div>
           <Button 
             onClick={() => setLocation('/reservations')}
-            className="bg-brazil-yellow text-brazil-blue font-bold py-2 px-6 rounded-lg hover:bg-yellow-300 transition shadow-md"
+            className="bg-brasil-yellow text-brasil-blue font-bold py-2 px-6 rounded-lg hover:bg-yellow-300 transition shadow-md"
           >
             {t('MakeReservation')}
           </Button>
@@ -103,7 +103,7 @@ const CustomerDashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Upcoming Reservations */}
         <div className="col-span-1 md:col-span-2 bg-white rounded-xl shadow-md overflow-hidden">
-          <div className="bg-brazil-green px-6 py-4">
+          <div className="bg-brasil-green px-6 py-4">
             <h3 className="text-lg font-bold text-white font-montserrat">{t('YourUpcomingReservations')}</h3>
           </div>
           <div className="p-6">
@@ -116,7 +116,7 @@ const CustomerDashboard: React.FC = () => {
               <div className="mb-4 border-b border-gray-100 pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-brazil-green bg-opacity-10 rounded-full flex items-center justify-center text-brazil-green">
+                    <div className="w-12 h-12 bg-brasil-green bg-opacity-10 rounded-full flex items-center justify-center text-brasil-green">
                       <CalendarCheck className="h-6 w-6" />
                     </div>
                     <div className="ml-4">
@@ -138,14 +138,14 @@ const CustomerDashboard: React.FC = () => {
                   <div className="flex space-x-2">
                     <Button 
                       onClick={() => setLocation(`/reservations/${upcomingReservation.id}`)}
-                      className="text-sm bg-brazil-blue text-white px-3 py-1 rounded hover:bg-blue-700 transition"
+                      className="text-sm bg-brasil-blue text-white px-3 py-1 rounded hover:bg-blue-700 transition"
                     >
                       {t('Details')}
                     </Button>
                     <Button 
                       onClick={() => {/* Handle cancellation */}}
                       variant="outline"
-                      className="text-sm bg-white border border-brazil-red text-brazil-red px-3 py-1 rounded hover:bg-red-50 transition"
+                      className="text-sm bg-white border border-brasil-red text-brasil-red px-3 py-1 rounded hover:bg-red-50 transition"
                     >
                       {t('Cancel')}
                     </Button>
@@ -164,7 +164,7 @@ const CustomerDashboard: React.FC = () => {
                 <p className="text-gray-500 mb-4">{t('NoUpcomingReservations')}</p>
                 <Button 
                   onClick={() => setLocation('/reservations')}
-                  className="bg-brazil-green text-white hover:bg-brazil-green/90"
+                  className="bg-brasil-green text-white hover:bg-brasil-green/90"
                 >
                   {t('BookTable')}
                 </Button>
@@ -175,7 +175,7 @@ const CustomerDashboard: React.FC = () => {
               <Button 
                 onClick={() => setLocation('/reservations')}
                 variant="link"
-                className="text-brazil-blue font-medium hover:text-brazil-green transition flex items-center"
+                className="text-brasil-blue font-medium hover:text-brasil-green transition flex items-center"
               >
                 <span>{t('ViewAllReservations')}</span>
                 <ChevronRight className="ml-1 h-4 w-4" />
@@ -186,8 +186,8 @@ const CustomerDashboard: React.FC = () => {
 
         {/* Special Offers */}
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <div className="bg-brazil-yellow px-6 py-4">
-            <h3 className="text-lg font-bold text-brazil-blue font-montserrat">{t('SpecialOffers')}</h3>
+          <div className="bg-brasil-yellow px-6 py-4">
+            <h3 className="text-lg font-bold text-brasil-blue font-montserrat">{t('SpecialOffers')}</h3>
           </div>
           <div className="p-6">
             {specialOffers.map(offer => (
@@ -201,7 +201,7 @@ const CustomerDashboard: React.FC = () => {
             ))}
             <Button 
               onClick={() => setLocation('/menu')}
-              className="w-full bg-brazil-yellow text-brazil-blue font-bold py-2 rounded hover:bg-yellow-300 transition"
+              className="w-full bg-brasil-yellow text-brasil-blue font-bold py-2 rounded hover:bg-yellow-300 transition"
             >
               {t('ViewPromotions')}
             </Button>
@@ -216,7 +216,7 @@ const CustomerDashboard: React.FC = () => {
           <Button 
             onClick={() => setLocation('/menu')}
             variant="link" 
-            className="text-brazil-blue hover:text-brazil-green font-medium"
+            className="text-brasil-blue hover:text-brasil-green font-medium"
           >
             {t('ViewFullMenu')}
           </Button>
