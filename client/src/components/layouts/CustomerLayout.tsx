@@ -107,7 +107,7 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
           )}
           <div className="ml-2">
             <p className="text-sm font-medium text-gray-800">{user?.firstName} {user?.lastName}</p>
-            <p className="text-xs text-gray-500">{t('CustomerSince')} {user?.createdAt ? format(new Date(user.createdAt), 'yyyy') : '2023'}</p>
+            <p className="text-xs text-gray-500">{t('CustomerSince')} 2023</p>
           </div>
         </div>
       </div>

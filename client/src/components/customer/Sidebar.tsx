@@ -80,20 +80,19 @@ const CustomerSidebar: React.FC = () => {
         <ul>
           {navItems.map((item) => (
             <li key={item.path} className="py-3">
-              <Link href={item.path}>
-                <a 
-                  className={`flex items-center text-white rounded-lg p-2 transition cursor-pointer ${
-                    location === item.path 
-                      ? 'bg-brazil-blue bg-opacity-40' 
-                      : 'hover:bg-brazil-blue hover:bg-opacity-40'
-                  }`}
-                  onClick={closeMenu}
-                >
-                  <span className={`${location === item.path ? 'text-brazil-yellow' : 'text-brazil-yellow'} w-6`}>
-                    {React.cloneElement(item.icon, { className: 'h-5 w-5' })}
-                  </span>
-                  <span className="ml-2 font-medium">{item.label}</span>
-                </a>
+              <Link 
+                href={item.path}
+                onClick={closeMenu}
+                className={`flex items-center text-white rounded-lg p-2 transition cursor-pointer ${
+                  location === item.path 
+                    ? 'bg-brazil-blue bg-opacity-40' 
+                    : 'hover:bg-brazil-blue hover:bg-opacity-40'
+                }`}
+              >
+                <span className="text-brazil-yellow w-6">
+                  {React.cloneElement(item.icon, { className: 'h-5 w-5' })}
+                </span>
+                <span className="ml-2 font-medium">{item.label}</span>
               </Link>
             </li>
           ))}

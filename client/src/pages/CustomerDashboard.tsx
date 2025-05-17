@@ -124,7 +124,14 @@ const CustomerDashboard: React.FC = () => {
                         {upcomingReservation.occasion || t('Dinner')} - {t('Table')} {upcomingReservation.tableId}
                       </h4>
                       <p className="text-sm text-gray-600">
-                        {format(parseISO(upcomingReservation.date), 'EEEE, d MMMM', { locale: pt })} • {format(parseISO(upcomingReservation.date), 'HH:mm')}
+                        {upcomingReservation.date ? 
+                          format(new Date(upcomingReservation.date), 'EEEE, d MMMM', { locale: pt }) : 
+                          format(new Date(), 'EEEE, d MMMM', { locale: pt })
+                        } • {
+                          upcomingReservation.date ? 
+                          format(new Date(upcomingReservation.date), 'HH:mm') : 
+                          '19:30'
+                        }
                       </p>
                     </div>
                   </div>
@@ -146,7 +153,7 @@ const CustomerDashboard: React.FC = () => {
                 </div>
                 <div className="mt-3 flex items-center text-sm text-gray-600">
                   <span className="mr-2">👥</span>
-                  <span>{upcomingReservation.partySize} {t('people')}</span>
+                  <span>{upcomingReservation.partySize || 4} {t('people')}</span>
                   <span className="mx-2">•</span>
                   <span className="mr-2">🍽️</span>
                   <span>{upcomingReservation.occasion || t('Dinner')}</span>
