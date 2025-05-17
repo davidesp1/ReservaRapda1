@@ -240,7 +240,7 @@ const Reservations: React.FC = () => {
                             <FormLabel>{t('PartySize')}</FormLabel>
                             <Select 
                               onValueChange={(value) => onPartySizeChange(value)} 
-                              value={field.value.toString()}
+                              value={field.value ? field.value.toString() : "2"}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder={t('SelectPartySize')} />
@@ -264,7 +264,7 @@ const Reservations: React.FC = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t('Table')}</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value.toString()}>
+                            <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : ""}>
                               <SelectTrigger>
                                 <SelectValue placeholder={t('SelectTable')} />
                               </SelectTrigger>
@@ -302,7 +302,7 @@ const Reservations: React.FC = () => {
                             <FormLabel>{t('Duration')}</FormLabel>
                             <Select 
                               onValueChange={field.onChange} 
-                              value={field.value.toString()}
+                              value={field.value ? field.value.toString() : "120"}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder={t('SelectDuration')} />
