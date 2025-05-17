@@ -44,7 +44,7 @@ export default function FinanceAnalytics({ revenueData, paymentMethodData }: Ana
               xLabel={t('Date')} 
               yLabel={t('Revenue')} 
               areaColor="#009c3b"
-              formatY={(value) => formatPrice(value)}
+              formatY={(value: number) => formatPrice(value)}
             />
           </CardContent>
         </Card>
