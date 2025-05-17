@@ -25,13 +25,16 @@ export default function PaymentDetails() {
   }, [isAuthenticated, isLoading, navigate]);
 
   // Fetch payment details
-  const { data: payment, isLoading: paymentLoading } = useQuery({
+  const { data: payment, isLoading: paymentLoading, error } = useQuery({
     queryKey: ['/api/payments', paymentId],
     enabled: isAuthenticated && !!paymentId,
     queryFn: async () => {
-      const response = await fetch(`/api/payments/${paymentId}`);
+      const response = await fetch(`/api/payments/${paymentId}`, {
+        credentials: 'include' // Importante para enviar cookies de autenticação
+      });
       if (!response.ok) {
-        throw new Error('Failed to fetch payment details');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch payment details');
       }
       return response.json();
     },
@@ -56,25 +59,53 @@ export default function PaymentDetails() {
 
   if (isLoading || paymentLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-      </div>
+      <CustomerLayout title={t('PaymentDetails')}>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      </CustomerLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <CustomerLayout title={t('Error')}>
+        <div className="container max-w-4xl mx-auto py-10">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('PaymentError')}</CardTitle>
+              <CardDescription>{String(error)}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">{t('AuthenticationRequired')}</p>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button onClick={() => navigate('/reservations')}>{t('BackToReservations')}</Button>
+              <Button variant="default" onClick={() => window.location.reload()}>
+                {t('TryAgain')}
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </CustomerLayout>
     );
   }
 
   if (!payment) {
     return (
-      <div className="container max-w-4xl mx-auto py-10">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('PaymentNotFound')}</CardTitle>
-            <CardDescription>{t('PaymentNotFoundDescription')}</CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button onClick={() => navigate('/reservations')}>{t('BackToReservations')}</Button>
-          </CardFooter>
-        </Card>
-      </div>
+      <CustomerLayout title={t('PaymentNotFound')}>
+        <div className="container max-w-4xl mx-auto py-10">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('PaymentNotFound')}</CardTitle>
+              <CardDescription>{t('PaymentNotFoundDescription')}</CardDescription>
+            </CardHeader>
+            <CardFooter>
+              <Button onClick={() => navigate('/reservations')}>{t('BackToReservations')}</Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </CustomerLayout>
     );
   }
 
