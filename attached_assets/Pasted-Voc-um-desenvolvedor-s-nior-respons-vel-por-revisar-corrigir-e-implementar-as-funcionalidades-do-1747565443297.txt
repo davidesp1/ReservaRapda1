@@ -1,36 +1,0 @@
-Você é um desenvolvedor sênior responsável por revisar, corrigir e implementar as funcionalidades do painel administrativo de uma aplicação web. Siga rigorosamente os requisitos abaixo:
-1. Internacionalização
-    * Faça uma varredura completa em todas as páginas e modais para garantir que todos os textos (labels, botões, mensagens de erro, placeholders etc.) estejam prontos para tradução. 
-    * Confirme que o sistema de i18n carrega dinamicamente os recursos de idioma e exibe o conteúdo corretamente em pelo menos dois idiomas (por exemplo, português e inglês). 
-2. Dashboard (Painel alterar para Dashboard)
-    * Valide que os dados exibidos no dashboard são reais, recuperados diretamente do banco de dados. 
-    * Implemente ou ajuste o binding entre a API e o front-end para leitura e atualização em tempo real. 
-3. Clientes
-    * Garanta que a listagem, criação, edição e remoção de clientes persistam corretamente no banco. 
-    * Corrija o botão “Adicionar Cliente” que atualmente não funciona, implementar. 
-4. Gestão de Menu
-    * Ao adicionar novas categorias, o sistema exibe erro 403. Identifique o problema (CORS, autenticação ou autorização) e corrija. 
-5. Mesas
-    * A criação de mesas retorna erro 403. Verifique endpoints, headers e políticas de acesso, e garanta a persistência no banco. 
-6. Finanças
-    * Garanta que todos os relatórios e saldos exibidos reflitam os dados reais do banco. 
-    * Remova a seção de “Configurações” de pagamentos da área de Configurações geral e crie uma aba “Configurações de Pagamento” dentro de Finanças. 
-    * Nessa aba, implemente opções com toggles para cada método de pagamento (Cartão, MBWay, Multibanco, Transferência e Dinheiro), armazenando seu estado (ativo/inativo) no banco. 
-7. Pagamentos
-    * Elimine completamente a página “Pagamentos” do menu lateral e de quaisquer rotas acessíveis. 
-8. Reservas
-    * Adicione a página de Gestão de Reservas, exibindo, criando, editando e cancelando reservas com dados reais do banco. 
-9. Configurações
-    * Remova a entrada fixa de “Configurações” que aparece junto com “Sair” no menu lateral. 
-    * Mantenha apenas a entrada “Configurações” no sidebar principal, organizando corretamente suas subpáginas. 
-Critérios de aceitação:
-* Todos os endpoints must retornar HTTP 200 para operações válidas. 
-* Testes automatizados (unitários e de integração) cobrindo cada fluxo crítico. 
-* Interface totalmente traduzível (uso de chaves i18n, sem strings hardcoded). 
-* Documentação de cada API endpoint e payloads para front-end. 
-* Verificação manual rápida em módulo de testes, confirmando que cada botão e formulário funciona conforme o esperado. 
-Entregue:
-* Plano de ação passo a passo. 
-* Snippets de código exemplares (API, front-end, configurações de i18n). 
-* Comandos de migração ou seed necessários para preparar o ambiente de testes. 
-* Caso de teste mínimo para cada funcionalidade. 
