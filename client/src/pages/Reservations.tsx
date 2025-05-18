@@ -54,10 +54,7 @@ const Reservations: React.FC = () => {
     time: z.string({ required_error: 'Please select a time' }),
     partySize: z.coerce.number(),
     tableId: z.coerce.number(),
-    specialRequests: z.string().optional(),
-    duration: z.coerce.number().default(120),
     dietaryRequirements: z.string().optional(),
-    occasion: z.string().optional(),
   });
   
   type ReservationFormValues = z.infer<typeof reservationSchema>;
@@ -69,10 +66,7 @@ const Reservations: React.FC = () => {
       time: '',
       partySize: 2,
       tableId: undefined,
-      specialRequests: '',
-      duration: 120,
       dietaryRequirements: '',
-      occasion: '',
     },
   });
   
@@ -130,11 +124,9 @@ const Reservations: React.FC = () => {
       date: dateTime.toISOString(),
       tableId: data.tableId,
       partySize: data.partySize,
-      specialRequests: data.specialRequests,
-      notes: data.specialRequests, // Map to notes field in the schema
-      duration: data.duration,
       dietaryRequirements: data.dietaryRequirements,
-      occasion: data.occasion,
+      // Valor padrão fixo para a duração (2 horas)
+      duration: 120,
       // Gerar código de confirmação aleatório
       confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase()
     };
@@ -293,65 +285,6 @@ const Reservations: React.FC = () => {
                       />
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="duration"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('Duration')}</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
-                              value={field.value ? field.value.toString() : "120"}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder={t('SelectDuration')} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="90">1.5 {t('ReservationHours')}</SelectItem>
-                                <SelectItem value="120">2 {t('ReservationHours')}</SelectItem>
-                                <SelectItem value="150">2.5 {t('ReservationHours')}</SelectItem>
-                                <SelectItem value="180">3 {t('ReservationHours')}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormDescription>
-                              {t('DurationDescription')}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="occasion"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('Occasion')}</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
-                              value={field.value}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder={t('SelectOccasion')} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">{t('None')}</SelectItem>
-                                <SelectItem value="birthday">{t('Birthday')}</SelectItem>
-                                <SelectItem value="anniversary">{t('Anniversary')}</SelectItem>
-                                <SelectItem value="business">{t('BusinessMeeting')}</SelectItem>
-                                <SelectItem value="date">{t('DateNight')}</SelectItem>
-                                <SelectItem value="other">{t('Other')}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormDescription>
-                              {t('OccasionDescription')}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
                     
                     <FormField
                       control={form.control}
@@ -375,27 +308,7 @@ const Reservations: React.FC = () => {
                       )}
                     />
                     
-                    <FormField
-                      control={form.control}
-                      name="specialRequests"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('SpecialRequests')}</FormLabel>
-                          <FormControl>
-                            <textarea
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                              rows={3}
-                              placeholder={t('EnterSpecialRequests')}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            {t('SpecialRequestsDescription')}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+
                     
                     <Button 
                       type="submit" 
