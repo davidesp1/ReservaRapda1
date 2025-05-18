@@ -297,10 +297,17 @@ const MenuManager: React.FC = () => {
 
   // Handle menu item form submission
   const onItemSubmit = (data: z.infer<typeof menuItemSchema>) => {
+    // Convertemos o valor do preço de euros para centavos (int)
+    const formattedData = {
+      ...data,
+      // Multiplicamos por 100 e convertemos para inteiro
+      price: Math.round(data.price * 100)
+    };
+    
     if (editItem) {
-      updateItemMutation.mutate({ id: editItem.id, data });
+      updateItemMutation.mutate({ id: editItem.id, data: formattedData });
     } else {
-      createItemMutation.mutate(data);
+      createItemMutation.mutate(formattedData);
     }
   };
 
