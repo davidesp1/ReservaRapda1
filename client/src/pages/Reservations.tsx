@@ -1,32 +1,94 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useForm, Controller } from 'react-hook-form';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { CalendarIcon, Clock } from 'lucide-react';
+import { 
+  CalendarIcon, 
+  Clock, 
+  Plus, 
+  Calendar as CalendarIcon2,
+  Info, 
+  CreditCard,
+  Check,
+  AlertCircle,
+  ArrowRight,
+  Trash2
+} from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import CustomerLayout from '@/components/layouts/CustomerLayout';
 
+// Status de reserva
+type ReservationStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+
+// Tipo para os itens de menu da reserva
+interface MenuItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+// Interface para a nova reserva
+interface ReservationData {
+  id?: number;
+  date: Date;
+  time: string;
+  partySize: number;
+  tableId?: number;
+  status: ReservationStatus;
+  confirmationCode?: string;
+  items?: MenuItem[];
+  total?: number;
+  notes?: string;
+  paymentMethod?: string;
+  paymentStatus?: 'pending' | 'paid' | 'failed';
+}
+
 const Reservations: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, user, isLoading } = useAuth();
-  const [_, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { toast } = useToast();
+  
+  // Estado para controlar a etapa atual da criação da reserva
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [isCreatingReservation, setIsCreatingReservation] = useState(false);
+  
+  // Estado para armazenar dados da reserva em andamento
+  const [reservationData, setReservationData] = useState<ReservationData>({
+    date: new Date(),
+    time: '',
+    partySize: 2,
+    status: 'pending',
+    items: [],
+    notes: '',
+  });
+  
+  // Estado para o formulário básico
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [partySize, setPartySize] = useState<number>(2);
-  const { toast } = useToast();
   
   // Redirect if not authenticated
   useEffect(() => {
@@ -34,6 +96,12 @@ const Reservations: React.FC = () => {
       setLocation('/');
     }
   }, [isAuthenticated, isLoading, setLocation]);
+  
+  // Fetch das reservas do usuário
+  const { data: userReservations, isLoading: reservationsLoading, refetch: refetchReservations } = useQuery({
+    queryKey: ['/api/reservations'],
+    enabled: !!isAuthenticated,
+  });
   
   // Fetch available tables for the selected date and party size
   const { data: availableTables, isLoading: tablesLoading, refetch: refetchTables } = useQuery<any[]>({
@@ -53,7 +121,13 @@ const Reservations: React.FC = () => {
       
       return response.json();
     },
-    enabled: !!selectedDate && partySize > 0 && isAuthenticated,
+    enabled: !!selectedDate && partySize > 0 && isAuthenticated && isCreatingReservation,
+  });
+  
+  // Fetch menu items
+  const { data: menuItems, isLoading: menuItemsLoading } = useQuery({
+    queryKey: ['/api/menu-items'],
+    enabled: !!isAuthenticated && currentStep === 2,
   });
   
   // Time slots available for reservations
@@ -64,50 +138,158 @@ const Reservations: React.FC = () => {
     '20:00', '20:30', '21:00', '21:30'
   ];
   
-  const reservationSchema = z.object({
-    date: z.date({ required_error: 'Please select a date' }),
-    time: z.string({ required_error: 'Please select a time' }),
-    partySize: z.coerce.number(),
-    tableId: z.coerce.number(),
-    dietaryRequirements: z.string().optional(),
+  // Schema para validação da etapa 1 (Detalhes iniciais)
+  const step1Schema = z.object({
+    date: z.date({ required_error: t('PleaseSelectDate') }),
+    time: z.string({ required_error: t('PleaseSelectTime') }),
+    partySize: z.coerce.number().min(1, { message: t('InvalidPartySize') }),
+    tableId: z.coerce.number({ required_error: t('PleaseSelectTable') }),
+    notes: z.string().optional(),
   });
   
-  type ReservationFormValues = z.infer<typeof reservationSchema>;
+  type Step1FormValues = z.infer<typeof step1Schema>;
   
-  const form = useForm<ReservationFormValues>({
-    resolver: zodResolver(reservationSchema),
+  const step1Form = useForm<Step1FormValues>({
+    resolver: zodResolver(step1Schema),
     defaultValues: {
       date: undefined,
       time: '',
       partySize: 2,
       tableId: undefined,
-      dietaryRequirements: '',
+      notes: '',
     },
   });
   
-  // Update available tables when date or party size changes
-  useEffect(() => {
-    if (selectedDate) {
-      refetchTables();
-    }
-  }, [selectedDate, partySize, refetchTables]);
-  
-  // When date is selected in the form
+  // Quando a data é selecionada no formulário
   const onDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
-    form.setValue('date', date as Date);
+    step1Form.setValue('date', date as Date);
   };
   
-  // When party size changes in the form
+  // Quando o tamanho do grupo muda no formulário
   const onPartySizeChange = (value: string) => {
     const size = parseInt(value);
     setPartySize(size);
-    form.setValue('partySize', size);
+    step1Form.setValue('partySize', size);
   };
   
-  // Create reservation mutation
+  // Atualiza as mesas disponíveis quando a data ou o tamanho do grupo mudam
+  useEffect(() => {
+    if (selectedDate && isCreatingReservation) {
+      refetchTables();
+    }
+  }, [selectedDate, partySize, refetchTables, isCreatingReservation]);
+  
+  // Atualiza o estado com os dados da etapa 1
+  const onSubmitStep1 = (data: Step1FormValues) => {
+    // Atualiza os dados da reserva
+    setReservationData(prev => ({
+      ...prev,
+      date: data.date,
+      time: data.time,
+      partySize: data.partySize,
+      tableId: data.tableId,
+      notes: data.notes,
+    }));
+    
+    // Avança para a próxima etapa
+    setCurrentStep(2);
+  };
+  
+  // Função para adicionar item de menu à reserva
+  const addMenuItem = (item: any) => {
+    setReservationData(prev => {
+      const existingItems = prev.items || [];
+      const existingItem = existingItems.find(i => i.id === item.id);
+      
+      if (existingItem) {
+        // Atualiza a quantidade do item existente
+        return {
+          ...prev,
+          items: existingItems.map(i => 
+            i.id === item.id 
+              ? { ...i, quantity: i.quantity + 1 } 
+              : i
+          ),
+        };
+      } else {
+        // Adiciona o novo item à lista
+        return {
+          ...prev,
+          items: [...existingItems, { ...item, quantity: 1 }],
+        };
+      }
+    });
+  };
+  
+  // Função para remover item de menu da reserva
+  const removeMenuItem = (itemId: number) => {
+    setReservationData(prev => {
+      const existingItems = prev.items || [];
+      
+      return {
+        ...prev,
+        items: existingItems.filter(i => i.id !== itemId),
+      };
+    });
+  };
+  
+  // Função para atualizar a quantidade de um item
+  const updateItemQuantity = (itemId: number, quantity: number) => {
+    setReservationData(prev => {
+      const existingItems = prev.items || [];
+      
+      if (quantity <= 0) {
+        return {
+          ...prev,
+          items: existingItems.filter(i => i.id !== itemId),
+        };
+      }
+      
+      return {
+        ...prev,
+        items: existingItems.map(i => 
+          i.id === itemId 
+            ? { ...i, quantity } 
+            : i
+        ),
+      };
+    });
+  };
+  
+  // Submeter etapa 2 - Itens de menu
+  const submitStep2 = () => {
+    // Calcular valor total
+    const total = (reservationData.items || []).reduce(
+      (sum, item) => sum + (item.price * item.quantity), 
+      0
+    );
+    
+    setReservationData(prev => ({
+      ...prev,
+      total,
+    }));
+    
+    // Avançar para a próxima etapa
+    setCurrentStep(3);
+  };
+  
+  // Submeter etapa 3 - Pagamento
+  const submitStep3 = (paymentMethod: string) => {
+    setReservationData(prev => ({
+      ...prev,
+      paymentMethod,
+      paymentStatus: 'paid', // Simulando um pagamento bem-sucedido
+      confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+    }));
+    
+    // Avançar para a etapa final
+    setCurrentStep(4);
+  };
+  
+  // Criar reserva mutation
   const createReservationMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: ReservationData) => {
       const response = await apiRequest('POST', '/api/reservations', data);
       return response.json();
     },
@@ -117,7 +299,8 @@ const Reservations: React.FC = () => {
         description: t('ReservationSuccessMessage'),
       });
       queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
-      setLocation('/dashboard');
+      // Resetar o fluxo e voltar para a lista de reservas
+      finishReservationProcess();
     },
     onError: (error: any) => {
       toast({
@@ -128,25 +311,69 @@ const Reservations: React.FC = () => {
     }
   });
   
-  const onSubmit = (data: ReservationFormValues) => {
-    // Combine date and time
-    const dateTime = new Date(data.date);
-    const [hours, minutes] = data.time.split(':').map(Number);
+  // Finalizar processo e salvar a reserva
+  const finalizeReservation = () => {
+    // Prepare reservation data
+    const dateTime = new Date(reservationData.date);
+    const [hours, minutes] = reservationData.time.split(':').map(Number);
     dateTime.setHours(hours, minutes, 0, 0);
     
-    // Prepare reservation data
-    const reservationData = {
+    const submitData = {
+      ...reservationData,
       date: dateTime.toISOString(),
-      tableId: data.tableId,
-      partySize: data.partySize,
-      dietaryRequirements: data.dietaryRequirements,
-      // Valor padrão fixo para a duração (2 horas)
+      status: 'confirmed',
+      // Valores padrão
       duration: 120,
-      // Gerar código de confirmação aleatório
-      confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase()
     };
     
-    createReservationMutation.mutate(reservationData);
+    createReservationMutation.mutate(submitData);
+  };
+  
+  // Cancelar criação de reserva e voltar à lista
+  const cancelReservationCreation = () => {
+    setIsCreatingReservation(false);
+    setCurrentStep(1);
+    
+    // Resetar dados do formulário
+    step1Form.reset();
+  };
+  
+  // Finalizar processo de reserva
+  const finishReservationProcess = () => {
+    setIsCreatingReservation(false);
+    setCurrentStep(1);
+    refetchReservations();
+    
+    // Resetar dados do formulário
+    step1Form.reset();
+  };
+  
+  // Deletar reserva
+  const deleteReservationMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest('DELETE', `/api/reservations/${id}`);
+      return response.ok;
+    },
+    onSuccess: () => {
+      toast({
+        title: t('ReservationCancelled'),
+        description: t('ReservationCancelledMessage'),
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
+    },
+    onError: () => {
+      toast({
+        title: t('Error'),
+        description: t('ReservationCancelError'),
+        variant: 'destructive',
+      });
+    }
+  });
+  
+  const handleDeleteReservation = (id: number) => {
+    if (window.confirm(t('ConfirmCancelReservation'))) {
+      deleteReservationMutation.mutate(id);
+    }
   };
   
   return (
