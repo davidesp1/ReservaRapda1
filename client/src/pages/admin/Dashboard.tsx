@@ -197,10 +197,19 @@ const Dashboard: React.FC = () => {
         <div className="flex justify-between items-start">
           <div>
             <p className="text-sm text-gray-500 font-medium">{t('CurrentOccupancy')}</p>
-            <p className="text-2xl font-bold text-gray-800 mt-1">78%</p>
+            <p className="text-2xl font-bold text-gray-800 mt-1">{dashboardStats?.currentOccupancy || 0}%</p>
             <div className="flex items-center mt-2 text-sm">
-              <FaArrowDown className="text-brasil-red mr-1" />
-              <span className="text-brasil-red font-medium">3%</span>
+              {dashboardStats?.occupancyChange > 0 ? (
+                <>
+                  <FaArrowUp className="text-brasil-green mr-1" />
+                  <span className="text-brasil-green font-medium">{dashboardStats?.occupancyChange || 0}%</span>
+                </>
+              ) : (
+                <>
+                  <FaArrowDown className="text-brasil-red mr-1" />
+                  <span className="text-brasil-red font-medium">{Math.abs(dashboardStats?.occupancyChange || 0)}%</span>
+                </>
+              )}
               <span className="text-gray-500 ml-1">{t('vs_weekly_average')}</span>
             </div>
           </div>

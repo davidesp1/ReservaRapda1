@@ -226,8 +226,13 @@ const MenuManager: React.FC = () => {
 
   // Create category mutation
   const createCategoryMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', '/api/menu-categories', data);
+    mutationFn: async (data: z.infer<typeof categorySchema>) => {
+      // Garantir que os dados estão no formato correto
+      const categoryData = {
+        name: data.name,
+        description: data.description || ""
+      };
+      const response = await apiRequest('POST', '/api/menu-categories', categoryData);
       return response.json();
     },
     onSuccess: () => {
@@ -249,8 +254,13 @@ const MenuManager: React.FC = () => {
 
   // Update category mutation
   const updateCategoryMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number, data: any }) => {
-      const response = await apiRequest('PUT', `/api/menu-categories/${id}`, data);
+    mutationFn: async ({ id, data }: { id: number, data: z.infer<typeof categorySchema> }) => {
+      // Garantir que os dados estão no formato correto
+      const categoryData = {
+        name: data.name,
+        description: data.description || ""
+      };
+      const response = await apiRequest('PUT', `/api/menu-categories/${id}`, categoryData);
       return response.json();
     },
     onSuccess: () => {
