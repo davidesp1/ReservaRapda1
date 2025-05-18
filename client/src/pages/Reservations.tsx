@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, Link } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -318,15 +318,24 @@ const Reservations: React.FC = () => {
     const [hours, minutes] = reservationData.time.split(':').map(Number);
     dateTime.setHours(hours, minutes, 0, 0);
     
+    // Conversão adequada para formato compatível com a API
     const submitData = {
-      ...reservationData,
+      userId: user?.id,
       date: dateTime.toISOString(),
+      tableId: reservationData.tableId,
+      partySize: reservationData.partySize,
+      notes: reservationData.notes || '',
       status: 'confirmed',
+      confirmationCode: reservationData.confirmationCode,
+      paymentMethod: reservationData.paymentMethod,
+      paymentStatus: reservationData.paymentStatus,
+      items: reservationData.items,
+      total: reservationData.total,
       // Valores padrão
       duration: 120,
     };
     
-    createReservationMutation.mutate(submitData);
+    createReservationMutation.mutate(submitData as any);
   };
   
   // Cancelar criação de reserva e voltar à lista
@@ -390,11 +399,11 @@ const Reservations: React.FC = () => {
             <CardDescription className="md:text-base text-sm">{t('PleaseSelectDateAndPartySize')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
+            <Form {...step1Form}>
+              <form onSubmit={step1Form.handleSubmit(onSubmitStep1)} className="space-y-4 md:space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormField
-                        control={form.control}
+                        control={step1Form.control}
                         name="date"
                         render={({ field }) => (
                           <FormItem>
@@ -433,7 +442,7 @@ const Reservations: React.FC = () => {
                       />
                       
                       <FormField
-                        control={form.control}
+                        control={step1Form.control}
                         name="time"
                         render={({ field }) => (
                           <FormItem>
@@ -467,7 +476,7 @@ const Reservations: React.FC = () => {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormField
-                        control={form.control}
+                        control={step1Form.control}
                         name="partySize"
                         render={({ field }) => (
                           <FormItem>
@@ -493,7 +502,7 @@ const Reservations: React.FC = () => {
                       />
                       
                       <FormField
-                        control={form.control}
+                        control={step1Form.control}
                         name="tableId"
                         render={({ field }) => (
                           <FormItem>
@@ -529,21 +538,21 @@ const Reservations: React.FC = () => {
                     
                     
                     <FormField
-                      control={form.control}
-                      name="dietaryRequirements"
+                      control={step1Form.control}
+                      name="notes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('DietaryRequirements')}</FormLabel>
+                          <FormLabel>{t('Notes')}</FormLabel>
                           <FormControl>
                             <textarea
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brasil-green focus:border-transparent"
-                              rows={2}
-                              placeholder={t('DietaryRequirementsPlaceholder')}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brasil-green focus:border-transparent resize-none"
+                              rows={3}
+                              placeholder={t('NotesPlaceholder')}
                               {...field}
                             />
                           </FormControl>
                           <FormDescription>
-                            {t('DietaryRequirementsDescription')}
+                            {t('NotesDescription')}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -551,24 +560,28 @@ const Reservations: React.FC = () => {
                     />
                     
 
-                    
-                    <Button 
-                      type="submit" 
-                      className="bg-brasil-green hover:bg-green-700 text-white"
-                      disabled={
-                        createReservationMutation.isPending || 
-                        !availableTables || 
-                        !(Array.isArray(availableTables) && availableTables.length > 0)
-                      }
-                    >
-                      {createReservationMutation.isPending ? (
+                    <div className="flex justify-between pt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={cancelReservationCreation}
+                      >
+                        {t('Cancel')}
+                      </Button>
+                      
+                      <Button 
+                        type="submit" 
+                        className="bg-brasil-green hover:bg-green-700 text-white"
+                        disabled={
+                          !availableTables || 
+                          !(Array.isArray(availableTables) && availableTables.length > 0)
+                        }
+                      >
                         <span className="flex items-center">
-                          <i className="fas fa-spinner fa-spin mr-2"></i> {t('Processing')}
+                          {t('Continue')} <ArrowRight className="ml-2 h-4 w-4" />
                         </span>
-                      ) : (
-                        t('ConfirmReservation')
-                      )}
-                    </Button>
+                      </Button>
+                    </div>
                   </form>
                 </Form>
               </CardContent>
