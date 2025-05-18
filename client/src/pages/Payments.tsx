@@ -157,7 +157,7 @@ const PaymentsPage = () => {
           <h1 className="text-2xl font-bold">{t('Payments')}</h1>
           <Button 
             variant="outline" 
-            className="border-brasil-blue text-brasil-blue hover:bg-brasil-blue/10"
+            className="bg-brasil-green text-white border-brasil-green hover:bg-brasil-green/90"
             onClick={() => setShowSettings(!showSettings)}
           >
             {showSettings ? t('HideSettings') : t('PaymentSettings')}

@@ -4,6 +4,7 @@ import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { Helmet } from 'react-helmet';
 import CustomerSidebar from '@/components/customer/Sidebar';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { Menu, User, Bell, ChevronRight } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -59,9 +60,12 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
         <h1 className="text-lg font-bold">Opa que delicia</h1>
       </div>
       <div className="flex items-center">
-        <Button variant="ghost" size="icon" className="relative mr-3 text-white hover:bg-brazil-blue/80">
+        <div className="mr-2 text-white">
+          <LanguageSwitcher />
+        </div>
+        <Button variant="ghost" size="icon" className="relative mr-3 text-white hover:bg-brasil-blue/80">
           <Bell className="text-lg" />
-          <span className="absolute -top-1 -right-1 bg-brazil-red text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 bg-brasil-red text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
             3
           </span>
         </Button>
@@ -87,10 +91,11 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
         {t('Hello')}, {user?.firstName || t('Client')}!
       </h1>
       <div className="flex items-center space-x-4">
+        <LanguageSwitcher />
         <div className="relative">
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5 text-gray-600" />
-            <span className="absolute -top-1 -right-1 bg-brazil-red text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 bg-brasil-red text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
               3
             </span>
           </Button>
