@@ -24,6 +24,12 @@ const Dashboard: React.FC = () => {
     queryKey: ['/api/stats/dashboard'],
     enabled: isAuthenticated && isAdmin,
   });
+
+  // Fetch recent reservations - dados reais das reservações
+  const { data: recentReservations = [], isLoading: reservationsLoading } = useQuery<any[]>({
+    queryKey: ['/api/reservations', { limit: 5 }],
+    enabled: isAuthenticated && isAdmin,
+  });
   
   useEffect(() => {
     let salesChartInstance: Chart | undefined;
@@ -288,12 +294,6 @@ const Dashboard: React.FC = () => {
     </div>
   );
 
-  // Fetch recent reservations
-  const { data: recentReservations = [], isLoading: reservationsLoading } = useQuery<any[]>({
-    queryKey: ['/api/reservations', { limit: 5 }],
-    enabled: isAuthenticated && isAdmin,
-  });
-  
   const DesktopReservationsTable = () => {
     // Format date from ISO string to readable format
     const formatDate = (dateString: string) => {
