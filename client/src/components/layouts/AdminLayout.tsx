@@ -4,6 +4,7 @@ import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { Helmet } from 'react-helmet';
 import AdminSidebar from '@/components/admin/Sidebar';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { FaBell, FaBars } from 'react-icons/fa';
 import { format } from 'date-fns';
@@ -55,6 +56,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         <h1 className="text-lg font-bold">{t('AdminDashboard')}</h1>
       </div>
       <div className="flex items-center">
+        <div className="mr-2 text-white">
+          <LanguageSwitcher />
+        </div>
         <button className="relative mr-4">
           <FaBell className="text-lg" />
           <span className="absolute -top-1 -right-1 bg-brasil-red text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
@@ -92,6 +96,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     <div id="header" className="flex justify-between items-center mb-8">
       <h1 className="text-2xl font-bold text-gray-800 font-montserrat">{title}</h1>
       <div className="flex items-center space-x-4">
+        <LanguageSwitcher />
         <div className="relative">
           <button className="relative">
             <FaBell className="text-xl text-gray-600" />
