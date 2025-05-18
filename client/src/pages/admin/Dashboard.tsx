@@ -18,7 +18,7 @@ const Dashboard: React.FC = () => {
   const salesChartRef = useRef<HTMLCanvasElement>(null);
   const categoryChartRef = useRef<HTMLCanvasElement>(null);
   
-  // Fetch dashboard stats - usando dados mockados para visualização
+  // Fetch dashboard stats - usando dados reais do banco de dados
   const { data: dashboardStats, isLoading: statsLoading } = useQuery<any>({
     queryKey: ['/api/stats/dashboard'],
     enabled: isAuthenticated && isAdmin,
@@ -38,10 +38,10 @@ const Dashboard: React.FC = () => {
         salesChartInstance = new Chart(salesCtx, {
           type: 'bar',
           data: {
-            labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+            labels: dashboardStats?.salesData?.labels || ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
             datasets: [{
-              label: 'Faturamento (R$)',
-              data: [3200, 2800, 4100, 3700, 5200, 6500, 4289],
+              label: 'Faturamento (€)',
+              data: dashboardStats?.salesData?.values || [0, 0, 0, 0, 0, 0, 0],
               backgroundColor: '#002776', // Brazil Blue
               borderWidth: 0,
               borderRadius: 4
@@ -77,9 +77,9 @@ const Dashboard: React.FC = () => {
         categoryChartInstance = new Chart(categoryCtx, {
           type: 'doughnut',
           data: {
-            labels: ['Pratos Principais', 'Bebidas', 'Sobremesas', 'Entradas'],
+            labels: dashboardStats?.categoryData?.labels || ['Pratos Principais', 'Bebidas', 'Sobremesas', 'Entradas'],
             datasets: [{
-              data: [45, 25, 15, 15],
+              data: dashboardStats?.categoryData?.values || [0, 0, 0, 0],
               backgroundColor: [
                 '#002776', // Brazil Blue
                 '#009c3b', // Brazil Green
@@ -143,10 +143,21 @@ const Dashboard: React.FC = () => {
         <div className="flex justify-between items-start">
           <div>
             <p className="text-sm text-gray-500 font-medium">{t('TodayRevenue')}</p>
-            <p className="text-2xl font-bold text-gray-800 mt-1">R$ 4.289,00</p>
+            <p className="text-2xl font-bold text-gray-800 mt-1">
+              {dashboardStats?.todayRevenue ? `€ ${dashboardStats.todayRevenue.toFixed(2)}` : '€ 0,00'}
+            </p>
             <div className="flex items-center mt-2 text-sm">
-              <FaArrowUp className="text-brasil-green mr-1" />
-              <span className="text-brasil-green font-medium">12%</span>
+              {dashboardStats?.revenueChange > 0 ? (
+                <>
+                  <FaArrowUp className="text-brasil-green mr-1" />
+                  <span className="text-brasil-green font-medium">{dashboardStats?.revenueChange || 0}%</span>
+                </>
+              ) : (
+                <>
+                  <FaArrowDown className="text-brasil-red mr-1" />
+                  <span className="text-brasil-red font-medium">{Math.abs(dashboardStats?.revenueChange || 0)}%</span>
+                </>
+              )}
               <span className="text-gray-500 ml-1">{t('vs_last_week')}</span>
             </div>
           </div>
@@ -160,10 +171,19 @@ const Dashboard: React.FC = () => {
         <div className="flex justify-between items-start">
           <div>
             <p className="text-sm text-gray-500 font-medium">{t('TodayReservations')}</p>
-            <p className="text-2xl font-bold text-gray-800 mt-1">42</p>
+            <p className="text-2xl font-bold text-gray-800 mt-1">{dashboardStats?.todayReservations || 0}</p>
             <div className="flex items-center mt-2 text-sm">
-              <FaArrowUp className="text-brasil-green mr-1" />
-              <span className="text-brasil-green font-medium">8%</span>
+              {dashboardStats?.reservationsChange > 0 ? (
+                <>
+                  <FaArrowUp className="text-brasil-green mr-1" />
+                  <span className="text-brasil-green font-medium">{dashboardStats?.reservationsChange || 0}%</span>
+                </>
+              ) : (
+                <>
+                  <FaArrowDown className="text-brasil-red mr-1" />
+                  <span className="text-brasil-red font-medium">{Math.abs(dashboardStats?.reservationsChange || 0)}%</span>
+                </>
+              )}
               <span className="text-gray-500 ml-1">{t('vs_yesterday')}</span>
             </div>
           </div>
