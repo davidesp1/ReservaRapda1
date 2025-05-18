@@ -15,6 +15,7 @@ import Chart from 'chart.js/auto';
 const Dashboard: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, isAdmin } = useAuth();
+  const [_, setLocation] = useLocation();
   const salesChartRef = useRef<HTMLCanvasElement>(null);
   const categoryChartRef = useRef<HTMLCanvasElement>(null);
   
@@ -139,7 +140,10 @@ const Dashboard: React.FC = () => {
   // Desktop Layout Components
   const DesktopMetricsCards = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-brasil-green">
+      <div 
+        className="bg-white rounded-xl shadow-md p-6 border-t-4 border-brasil-green cursor-pointer hover:shadow-lg transition-shadow"
+        onClick={() => setLocation('/admin/finance')}
+      >
         <div className="flex justify-between items-start">
           <div>
             <p className="text-sm text-gray-500 font-medium">{t('TodayRevenue')}</p>
@@ -167,7 +171,10 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-brasil-blue">
+      <div 
+        className="bg-white rounded-xl shadow-md p-6 border-t-4 border-brasil-blue cursor-pointer hover:shadow-lg transition-shadow"
+        onClick={() => setLocation('/admin/reservations')}
+      >
         <div className="flex justify-between items-start">
           <div>
             <p className="text-sm text-gray-500 font-medium">{t('TodayReservations')}</p>

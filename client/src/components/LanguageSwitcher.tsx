@@ -32,18 +32,23 @@ const LanguageSwitcher = () => {
     es: 'Español'
   };
 
-  // Language flag emojis
-  const languageFlags: Record<string, string> = {
-    pt: '🇵🇹',
-    en: '🇬🇧',
-    es: '🇪🇸'
+  // Language flags with country codes for flag API
+  const languageFlagCodes: Record<string, string> = {
+    pt: 'pt',
+    en: 'gb',
+    es: 'es'
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full">
-          <Globe className="h-5 w-5" />
+        <Button variant="ghost" size="sm" className="h-8 px-2 flex items-center gap-1">
+          <img 
+            src={`https://flagcdn.com/w20/${languageFlagCodes[currentLanguage]}.png`}
+            alt={languageNames[currentLanguage]}
+            className="w-5 h-auto mr-1"
+          />
+          <Globe className="h-4 w-4" />
           <span className="sr-only">Toggle language</span>
         </Button>
       </DropdownMenuTrigger>
@@ -54,7 +59,11 @@ const LanguageSwitcher = () => {
             onClick={() => changeLanguage(langCode)}
             className={`flex items-center ${currentLanguage === langCode ? 'font-bold bg-muted' : ''}`}
           >
-            <span className="mr-2">{languageFlags[langCode]}</span>
+            <img 
+              src={`https://flagcdn.com/w20/${languageFlagCodes[langCode]}.png`}
+              alt={languageNames[langCode]}
+              className="w-5 h-auto mr-2"
+            />
             {languageNames[langCode]}
           </DropdownMenuItem>
         ))}
