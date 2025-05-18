@@ -9,8 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useQuery } from '@tanstack/react-query';
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { Download, Search, ChevronDown, Calendar } from 'lucide-react';
+import { 
+  Download, Search, ChevronDown, Calendar, CreditCard, 
+  Smartphone, Banknote, ArrowLeftRight, Landmark
+} from 'lucide-react';
 import { PAYMENT_METHODS, PAYMENT_STATUS } from '@/constants';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
@@ -220,9 +224,10 @@ const Finance: React.FC = () => {
       />
 
       <Tabs defaultValue={currentTab} onValueChange={setCurrentTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
+        <TabsList className="grid w-full grid-cols-3 md:w-[600px]">
           <TabsTrigger value="payments">{t('Payments')}</TabsTrigger>
           <TabsTrigger value="analytics">{t('Analytics')}</TabsTrigger>
+          <TabsTrigger value="payment_settings">{t('PaymentSettings')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="payments">
@@ -405,6 +410,59 @@ const Finance: React.FC = () => {
             revenueData={revenueByDay}
             paymentMethodData={paymentsByMethod}
           />
+        </TabsContent>
+
+        <TabsContent value="payment_settings">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('PaymentSettings')}</CardTitle>
+              <CardDescription>{t('ManageAvailablePaymentMethods')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid gap-6">
+                  {[
+                    { id: 'card', name: t('CreditCard'), icon: 'credit-card' },
+                    { id: 'mbway', name: 'MBWay', icon: 'smartphone' },
+                    { id: 'multibanco', name: 'Multibanco', icon: 'bank' },
+                    { id: 'transfer', name: t('BankTransfer'), icon: 'arrows-right-left' },
+                    { id: 'cash', name: t('Cash'), icon: 'banknote' }
+                  ].map((method) => (
+                    <div key={method.id} className="flex items-center justify-between border p-4 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="bg-muted w-10 h-10 rounded-full flex items-center justify-center">
+                          <span className="text-muted-foreground">
+                            {method.icon === 'credit-card' && <CreditCard className="h-5 w-5" />}
+                            {method.icon === 'smartphone' && <Smartphone className="h-5 w-5" />}
+                            {method.icon === 'bank' && <Landmark className="h-5 w-5" />}
+                            {method.icon === 'arrows-right-left' && <ArrowLeftRight className="h-5 w-5" />}
+                            {method.icon === 'banknote' && <Banknote className="h-5 w-5" />}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium">{method.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {method.id === 'card' && t('ProcessedByStripe')}
+                            {method.id === 'mbway' && t('ProcessedByEuPago')}
+                            {method.id === 'multibanco' && t('ProcessedByEuPago')}
+                            {method.id === 'transfer' && t('ManualVerification')}
+                            {method.id === 'cash' && t('PaidAtRestaurant')}
+                          </p>
+                        </div>
+                      </div>
+                      <Switch 
+                        checked={true}
+                        onCheckedChange={() => {}}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-6">
+                  <Button className="w-full">{t('SaveSettings')}</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </AdminLayout>
