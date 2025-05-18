@@ -519,64 +519,144 @@ const Dashboard: React.FC = () => {
     </section>
   );
 
-  const MobileAlertsSection = () => (
-    <section className="px-4 py-2">
-      <h3 className="font-semibold mb-2">{t('AlertsNotifications')}</h3>
-      <div className="space-y-3">
-        <div className="bg-white rounded-lg shadow p-3 border-l-4 border-brasil-red">
-          <div className="flex items-start">
-            <div className="bg-red-100 p-2 rounded-full mr-3">
-              <FaChair className="text-brasil-red" />
+  const MobileAlertsSection = () => {
+    // Dados de alertas dinâmicos que futuramente podem vir do servidor
+    const alerts = [
+      {
+        id: 1,
+        type: 'warning',
+        title: t('LowInventory'),
+        message: t('LowInventoryItems'),
+        time: t('TimeAgo', { time: 30, unit: t('Minutes') }),
+        icon: <FaChair className="text-brasil-red" />,
+        color: 'border-brasil-red',
+        bgColor: 'bg-red-100'
+      },
+      {
+        id: 2,
+        type: 'info',
+        title: t('VIPReservation'),
+        message: t('VIPConfirmedTonight'),
+        time: t('TimeAgo', { time: 2, unit: t('Hours') }),
+        icon: <FaCalendarCheck className="text-brasil-yellow" />,
+        color: 'border-brasil-yellow',
+        bgColor: 'bg-yellow-100'
+      }
+    ];
+    
+    return (
+      <section className="px-4 py-2">
+        <h3 className="font-semibold mb-2">{t('AlertsNotifications')}</h3>
+        <div className="space-y-3">
+          {alerts.map(alert => (
+            <div key={alert.id} className={`bg-white rounded-lg shadow p-3 border-l-4 ${alert.color}`}>
+              <div className="flex items-start">
+                <div className={`${alert.bgColor} p-2 rounded-full mr-3`}>
+                  {alert.icon}
+                </div>
+                <div>
+                  <h4 className="font-medium text-sm">{alert.title}</h4>
+                  <p className="text-xs text-gray-600">{alert.message}</p>
+                  <p className="text-xs text-gray-400 mt-1">{alert.time}</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <h4 className="font-medium text-sm">{t('LowInventory')}</h4>
-              <p className="text-xs text-gray-600">{t('LowInventoryItems')}</p>
-              <p className="text-xs text-gray-400 mt-1">30 {t('MinutesAgo')}</p>
-            </div>
-          </div>
+          ))}
+        </div>
+      </section>
+    );
+  };
+
+  const MobileRecentReservations = () => {
+    // Format date from ISO string to readable format
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString();
+    };
+
+    // Format time from ISO string to readable format
+    const formatTime = (dateString: string) => {
+      const date = new Date(dateString);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    // Get status badge class based on reservation status
+    const getStatusClass = (status: string) => {
+      switch(status) {
+        case 'confirmed':
+          return 'bg-green-100 text-green-800';
+        case 'pending':
+          return 'bg-yellow-100 text-yellow-800';
+        case 'cancelled':
+          return 'bg-gray-100 text-gray-800';
+        case 'completed':
+          return 'bg-blue-100 text-blue-800';
+        default:
+          return 'bg-gray-100 text-gray-800';
+      }
+    };
+
+    // Get translated status text
+    const getStatusText = (status: string) => {
+      switch(status) {
+        case 'confirmed':
+          return t('Confirmed');
+        case 'pending':
+          return t('Pending');
+        case 'cancelled':
+          return t('Cancelled');
+        case 'completed':
+          return t('Completed');
+        default:
+          return status;
+      }
+    };
+    
+    return (
+      <section className="px-4 py-2 mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="font-semibold">{t('TodaysReservations')}</h3>
+          <span 
+            className="text-brasil-blue text-sm cursor-pointer"
+            onClick={() => setLocation('/admin/reservations')}
+          >
+            {t('ViewAll')}
+          </span>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-3 border-l-4 border-brasil-yellow">
-          <div className="flex items-start">
-            <div className="bg-yellow-100 p-2 rounded-full mr-3">
-              <FaCalendarCheck className="text-brasil-yellow" />
+        <div className="space-y-3">
+          {reservationsLoading ? (
+            <div className="flex justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-brasil-blue"></div>
             </div>
-            <div>
-              <h4 className="font-medium text-sm">{t('VIPReservation')}</h4>
-              <p className="text-xs text-gray-600">{t('VIPConfirmedTonight')}</p>
-              <p className="text-xs text-gray-400 mt-1">2 {t('HoursAgo')}</p>
+          ) : recentReservations && recentReservations.length > 0 ? (
+            recentReservations.slice(0, 3).map((reservation: any) => (
+              <div 
+                key={reservation.id} 
+                className="bg-white rounded-lg shadow p-3 cursor-pointer active:bg-gray-50"
+                onClick={() => setLocation(`/admin/reservations/${reservation.id}`)}
+              >
+                <div className="flex justify-between mb-1">
+                  <span className="font-medium">#{reservation.id}</span>
+                  <span className={`px-2 py-0.5 text-xs rounded-full ${getStatusClass(reservation.status)}`}>
+                    {getStatusText(reservation.status)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>{reservation.userName || t('Guest')}</span>
+                  <span>{formatTime(reservation.date)} • {reservation.partySize} {t('people')}</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="bg-white rounded-lg shadow p-4 text-center text-gray-500">
+              {t('NoReservationsToday')}
             </div>
-          </div>
+          )}
         </div>
-      </div>
-    </section>
-  );
-
-  const MobileRecentReservations = () => (
-    <section className="px-4 py-2 mb-6">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="font-semibold">{t('TodaysReservations')}</h3>
-        <span className="text-brasil-blue text-sm">{t('ViewAll')}</span>
-      </div>
-      
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-white rounded-lg shadow p-3">
-            <div className="flex justify-between mb-1">
-              <span className="font-medium">#{4720 + i}</span>
-              <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800">
-                {t('Confirmed')}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>João Silva</span>
-              <span>19:30 • 4 {t('People')}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
+      </section>
+    );
+  };
 
   return (
     <AdminLayout title={t('Dashboard')}>
