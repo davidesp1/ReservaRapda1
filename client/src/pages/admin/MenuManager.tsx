@@ -136,18 +136,22 @@ const MenuManager: React.FC = () => {
     }
   }, [isCategoryModalOpen, editCategory, categoryForm]);
 
-  // Filter menu items based on search
+  // Filter menu items based on search and category
   const filteredMenuItems = React.useMemo(() => {
     if (!menuItems || !Array.isArray(menuItems)) return [];
     
     return menuItems.filter((item: any) => {
       const searchLower = searchText.toLowerCase();
-      return (
+      const matchesSearch = 
         item.name.toLowerCase().includes(searchLower) ||
-        (item.description && item.description.toLowerCase().includes(searchLower))
-      );
+        (item.description && item.description.toLowerCase().includes(searchLower));
+      
+      const matchesCategory = currentCategoryId === null || currentCategoryId === "all" || 
+        item.categoryId.toString() === currentCategoryId;
+      
+      return matchesSearch && matchesCategory;
     });
-  }, [menuItems, searchText]);
+  }, [menuItems, searchText, currentCategoryId]);
 
   // Create menu item mutation
   const createItemMutation = useMutation({
@@ -391,7 +395,7 @@ const MenuManager: React.FC = () => {
                     <SelectValue placeholder={t('AllCategories')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">{t('AllCategories')}</SelectItem>
+                    <SelectItem value="all">{t('AllCategories')}</SelectItem>
                     {categories?.map((category: any) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.name}
@@ -646,10 +650,15 @@ const MenuManager: React.FC = () => {
                       <FormLabel>{t('Category')}</FormLabel>
                       <Select 
                         onValueChange={(value) => {
-                          // Convert string to number if it's not empty
-                          field.onChange(value ? parseInt(value) : undefined);
+                          // Convert string to number if it's not empty and not "select"
+                          if (value && value !== "select") {
+                            field.onChange(parseInt(value));
+                          } else {
+                            // Set to undefined if "select" is chosen
+                            field.onChange(undefined);
+                          }
                         }} 
-                        value={field.value ? field.value.toString() : ""}
+                        value={field.value ? field.value.toString() : "select"}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -657,7 +666,7 @@ const MenuManager: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">{t('SelectCategory')}</SelectItem>
+                          <SelectItem value="select">{t('SelectCategory')}</SelectItem>
                           {categories?.map((category: any) => (
                             <SelectItem 
                               key={category.id} 
