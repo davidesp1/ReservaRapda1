@@ -22,7 +22,7 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
   const { t } = useTranslation();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [_, setLocation] = useLocation();
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  // Estado para o menu móvel foi removido pois é gerenciado pelo componente Sheet
   
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -47,13 +47,13 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
   const MobileHeader = () => (
     <header className="bg-brazil-blue text-white px-4 py-3 flex justify-between items-center shadow-md">
       <div className="flex items-center">
-        <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+        <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="mr-3 text-white hover:bg-brazil-blue/80">
-              <Menu className="text-xl" />
+            <Button variant="ghost" size="icon" className="mr-3 text-white hover:bg-brasil-blue/80">
+              <Menu className="w-6 h-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-[75%] max-w-xs bg-brazil-blue">
+          <SheetContent side="left" className="p-0 w-[75%] max-w-[280px] bg-brasil-blue border-r-brasil-blue">
             <CustomerSidebar />
           </SheetContent>
         </Sheet>

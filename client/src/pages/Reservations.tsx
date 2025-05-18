@@ -38,6 +38,21 @@ const Reservations: React.FC = () => {
   // Fetch available tables for the selected date and party size
   const { data: availableTables, isLoading: tablesLoading, refetch: refetchTables } = useQuery<any[]>({
     queryKey: ['/api/tables/available', { date: selectedDate?.toISOString(), partySize }],
+    queryFn: async ({ queryKey }) => {
+      const [_, params] = queryKey;
+      const { date, partySize } = params as { date?: string; partySize: number };
+      
+      if (!date) {
+        return [];
+      }
+      
+      const response = await apiRequest(
+        'GET', 
+        `/api/tables/available?date=${encodeURIComponent(date)}&partySize=${partySize}`
+      );
+      
+      return response.json();
+    },
     enabled: !!selectedDate && partySize > 0 && isAuthenticated,
   });
   

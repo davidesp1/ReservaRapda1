@@ -114,13 +114,9 @@ const CustomerSidebar: React.FC = () => {
 
   return (
     <>
-      {/* Mobile sidebar */}
-      <div className="md:hidden">
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetContent side="left" className="p-0 w-64 bg-brazil-blue">
-            <Sidebar />
-          </SheetContent>
-        </Sheet>
+      {/* Mobile sidebar - removido o Sheet daqui pois ele já está no CustomerLayout */}
+      <div className="md:hidden h-full">
+        <Sidebar />
       </div>
       
       {/* Desktop sidebar */}
