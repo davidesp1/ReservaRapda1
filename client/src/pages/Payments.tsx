@@ -173,7 +173,7 @@ const PaymentsPage = () => {
             <CardContent className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium mb-4">{t('DefaultPaymentMethods')}</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Cartão de Crédito */}
                   <Card className="border-2 border-brasil-blue">
                     <CardHeader className="pb-2">
@@ -212,6 +212,52 @@ const PaymentsPage = () => {
                     </CardContent>
                     <CardFooter className="flex justify-between pt-0">
                       <Button variant="ghost" size="sm">{t('Edit')}</Button>
+                      <Button variant="ghost" size="sm">{t('MakeDefault')}</Button>
+                    </CardFooter>
+                  </Card>
+                  
+                  {/* Multibanco */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Multibanco</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="text-sm text-gray-500">
+                        <div className="flex items-center mb-1">
+                          <span className="font-medium mr-2">{t('Entity')}:</span>
+                          12345
+                        </div>
+                        <div className="flex items-center">
+                          <span className="font-medium mr-2">{t('Reference')}:</span>
+                          123 456 789
+                        </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-between pt-0">
+                      <Button variant="ghost" size="sm">{t('Generate')}</Button>
+                      <Button variant="ghost" size="sm">{t('MakeDefault')}</Button>
+                    </CardFooter>
+                  </Card>
+                  
+                  {/* Transferência Bancária */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">{t('BankTransfer')}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="text-sm text-gray-500">
+                        <div className="flex items-center mb-1">
+                          <span className="font-medium mr-2">IBAN:</span>
+                          PT50 0023 0000 45678900123 72
+                        </div>
+                        <div className="flex items-center">
+                          <span className="font-medium mr-2">{t('BankName')}:</span>
+                          Banco Opa que delícia
+                        </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-between pt-0">
+                      <Button variant="ghost" size="sm">{t('CopyDetails')}</Button>
                       <Button variant="ghost" size="sm">{t('MakeDefault')}</Button>
                     </CardFooter>
                   </Card>

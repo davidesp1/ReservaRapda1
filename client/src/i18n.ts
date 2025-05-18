@@ -314,6 +314,8 @@ const resources = {
       "NoPaymentsMessage": "Você ainda não realizou nenhum pagamento",
       "ClearSearch": "Limpar pesquisa",
       "Receipt": "Recibo",
+      "Generate": "Gerar",
+      "CopyDetails": "Copiar Detalhes",
       "Card": "Cartão",
       "Multibanco": "Multibanco",
       "Transfer": "Transferência",
