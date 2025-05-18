@@ -87,7 +87,10 @@ const Customers: React.FC = () => {
                 onChange={(e) => setSearchText(e.target.value)}
               />
             </div>
-            <Button className="bg-brasil-green text-white">
+            <Button 
+              className="bg-brasil-green text-white hover:bg-brasil-green/90"
+              onClick={() => setLocation('/admin/customers/add')}
+            >
               <UserPlus className="mr-2 h-4 w-4" /> {t('AddCustomer')}
             </Button>
           </div>

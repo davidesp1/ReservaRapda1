@@ -25,6 +25,7 @@ const Payments = lazy(() => import("@/pages/Payments"));
 // Admin pages
 import Dashboard from "@/pages/admin/Dashboard";
 import Customers from "@/pages/admin/Customers";
+import CustomersAdd from "@/pages/admin/CustomersAdd";
 import MenuManager from "@/pages/admin/MenuManager";
 import TableManager from "@/pages/admin/TableManager";
 import Finance from "@/pages/admin/Finance";
@@ -102,6 +103,7 @@ function Router() {
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/dashboard" component={Dashboard} />
       <Route path="/admin/customers" component={Customers} />
+      <Route path="/admin/customers/add" component={CustomersAdd} />
       <Route path="/admin/menu" component={MenuManager} />
       <Route path="/admin/tables" component={TableManager} />
       <Route path="/admin/finance" component={Finance} />

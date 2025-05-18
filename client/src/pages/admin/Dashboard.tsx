@@ -406,14 +406,21 @@ const Dashboard: React.FC = () => {
   const MobileMetricsCards = () => (
     <section className="px-4 py-2">
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white rounded-lg shadow p-3">
+        <div 
+          className="bg-white rounded-lg shadow p-3 cursor-pointer active:bg-gray-50"
+          onClick={() => setLocation('/admin/finance')}
+        >
           <div className="flex justify-between items-start">
             <div>
               <p className="text-xs text-gray-500">{t('TodayRevenue')}</p>
-              <h3 className="text-lg font-bold">R$ 4.289</h3>
-              <p className="text-xs text-brasil-green flex items-center">
-                <FaArrowUp className="mr-1" />
-                12%
+              <h3 className="text-lg font-bold">R$ {dashboardStats?.todayRevenue || 0}</h3>
+              <p className={`text-xs ${dashboardStats?.revenueChange > 0 ? 'text-brasil-green' : 'text-brasil-red'} flex items-center`}>
+                {dashboardStats?.revenueChange > 0 ? (
+                  <FaArrowUp className="mr-1" />
+                ) : (
+                  <FaArrowDown className="mr-1" />
+                )}
+                {Math.abs(dashboardStats?.revenueChange || 0)}%
               </p>
             </div>
             <div className="bg-blue-100 p-2 rounded-full">
@@ -422,14 +429,21 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-3">
+        <div 
+          className="bg-white rounded-lg shadow p-3 cursor-pointer active:bg-gray-50"
+          onClick={() => setLocation('/admin/reservations')}
+        >
           <div className="flex justify-between items-start">
             <div>
               <p className="text-xs text-gray-500">{t('TodayReservations')}</p>
-              <h3 className="text-lg font-bold">42</h3>
-              <p className="text-xs text-brasil-green flex items-center">
-                <FaArrowUp className="mr-1" />
-                8%
+              <h3 className="text-lg font-bold">{dashboardStats?.todayReservations || 0}</h3>
+              <p className={`text-xs ${dashboardStats?.reservationsChange > 0 ? 'text-brasil-green' : 'text-brasil-red'} flex items-center`}>
+                {dashboardStats?.reservationsChange > 0 ? (
+                  <FaArrowUp className="mr-1" />
+                ) : (
+                  <FaArrowDown className="mr-1" />
+                )}
+                {Math.abs(dashboardStats?.reservationsChange || 0)}%
               </p>
             </div>
             <div className="bg-green-100 p-2 rounded-full">
@@ -438,14 +452,21 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-3">
+        <div 
+          className="bg-white rounded-lg shadow p-3 cursor-pointer active:bg-gray-50"
+          onClick={() => setLocation('/admin/tables')}
+        >
           <div className="flex justify-between items-start">
             <div>
               <p className="text-xs text-gray-500">{t('CurrentOccupancy')}</p>
-              <h3 className="text-lg font-bold">78%</h3>
-              <p className="text-xs text-brasil-red flex items-center">
-                <FaArrowDown className="mr-1" />
-                3%
+              <h3 className="text-lg font-bold">{dashboardStats?.currentOccupancy || 0}%</h3>
+              <p className={`text-xs ${dashboardStats?.occupancyChange > 0 ? 'text-brasil-green' : 'text-brasil-red'} flex items-center`}>
+                {dashboardStats?.occupancyChange > 0 ? (
+                  <FaArrowUp className="mr-1" />
+                ) : (
+                  <FaArrowDown className="mr-1" />
+                )}
+                {Math.abs(dashboardStats?.occupancyChange || 0)}%
               </p>
             </div>
             <div className="bg-yellow-100 p-2 rounded-full">
@@ -454,14 +475,21 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-3">
+        <div 
+          className="bg-white rounded-lg shadow p-3 cursor-pointer active:bg-gray-50"
+          onClick={() => setLocation('/admin/customers')}
+        >
           <div className="flex justify-between items-start">
             <div>
               <p className="text-xs text-gray-500">{t('NewCustomers')}</p>
-              <h3 className="text-lg font-bold">16</h3>
-              <p className="text-xs text-brasil-green flex items-center">
-                <FaArrowUp className="mr-1" />
-                24%
+              <h3 className="text-lg font-bold">{dashboardStats?.newCustomers || 0}</h3>
+              <p className={`text-xs ${dashboardStats?.customerChange > 0 ? 'text-brasil-green' : 'text-brasil-red'} flex items-center`}>
+                {dashboardStats?.customerChange > 0 ? (
+                  <FaArrowUp className="mr-1" />
+                ) : (
+                  <FaArrowDown className="mr-1" />
+                )}
+                {Math.abs(dashboardStats?.customerChange || 0)}%
               </p>
             </div>
             <div className="bg-red-100 p-2 rounded-full">
