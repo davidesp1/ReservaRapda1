@@ -92,8 +92,10 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
     const result = await response.json();
 
     // Verificar erros na resposta da API
-    if (!response.ok || result.erro) {
-      const errorMessage = result.erro || 'Erro no processamento do pagamento';
+    if (!response.ok || (typeof result === 'object' && 'erro' in result)) {
+      const errorMessage = typeof result === 'object' && 'erro' in result 
+        ? String(result.erro) 
+        : 'Erro no processamento do pagamento';
       throw new Error(errorMessage);
     }
 
@@ -137,7 +139,7 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
       success: true,
       paymentReference: paymentData.reference,
       message: 'Pagamento criado com sucesso',
-      ...result,
+      ...(typeof result === 'object' ? result : {}),
     };
 
     return paymentResponse;
@@ -184,8 +186,10 @@ export async function checkPaymentStatus(reference: string): Promise<PaymentResp
     const result = await response.json();
 
     // Verificar erros na resposta da API
-    if (!response.ok || result.erro) {
-      const errorMessage = result.erro || 'Erro ao verificar o status do pagamento';
+    if (!response.ok || (typeof result === 'object' && 'erro' in result)) {
+      const errorMessage = typeof result === 'object' && 'erro' in result 
+        ? String(result.erro) 
+        : 'Erro ao verificar o status do pagamento';
       throw new Error(errorMessage);
     }
 
@@ -203,9 +207,11 @@ export async function checkPaymentStatus(reference: string): Promise<PaymentResp
     const paymentResponse: PaymentResponseData = {
       success: true,
       paymentReference: reference,
-      status: result.estado || 'unknown',
-      message: result.estado === 'paga' ? 'Pagamento concluído com sucesso' : 'Pagamento pendente',
-      ...result,
+      status: typeof result === 'object' && 'estado' in result ? String(result.estado) : 'unknown',
+      message: typeof result === 'object' && 'estado' in result && result.estado === 'paga' 
+        ? 'Pagamento concluído com sucesso' 
+        : 'Pagamento pendente',
+      ...(typeof result === 'object' ? result as Record<string, any> : {}),
     };
 
     return paymentResponse;
