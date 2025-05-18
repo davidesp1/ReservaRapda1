@@ -274,17 +274,65 @@ const Reservations: React.FC = () => {
     setCurrentStep(3);
   };
   
+  // Estado para controlar o processamento do pagamento
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  
   // Submeter etapa 3 - Pagamento
-  const submitStep3 = (paymentMethod: string) => {
-    setReservationData(prev => ({
-      ...prev,
-      paymentMethod,
-      paymentStatus: 'paid', // Simulando um pagamento bem-sucedido
-      confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
-    }));
+  const submitStep3 = async (paymentMethod: string) => {
+    setIsProcessingPayment(true);
+    setPaymentError(null);
     
-    // Avançar para a etapa final
-    setCurrentStep(4);
+    try {
+      // Calcular valor total para o pagamento
+      const total = reservationData.items?.reduce(
+        (sum, item) => sum + (item.price * item.quantity), 
+        0
+      ) || 0;
+      
+      // Preparar dados para o pagamento
+      const paymentData = {
+        method: paymentMethod,
+        amount: total,
+        reference: `RES-${Date.now()}`, // Referência única para o pagamento
+        description: `Reserva ${format(reservationData.date, 'dd/MM/yyyy')} - ${reservationData.time}`,
+        email: user?.email,
+        name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.username,
+        phone: user?.phone || '',
+      };
+      
+      // Chamar API para processar o pagamento
+      const response = await apiRequest('POST', '/api/payments/process', paymentData);
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Erro ao processar pagamento');
+      }
+      
+      // Atualizar dados da reserva com os dados de pagamento
+      setReservationData(prev => ({
+        ...prev,
+        paymentMethod,
+        paymentStatus: 'paid',
+        confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+        paymentReference: result.paymentReference,
+        paymentUrl: result.paymentUrl,
+        paymentDetails: result
+      }));
+      
+      // Avançar para a etapa final
+      setCurrentStep(4);
+    } catch (error: any) {
+      console.error('Erro no pagamento:', error);
+      setPaymentError(error.message || 'Ocorreu um erro ao processar o pagamento. Por favor, tente novamente.');
+      toast({
+        title: t('PaymentError'),
+        description: error.message || t('PaymentErrorMessage'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
   
   // Criar reserva mutation
@@ -662,7 +710,7 @@ const Reservations: React.FC = () => {
                                   <h4 className="font-medium">{item.name}</h4>
                                   <p className="text-sm text-gray-500 line-clamp-2">{item.description}</p>
                                 </div>
-                                <div className="font-semibold text-brasil-green">€{item.price.toFixed(2)}</div>
+                                <div className="font-semibold text-brasil-green">€{Number(item.price).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                               </div>
                               <Button 
                                 size="sm" 
@@ -718,7 +766,7 @@ const Reservations: React.FC = () => {
                               </div>
                               <div className="text-right">
                                 <div className="text-sm font-semibold">
-                                  €{(item.price * item.quantity).toFixed(2)}
+                                  €{Number(item.price * item.quantity).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                 </div>
                                 <Button 
                                   variant="ghost" 
@@ -736,7 +784,7 @@ const Reservations: React.FC = () => {
                         <div className="pt-2 border-t border-gray-200">
                           <div className="flex justify-between font-semibold">
                             <span>{t('Total')}</span>
-                            <span>€{reservationData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
+                            <span>€{Number(reservationData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                           </div>
                         </div>
                         
@@ -800,50 +848,67 @@ const Reservations: React.FC = () => {
                   <h3 className="font-semibold mb-4">{t('PaymentMethods')}</h3>
                   
                   <div className="space-y-3">
-                    <Card 
-                      className="cursor-pointer hover:border-brasil-green border-2 transition-colors"
-                      onClick={() => submitStep3('card')}
-                    >
-                      <CardContent className="p-4 flex items-center">
-                        <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
-                          <CreditCard className="h-6 w-6 text-brasil-blue" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium">{t('CreditCard')}</h4>
-                          <p className="text-sm text-gray-500">{t('CreditCardDescription')}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card 
-                      className="cursor-pointer hover:border-brasil-green border-2 transition-colors"
-                      onClick={() => submitStep3('mbway')}
-                    >
-                      <CardContent className="p-4 flex items-center">
-                        <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
-                          <i className="fas fa-mobile-alt text-brasil-blue"></i>
-                        </div>
-                        <div>
-                          <h4 className="font-medium">MBWay</h4>
-                          <p className="text-sm text-gray-500">{t('MBWayDescription')}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card 
-                      className="cursor-pointer hover:border-brasil-green border-2 transition-colors"
-                      onClick={() => submitStep3('multibanco')}
-                    >
-                      <CardContent className="p-4 flex items-center">
-                        <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
-                          <i className="fas fa-university text-brasil-blue"></i>
-                        </div>
-                        <div>
-                          <h4 className="font-medium">Multibanco</h4>
-                          <p className="text-sm text-gray-500">{t('MultibancoDescription')}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    {isProcessingPayment ? (
+                      <div className="flex flex-col items-center justify-center py-10">
+                        <div className="animate-spin w-10 h-10 border-4 border-brasil-green border-t-transparent rounded-full mb-4"></div>
+                        <p className="text-brasil-blue font-medium">{t('ProcessingPayment')}</p>
+                        <p className="text-sm text-gray-500 mt-2">{t('PleaseWait')}</p>
+                      </div>
+                    ) : (
+                      <>
+                        {paymentError && (
+                          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                            <h4 className="font-medium mb-1">{t('PaymentError')}</h4>
+                            <p className="text-sm">{paymentError}</p>
+                          </div>
+                        )}
+                        
+                        <Card 
+                          className="cursor-pointer hover:border-brasil-green border-2 transition-colors"
+                          onClick={() => submitStep3('card')}
+                        >
+                          <CardContent className="p-4 flex items-center">
+                            <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
+                              <CreditCard className="h-6 w-6 text-brasil-blue" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">{t('CreditCard')}</h4>
+                              <p className="text-sm text-gray-500">{t('CreditCardDescription')}</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        
+                        <Card 
+                          className="cursor-pointer hover:border-brasil-green border-2 transition-colors"
+                          onClick={() => submitStep3('mbway')}
+                        >
+                          <CardContent className="p-4 flex items-center">
+                            <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
+                              <i className="fas fa-mobile-alt text-brasil-blue"></i>
+                            </div>
+                            <div>
+                              <h4 className="font-medium">MBWay</h4>
+                              <p className="text-sm text-gray-500">{t('MBWayDescription')}</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        
+                        <Card 
+                          className="cursor-pointer hover:border-brasil-green border-2 transition-colors"
+                          onClick={() => submitStep3('multibanco')}
+                        >
+                          <CardContent className="p-4 flex items-center">
+                            <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
+                              <i className="fas fa-university text-brasil-blue"></i>
+                            </div>
+                            <div>
+                              <h4 className="font-medium">Multibanco</h4>
+                              <p className="text-sm text-gray-500">{t('MultibancoDescription')}</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </>
+                    )}
                   </div>
                 </div>
                 
@@ -875,13 +940,13 @@ const Reservations: React.FC = () => {
                             {reservationData.items.map((item) => (
                               <div key={item.id} className="flex justify-between text-sm">
                                 <span>{item.name} x{item.quantity}</span>
-                                <span>€{(item.price * item.quantity).toFixed(2)}</span>
+                                <span>€{Number(item.price * item.quantity).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                               </div>
                             ))}
                             
                             <div className="flex justify-between font-semibold pt-2 border-t">
                               <span>{t('Total')}</span>
-                              <span>€{reservationData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
+                              <span>€{Number(reservationData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                             </div>
                           </div>
                         ) : (
@@ -989,7 +1054,7 @@ const Reservations: React.FC = () => {
                       <div className="pt-3 border-t">
                         <div className="flex justify-between font-semibold">
                           <span>{t('Total')}</span>
-                          <span>€{reservationData.total?.toFixed(2) || '0.00'}</span>
+                          <span>€{Number(reservationData.total || 0).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </div>
                       </div>
                     </div>
