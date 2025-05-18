@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { useLocation } from 'wouter';
 import { 
   CreditCard, 
@@ -16,7 +19,9 @@ import {
   Filter, 
   Search,
   Download,
-  FileText
+  FileText,
+  Phone,
+  Plus
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -37,6 +42,7 @@ const PaymentsPage = () => {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
   
   // Dados de exemplo
   const payments: Payment[] = [
@@ -147,7 +153,149 @@ const PaymentsPage = () => {
   return (
     <CustomerLayout>
       <div className="container mx-auto py-8">
-        <h1 className="text-2xl font-bold mb-6">{t('Payments')}</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">{t('Payments')}</h1>
+          <Button 
+            variant="outline" 
+            className="border-brasil-blue text-brasil-blue hover:bg-brasil-blue/10"
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            {showSettings ? t('HideSettings') : t('PaymentSettings')}
+          </Button>
+        </div>
+
+        {showSettings ? (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>{t('PaymentSettings')}</CardTitle>
+              <CardDescription>{t('ManageYourPaymentPreferences')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium mb-4">{t('DefaultPaymentMethods')}</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Cartão de Crédito */}
+                  <Card className="border-2 border-brasil-blue">
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-base">{t('Card')}</CardTitle>
+                        <Badge variant="outline" className="text-brasil-blue">
+                          {t('Default')}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        **** **** **** 4789
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {t('ExpiresOn')}: 08/2026
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-between pt-0">
+                      <Button variant="ghost" size="sm">{t('Edit')}</Button>
+                      <Button variant="ghost" size="sm">{t('Remove')}</Button>
+                    </CardFooter>
+                  </Card>
+                  
+                  {/* MBWay */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">MBWay</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Phone className="mr-2 h-4 w-4" />
+                        +351 96 *** **23
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-between pt-0">
+                      <Button variant="ghost" size="sm">{t('Edit')}</Button>
+                      <Button variant="ghost" size="sm">{t('MakeDefault')}</Button>
+                    </CardFooter>
+                  </Card>
+                </div>
+                
+                <Button 
+                  className="mt-4 bg-brasil-green text-white hover:bg-brasil-green/90"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t('AddPaymentMethod')}
+                </Button>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <h3 className="text-lg font-medium mb-4">{t('BillingInformation')}</h3>
+                <div className="space-y-4">
+                  <div>
+                    <Label>{t('BillingName')}</Label>
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-sm">Katia Ferreira</p>
+                      <Button variant="ghost" size="sm">{t('Edit')}</Button>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label>{t('BillingAddress')}</Label>
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-sm">Rua do Carregado, 123<br />2580-465 Carregado<br />Portugal</p>
+                      <Button variant="ghost" size="sm">{t('Edit')}</Button>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label>{t('BillingEmail')}</Label>
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-sm">katiaf@email.com</p>
+                      <Button variant="ghost" size="sm">{t('Edit')}</Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <h3 className="text-lg font-medium mb-4">{t('Preferences')}</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>{t('AutomaticReceipts')}</Label>
+                      <p className="text-sm text-gray-500">{t('AutomaticReceiptsDescription')}</p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>{t('PaymentNotifications')}</Label>
+                      <p className="text-sm text-gray-500">{t('PaymentNotificationsDescription')}</p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>{t('SavePaymentMethods')}</Label>
+                      <p className="text-sm text-gray-500">{t('SavePaymentMethodsDescription')}</p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end">
+              <Button 
+                className="bg-brasil-green text-white hover:bg-brasil-green/90"
+              >
+                {t('SaveSettings')}
+              </Button>
+            </CardFooter>
+          </Card>
+        ) : null}
         
         <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
           <div className="flex justify-between items-center mb-6">
