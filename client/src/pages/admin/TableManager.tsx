@@ -514,7 +514,6 @@ const TableManager: React.FC = () => {
                         <Input 
                           type="number"
                           min="1"
-                          max="20"
                           {...field}
                         />
                       </FormControl>
