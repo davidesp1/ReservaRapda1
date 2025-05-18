@@ -527,7 +527,7 @@ const Dashboard: React.FC = () => {
         type: 'warning',
         title: t('LowInventory'),
         message: t('LowInventoryItems'),
-        time: t('TimeAgo', { time: 30, unit: t('Minutes') }),
+        time: '30 ' + t('Minutes') + ' ' + t('ago'),
         icon: <FaChair className="text-brasil-red" />,
         color: 'border-brasil-red',
         bgColor: 'bg-red-100'
@@ -537,7 +537,7 @@ const Dashboard: React.FC = () => {
         type: 'info',
         title: t('VIPReservation'),
         message: t('VIPConfirmedTonight'),
-        time: t('TimeAgo', { time: 2, unit: t('Hours') }),
+        time: '2 ' + t('HoursUnit') + ' ' + t('ago'),
         icon: <FaCalendarCheck className="text-brasil-yellow" />,
         color: 'border-brasil-yellow',
         bgColor: 'bg-yellow-100'
