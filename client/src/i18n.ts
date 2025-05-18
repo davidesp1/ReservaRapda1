@@ -85,7 +85,7 @@ const resources = {
       "TermsAndPolicy": "Termos de Uso e Política de Privacidade",
       
       // Dashboard
-      "Dashboard": "Painel",
+      "Dashboard": "Dashboard",
       "Profile": "Perfil",
       "Reservations": "Reservas",
       "Payments": "Pagamentos",

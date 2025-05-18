@@ -53,11 +53,6 @@ const AdminSidebar: React.FC<SidebarProps> = ({ isMobile = false, onClose }) => 
       icon: <FaCoins className="w-6 text-brasil-yellow" />
     },
     {
-      path: '/admin/payments',
-      label: t('Payments'),
-      icon: <FaCreditCard className="w-6 text-brasil-yellow" />
-    },
-    {
       path: '/admin/reservations',
       label: t('Reservations'),
       icon: <FaCalendarCheck className="w-6 text-brasil-yellow" />
@@ -151,15 +146,9 @@ const AdminSidebar: React.FC<SidebarProps> = ({ isMobile = false, onClose }) => 
       </div>
       
       <div className="mt-auto border-t border-blue-400 p-4">
-        <Link href="/admin/settings">
-          <a className="flex items-center text-white hover:bg-brasil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
-            <FaCog className="w-6 text-brasil-yellow" />
-            <span className="ml-2 font-medium">{t('Settings')}</span>
-          </a>
-        </Link>
         <button 
           onClick={handleLogout}
-          className="flex w-full items-center text-white hover:bg-brasil-blue hover:bg-opacity-40 rounded-lg p-2 mt-2 cursor-pointer"
+          className="flex w-full items-center text-white hover:bg-brasil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer"
         >
           <FaSignOutAlt className="w-6 text-brasil-yellow" />
           <span className="ml-2 font-medium">{t('Logout')}</span>
