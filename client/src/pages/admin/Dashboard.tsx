@@ -200,7 +200,10 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-brasil-yellow">
+      <div 
+        className="bg-white rounded-xl shadow-md p-6 border-t-4 border-brasil-yellow cursor-pointer hover:shadow-lg transition-shadow"
+        onClick={() => setLocation('/admin/tables')}
+      >
         <div className="flex justify-between items-start">
           <div>
             <p className="text-sm text-gray-500 font-medium">{t('CurrentOccupancy')}</p>
@@ -226,14 +229,26 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-brasil-red">
+      <div 
+        className="bg-white rounded-xl shadow-md p-6 border-t-4 border-brasil-red cursor-pointer hover:shadow-lg transition-shadow"
+        onClick={() => setLocation('/admin/customers')}
+      >
         <div className="flex justify-between items-start">
           <div>
             <p className="text-sm text-gray-500 font-medium">{t('NewCustomers')}</p>
-            <p className="text-2xl font-bold text-gray-800 mt-1">16</p>
+            <p className="text-2xl font-bold text-gray-800 mt-1">{dashboardStats?.newCustomers || 0}</p>
             <div className="flex items-center mt-2 text-sm">
-              <FaArrowUp className="text-brasil-green mr-1" />
-              <span className="text-brasil-green font-medium">25%</span>
+              {dashboardStats?.customerChange > 0 ? (
+                <>
+                  <FaArrowUp className="text-brasil-green mr-1" />
+                  <span className="text-brasil-green font-medium">{dashboardStats?.customerChange || 0}%</span>
+                </>
+              ) : (
+                <>
+                  <FaArrowDown className="text-brasil-red mr-1" />
+                  <span className="text-brasil-red font-medium">{Math.abs(dashboardStats?.customerChange || 0)}%</span>
+                </>
+              )}
               <span className="text-gray-500 ml-1">{t('vs_last_week')}</span>
             </div>
           </div>
@@ -273,94 +288,119 @@ const Dashboard: React.FC = () => {
     </div>
   );
 
-  const DesktopReservationsTable = () => (
-    <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-800 font-montserrat">{t('RecentReservations')}</h2>
-          <p className="text-sm text-gray-500">{t('LastReservations')}</p>
-        </div>
-        <button className="text-sm text-brasil-blue hover:underline">{t('ViewAll')}</button>
-      </div>
+  // Fetch recent reservations
+  const { data: recentReservations = [], isLoading: reservationsLoading } = useQuery<any[]>({
+    queryKey: ['/api/reservations', { limit: 5 }],
+    enabled: isAuthenticated && isAdmin,
+  });
+  
+  const DesktopReservationsTable = () => {
+    // Format date from ISO string to readable format
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString();
+    };
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full">
-          <thead>
-            <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <th className="px-4 py-3">{t('Id')}</th>
-              <th className="px-4 py-3">{t('Client')}</th>
-              <th className="px-4 py-3">{t('Date')}</th>
-              <th className="px-4 py-3">{t('Time')}</th>
-              <th className="px-4 py-3">{t('Guests')}</th>
-              <th className="px-4 py-3">{t('Status')}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            <tr className="hover:bg-gray-50">
-              <td className="px-4 py-3">#4721</td>
-              <td className="px-4 py-3">João Silva</td>
-              <td className="px-4 py-3">17/05/2025</td>
-              <td className="px-4 py-3">19:30</td>
-              <td className="px-4 py-3">4</td>
-              <td className="px-4 py-3">
-                <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                  {t('Confirmed')}
-                </span>
-              </td>
-            </tr>
-            <tr className="hover:bg-gray-50">
-              <td className="px-4 py-3">#4720</td>
-              <td className="px-4 py-3">Maria Santos</td>
-              <td className="px-4 py-3">17/05/2025</td>
-              <td className="px-4 py-3">20:00</td>
-              <td className="px-4 py-3">2</td>
-              <td className="px-4 py-3">
-                <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                  {t('Arrived')}
-                </span>
-              </td>
-            </tr>
-            <tr className="hover:bg-gray-50">
-              <td className="px-4 py-3">#4719</td>
-              <td className="px-4 py-3">Carlos Oliveira</td>
-              <td className="px-4 py-3">17/05/2025</td>
-              <td className="px-4 py-3">18:45</td>
-              <td className="px-4 py-3">6</td>
-              <td className="px-4 py-3">
-                <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
-                  {t('Pending')}
-                </span>
-              </td>
-            </tr>
-            <tr className="hover:bg-gray-50">
-              <td className="px-4 py-3">#4718</td>
-              <td className="px-4 py-3">Ana Pereira</td>
-              <td className="px-4 py-3">17/05/2025</td>
-              <td className="px-4 py-3">19:00</td>
-              <td className="px-4 py-3">3</td>
-              <td className="px-4 py-3">
-                <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                  {t('Confirmed')}
-                </span>
-              </td>
-            </tr>
-            <tr className="hover:bg-gray-50">
-              <td className="px-4 py-3">#4717</td>
-              <td className="px-4 py-3">Pedro Costa</td>
-              <td className="px-4 py-3">17/05/2025</td>
-              <td className="px-4 py-3">20:30</td>
-              <td className="px-4 py-3">5</td>
-              <td className="px-4 py-3">
-                <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
-                  {t('Cancelled')}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    // Format time from ISO string to readable format
+    const formatTime = (dateString: string) => {
+      const date = new Date(dateString);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    // Get status badge class based on reservation status
+    const getStatusClass = (status: string) => {
+      switch(status) {
+        case 'confirmed':
+          return 'bg-green-100 text-green-800';
+        case 'pending':
+          return 'bg-yellow-100 text-yellow-800';
+        case 'cancelled':
+          return 'bg-gray-100 text-gray-800';
+        case 'completed':
+          return 'bg-blue-100 text-blue-800';
+        default:
+          return 'bg-gray-100 text-gray-800';
+      }
+    };
+
+    // Get translated status text
+    const getStatusText = (status: string) => {
+      switch(status) {
+        case 'confirmed':
+          return t('Confirmed');
+        case 'pending':
+          return t('Pending');
+        case 'cancelled':
+          return t('Cancelled');
+        case 'completed':
+          return t('Completed');
+        default:
+          return status;
+      }
+    };
+
+    return (
+      <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-800 font-montserrat">{t('RecentReservations')}</h2>
+            <p className="text-sm text-gray-500">{t('LastReservations')}</p>
+          </div>
+          <button 
+            className="text-sm text-brasil-blue hover:underline"
+            onClick={() => setLocation('/admin/reservations')}
+          >
+            {t('ViewAll')}
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          {reservationsLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brasil-blue"></div>
+            </div>
+          ) : (
+            <table className="min-w-full">
+              <thead>
+                <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3">{t('Id')}</th>
+                  <th className="px-4 py-3">{t('Client')}</th>
+                  <th className="px-4 py-3">{t('Date')}</th>
+                  <th className="px-4 py-3">{t('Time')}</th>
+                  <th className="px-4 py-3">{t('Guests')}</th>
+                  <th className="px-4 py-3">{t('Status')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {recentReservations.length > 0 ? (
+                  recentReservations.map((reservation: any) => (
+                    <tr key={reservation.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setLocation(`/admin/reservations/${reservation.id}`)}>
+                      <td className="px-4 py-3">#{reservation.id}</td>
+                      <td className="px-4 py-3">{reservation.userName || 'Cliente ' + reservation.id}</td>
+                      <td className="px-4 py-3">{formatDate(reservation.date)}</td>
+                      <td className="px-4 py-3">{formatTime(reservation.date)}</td>
+                      <td className="px-4 py-3">{reservation.partySize}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 text-xs rounded-full ${getStatusClass(reservation.status)}`}>
+                          {getStatusText(reservation.status)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
+                      {t('NoReservationsFound')}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Mobile Layout Components
   const MobileMetricsCards = () => (
