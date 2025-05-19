@@ -85,8 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isLoading, isError]);
 
   // Login mutation
-  const loginMutation = useMutation<User, Error, { username: string; password: string }>({
-    mutationFn: async (credentials: { username: string; password: string }) => {
+  const loginMutation = useMutation<User, Error, { email: string; password: string }>({
+    mutationFn: async (credentials: { email: string; password: string }) => {
       const response = await apiRequest('POST', '/api/auth/login', credentials);
       return response.json();
     },
@@ -153,8 +153,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   });
 
-  const login = async (username: string, password: string): Promise<User> => {
-    const userData = await loginMutation.mutateAsync({ username, password });
+  const login = async (email: string, password: string): Promise<User> => {
+    const userData = await loginMutation.mutateAsync({ email, password });
     return userData;
   };
 

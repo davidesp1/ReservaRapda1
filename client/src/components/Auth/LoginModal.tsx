@@ -34,8 +34,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loginSchema = z.object({
-    username: z.string().min(1, { message: 'Username is required' }),
-    password: z.string().min(1, { message: 'Password is required' }),
+    email: z.string().email({ message: 'Email inválido' }).min(1, { message: 'Email é obrigatório' }),
+    password: z.string().min(1, { message: 'Senha é obrigatória' }),
   });
 
   type LoginFormValues = z.infer<typeof loginSchema>;
@@ -43,7 +43,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: '',
+      email: '',
       password: '',
     },
   });
@@ -51,7 +51,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
-      const userData = await login(data.username, data.password);
+      const userData = await login(data.email, data.password);
       onClose();
       
       // Redirecionar baseado no papel do usuário
@@ -86,13 +86,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
-              name="username"
+              name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('Username')}</FormLabel>
+                  <FormLabel>{t('Email')}</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="user123" 
+                      type="email"
+                      placeholder="exemplo@email.com" 
                       {...field} 
                       className="w-full px-4 py-3 rounded-lg border"
                     />
