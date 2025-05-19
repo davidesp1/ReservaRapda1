@@ -20,6 +20,42 @@ import { ZodError } from "zod";
 // Setup session store
 const MemorySessionStore = MemoryStore(session);
 
+// Função auxiliar para verificar disponibilidade de mesa
+async function checkTableAvailability(tableId: number, date: Date, timeSlot: string, duration: number = 2): Promise<boolean> {
+  // Obter todas as reservas
+  const allReservations = await storage.getAllReservations();
+  
+  // Filtrar reservas para esta mesa e data
+  const reservationsForTable = allReservations.filter(r => {
+    // Verificar se é para a mesma mesa
+    if (r.tableId !== tableId) return false;
+    
+    // Verificar se é para o mesmo dia
+    const rDate = new Date(r.date);
+    const targetDate = new Date(date);
+    if (rDate.getFullYear() !== targetDate.getFullYear() || 
+        rDate.getMonth() !== targetDate.getMonth() || 
+        rDate.getDate() !== targetDate.getDate()) {
+      return false;
+    }
+    
+    // Verificar se há sobreposição de horário
+    const rTime = r.timeSlot;
+    const [rHours, rMinutes] = rTime.split(':').map(Number);
+    const [targetHours, targetMinutes] = timeSlot.split(':').map(Number);
+    
+    const rStartTime = rHours * 60 + rMinutes;
+    const rEndTime = rStartTime + (r.duration || 2) * 60;
+    const targetStartTime = targetHours * 60 + targetMinutes;
+    const targetEndTime = targetStartTime + duration * 60;
+    
+    // Há sobreposição se o início ou fim de uma reserva está dentro da outra
+    return (targetStartTime < rEndTime && targetEndTime > rStartTime);
+  });
+  
+  return reservationsForTable.length > 0;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure session middleware
   app.use(
@@ -95,13 +131,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
   
   app.post("/api/auth/login", handleErrors(async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+    const { email, username, password } = req.body;
     
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+    if ((!email && !username) || !password) {
+      return res.status(400).json({ message: "Email/username and password are required" });
     }
     
-    const user = await storage.getUserByEmail(email);
+    let user: any = null;
+    
+    // Verificar login com email
+    if (email) {
+      user = await storage.getUserByEmail(email);
+    }
+    
+    // Verificar login com username
+    if (!user && username) {
+      user = await storage.getUserByUsername(username);
+    }
     
     if (!user || user.password !== password) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -215,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/menu-items", handleErrors(async (req: Request, res: Response) => {
     const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
     const menuItems = categoryId 
-      ? await storage.getMenuItemsByCategoryId(categoryId)
+      ? await storage.getMenuItemsByCategory(categoryId)
       : await storage.getAllMenuItems();
     res.json(menuItems);
   }));
@@ -338,7 +384,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Check if table has reservations
-    const reservations = await storage.getReservationsByTableId(id);
+    const allReservations = await storage.getAllReservations();
+    const reservations = allReservations.filter(r => r.tableId === id);
     if (reservations.length > 0) {
       return res.status(400).json({ message: "Cannot delete table with reservations" });
     }
@@ -399,10 +446,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Check if the table is already booked for the requested time
-    const isTableBooked = await storage.isTableBooked(
+    const isTableBooked = await checkTableAvailability(
       reservationData.tableId,
       new Date(reservationData.date),
-      reservationData.duration
+      reservationData.timeSlot,
+      reservationData.duration || 2
     );
     
     if (isTableBooked) {
