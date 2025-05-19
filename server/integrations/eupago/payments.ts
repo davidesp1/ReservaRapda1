@@ -59,12 +59,14 @@ export async function criarCartao(data: {
   console.log("Criando simulação de pagamento com Cartão", data.id, data.valor);
   
   // Simulação direta sem tentar conectar com API externa
+  const cardBaseUrl = process.env.EUPAGO_CARD_BASE_URL || 'https://sandbox.eupago.pt/clientes/rest_api';
+  
   return {
     success: true,
     reference: `CARD-${data.id}`,
     value: data.valor.toString(),
     status: 'pending',
-    paymentUrl: 'https://sandbox.eupago.pt/pagamento?simulacao=1',
+    paymentUrl: `${cardBaseUrl}/pagamento?ref=${data.id}`,
     message: 'Redirecionando para a página de pagamento com cartão (ambiente de teste)',
   };
 }
