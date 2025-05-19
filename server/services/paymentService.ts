@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import { criarCartao, criarMbway, criarMultibanco, verificarStatusPagamento } from '../integrations/eupago/payments';
 
 // Interface para os dados de pagamento recebidos do frontend
 interface PaymentRequestData {
@@ -33,113 +33,80 @@ interface PaymentResponseData {
 export async function processPayment(paymentData: PaymentRequestData): Promise<PaymentResponseData> {
   try {
     // Verificar se a chave da API eupago está definida
-    const apiKey = process.env.EUPAGO_API_KEY;
-    if (!apiKey) {
+    if (!process.env.EUPAGO_API_KEY) {
       throw new Error('EUPAGO_API_KEY não configurada');
     }
 
-    // Determinar a URL da API com base no método de pagamento
-    let apiUrl = '';
-    let payload: any = {
-      valor: paymentData.amount.toFixed(2),
-      chave: apiKey,
-      referencia: paymentData.reference,
-      descricao: paymentData.description,
-    };
+    let paymentResult;
 
-    // Configurar parâmetros específicos por tipo de pagamento
+    // Processar pagamento conforme o método escolhido
     switch (paymentData.method) {
       case 'card':
-        apiUrl = 'https://sandbox.eupago.pt/clientes/rest_api/credit_card/create';
-        payload = {
-          ...payload,
-          email: paymentData.email,
-          valor: paymentData.amount.toFixed(2),
-          por_defeito: true,
-          formato: 'json',
-        };
+        paymentResult = await criarCartao({
+          id: paymentData.reference,
+          valor: paymentData.amount,
+          email: paymentData.email
+        });
         break;
         
       case 'mbway':
-        apiUrl = 'https://sandbox.eupago.pt/clientes/rest_api/mbway/create';
-        payload = {
-          ...payload,
-          valor: paymentData.amount.toFixed(2),
-          alias: paymentData.phone || '9123456789', // Número de telefone necessário para MBWay
-          formato: 'json',
-        };
+        if (!paymentData.phone) {
+          throw new Error('Número de telefone é obrigatório para pagamento MB WAY');
+        }
+        paymentResult = await criarMbway(
+          paymentData.reference,
+          paymentData.amount,
+          paymentData.phone
+        );
         break;
         
       case 'multibanco':
-        apiUrl = 'https://sandbox.eupago.pt/clientes/rest_api/reference/create';
-        // O payload padrão já contém os campos necessários para Multibanco
-        payload.formato = 'json';
+        paymentResult = await criarMultibanco(
+          paymentData.reference,
+          paymentData.amount
+        );
         break;
         
       default:
         throw new Error(`Método de pagamento não suportado: ${paymentData.method}`);
     }
 
-    // Chamar a API eupago
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const result = await response.json();
-
-    // Verificar erros na resposta da API
-    if (!response.ok || (typeof result === 'object' && 'erro' in result)) {
-      const errorMessage = typeof result === 'object' && 'erro' in result 
-        ? String(result.erro) 
-        : 'Erro no processamento do pagamento';
-      throw new Error(errorMessage);
+    // Verificar se o pagamento foi criado com sucesso
+    if (!paymentResult.success) {
+      throw new Error(paymentResult.message || 'Falha no processamento do pagamento');
     }
 
-    // Em modo de sandbox, simular uma resposta de sucesso para teste
-    // Em produção, este bloco seria removido
+    // Em modo de desenvolvimento/sandbox, não há comportamento de redirect real, então:
     if (process.env.NODE_ENV === 'development') {
-      // Criar resposta baseada no método de pagamento
-      let paymentResponse: PaymentResponseData = {
+      // Simulamos a resposta para teste em sandbox
+      const simulatedResponse: PaymentResponseData = {
         success: true,
         paymentReference: paymentData.reference,
         status: 'pending',
-        message: 'Pagamento criado com sucesso',
+        message: 'Pagamento criado com sucesso (sandbox)',
       };
 
+      // Adicionar dados específicos por método de pagamento
       if (paymentData.method === 'card') {
-        paymentResponse = {
-          ...paymentResponse,
-          paymentUrl: 'https://sandbox.eupago.pt/pagamento?ref=012345678901',
-          expirationDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        };
+        simulatedResponse.paymentUrl = 'https://sandbox.eupago.pt/pagamento?ref=012345678901';
+        simulatedResponse.expirationDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
       } else if (paymentData.method === 'mbway') {
-        paymentResponse = {
-          ...paymentResponse,
-          phone: paymentData.phone || '9123456789',
-          expirationDate: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-        };
+        simulatedResponse.phone = paymentData.phone;
+        simulatedResponse.expirationDate = new Date(Date.now() + 30 * 60 * 1000).toISOString();
       } else if (paymentData.method === 'multibanco') {
-        paymentResponse = {
-          ...paymentResponse,
-          entity: '12345',
-          reference: '123 456 789',
-          expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-        };
+        simulatedResponse.entity = '12345';
+        simulatedResponse.reference = '123 456 789';
+        simulatedResponse.expirationDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
       }
 
-      return paymentResponse;
+      return simulatedResponse;
     }
 
-    // Formatar a resposta conforme o método de pagamento
+    // Formatar a resposta para o frontend
     const paymentResponse: PaymentResponseData = {
       success: true,
       paymentReference: paymentData.reference,
-      message: 'Pagamento criado com sucesso',
-      ...(typeof result === 'object' ? result : {}),
+      ...paymentResult
     };
 
     return paymentResponse;
@@ -161,39 +128,10 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
  */
 export async function checkPaymentStatus(reference: string): Promise<PaymentResponseData> {
   try {
-    // Verificar se a chave da API eupago está definida
-    const apiKey = process.env.EUPAGO_API_KEY;
-    if (!apiKey) {
-      throw new Error('EUPAGO_API_KEY não configurada');
-    }
+    // Verificar status do pagamento com o serviço do Eupago
+    const statusResult = await verificarStatusPagamento(reference);
 
-    // URL para verificar o status do pagamento
-    const apiUrl = 'https://sandbox.eupago.pt/clientes/rest_api/payment/check';
-
-    // Chamar a API eupago
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chave: apiKey,
-        referencia: reference,
-        formato: 'json',
-      }),
-    });
-
-    const result = await response.json();
-
-    // Verificar erros na resposta da API
-    if (!response.ok || (typeof result === 'object' && 'erro' in result)) {
-      const errorMessage = typeof result === 'object' && 'erro' in result 
-        ? String(result.erro) 
-        : 'Erro ao verificar o status do pagamento';
-      throw new Error(errorMessage);
-    }
-
-    // Em modo de sandbox, simular uma resposta de sucesso para teste
+    // Em ambiente de desenvolvimento, simulamos um pagamento concluído
     if (process.env.NODE_ENV === 'development') {
       return {
         success: true,
@@ -203,15 +141,13 @@ export async function checkPaymentStatus(reference: string): Promise<PaymentResp
       };
     }
 
-    // Formatar a resposta
+    // Formatar a resposta para o frontend
     const paymentResponse: PaymentResponseData = {
-      success: true,
+      success: statusResult.success,
       paymentReference: reference,
-      status: typeof result === 'object' && 'estado' in result ? String(result.estado) : 'unknown',
-      message: typeof result === 'object' && 'estado' in result && result.estado === 'paga' 
-        ? 'Pagamento concluído com sucesso' 
-        : 'Pagamento pendente',
-      ...(typeof result === 'object' ? result as Record<string, any> : {}),
+      status: statusResult.status,
+      message: statusResult.message,
+      ...statusResult
     };
 
     return paymentResponse;

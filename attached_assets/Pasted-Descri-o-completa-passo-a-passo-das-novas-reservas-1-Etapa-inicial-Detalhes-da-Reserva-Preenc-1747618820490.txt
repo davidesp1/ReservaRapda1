@@ -1,0 +1,114 @@
+Descrição completa passo a passo das novas reservas:
+1. Etapa inicial - Detalhes da Reserva
+* Preencha os detalhes iniciais da reserva:
+    * Data da reserva (selecione no calendário)
+    * Horário (escolha entre os horários disponíveis)
+    * Número de pessoas (Nã aplicável para ela sistema) retirar do formulário
+    * Seleção de Mesa (Nã aplicável para ela sistema)
+    * Opcionalmente, adicione observações
+* Clique no botão "Continuar" para avançar
+2. Etapa de Seleção - Mesa e Menu
+* Seleção do Menu:
+    * Navegue pelas categorias de menu (Configurada pelo admin)
+    * Clique no botão "+" para adicionar itens ao seu pedido
+    * Ajuste as quantidades conforme necessário
+    * Veja o resumo dos itens selecionados e o valor total à direita
+    * Verifique as informações de valores temos alguma anomalia, Ex. No banco temos 2€ mas no front aparece 200€
+* Quando estiver satisfeito com a seleção, clique em "Prosseguir para o Pagamento"
+3. Etapa de Pagamento
+* Escolha o método de pagamento:
+    * Consoante configuração do admin se ativado ou não
+* Selecione o método de pagamento conforme o método escolhido 
+* Revise o resumo completo da reserva (data, hora, itens, mesa e valor total)
+* Clique em “Avançar para Pagamento" para confirmar a reserva
+* Sistema se comunica com eupago para confirmar pagamento
+4. Etapa de Confirmação
+* Visualize a confirmação da reserva com todos os detalhes
+* O sistema geram invoice com todas as informações da reserva ( possibilidade de imprimir )
+* O sistema gera um código QR e um código de barras da sua reserva
+    * O código QR pode ser escaneado na entrada do restaurante
+    * O código de barras serve como identificação alternativa
+* O código da reserva também é exibido em formato texto
+* Veja o resumo final com data, hora, mesa e número de pessoas
+* Clique em "Ver Minhas Reservas" para visualizar todas as suas reservas
+
+Detalhes para implementar a integração de pagamento via Eupago (Multibanco, MB WAY e Cartão). 
+Siga estas instruções:
+
+Atualmente estamos em ambiente de desenvolvimento
+
+1. **Variáveis de Ambiente**
+   - EUPAGO_BASE_URL: 
+   - EUPAGO_API_KEY: 
+
+2. **Cliente HTTP**
+   - Em `src/integrations/eupago/client.ts`, crie um cliente Axios:
+     ```ts
+     import axios from 'axios';
+
+     const eupago = axios.create({
+       baseURL: process.env.EUPAGO_BASE_URL!,
+       headers: {
+         'Content-Type': 'application/json',
+         'ApiKey': process.env.EUPAGO_API_KEY!
+       }
+     });
+
+     export { eupago };
+     ```
+
+3. **Funções de Pagamento**
+   - Em `src/integrations/eupago/payments.ts`, exporte três funções:
+     ```ts
+     import { eupago } from './client';
+
+     export async function criarMultibanco(orderId: string, amount: number) {
+       return eupago.post('/multibanco', {
+         id: orderId,
+         valor: amount.toFixed(2)
+       });
+     }
+
+     export async function criarMbway(orderId: string, amount: number, telefone: string) {
+       return eupago.post('/mbway', {
+         id: orderId,
+         valor: amount.toFixed(2),
+         telefone
+       });
+     }
+
+     export async function criarCartao(data: {
+       id: string;
+       valor: number;
+       cartao_numero: string;
+       cartao_validade: string;
+       cartao_cvc: string;
+     }) {
+       return eupago.post('/credit_card', {
+         id: data.id,
+         valor: data.valor.toFixed(2),
+         cartao_numero: data.cartao_numero,
+         cartao_validade: data.cartao_validade,
+         cartao_cvc: data.cartao_cvc
+       });
+     }
+     ```
+
+4. **API Route (Next.js)**
+   - Em `src/pages/api/pagamentos.ts`, implemente um handler que receba `{ metodo, orderId, amount, telefone?, cartao? }` e chame a função correta de `payments.ts`. Retorne JSON com o resultado ou erro.
+
+5. **Front-end**
+   - No componente de checkout, crie uma função `pagar(metodo, orderId, amount, extras)` que faça `fetch('/api/pagamentos', {...})`. Trate sucessos e erros para exibir ao usuário.
+
+6. **Fluxo de Testes**
+   - Use a URL de sandbox e dados de teste para cada método.
+   - Após validação, altere `EUPAGO_BASE_URL` para produção e use a chave real.
+
+7. **Boas Práticas**
+   - Trate erros de rede / API no front e no backend, mostrando mensagens claras.
+   - Nunca exponha a API key no código cliente.
+   - Logue erros de pagamento no console/backend para auditoria.
+
+Implemente tudo em TypeScript, com tipagem adequada, observando padrões de código existentes no projeto.  
+
+Documentação pelo link - https://eupago.readme.io/reference/api-eupago
