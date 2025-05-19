@@ -1,0 +1,127 @@
+2) Unifica o teu client HTTP
+No server/integrations/eupago/client.ts faz algo assim:
+
+import fetch from 'node-fetch'
+import { EupagoResponse } from './types'
+
+const eupagoClient = {
+  baseURL: process.env.EUPAGO_BASE_URL!,
+  apiKey: process.env.EUPAGO_API_KEY!,
+
+  async request(endpoint: string, payload: any): Promise<EupagoResponse> {
+    if (process.env.EUPAGO_SIMULATION === 'true') {
+      console.log(`SIM → ${endpoint}`, payload)
+      // devolve sempre o mesmo shape para reference/mbway/status…
+      return simulate(endpoint, payload)
+    }
+
+    const url = `${this.baseURL}${endpoint}`
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    })
+    if (!resp.ok) throw new Error(`EuPago ${endpoint} falhou: ${resp.status}`)
+    return resp.json()
+  }
+}
+
+export default eupagoClient
+
+3) Implementa os “create” no teu serviço
+Em server/integrations/eupago/payments.ts:
+
+import eupagoClient from './client'
+import { EupagoResponse } from './types'
+
+// 3.1 Multibanco
+export async function createMultibanco(valor: number) {
+  return eupagoClient.request('/reference/create', {
+    valor,
+    // …os restantes campos que a docs pede
+  })
+}
+
+// 3.2 MBWay
+export async function createMbway(telemovel: string, valor: number) {
+  return eupagoClient.request('/mbway/create', {
+    telemovel,
+    valor,
+  })
+}
+
+// 3.3 Cartão
+export async function createCardPayment(valor: number, callbackUrl: string) {
+  // *É este endpoint que devolve um campo `url`* para abrir em nova aba
+  return eupagoClient.request('/card/create', {
+    valor,
+    url_retorno: callbackUrl,
+    // …outros campos que a docs especifica
+  })
+}
+
+// 3.4 Verificar estado depois
+export async function checkStatus(referencia: string) {
+  return eupagoClient.request('/payments/status', { referencia })
+}
+
+4) Expôe na tua rota de API
+Em server/routes.ts (ou onde definires o endpoint):
+
+import { createMultibanco, createMbway, createCardPayment } from './integrations/eupago/payments'
+
+router.post('/api/payments/process', async (req, res) => {
+  const { method, amount, phone } = req.body
+
+  try {
+    if (method === 'multibanco') {
+      const r = await createMultibanco(amount)
+      return res.json({
+        entity:   r.entidade,
+        reference:r.referencia,
+        expires:  r.dataLimite,
+      })
+    }
+
+    if (method === 'mbway') {
+      const r = await createMbway(phone, amount)
+      return res.json({
+        reference: r.referencia,
+      })
+    }
+
+    if (method === 'card') {
+      const r = await createCardPayment(amount, 'https://teu-dominio.com/payments/callback')
+      // **Aqui o EuPago devolve algo como** { sucesso: true, url: "https://sandbox.eupago.pt/…?ref=XYZ&token=ABC" }
+      return res.json({ paymentUrl: r.url })
+    }
+
+    throw new Error('Método não suportado')
+
+  } catch (err: any) {
+    console.error('Pagamento falhou', err)
+    res.status(500).json({ message: err.message })
+  }
+})
+
+5) No Frontend: usa sempre o paymentUrl que vem do backend
+Em Reservations.tsx, no submitStep3:
+
+const response = await apiRequest('POST', '/api/payments/process', paymentData)
+const result   = await response.json()
+
+if (paymentMethod === 'card' && result.paymentUrl) {
+  window.open(result.paymentUrl, '_blank')    // **NUNCA** montes manualmente `/pagamento?ref=…`
+  setReservationData(prev => ({ 
+    ...prev, 
+    paymentUrl: result.paymentUrl, 
+    paymentStatus: 'pending' 
+  }))
+  setPaymentModalOpen(true)
+  return
+}
+
+// resto do fluxo para multibanco / mbway…

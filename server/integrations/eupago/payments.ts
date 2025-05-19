@@ -1,89 +1,105 @@
 import eupagoClient from './client';
-import { PaymentResult, CardPaymentData } from './types';
+import { PaymentResult } from './types';
 
 /**
  * Cria um pagamento Multibanco
- * @param orderId ID do pedido
- * @param amount Valor a ser pago
+ * @param valor Valor a ser pago
+ * @param idempotencia Identificador único da transação
+ * @param descricao Descrição opcional do pagamento
  * @returns Resultado do pagamento com referência Multibanco
  */
-export async function criarMultibanco(orderId: string, amount: number): Promise<PaymentResult> {
-  console.log("Criando simulação de pagamento Multibanco", orderId, amount);
+export async function createMultibanco(valor: number, idempotencia: string, descricao?: string): Promise<PaymentResult> {
+  console.log("Criando pagamento Multibanco", idempotencia, valor);
   
-  // Simulação direta sem tentar conectar com API externa
+  const response = await eupagoClient.request('/reference/create', {
+    valor,
+    idempotencia,
+    descricao: descricao || `Reserva ${idempotencia}`
+  });
+  
   return {
     success: true,
-    reference: "999 999 999",
-    entity: "11111",
-    value: amount.toString(),
-    status: 'pending',
-    expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    message: 'Multibanco criado com sucesso (ambiente de teste)'
+    reference: response.referencia,
+    entity: response.entidade,
+    value: response.valor?.toString(),
+    status: response.estado || 'pending',
+    expirationDate: response.dataLimite,
+    message: 'Multibanco criado com sucesso'
   };
 }
 
 /**
  * Cria um pagamento MB WAY
- * @param orderId ID do pedido
- * @param amount Valor a ser pago
- * @param telefone Número de telefone para MB WAY
+ * @param valor Valor a ser pago
+ * @param telemovel Número de telefone para MB WAY (formato: 9XXXXXXXX)
+ * @param idempotencia Identificador único da transação
+ * @param descricao Descrição opcional do pagamento
  * @returns Resultado do pagamento MB WAY
  */
-export async function criarMbway(orderId: string, amount: number, telefone: string): Promise<PaymentResult> {
-  console.log("Criando simulação de pagamento MBWay", orderId, amount, telefone);
+export async function createMbway(valor: number, telemovel: string, idempotencia: string, descricao?: string): Promise<PaymentResult> {
+  console.log("Criando pagamento MBWay", idempotencia, valor, telemovel);
   
-  // Simulação direta sem tentar conectar com API externa
+  const response = await eupagoClient.request('/mbway/create', {
+    valor,
+    telemovel,
+    idempotencia,
+    descricao: descricao || `Reserva ${idempotencia}`
+  });
+  
   return {
     success: true,
-    reference: `MBWAY-${orderId}`,
-    value: amount.toString(),
-    status: 'pending',
-    message: 'Pagamento MB WAY solicitado. Verifique o seu telemóvel. (ambiente de teste)',
-    phone: telefone
+    reference: response.referencia,
+    value: response.valor?.toString(),
+    status: response.estado || 'pending',
+    message: 'Pagamento MB WAY solicitado. Verifique o seu telemóvel.',
+    phone: telemovel
   };
 }
 
 /**
  * Cria um pagamento com cartão de crédito
- * @param data Dados do cartão e do pagamento
+ * @param valor Valor a ser pago
+ * @param idempotencia Identificador único da transação
+ * @param callbackUrl URL de retorno após o pagamento
+ * @param descricao Descrição opcional do pagamento
  * @returns Resultado do pagamento com cartão
  */
-export async function criarCartao(data: {
-  id: string;
-  valor: number;
-  cartao_numero?: string;
-  cartao_validade?: string;
-  cartao_cvc?: string;
-  email?: string;
-}): Promise<PaymentResult> {
-  console.log("Criando simulação de pagamento com Cartão", data.id, data.valor);
+export async function createCardPayment(valor: number, idempotencia: string, callbackUrl: string, descricao?: string): Promise<PaymentResult> {
+  console.log("Criando pagamento com Cartão", idempotencia, valor);
   
-  // Simulação direta sem tentar conectar com API externa
-  const cardBaseUrl = process.env.EUPAGO_CARD_BASE_URL || 'https://sandbox.eupago.pt/clientes/rest_api';
+  const response = await eupagoClient.request('/card/create', {
+    valor,
+    idempotencia,
+    url_retorno: callbackUrl,
+    descricao: descricao || `Reserva ${idempotencia}`
+  });
   
   return {
     success: true,
-    reference: `CARD-${data.id}`,
-    value: data.valor.toString(),
-    status: 'pending',
-    paymentUrl: `${cardBaseUrl}/pagamento?ref=${data.id}`,
-    message: 'Redirecionando para a página de pagamento com cartão (ambiente de teste)',
+    reference: response.referencia || `CARD-${idempotencia}`,
+    value: response.valor?.toString(),
+    status: response.estado || 'pending',
+    paymentUrl: response.url,
+    message: 'Redirecionando para a página de pagamento com cartão',
   };
 }
 
 /**
  * Verifica o status de um pagamento
- * @param reference Referência do pagamento
+ * @param referencia Referência do pagamento
  * @returns Status atual do pagamento
  */
-export async function verificarStatusPagamento(reference: string): Promise<PaymentResult> {
-  console.log("Verificando simulação de status do pagamento", reference);
+export async function checkPaymentStatus(referencia: string): Promise<PaymentResult> {
+  console.log("Verificando status do pagamento", referencia);
   
-  // Simulação direta sem tentar conectar com API externa
+  const response = await eupagoClient.request('/payments/status', { referencia });
+  
   return {
     success: true,
-    reference: reference,
-    status: 'paid',
-    message: 'Pagamento concluído com sucesso (ambiente de teste)',
+    reference: referencia,
+    status: response.estado || 'unknown',
+    message: response.estado === 'pago' 
+      ? 'Pagamento concluído com sucesso' 
+      : 'Pagamento pendente',
   };
 }

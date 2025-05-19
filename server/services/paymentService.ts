@@ -1,4 +1,4 @@
-import { criarCartao, criarMbway, criarMultibanco, verificarStatusPagamento } from '../integrations/eupago/payments';
+import { createCardPayment, createMbway, createMultibanco, checkPaymentStatus as checkEupagoPaymentStatus } from '../integrations/eupago/payments';
 
 // Interface para os dados de pagamento recebidos do frontend
 interface PaymentRequestData {
@@ -37,31 +37,37 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
 
     let paymentResult;
 
-    // Processar pagamento conforme o método escolhido (modo simulação)
+    // URL base para callbacks de pagamento
+    const callbackUrl = process.env.APP_URL || 'https://' + process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
+    
+    // Processar pagamento conforme o método escolhido
     switch (paymentData.method) {
       case 'card':
-        paymentResult = await criarCartao({
-          id: paymentData.reference,
-          valor: paymentData.amount,
-          email: paymentData.email
-        });
+        paymentResult = await createCardPayment(
+          paymentData.amount,
+          paymentData.reference,
+          `${callbackUrl}/api/payments/callback`,
+          paymentData.description
+        );
         break;
         
       case 'mbway':
         if (!paymentData.phone) {
           throw new Error('Número de telefone é obrigatório para pagamento MB WAY');
         }
-        paymentResult = await criarMbway(
-          paymentData.reference,
+        paymentResult = await createMbway(
           paymentData.amount,
-          paymentData.phone
+          paymentData.phone,
+          paymentData.reference,
+          paymentData.description
         );
         break;
         
       case 'multibanco':
-        paymentResult = await criarMultibanco(
+        paymentResult = await createMultibanco(
+          paymentData.amount,
           paymentData.reference,
-          paymentData.amount
+          paymentData.description
         );
         break;
         
@@ -74,15 +80,14 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
       throw new Error(paymentResult.message || 'Falha no processamento do pagamento');
     }
 
-    // Em modo de desenvolvimento/sandbox ou quando houver problemas com a API, usamos a simulação:
-    // Sempre usamos o modo de simulação para evitar problemas com a API externa
-    if (true) {
+    // Verificar se estamos em modo de simulação
+    if (process.env.EUPAGO_SIMULATION === 'true') {
       // Simulamos a resposta para teste em sandbox
       const simulatedResponse: PaymentResponseData = {
         success: true,
         paymentReference: paymentData.reference,
         status: 'pending',
-        message: 'Pagamento criado com sucesso (sandbox)',
+        message: 'Pagamento criado com sucesso (modo teste)',
       };
 
       // Adicionar dados específicos por método de pagamento
@@ -134,10 +139,10 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
 export async function checkPaymentStatus(reference: string): Promise<PaymentResponseData> {
   try {
     // Verificar status do pagamento com o serviço do Eupago
-    const statusResult = await verificarStatusPagamento(reference);
+    const statusResult = await checkEupagoPaymentStatus(reference);
 
-    // Em ambiente de desenvolvimento ou quando houver problemas com a API, usamos a simulação
-    if (true) {
+    // Se estamos em modo de simulação, retornar um status fixo
+    if (process.env.EUPAGO_SIMULATION === 'true') {
       return {
         success: true,
         paymentReference: reference,
