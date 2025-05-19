@@ -74,6 +74,20 @@ interface ReservationData {
   paymentStatus?: 'pending' | 'paid' | 'failed';
 }
 
+// Estado para detalhes de pagamento
+interface PaymentDetails {
+  entity?: string;
+  reference?: string;
+  expirationDate?: string;
+  phone?: string;
+}
+
+// Estender a interface ReservationData
+interface ExtendedReservationData extends ReservationData {
+  paymentDetails?: PaymentDetails;
+  paymentUrl?: string;
+}
+
 const Reservations: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, user, isLoading } = useAuth();
@@ -85,7 +99,7 @@ const Reservations: React.FC = () => {
   const [isCreatingReservation, setIsCreatingReservation] = useState(false);
   
   // Estado para armazenar dados da reserva em andamento
-  const [reservationData, setReservationData] = useState<ReservationData>({
+  const [reservationData, setReservationData] = useState<ExtendedReservationData>({
     date: new Date(),
     time: '',
     partySize: 2,
@@ -98,6 +112,9 @@ const Reservations: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [partySize, setPartySize] = useState<number>(2);
   const [selectedTime, setSelectedTime] = useState<string>('');
+  
+  // Estado para controlar o modal de pagamento
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   
   // Redirect if not authenticated
   useEffect(() => {
@@ -311,7 +328,6 @@ const Reservations: React.FC = () => {
   // Estados para o controle do pagamento
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   
   // Função para fechar o modal de pagamento e prosseguir para a confirmação
   const handlePaymentCompleted = () => {
@@ -1355,6 +1371,105 @@ const Reservations: React.FC = () => {
         </div>
       )}
     </CustomerLayout>
+  );
+  
+  // Modal de pagamento
+  return (
+    <>
+      <CustomerLayout>
+        {/* Conteúdo principal da página */}
+        {mainContent}
+      </CustomerLayout>
+      
+      {/* Modal de pagamento */}
+      <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('PaymentInformation')}</DialogTitle>
+            <DialogDescription>
+              {reservationData.paymentMethod === 'multibanco' && t('MultibancoPaymentDescription')}
+              {reservationData.paymentMethod === 'mbway' && t('MBWayPaymentDescription')}
+              {reservationData.paymentMethod === 'card' && t('CardPaymentDescription')}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 my-4">
+            {/* Detalhes de pagamento Multibanco */}
+            {reservationData.paymentMethod === 'multibanco' && reservationData.paymentDetails && (
+              <div className="space-y-4">
+                <div className="flex justify-between">
+                  <span className="font-medium">{t('Entity')}:</span>
+                  <span className="font-bold">{reservationData.paymentDetails.entity || '11111'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">{t('Reference')}:</span>
+                  <span className="font-bold">{reservationData.paymentDetails.reference || '999 999 999'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">{t('Amount')}:</span>
+                  <span className="font-bold">€{Number(reservationData.total || 0).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                </div>
+                {reservationData.paymentDetails.expirationDate && (
+                  <div className="flex justify-between">
+                    <span className="font-medium">{t('ExpirationDate')}:</span>
+                    <span>{new Date(reservationData.paymentDetails.expirationDate).toLocaleDateString()}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Detalhes de pagamento MBWay */}
+            {reservationData.paymentMethod === 'mbway' && reservationData.paymentDetails && (
+              <div className="space-y-4">
+                <div className="flex justify-between">
+                  <span className="font-medium">{t('PhoneNumber')}:</span>
+                  <span className="font-bold">{reservationData.paymentDetails.phone || user?.phone}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">{t('Amount')}:</span>
+                  <span className="font-bold">€{Number(reservationData.total || 0).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                </div>
+                <div className="text-center text-sm text-gray-600 mt-2">
+                  {t('CheckYourPhoneForMBWayNotification')}
+                </div>
+              </div>
+            )}
+            
+            {/* Detalhes de pagamento com Cartão */}
+            {reservationData.paymentMethod === 'card' && reservationData.paymentDetails && (
+              <div className="space-y-4 text-center">
+                <div className="text-sm text-gray-600">
+                  {t('RedirectedToPaymentPage')}
+                </div>
+                {reservationData.paymentUrl && (
+                  <Button
+                    className="w-full bg-brasil-blue hover:bg-blue-700"
+                    onClick={() => window.open(reservationData.paymentUrl, '_blank')}
+                  >
+                    {t('OpenPaymentPage')}
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter className="flex sm:justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => setPaymentModalOpen(false)}
+            >
+              {t('Cancel')}
+            </Button>
+            <Button 
+              className="bg-brasil-green hover:bg-green-700 text-white"
+              onClick={handlePaymentCompleted}
+            >
+              {t('ConfirmPayment')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
