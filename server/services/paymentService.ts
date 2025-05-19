@@ -87,12 +87,28 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
     // retornamos respostas simuladas, evitando falhas na API externa
     {
       // Simulamos a resposta para teste em sandbox
-      const simulatedResponse: PaymentResponseData = {
+      // A resposta varia dependendo do método de pagamento
+      let simulatedResponse: PaymentResponseData = {
         success: true,
         paymentReference: paymentData.reference,
         status: 'pending',
         message: 'Pagamento criado com sucesso (modo teste)',
       };
+      
+      // Adicionar campos específicos para cada método
+      if (paymentData.method === 'multibanco') {
+        simulatedResponse = {
+          ...simulatedResponse,
+          entity: '11111',
+          reference: '999 999 999',
+          expirationDate: new Date(Date.now() + 72*3600*1000).toISOString()
+        };
+      } else if (paymentData.method === 'mbway') {
+        simulatedResponse = {
+          ...simulatedResponse,
+          phone: paymentData.phone
+        };
+      }
 
       // Adicionar dados específicos por método de pagamento
       if (paymentData.method === 'card') {
