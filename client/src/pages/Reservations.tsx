@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PaymentDetailsModal from '@/components/payments/PaymentDetailsModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { 
   Table, 
   TableBody, 
@@ -32,7 +33,9 @@ import {
   Check,
   AlertCircle,
   ArrowRight,
-  Trash2
+  Trash2,
+  Smartphone,
+  Landmark
 } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -343,6 +346,44 @@ const Reservations: React.FC = () => {
     });
   };
   
+  // Contador regressivo para pagamento Multibanco
+  const [countdownTime, setCountdownTime] = useState<number>(300); // 5 minutos em segundos
+  const [countdownActive, setCountdownActive] = useState<boolean>(false);
+  
+  // Efeito para gerenciar o contador regressivo
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    
+    if (countdownActive && countdownTime > 0) {
+      timer = setInterval(() => {
+        setCountdownTime(prev => prev - 1);
+      }, 1000);
+    } else if (countdownTime === 0) {
+      // Tempo esgotado, cancelar o pagamento
+      setReservationData(prev => ({
+        ...prev,
+        paymentStatus: 'cancelled'
+      }));
+      
+      toast({
+        title: t('PaymentTimeout'),
+        description: t('PaymentTimeoutDescription'),
+        variant: 'destructive',
+      });
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [countdownActive, countdownTime, t]);
+  
+  // Formatar o tempo de contagem regressiva
+  const formatCountdown = () => {
+    const minutes = Math.floor(countdownTime / 60);
+    const seconds = countdownTime % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   // Submeter etapa 3 - Pagamento
   const submitStep3 = async (paymentMethod: string) => {
     setIsProcessingPayment(true);
@@ -384,9 +425,7 @@ const Reservations: React.FC = () => {
       
       // Processar o resultado do pagamento conforme o método
       if (paymentMethod === 'multibanco') {
-        // Para Multibanco, atualizamos os dados e exibimos os detalhes diretamente
-        // sem depender do modal que está tendo problemas
-        
+        // Para Multibanco, configuramos os detalhes do pagamento
         const multibancoDetails = {
           entity: result.entity || '11111',
           reference: result.reference || '999 999 999',
@@ -400,12 +439,16 @@ const Reservations: React.FC = () => {
         setReservationData({
           ...reservationData,
           paymentMethod,
-          paymentStatus: 'pending',
+          paymentStatus: 'pending', // Importante: status pendente para Multibanco
           confirmationCode,
           paymentReference: result.paymentReference,
           total: total,
           paymentDetails: multibancoDetails
         });
+        
+        // Iniciar contador regressivo para o pagamento
+        setCountdownTime(300); // 5 minutos
+        setCountdownActive(true);
         
         // Criar alerta de toast com os detalhes para garantir visibilidade
         toast({
@@ -414,7 +457,7 @@ const Reservations: React.FC = () => {
           duration: 10000,
         });
         
-        // Avançar direto para a etapa final
+        // Avançar para a etapa final
         setCurrentStep(4);
       } 
       else if (paymentMethod === 'mbway') {
@@ -1184,8 +1227,14 @@ const Reservations: React.FC = () => {
                         <div>
                           <div className="text-sm text-gray-600">{t('PaymentStatus')}</div>
                           <div className="font-medium">
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              {t('Paid')}
+                            <Badge variant="outline" className={
+                              reservationData.paymentMethod === 'multibanco' && reservationData.paymentStatus !== 'paid' 
+                                ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                : "bg-green-50 text-green-700 border-green-200"
+                            }>
+                              {reservationData.paymentMethod === 'multibanco' && reservationData.paymentStatus !== 'paid' 
+                                ? t('Pending') 
+                                : t('Paid')}
                             </Badge>
                           </div>
                         </div>
@@ -1198,13 +1247,54 @@ const Reservations: React.FC = () => {
                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
                       <div className="flex items-center mb-3">
                         <div className="bg-brasil-blue/10 p-2 rounded-full mr-3">
-                          <CreditCard className="h-4 w-4 text-brasil-blue" />
+                          {reservationData.paymentMethod === 'multibanco' ? (
+                            <Landmark className="h-4 w-4 text-brasil-blue" />
+                          ) : reservationData.paymentMethod === 'mbway' ? (
+                            <Smartphone className="h-4 w-4 text-brasil-blue" />
+                          ) : (
+                            <CreditCard className="h-4 w-4 text-brasil-blue" />
+                          )}
                         </div>
                         <div>
                           <div className="font-medium">{t(reservationData.paymentMethod || 'card')}</div>
-                          <div className="text-sm text-gray-600">{t('TransactionProcessed')}</div>
+                          <div className="text-sm text-gray-600">
+                            {reservationData.paymentMethod === 'multibanco' && reservationData.paymentStatus === 'pending' 
+                              ? t('PendingTransaction') 
+                              : t('TransactionProcessed')}
+                          </div>
                         </div>
                       </div>
+                      
+                      {/* Detalhes específicos para Multibanco */}
+                      {reservationData.paymentMethod === 'multibanco' && reservationData.paymentStatus === 'pending' && (
+                        <div className="mb-3 p-3 bg-yellow-50 rounded-md border border-yellow-100">
+                          <div className="text-center mb-2 font-medium text-yellow-800">
+                            {t('PaymentPendingApproval')}
+                          </div>
+                          
+                          {countdownActive && (
+                            <div className="text-center mb-3">
+                              <div className="text-sm text-gray-600">{t('TimeRemaining')}</div>
+                              <div className="text-xl font-mono font-semibold text-yellow-800">{formatCountdown()}</div>
+                            </div>
+                          )}
+                          
+                          <div className="grid grid-cols-2 gap-2 mb-3">
+                            <div>
+                              <div className="text-sm text-gray-600">{t('Entity')}</div>
+                              <div className="font-bold font-mono text-lg">{reservationData.paymentDetails?.entity || '11111'}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600">{t('Reference')}</div>
+                              <div className="font-bold font-mono text-lg">{reservationData.paymentDetails?.reference || '999 999 999'}</div>
+                            </div>
+                          </div>
+                          
+                          <div className="text-sm text-center text-gray-600">
+                            {t('MultibancoCTA')}
+                          </div>
+                        </div>
+                      )}
                       
                       <div className="pt-3 border-t">
                         <div className="flex justify-between font-semibold">
@@ -1223,16 +1313,45 @@ const Reservations: React.FC = () => {
                     <div className="mb-4">
                       <div className="text-sm text-gray-600 mb-2">{t('ScanQRCode')}</div>
                       <div className="bg-white p-4 inline-block rounded-lg border border-gray-200">
-                        {/* Placeholder para QR Code - Em produção usaria uma biblioteca real */}
-                        <div className="w-48 h-48 bg-gray-800 mx-auto"></div>
+                        {/* QR Code para Multibanco */}
+                        {reservationData.paymentMethod === 'multibanco' && reservationData.paymentStatus === 'pending' ? (
+                          <div className="text-center">
+                            <div className="w-48 h-48 bg-gray-800 mx-auto flex items-center justify-center">
+                              <div className="p-4 bg-white">
+                                <div className="text-sm font-bold mb-2">{t('MultibancoPay')}</div>
+                                <div className="text-xs mb-1">{t('Entity')}: {reservationData.paymentDetails?.entity || '11111'}</div>
+                                <div className="text-xs mb-1">{t('Reference')}: {reservationData.paymentDetails?.reference || '999999999'}</div>
+                                <div className="text-xs mb-1">€{Number(reservationData.total || 0).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-48 h-48 bg-gray-800 mx-auto flex items-center justify-center text-white text-sm p-2 text-center">
+                            {t('ReservationQRCode')}
+                          </div>
+                        )}
                       </div>
                     </div>
                     
                     <div className="mb-4 pb-4 border-b">
                       <div className="text-sm text-gray-600 mb-2">{t('OrShowBarcode')}</div>
                       <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        {/* Placeholder para código de barras */}
-                        <div className="w-full h-16 bg-gray-800 mx-auto"></div>
+                        {/* Código de barras para Multibanco */}
+                        {reservationData.paymentMethod === 'multibanco' && reservationData.paymentStatus === 'pending' ? (
+                          <div className="text-center">
+                            <div className="w-full h-16 bg-gray-800 mx-auto flex items-center justify-center">
+                              <div className="px-4 py-2 bg-white">
+                                <div className="text-xs font-mono font-bold">
+                                  {reservationData.paymentDetails?.entity || '11111'} | {reservationData.paymentDetails?.reference || '999999999'} | €{Number(reservationData.total || 0).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full h-16 bg-gray-800 mx-auto flex items-center justify-center text-white text-sm">
+                            {t('ReservationBarcode')}
+                          </div>
+                        )}
                       </div>
                     </div>
                     
