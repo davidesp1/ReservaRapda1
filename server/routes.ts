@@ -475,12 +475,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await storage.createPayment({
         userId,
-        reservationId: undefined, // Será atualizado quando a reserva for criada
         amount: Number(amount),
         method,
         status: "pending",
         reference: paymentResult.paymentReference,
-        details: JSON.stringify(paymentResult)
+        details: {
+          entity: paymentResult.entity,
+          reference: paymentResult.reference,
+          status: paymentResult.status,
+          paymentUrl: paymentResult.paymentUrl,
+          expirationDate: paymentResult.expirationDate
+        }
       });
     } catch (error) {
       console.error("Falha ao salvar registro de pagamento:", error);
@@ -597,12 +602,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ message: "Invalid payment method" });
     }
     
-    // Import the eupago service
-    const eupagoService = await import("./services/eupagoService").then(m => m.default);
-    
     // Generate a unique reference for this payment
     const reference = `RES${reservationId}-${Date.now()}`;
     const description = `Payment for Reservation #${reservationId} at Opa Que Delicia`;
+    
+    // Process payment with our payment service
+    const paymentResult = await processPayment({
+      method,
+      amount: Number(amount),
+      reference,
+      description,
+      email: req.body.email,
+      name: req.body.name,
+      phone: req.body.phone
+    });
     let paymentResponse;
     
     // Process payment based on method

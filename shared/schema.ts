@@ -121,13 +121,15 @@ export const insertReservationSchema = createInsertSchema(reservations).omit({
 // Payments
 export const payments = pgTable("payments", {
   id: serial("id").primaryKey(),
-  reservationId: integer("reservation_id").notNull(),
+  userId: integer("user_id").notNull(),
+  reservationId: integer("reservation_id"),
   amount: integer("amount").notNull(), // Amount in cents
   method: paymentMethodEnum("method").notNull(),
   status: paymentStatusEnum("status").default("pending"),
+  reference: text("reference"),
   transactionId: text("transaction_id"),
   paymentDate: timestamp("payment_date"),
-  eupagoDetails: json("eupago_details").$type<{
+  details: json("details").$type<{
     entity?: string;
     reference?: string;
     status?: string;
@@ -135,7 +137,9 @@ export const payments = pgTable("payments", {
     paymentUrl?: string;
     iban?: string;
     bankName?: string;
+    expirationDate?: string;
   }>(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertPaymentSchema = createInsertSchema(payments).omit({
