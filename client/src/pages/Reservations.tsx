@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, Link } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
@@ -106,7 +106,7 @@ const Reservations: React.FC = () => {
   
   // Fetch available tables for the selected date, time and party size
   const { data: availableTables, isLoading: tablesLoading, refetch: refetchTables } = useQuery<any[]>({
-    queryKey: ['/api/tables/available', { date: selectedDate?.toISOString(), time: selectedTimeValue, partySize }],
+    queryKey: ['/api/tables/available', { date: selectedDate?.toISOString(), time: '', partySize }],
     queryFn: async ({ queryKey }) => {
       const [_, params] = queryKey;
       const { date, time, partySize } = params as { date?: string; time?: string; partySize: number };
@@ -163,7 +163,7 @@ const Reservations: React.FC = () => {
   
   // Quando a data é selecionada no formulário
   const onDateSelect = (date: Date | undefined) => {
-    setSelectedDate(date);
+    handleDateChange(date);
     step1Form.setValue('date', date as Date);
   };
   
@@ -183,12 +183,20 @@ const Reservations: React.FC = () => {
     step1Form.setValue('time', time);
   };
   
-  // Atualiza as mesas disponíveis quando a data, hora ou o tamanho do grupo mudam
-  useEffect(() => {
-    if (selectedDate && selectedTimeValue && isCreatingReservation) {
+  // Manipulador para alterar data
+  const handleDateChange = useCallback((date: Date | undefined) => {
+    setSelectedDate(date);
+    if (date && isCreatingReservation) {
       refetchTables();
     }
-  }, [selectedDate, selectedTimeValue, partySize, refetchTables, isCreatingReservation]);
+  }, [isCreatingReservation, refetchTables]);
+  
+  // Atualiza as mesas disponíveis quando a data, hora ou o tamanho do grupo mudam
+  useEffect(() => {
+    if (selectedDate && isCreatingReservation) {
+      refetchTables();
+    }
+  }, [selectedDate, partySize, refetchTables, isCreatingReservation]);
   
   // Atualiza o estado com os dados da etapa 1
   const onSubmitStep1 = (data: Step1FormValues) => {

@@ -332,8 +332,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tables/available", handleErrors(async (req: Request, res: Response) => {
     const { date, time, partySize, duration } = req.query;
     
+    // Se data e hora não forem fornecidos, retornar todas as mesas disponíveis
     if (!date || !time) {
-      return res.status(400).json({ message: "Date and time are required" });
+      const allTables = await storage.getAllTables();
+      const availableTables = allTables.filter(table => table.available);
+      return res.json(availableTables);
     }
     
     const dateTime = new Date(`${date}T${time}`);
