@@ -89,6 +89,7 @@ const Reservations: React.FC = () => {
   // Estado para o formulário básico
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [partySize, setPartySize] = useState<number>(2);
+  const [selectedTime, setSelectedTime] = useState<string>('');
   
   // Redirect if not authenticated
   useEffect(() => {
@@ -105,18 +106,18 @@ const Reservations: React.FC = () => {
   
   // Fetch available tables for the selected date and party size
   const { data: availableTables, isLoading: tablesLoading, refetch: refetchTables } = useQuery<any[]>({
-    queryKey: ['/api/tables/available', { date: selectedDate?.toISOString(), partySize }],
+    queryKey: ['/api/tables/available', { date: selectedDate?.toISOString(), time: selectedTime, partySize }],
     queryFn: async ({ queryKey }) => {
       const [_, params] = queryKey;
-      const { date, partySize } = params as { date?: string; partySize: number };
+      const { date, time, partySize } = params as { date?: string; time?: string; partySize: number };
       
-      if (!date) {
+      if (!date || !time) {
         return [];
       }
       
       const response = await apiRequest(
         'GET', 
-        `/api/tables/available?date=${encodeURIComponent(date)}&partySize=${partySize}`
+        `/api/tables/available?date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&partySize=${partySize}`
       );
       
       return response.json();

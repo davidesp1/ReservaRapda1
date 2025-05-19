@@ -330,7 +330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
   
   app.get("/api/tables/available", handleErrors(async (req: Request, res: Response) => {
-    const { date, time, duration } = req.query;
+    const { date, time, partySize, duration } = req.query;
     
     if (!date || !time) {
       return res.status(400).json({ message: "Date and time are required" });
@@ -338,9 +338,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     const dateTime = new Date(`${date}T${time}`);
     const durationHours = duration ? parseInt(duration as string) : 2; // Default 2 hours
+    const partySizeNum = partySize ? parseInt(partySize as string) : 1;
     
-    const availableTables = await storage.getAvailableTables(dateTime, durationHours);
-    res.json(availableTables);
+    // Obter todas as mesas
+    const allTables = await storage.getAllTables();
+    
+    // Filtrar mesas com capacidade suficiente
+    const tablesWithCapacity = allTables.filter(table => 
+      table.available && (!table.capacity || table.capacity >= partySizeNum)
+    );
+    
+    // Verificar disponibilidade de cada mesa para o horário escolhido
+    const availableTables = await Promise.all(
+      tablesWithCapacity.map(async table => {
+        const isBooked = await checkTableAvailability(
+          table.id, 
+          dateTime, 
+          time as string, 
+          durationHours
+        );
+        return !isBooked ? table : null;
+      })
+    );
+    
+    // Filtrar mesas que não estão reservadas
+    const finalAvailableTables = availableTables.filter(table => table !== null);
+    
+    res.json(finalAvailableTables);
   }));
   
   app.get("/api/tables/:id", handleErrors(async (req: Request, res: Response) => {
