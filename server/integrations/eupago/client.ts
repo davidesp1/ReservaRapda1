@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import { EupagoResponse } from './types';
 
 // Cria o cliente para a API do Eupago
 const eupagoClient = {
@@ -6,7 +7,7 @@ const eupagoClient = {
   apiKey: process.env.EUPAGO_API_KEY,
 
   // Método genérico para fazer requisições à API do Eupago
-  async request(endpoint: string, data: any) {
+  async request(endpoint: string, data: any): Promise<EupagoResponse> {
     if (!this.apiKey) {
       throw new Error('EUPAGO_API_KEY não configurada');
     }
@@ -29,14 +30,14 @@ const eupagoClient = {
       const result = await response.json();
 
       // Verificar erros na resposta da API
-      if (!response.ok || (typeof result === 'object' && 'erro' in result)) {
-        const errorMessage = typeof result === 'object' && 'erro' in result 
+      if (!response.ok || (result && typeof result === 'object' && 'erro' in result)) {
+        const errorMessage = result && typeof result === 'object' && 'erro' in result 
           ? String(result.erro) 
           : 'Erro na requisição à API do Eupago';
         throw new Error(errorMessage);
       }
 
-      return result;
+      return result as EupagoResponse;
     } catch (error: any) {
       console.error(`Erro na requisição à API do Eupago (${endpoint}):`, error);
       throw error;

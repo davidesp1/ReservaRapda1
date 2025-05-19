@@ -1,17 +1,5 @@
 import eupagoClient from './client';
-
-// Interface para o resultado de pagamento
-export interface PaymentResult {
-  success: boolean;
-  reference?: string;
-  entity?: string;
-  value?: string;
-  message?: string;
-  paymentUrl?: string;
-  status?: string;
-  expirationDate?: string;
-  [key: string]: any;
-}
+import { PaymentResult, CardPaymentData } from './types';
 
 /**
  * Cria um pagamento Multibanco
@@ -28,11 +16,11 @@ export async function criarMultibanco(orderId: string, amount: number): Promise<
 
     return {
       success: true,
-      reference: response.referencia,
-      entity: response.entidade,
-      value: response.valor,
+      reference: response && typeof response === 'object' ? response.referencia : undefined,
+      entity: response && typeof response === 'object' ? response.entidade : undefined,
+      value: response && typeof response === 'object' ? response.valor : undefined,
       status: 'pending',
-      expirationDate: response.data_fim || null,
+      expirationDate: response && typeof response === 'object' && response.data_fim ? response.data_fim : undefined,
     };
   } catch (error: any) {
     return {
@@ -59,8 +47,8 @@ export async function criarMbway(orderId: string, amount: number, telefone: stri
 
     return {
       success: true,
-      reference: response.referencia,
-      value: response.valor,
+      reference: response && typeof response === 'object' ? response.referencia : undefined,
+      value: response && typeof response === 'object' ? response.valor : undefined,
       status: 'pending',
       message: 'Pagamento MB WAY solicitado. Verifique o seu telemóvel.',
     };
