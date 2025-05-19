@@ -881,6 +881,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ success: true, message: `${category} settings updated successfully` });
   }));
 
+  // Rotas específicas da API EuPago
+  // 1. Criar referência Multibanco
+  app.post('/api/payments/multibanco', isAuthenticated, handleErrors(async (req: Request, res: Response) => {
+    const { valor, idempotencia } = req.body;
+    try {
+      const resp = await eupagoClient.request('/reference/create', { valor, idempotencia });
+      return res.json(resp);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  }));
+
+  // 2. Criar pagamento MBWay
+  app.post('/api/payments/mbway', isAuthenticated, handleErrors(async (req: Request, res: Response) => {
+    const { valor, telemovel, idempotencia } = req.body;
+    try {
+      const resp = await eupagoClient.request('/mbway/create', { valor, telemovel, idempotencia });
+      return res.json(resp);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  }));
+
+  // 3. Verificar status de pagamento
+  app.post('/api/payments/status', isAuthenticated, handleErrors(async (req: Request, res: Response) => {
+    const { referencia } = req.body;
+    try {
+      const resp = await eupagoClient.request('/payments/status', { referencia });
+      return res.json(resp);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  }));
+
   const httpServer = createServer(app);
   
   return httpServer;

@@ -72,12 +72,12 @@ const eupagoClient = {
         body: JSON.stringify(data)
       });
       
-      const result = await response.json();
+      const result = await response.json() as EupagoResponse;
       
       console.log(`Resposta da API EuPago:`, result);
       
       if (!response.ok || !result.sucesso) {
-        throw new Error(result.mensagem || 'Erro na API EuPago');
+        throw new Error((result.mensagem as string) || 'Erro na API EuPago');
       }
       
       return result;
