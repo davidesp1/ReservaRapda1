@@ -87,7 +87,8 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
 
       // Adicionar dados específicos por método de pagamento
       if (paymentData.method === 'card') {
-        simulatedResponse.paymentUrl = 'https://sandbox.eupago.pt/pagamento?ref=012345678901';
+        const cardBaseUrl = process.env.EUPAGO_CARD_BASE_URL || 'https://sandbox.eupago.pt/clientes/rest_api';
+        simulatedResponse.paymentUrl = `${cardBaseUrl}/pagamento?ref=${paymentData.reference}`;
         simulatedResponse.expirationDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
       } else if (paymentData.method === 'mbway') {
         simulatedResponse.phone = paymentData.phone;

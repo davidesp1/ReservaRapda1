@@ -1,0 +1,58 @@
+Aqui estão as correções que você precisa aplicar para que o “Cartão” abra a página certa do EuPago (e não apenas sandbox.eupago.pt/pagamento?ref=…, que dá 404):
+
+1) Ajustar paymentUrl no hook de pagamento
+Arquivo: client/src/hooks/usePayment.ts Por volta da linha 45 (onde você faz o setPaymentUrl(result.paymentUrl) ou similar)
+diff
+CopiarEditar
+-   // antes, você estava usando o URL “bruto” vindo da API, que é só `/pagamento?ref=…`
+-   setPaymentUrl(result.paymentUrl)
++   // em vez disso, monte o URL completo incluindo o prefixo /clientes/rest_api
++   const base = process.env.NEXT_PUBLIC_EUPAGO_BASE_URL
++     || 'https://sandbox.eupago.pt/clientes/rest_api'
++   setPaymentUrl(`${base}/pagamento?ref=${result.referencia}`)
+Por quê? A API de cartão retorna só a query string (/pagamento?ref=…), mas o host correto é https://sandbox.eupago.pt/clientes/rest_api. Montando o link dessa forma você não terá mais 404.
+
+2) Ajustar o link no modal de detalhes de pagamento
+Arquivo: client/src/components/payments/PaymentDetailsModal.tsx Por volta da linha 30–35, onde você renderiza o botão/anchor para cartão:
+diff
+CopiarEditar
+- {reservationData.paymentMethod === 'card' && reservationData.paymentUrl && (
+-   <Button
+-     className="w-full bg-brasil-blue hover:bg-blue-700"
+-     onClick={() => window.open(reservationData.paymentUrl, '_blank')}
+-   >
+-     {t('OpenPaymentPage')}
+-   </Button>
+- )}
++ {reservationData.paymentMethod === 'card' && reservationData.paymentReference && (
++   <Button
++     className="w-full bg-brasil-blue hover:bg-blue-700"
++     onClick={() => {
++       const base = process.env.NEXT_PUBLIC_EUPAGO_BASE_URL
++         || 'https://sandbox.eupago.pt/clientes/rest_api'
++       const url = `${base}/pagamento?ref=${reservationData.paymentReference}`
++       window.open(url, '_blank')
++     }}
++   >
++     {t('OpenPaymentPage')}
++   </Button>
++ )}
+Por quê? Assim você garante que o link aberto no browser aponte para https://sandbox.eupago.pt/clientes/rest_api/pagamento?ref=…, que é onde o EuPago realmente serve o checkout.
+
+3) Configurar variáveis de ambiente
+No seu .env (ou no dashboard da Repl.it / Vercel), certifique-se de ter:
+dotenv
+CopiarEditar
+NEXT_PUBLIC_EUPAGO_BASE_URL=https://sandbox.eupago.pt/clientes/rest_api
+NEXT_PUBLIC_EUPAGO_API_KEY=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+Por quê? Isso alinha o process.env.NEXT_PUBLIC_EUPAGO_BASE_URL ao host correto do EuPago em sandbox.
+
+Depois dessas três mudanças:
+1. usePayment.ts monta o paymentUrl completo. 
+2. PaymentDetailsModal.tsx abre esse link completo. 
+3. .env garante que o host usado (sandbox) está certo. 
+Recompile o frontend e teste de novo clicando em “Cartão” — agora a aba deverá abrir em:
+perl
+CopiarEditar
+https://sandbox.eupago.pt/clientes/rest_api/pagamento?ref=012345678901
+e não em sandbox.eupago.pt/pagamento?.., resolvendo o 404.
