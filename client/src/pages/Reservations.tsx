@@ -9,14 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import PaymentDetailsModal from '@/components/payments/PaymentDetailsModal';
 import { 
   Table, 
   TableBody, 
@@ -333,6 +326,12 @@ const Reservations: React.FC = () => {
   const handlePaymentCompleted = () => {
     setPaymentModalOpen(false);
     setCurrentStep(4); // Avançar para confirmação
+    
+    toast({
+      title: t('PaymentProcessing'),
+      description: t('ReservationConfirmed'),
+      duration: 4000,
+    });
   };
   
   // Submeter etapa 3 - Pagamento
@@ -364,6 +363,59 @@ const Reservations: React.FC = () => {
       
       if (!response.ok) {
         throw new Error(result.message || 'Erro ao processar pagamento');
+      }
+      
+      // Atualizar dados da reserva com informações de pagamento
+      const confirmationCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+      
+      if (paymentMethod === 'multibanco' && result.entity && result.reference) {
+        // Atualizar dados para pagamento Multibanco
+        setReservationData({
+          ...reservationData,
+          paymentMethod,
+          paymentStatus: 'pending',
+          confirmationCode,
+          paymentReference: result.paymentReference,
+          paymentDetails: {
+            entity: result.entity,
+            reference: result.reference,
+            expirationDate: result.expirationDate
+          }
+        });
+        
+        // Abrir modal de pagamento
+        setPaymentModalOpen(true);
+      } 
+      else if (paymentMethod === 'mbway') {
+        // Atualizar dados para pagamento MBWay
+        setReservationData({
+          ...reservationData,
+          paymentMethod,
+          paymentStatus: 'pending',
+          confirmationCode,
+          paymentReference: result.paymentReference,
+          paymentDetails: {
+            phone: paymentData.phone
+          }
+        });
+        
+        // Abrir modal de pagamento
+        setPaymentModalOpen(true);
+      }
+      else if (paymentMethod === 'card' && result.paymentUrl) {
+        // Atualizar dados para pagamento com cartão
+        setReservationData({
+          ...reservationData,
+          paymentMethod,
+          paymentStatus: 'pending',
+          confirmationCode,
+          paymentReference: result.paymentReference,
+          paymentUrl: result.paymentUrl,
+          paymentDetails: {}
+        });
+        
+        // Abrir modal de pagamento
+        setPaymentModalOpen(true);
       }
       
       // Verificar se é necessário alguma ação de pagamento adicional
