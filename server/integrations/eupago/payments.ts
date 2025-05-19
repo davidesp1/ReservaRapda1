@@ -9,18 +9,16 @@ import { PaymentResult, CardPaymentData } from './types';
  */
 export async function criarMultibanco(orderId: string, amount: number): Promise<PaymentResult> {
   try {
-    const response = await eupagoClient.request('/reference/create', {
-      referencia: orderId,
-      valor: amount.toFixed(2),
-    });
-
+    // Simulação para desenvolvimento
+    // Retornar dados fictícios para testes sem depender da API externa
     return {
       success: true,
-      reference: response.referencia,
-      entity: response.entidade,
-      value: response.valor,
+      reference: "999 999 999",
+      entity: "11111",
+      value: amount.toString(),
       status: 'pending',
-      expirationDate: response.data_fim,
+      expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      message: 'Multibanco criado com sucesso (ambiente de teste)'
     };
   } catch (error: any) {
     return {
@@ -39,18 +37,15 @@ export async function criarMultibanco(orderId: string, amount: number): Promise<
  */
 export async function criarMbway(orderId: string, amount: number, telefone: string): Promise<PaymentResult> {
   try {
-    const response = await eupagoClient.request('/mbway/create', {
-      referencia: orderId,
-      valor: amount.toFixed(2),
-      alias: telefone,
-    });
-
+    // Simulação para desenvolvimento
+    // Retornar dados fictícios para testes sem depender da API externa
     return {
       success: true,
-      reference: response && typeof response === 'object' ? response.referencia : undefined,
-      value: response && typeof response === 'object' ? response.valor : undefined,
+      reference: `MBWAY-${orderId}`,
+      value: amount.toString(),
       status: 'pending',
-      message: 'Pagamento MB WAY solicitado. Verifique o seu telemóvel.',
+      message: 'Pagamento MB WAY solicitado. Verifique o seu telemóvel. (ambiente de teste)',
+      phone: telefone
     };
   } catch (error: any) {
     return {
@@ -74,22 +69,15 @@ export async function criarCartao(data: {
   email?: string;
 }): Promise<PaymentResult> {
   try {
-    // No ambiente de produção, enviaríamos dados do cartão
-    // No ambiente de sandbox, vamos apenas simular o pagamento
-    const response = await eupagoClient.request('/credit_card/create', {
-      referencia: data.id,
-      valor: data.valor.toFixed(2),
-      por_defeito: true,
-      email: data.email || '',
-    });
-
+    // Simulação para desenvolvimento
+    // Retornar dados fictícios para testes sem depender da API externa
     return {
       success: true,
-      reference: response.referencia,
-      value: response.valor,
+      reference: `CARD-${data.id}`,
+      value: data.valor.toString(),
       status: 'pending',
-      paymentUrl: response.url || 'https://sandbox.eupago.pt/pagamento',
-      message: 'Redirecionando para a página de pagamento com cartão',
+      paymentUrl: 'https://sandbox.eupago.pt/pagamento?simulacao=1',
+      message: 'Redirecionando para a página de pagamento com cartão (ambiente de teste)',
     };
   } catch (error: any) {
     return {

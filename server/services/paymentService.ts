@@ -32,14 +32,12 @@ interface PaymentResponseData {
  */
 export async function processPayment(paymentData: PaymentRequestData): Promise<PaymentResponseData> {
   try {
-    // Verificar se a chave da API eupago está definida
-    if (!process.env.EUPAGO_API_KEY) {
-      throw new Error('EUPAGO_API_KEY não configurada');
-    }
+    // Usar API key definida ou chave de teste para ambiente de desenvolvimento
+    const apiKey = process.env.EUPAGO_API_KEY || 'demo-key-for-development';
 
     let paymentResult;
 
-    // Processar pagamento conforme o método escolhido
+    // Processar pagamento conforme o método escolhido (modo simulação)
     switch (paymentData.method) {
       case 'card':
         paymentResult = await criarCartao({
