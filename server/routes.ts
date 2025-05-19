@@ -825,10 +825,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }).length;
     
     // Calcular receita total (de todos os pagamentos)
-    const allPayments = await storage.getAllPayments();
-    const totalRevenue = allPayments.reduce((sum, payment) => {
-      return sum + (payment.amount || 0);
-    }, 0);
+    let totalRevenue = 0;
+    try {
+      const allPayments = await storage.getAllPayments();
+      totalRevenue = allPayments.reduce((sum, payment) => {
+        return sum + (payment.amount || 0);
+      }, 0);
+    } catch (error) {
+      console.error("Erro ao buscar pagamentos:", error);
+      // Continuar com totalRevenue = 0 em caso de erro
+    }
     
     res.json({
       totalUsers,

@@ -174,12 +174,21 @@ const Reservations: React.FC = () => {
     step1Form.setValue('partySize', size);
   };
   
-  // Atualiza as mesas disponíveis quando a data ou o tamanho do grupo mudam
+  // Adiciona state para hora selecionada
+  const [selectedTimeValue, setSelectedTimeValue] = useState('');
+
+  // Manipulador de alteração de horário
+  const handleTimeChange = (time: string) => {
+    setSelectedTimeValue(time);
+    step1Form.setValue('time', time);
+  };
+  
+  // Atualiza as mesas disponíveis quando a data, hora ou o tamanho do grupo mudam
   useEffect(() => {
-    if (selectedDate && isCreatingReservation) {
+    if (selectedDate && selectedTimeValue && isCreatingReservation) {
       refetchTables();
     }
-  }, [selectedDate, partySize, refetchTables, isCreatingReservation]);
+  }, [selectedDate, selectedTimeValue, partySize, refetchTables, isCreatingReservation]);
   
   // Atualiza o estado com os dados da etapa 1
   const onSubmitStep1 = (data: Step1FormValues) => {
