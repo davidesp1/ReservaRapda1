@@ -105,24 +105,32 @@ const Reservations: React.FC = () => {
   });
   
   // Fetch available tables for the selected date, time and party size
+  // Buscar todas as mesas
+  const { data: allTables, isLoading: allTablesLoading } = useQuery<any[]>({
+    queryKey: ['/api/tables'],
+    enabled: !!isAuthenticated,
+  });
+  
+  // Buscar mesas disponíveis quando uma data for selecionada
   const { data: availableTables, isLoading: tablesLoading, refetch: refetchTables } = useQuery<any[]>({
-    queryKey: ['/api/tables/available', { date: selectedDate?.toISOString(), time: '', partySize }],
+    queryKey: ['/api/tables/available', { date: selectedDate?.toISOString(), partySize }],
     queryFn: async ({ queryKey }) => {
       const [_, params] = queryKey;
-      const { date, time, partySize } = params as { date?: string; time?: string; partySize: number };
+      const { date, partySize } = params as { date?: string; partySize: number };
       
-      if (!date || !time) {
-        return [];
+      // Se não há data, retornamos todas as mesas mas marcamos como não disponíveis para seleção
+      if (!date) {
+        return allTables?.filter(table => table.available) || [];
       }
       
-      const response = await apiRequest(
-        'GET', 
-        `/api/tables/available?date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&partySize=${partySize}`
-      );
+      // Usamos uma hora padrão para evitar problemas com o campo time
+      const defaultTime = "19:00";
+      const apiUrl = `/api/tables/available?date=${encodeURIComponent(date)}&time=${encodeURIComponent(defaultTime)}&partySize=${partySize}`;
       
+      const response = await apiRequest('GET', apiUrl);
       return response.json();
     },
-    enabled: !!selectedDate && partySize > 0 && isAuthenticated && isCreatingReservation,
+    enabled: !!isAuthenticated && isCreatingReservation,
   });
   
   // Fetch menu items

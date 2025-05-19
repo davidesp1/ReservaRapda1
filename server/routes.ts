@@ -332,7 +332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tables/available", handleErrors(async (req: Request, res: Response) => {
     const { date, time, partySize, duration } = req.query;
     
-    // Se data e hora não forem fornecidos, retornar todas as mesas disponíveis
+    // Se data ou hora não forem fornecidos, retornar todas as mesas disponíveis gerais
     if (!date || !time) {
       const allTables = await storage.getAllTables();
       const availableTables = allTables.filter(table => table.available);
