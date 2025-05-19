@@ -483,11 +483,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Table not available" });
       }
       
-      const isTableBooked = await storage.isTableBooked(
-        req.body.tableId,
+      const isTableBooked = await checkTableAvailability(
+        req.body.tableId || reservation.tableId,
         req.body.date ? new Date(req.body.date) : new Date(reservation.date),
-        req.body.duration || reservation.duration,
-        id // Exclude current reservation from check
+        req.body.timeSlot || reservation.timeSlot,
+        req.body.duration || reservation.duration || 2
       );
       
       if (isTableBooked) {
@@ -735,7 +735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(403).json({ message: "Forbidden" });
     }
     
-    const orders = await storage.getOrdersByReservationId(reservationId);
+    const orders = await storage.getReservationOrders(reservationId);
     res.json(orders);
   }));
 
@@ -785,11 +785,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Stats for dashboard
   app.get("/api/stats/dashboard", isAdmin, handleErrors(async (req: Request, res: Response) => {
-    // Get stats for dashboard
-    const totalUsers = await storage.countTotalUsers();
-    const totalReservations = await storage.countTotalReservations();
-    const upcomingReservations = await storage.countUpcomingReservations();
-    const totalRevenue = await storage.calculateTotalRevenue();
+    // Obter todos os usuários
+    const users = await storage.getAllUsers();
+    const totalUsers = users.length;
+    
+    // Obter todas as reservas
+    const allReservations = await storage.getAllReservations();
+    const totalReservations = allReservations.length;
+    
+    // Calcular reservas futuras (a partir de hoje)
+    const now = new Date();
+    const upcomingReservations = allReservations.filter(r => {
+      const reservationDate = new Date(r.date);
+      return reservationDate >= now;
+    }).length;
+    
+    // Calcular receita total (de todos os pagamentos)
+    const allPayments = await storage.getAllPayments();
+    const totalRevenue = allPayments.reduce((sum, payment) => {
+      return sum + (payment.amount || 0);
+    }, 0);
     
     res.json({
       totalUsers,
