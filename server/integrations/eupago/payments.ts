@@ -16,11 +16,11 @@ export async function criarMultibanco(orderId: string, amount: number): Promise<
 
     return {
       success: true,
-      reference: response && typeof response === 'object' ? response.referencia : undefined,
-      entity: response && typeof response === 'object' ? response.entidade : undefined,
-      value: response && typeof response === 'object' ? response.valor : undefined,
+      reference: response.referencia,
+      entity: response.entidade,
+      value: response.valor,
       status: 'pending',
-      expirationDate: response && typeof response === 'object' && response.data_fim ? response.data_fim : undefined,
+      expirationDate: response.data_fim,
     };
   } catch (error: any) {
     return {

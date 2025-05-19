@@ -460,8 +460,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       amount: Number(amount),
       reference,
       description: description || `Reserva ${reference}`,
-      email: email || req.session.user?.email,
-      name: name || req.session.user?.username,
+      email: email || undefined,
+      name: name || undefined,
       phone
     });
     
@@ -475,7 +475,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await storage.createPayment({
         userId,
-        reservationId: null, // Será atualizado quando a reserva for criada
+        reservationId: undefined, // Será atualizado quando a reserva for criada
         amount: Number(amount),
         method,
         status: "pending",

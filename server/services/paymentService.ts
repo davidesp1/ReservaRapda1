@@ -104,9 +104,14 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
 
     // Formatar a resposta para o frontend
     const paymentResponse: PaymentResponseData = {
-      success: true,
+      success: paymentResult.success,
       paymentReference: paymentData.reference,
-      ...paymentResult
+      message: paymentResult.message,
+      entity: paymentResult.entity,
+      reference: paymentResult.reference,
+      status: paymentResult.status,
+      expirationDate: paymentResult.expirationDate,
+      paymentUrl: paymentResult.paymentUrl
     };
 
     return paymentResponse;
@@ -147,7 +152,10 @@ export async function checkPaymentStatus(reference: string): Promise<PaymentResp
       paymentReference: reference,
       status: statusResult.status,
       message: statusResult.message,
-      ...statusResult
+      entity: statusResult.entity,
+      reference: statusResult.reference,
+      expirationDate: statusResult.expirationDate,
+      paymentUrl: statusResult.paymentUrl
     };
 
     return paymentResponse;
