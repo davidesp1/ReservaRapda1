@@ -45,6 +45,7 @@ import CustomerLayout from '@/components/layouts/CustomerLayout';
 
 // Status de reserva
 type ReservationStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+type PaymentStatus = 'pending' | 'paid' | 'failed';
 
 // Tipo para os itens de menu da reserva
 interface MenuItem {
@@ -67,7 +68,7 @@ interface ReservationData {
   total?: number;
   notes?: string;
   paymentMethod?: string;
-  paymentStatus?: 'pending' | 'paid' | 'failed';
+  paymentStatus?: PaymentStatus;
 }
 
 // Estado para detalhes de pagamento
@@ -83,6 +84,7 @@ interface ExtendedReservationData extends ReservationData {
   paymentDetails?: PaymentDetails;
   paymentUrl?: string;
   paymentReference?: string;
+  mainContent?: React.ReactNode; // Adicionado para resolver erro
 }
 
 const Reservations: React.FC = () => {
@@ -362,7 +364,7 @@ const Reservations: React.FC = () => {
       // Tempo esgotado, cancelar o pagamento
       setReservationData(prev => ({
         ...prev,
-        paymentStatus: 'cancelled'
+        paymentStatus: 'failed'  // Usamos "failed" em vez de "cancelled" para compatibilidade de tipos
       }));
       
       toast({
@@ -383,6 +385,53 @@ const Reservations: React.FC = () => {
     const seconds = countdownTime % 60;
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
+  
+  // Verificação periódica do status do pagamento Multibanco
+  useEffect(() => {
+    let checkInterval: NodeJS.Timeout;
+    
+    // Se for um pagamento Multibanco pendente e tivermos uma referência, verificamos o status periodicamente
+    if (
+      reservationData.paymentMethod === 'multibanco' && 
+      reservationData.paymentStatus === 'pending' && 
+      reservationData.paymentReference
+    ) {
+      checkInterval = setInterval(async () => {
+        try {
+          // Chamar API para verificar o status do pagamento
+          const response = await apiRequest('GET', `/api/payments/status/${reservationData.paymentReference}`);
+          
+          if (response.ok) {
+            const result = await response.json();
+            
+            // Se o pagamento foi confirmado, atualizar o status
+            if (result.status === 'paid') {
+              setReservationData(prev => ({
+                ...prev,
+                paymentStatus: 'paid'
+              }));
+              
+              // Mostrar notificação de pagamento confirmado
+              toast({
+                title: t('PaymentConfirmed'),
+                description: t('PaymentConfirmedDescription'),
+                variant: 'default',
+              });
+              
+              // Desativar o contador regressivo
+              setCountdownActive(false);
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao verificar status do pagamento:', error);
+        }
+      }, 15000); // Verificar a cada 15 segundos
+    }
+    
+    return () => {
+      if (checkInterval) clearInterval(checkInterval);
+    };
+  }, [reservationData.paymentMethod, reservationData.paymentStatus, reservationData.paymentReference, t]);
 
   // Submeter etapa 3 - Pagamento
   const submitStep3 = async (paymentMethod: string) => {
