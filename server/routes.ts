@@ -18,43 +18,41 @@ import { z } from "zod";
 import { ZodError } from "zod";
 
 // Setup session store
-const SessionStore = MemoryStore(session);
+const MemorySessionStore = MemoryStore(session);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure session middleware
   app.use(
     session({
-      store: new SessionStore({
-        checkPeriod: 86400000, // 24 hours
-      }),
-      secret: process.env.SESSION_SECRET || "opa-que-delicia-secret",
+      secret: "opaqueDelicia2025",
       resave: false,
       saveUninitialized: false,
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 24 hours
-        secure: process.env.NODE_ENV === "production",
-        httpOnly: true,
-      },
+      store: new MemorySessionStore({
+        checkPeriod: 86400000 // prune expired entries every 24h
+      }),
     })
   );
 
-  // Middleware to check if user is authenticated
   const isAuthenticated = (req: Request, res: Response, next: Function) => {
-    if (req.session && req.session.userId) {
-      return next();
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
     }
-    res.status(401).json({ message: "Unauthorized" });
+    next();
   };
 
-  // Middleware to check if user is admin
   const isAdmin = async (req: Request, res: Response, next: Function) => {
-    if (req.session && req.session.userId) {
-      const user = await storage.getUser(req.session.userId);
-      if (user && user.role === "admin") {
-        return next();
-      }
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
     }
-    res.status(403).json({ message: "Forbidden" });
+
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "admin") {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Add user info to session for future use
+    req.session.user = user;
+    next();
   };
 
   // Error handler middleware
@@ -62,15 +60,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await fn(req, res);
     } catch (error) {
+      console.error("Error handling request:", error);
+      
       if (error instanceof ZodError) {
-        res.status(400).json({ 
+        return res.status(400).json({ 
           message: "Validation error", 
-          errors: error.errors 
+          errors: error.errors
         });
-      } else {
-        console.error(error);
-        res.status(500).json({ message: "Internal server error" });
       }
+
+      return res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Internal server error" 
+      });
     }
   };
 
@@ -78,83 +79,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/register", handleErrors(async (req: Request, res: Response) => {
     const userData = insertUserSchema.parse(req.body);
     
-    // Check if user already exists
-    const existingByEmail = await storage.getUserByEmail(userData.email);
-    if (existingByEmail) {
+    // Check if email is already registered
+    const existingUser = await storage.getUserByEmail(userData.email);
+    if (existingUser) {
       return res.status(400).json({ message: "Email already registered" });
     }
     
-    const existingByUsername = await storage.getUserByUsername(userData.username);
-    if (existingByUsername) {
-      return res.status(400).json({ message: "Username already taken" });
+    // Create the user
+    const user = await storage.createUser(userData);
+    
+    // Set userId in session
+    req.session.userId = user.id;
+    
+    return res.status(201).json({ message: "User created successfully", userId: user.id });
+  }));
+  
+  app.post("/api/auth/login", handleErrors(async (req: Request, res: Response) => {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
     }
     
-    // Create new user
-    const newUser = await storage.createUser(userData);
+    const user = await storage.getUserByEmail(email);
     
-    // Omit password before sending response
-    const { password, ...userWithoutPassword } = newUser;
-    
-    // Set session
-    req.session.userId = newUser.id;
-    
-    res.status(201).json(userWithoutPassword);
-  }));
-
-  app.post("/api/auth/login", handleErrors(async (req: Request, res: Response) => {
-    const loginSchema = z.object({
-      username: z.string(),
-      password: z.string()
-    });
-    
-    const { username, password } = loginSchema.parse(req.body);
-    
-    // Find user
-    const user = await storage.getUserByUsername(username);
     if (!user || user.password !== password) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
     
-    // Set session
+    // Set userId in session
     req.session.userId = user.id;
     
-    // Omit password before sending response
-    const { password: _, ...userWithoutPassword } = user;
-    
-    res.json(userWithoutPassword);
+    return res.json({ 
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role
+    });
   }));
-
+  
   app.post("/api/auth/logout", (req: Request, res: Response) => {
     req.session.destroy((err) => {
       if (err) {
         return res.status(500).json({ message: "Failed to logout" });
       }
-      res.json({ message: "Logged out successfully" });
+      
+      res.clearCookie("connect.sid");
+      return res.json({ message: "Logged out successfully" });
     });
   });
-
+  
   app.get("/api/auth/me", handleErrors(async (req: Request, res: Response) => {
     if (!req.session.userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
     
     const user = await storage.getUser(req.session.userId);
+    
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Failed to destroy session:", err);
+        }
+      });
+      return res.status(401).json({ message: "User not found" });
     }
     
-    // Omit password before sending response
-    const { password, ...userWithoutPassword } = user;
-    
-    res.json(userWithoutPassword);
+    return res.json({ 
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role
+    });
   }));
 
-  // Menu Category routes
+  // Menu category routes
   app.get("/api/menu-categories", handleErrors(async (req: Request, res: Response) => {
     const categories = await storage.getAllMenuCategories();
     res.json(categories);
   }));
-
+  
   app.get("/api/menu-categories/:id", handleErrors(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     const category = await storage.getMenuCategory(id);
@@ -163,92 +169,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ message: "Category not found" });
     }
     
-    res.json(category);
+    return res.json(category);
   }));
-
+  
   app.post("/api/menu-categories", isAdmin, handleErrors(async (req: Request, res: Response) => {
     const categoryData = insertMenuCategorySchema.parse(req.body);
     const newCategory = await storage.createMenuCategory(categoryData);
     res.status(201).json(newCategory);
   }));
-
+  
   app.put("/api/menu-categories/:id", isAdmin, handleErrors(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     const categoryData = insertMenuCategorySchema.parse(req.body);
     
-    const updatedCategory = await storage.updateMenuCategory(id, categoryData);
-    if (!updatedCategory) {
+    // Check if category exists
+    const category = await storage.getMenuCategory(id);
+    if (!category) {
       return res.status(404).json({ message: "Category not found" });
     }
     
+    const updatedCategory = await storage.updateMenuCategory(id, categoryData);
     res.json(updatedCategory);
   }));
-
+  
   app.delete("/api/menu-categories/:id", isAdmin, handleErrors(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
-    const success = await storage.deleteMenuCategory(id);
     
-    if (!success) {
+    // Check if category exists
+    const category = await storage.getMenuCategory(id);
+    if (!category) {
       return res.status(404).json({ message: "Category not found" });
     }
     
+    // Check if category has menu items
+    const menuItems = await storage.getMenuItemsByCategoryId(id);
+    if (menuItems.length > 0) {
+      return res.status(400).json({ message: "Cannot delete category with menu items" });
+    }
+    
+    await storage.deleteMenuCategory(id);
     res.json({ message: "Category deleted successfully" });
   }));
 
-  // Menu Item routes
+  // Menu item routes
   app.get("/api/menu-items", handleErrors(async (req: Request, res: Response) => {
     const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
-    const featured = req.query.featured === "true";
-    
-    let items;
-    if (categoryId) {
-      items = await storage.getMenuItemsByCategory(categoryId);
-    } else if (featured) {
-      items = await storage.getFeaturedMenuItems();
-    } else {
-      items = await storage.getAllMenuItems();
-    }
-    
-    res.json(items);
+    const menuItems = categoryId 
+      ? await storage.getMenuItemsByCategoryId(categoryId)
+      : await storage.getAllMenuItems();
+    res.json(menuItems);
   }));
-
+  
   app.get("/api/menu-items/:id", handleErrors(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
-    const item = await storage.getMenuItem(id);
+    const menuItem = await storage.getMenuItem(id);
     
-    if (!item) {
+    if (!menuItem) {
       return res.status(404).json({ message: "Menu item not found" });
     }
     
-    res.json(item);
+    return res.json(menuItem);
   }));
-
+  
   app.post("/api/menu-items", isAdmin, handleErrors(async (req: Request, res: Response) => {
-    const itemData = insertMenuItemSchema.parse(req.body);
-    const newItem = await storage.createMenuItem(itemData);
-    res.status(201).json(newItem);
+    const menuItemData = insertMenuItemSchema.parse(req.body);
+    
+    // Check if category exists
+    const category = await storage.getMenuCategory(menuItemData.categoryId);
+    if (!category) {
+      return res.status(400).json({ message: "Category not found" });
+    }
+    
+    const newMenuItem = await storage.createMenuItem(menuItemData);
+    res.status(201).json(newMenuItem);
   }));
-
+  
   app.put("/api/menu-items/:id", isAdmin, handleErrors(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
-    const itemData = insertMenuItemSchema.parse(req.body);
+    const menuItemData = insertMenuItemSchema.parse(req.body);
     
-    const updatedItem = await storage.updateMenuItem(id, itemData);
-    if (!updatedItem) {
+    // Check if menu item exists
+    const menuItem = await storage.getMenuItem(id);
+    if (!menuItem) {
       return res.status(404).json({ message: "Menu item not found" });
     }
     
-    res.json(updatedItem);
+    // Check if category exists
+    const category = await storage.getMenuCategory(menuItemData.categoryId);
+    if (!category) {
+      return res.status(400).json({ message: "Category not found" });
+    }
+    
+    const updatedMenuItem = await storage.updateMenuItem(id, menuItemData);
+    res.json(updatedMenuItem);
   }));
-
+  
   app.delete("/api/menu-items/:id", isAdmin, handleErrors(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
-    const success = await storage.deleteMenuItem(id);
     
-    if (!success) {
+    // Check if menu item exists
+    const menuItem = await storage.getMenuItem(id);
+    if (!menuItem) {
       return res.status(404).json({ message: "Menu item not found" });
     }
     
+    await storage.deleteMenuItem(id);
     res.json({ message: "Menu item deleted successfully" });
   }));
 
@@ -257,21 +282,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const tables = await storage.getAllTables();
     res.json(tables);
   }));
-
+  
   app.get("/api/tables/available", handleErrors(async (req: Request, res: Response) => {
-    const dateStr = req.query.date as string;
-    const partySize = parseInt(req.query.partySize as string);
+    const { date, time, duration } = req.query;
     
-    if (!dateStr || isNaN(partySize)) {
-      return res.status(400).json({ message: "Date and party size are required" });
+    if (!date || !time) {
+      return res.status(400).json({ message: "Date and time are required" });
     }
     
-    const date = new Date(dateStr);
-    const availableTables = await storage.getAvailableTables(date, partySize);
+    const dateTime = new Date(`${date}T${time}`);
+    const durationHours = duration ? parseInt(duration as string) : 2; // Default 2 hours
     
+    const availableTables = await storage.getAvailableTables(dateTime, durationHours);
     res.json(availableTables);
   }));
-
+  
   app.get("/api/tables/:id", handleErrors(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     const table = await storage.getTable(id);
@@ -280,86 +305,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ message: "Table not found" });
     }
     
-    res.json(table);
+    return res.json(table);
   }));
-
+  
   app.post("/api/tables", isAdmin, handleErrors(async (req: Request, res: Response) => {
     const tableData = insertTableSchema.parse(req.body);
     const newTable = await storage.createTable(tableData);
     res.status(201).json(newTable);
   }));
-
+  
   app.put("/api/tables/:id", isAdmin, handleErrors(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     const tableData = insertTableSchema.parse(req.body);
     
-    const updatedTable = await storage.updateTable(id, tableData);
-    if (!updatedTable) {
+    // Check if table exists
+    const table = await storage.getTable(id);
+    if (!table) {
       return res.status(404).json({ message: "Table not found" });
     }
     
+    const updatedTable = await storage.updateTable(id, tableData);
     res.json(updatedTable);
   }));
-
+  
   app.delete("/api/tables/:id", isAdmin, handleErrors(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
-    const success = await storage.deleteTable(id);
     
-    if (!success) {
+    // Check if table exists
+    const table = await storage.getTable(id);
+    if (!table) {
       return res.status(404).json({ message: "Table not found" });
     }
     
+    // Check if table has reservations
+    const reservations = await storage.getReservationsByTableId(id);
+    if (reservations.length > 0) {
+      return res.status(400).json({ message: "Cannot delete table with reservations" });
+    }
+    
+    await storage.deleteTable(id);
     res.json({ message: "Table deleted successfully" });
   }));
 
   // Reservation routes
   app.get("/api/reservations", isAuthenticated, handleErrors(async (req: Request, res: Response) => {
     const userId = req.session.userId!;
-    const user = await storage.getUser(userId);
     
-    // If admin, return all reservations with optional filters
-    if (user && user.role === "admin") {
-      const dateStr = req.query.date as string;
-      const status = req.query.status as string;
-      
-      if (dateStr) {
-        const date = new Date(dateStr);
-        const reservations = await storage.getReservationsByDate(date);
-        return res.json(reservations);
-      }
-      
-      if (status) {
-        const reservations = await storage.getReservationsByStatus(status);
-        return res.json(reservations);
-      }
-      
-      const allReservations = await storage.getAllReservations();
-      return res.json(allReservations);
+    // If admin, return all reservations or filtered by date
+    const user = await storage.getUser(userId);
+    if (user?.role === "admin") {
+      const date = req.query.date as string;
+      const reservations = date 
+        ? await storage.getReservationsByDate(new Date(date))
+        : await storage.getAllReservations();
+      return res.json(reservations);
     }
     
-    // For regular users, return only their reservations
-    const userReservations = await storage.getUserReservations(userId);
-    res.json(userReservations);
+    // Otherwise, return only user's reservations
+    const reservations = await storage.getReservationsByUserId(userId);
+    res.json(reservations);
   }));
-
+  
   app.get("/api/reservations/:id", isAuthenticated, handleErrors(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     const userId = req.session.userId!;
+    
     const reservation = await storage.getReservation(id);
     
     if (!reservation) {
       return res.status(404).json({ message: "Reservation not found" });
     }
     
-    // Check if user is the owner of the reservation or an admin
+    // Check permission: admin can see all, regular users only their own
     const user = await storage.getUser(userId);
     if (reservation.userId !== userId && user?.role !== "admin") {
-      return res.status(403).json({ message: "Forbidden" });
+      return res.status(403).json({ message: "Not authorized to view this reservation" });
     }
     
-    res.json(reservation);
+    return res.json(reservation);
   }));
-
+  
   app.post("/api/reservations", isAuthenticated, handleErrors(async (req: Request, res: Response) => {
     const userId = req.session.userId!;
     const reservationData = insertReservationSchema.parse({
@@ -373,70 +398,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ message: "Table not available" });
     }
     
-    // Check if table capacity is sufficient
-    if (table.capacity < reservationData.partySize) {
-      return res.status(400).json({ message: "Table capacity insufficient for party size" });
-    }
+    // Check if the table is already booked for the requested time
+    const isTableBooked = await storage.isTableBooked(
+      reservationData.tableId,
+      new Date(reservationData.date),
+      reservationData.duration
+    );
     
-    // Check if the table is already reserved for that date
-    const availableTables = await storage.getAvailableTables(new Date(reservationData.date), reservationData.partySize);
-    const isTableAvailable = availableTables.some(t => t.id === reservationData.tableId);
-    
-    if (!isTableAvailable) {
-      return res.status(400).json({ message: "Table already reserved for that date and time" });
+    if (isTableBooked) {
+      return res.status(400).json({ message: "Table already booked for this time" });
     }
     
     const newReservation = await storage.createReservation(reservationData);
     res.status(201).json(newReservation);
   }));
-
+  
   app.put("/api/reservations/:id", isAuthenticated, handleErrors(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     const userId = req.session.userId!;
     
-    // Check if reservation exists
-    const existingReservation = await storage.getReservation(id);
-    if (!existingReservation) {
+    // Verify reservation exists and belongs to user or user is admin
+    const reservation = await storage.getReservation(id);
+    if (!reservation) {
       return res.status(404).json({ message: "Reservation not found" });
     }
     
-    // Check if user is the owner of the reservation or an admin
     const user = await storage.getUser(userId);
-    if (existingReservation.userId !== userId && user?.role !== "admin") {
-      return res.status(403).json({ message: "Forbidden" });
+    if (reservation.userId !== userId && user?.role !== "admin") {
+      return res.status(403).json({ message: "Not authorized to update this reservation" });
     }
     
-    // Parse and update reservation
-    const reservationData = req.body;
-    const updatedReservation = await storage.updateReservation(id, reservationData);
+    // If changing table or date, verify availability
+    if (req.body.tableId !== undefined && req.body.tableId !== reservation.tableId) {
+      const table = await storage.getTable(req.body.tableId);
+      if (!table || !table.available) {
+        return res.status(400).json({ message: "Table not available" });
+      }
+      
+      const isTableBooked = await storage.isTableBooked(
+        req.body.tableId,
+        req.body.date ? new Date(req.body.date) : new Date(reservation.date),
+        req.body.duration || reservation.duration,
+        id // Exclude current reservation from check
+      );
+      
+      if (isTableBooked) {
+        return res.status(400).json({ message: "Table already booked for this time" });
+      }
+    }
     
+    // Update the reservation
+    const updatedReservation = await storage.updateReservation(id, req.body);
     res.json(updatedReservation);
   }));
-
+  
   app.delete("/api/reservations/:id", isAuthenticated, handleErrors(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     const userId = req.session.userId!;
     
-    // Check if reservation exists
-    const existingReservation = await storage.getReservation(id);
-    if (!existingReservation) {
+    // Verify reservation exists and belongs to user or user is admin
+    const reservation = await storage.getReservation(id);
+    if (!reservation) {
       return res.status(404).json({ message: "Reservation not found" });
     }
     
-    // Check if user is the owner of the reservation or an admin
     const user = await storage.getUser(userId);
-    if (existingReservation.userId !== userId && user?.role !== "admin") {
-      return res.status(403).json({ message: "Forbidden" });
+    if (reservation.userId !== userId && user?.role !== "admin") {
+      return res.status(403).json({ message: "Not authorized to delete this reservation" });
     }
     
-    // For customers, update status to cancelled instead of deleting
-    if (user?.role !== "admin") {
-      const updatedReservation = await storage.updateReservation(id, { status: "cancelled" });
-      return res.json({ message: "Reservation cancelled successfully" });
-    }
-    
-    // Admins can actually delete
-    const success = await storage.deleteReservation(id);
+    await storage.deleteReservation(id);
     res.json({ message: "Reservation deleted successfully" });
   }));
 
@@ -465,6 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       phone
     });
     
+    // Verificar se o processamento de pagamento foi bem-sucedido
     if (!paymentResult.success) {
       return res.status(400).json({ 
         message: paymentResult.message || "Falha no processamento do pagamento" 
@@ -513,49 +545,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Adicionar verificação para saber se o paymentId é um número válido
     if (isNaN(paymentId)) {
-      return res.status(400).json({ message: "Invalid payment ID" });
+      return res.status(400).json({ message: "Invalid payment ID format" });
     }
     
-    // Get payment details
     const payment = await storage.getPayment(paymentId);
     
-    // Se o pagamento não existir, vamos criar um exemplo para fins de teste
-    // Esta parte seria removida em produção, mas nos ajuda a resolver o problema atual
     if (!payment) {
-      const testPayment = {
-        id: paymentId,
-        reservationId: 1,
-        amount: 3500, // 35.00 EUR
-        method: 'multibanco',
-        status: 'pending',
-        transactionId: `test-${paymentId}`,
-        paymentDate: new Date(),
-        eupagoDetails: {
-          entity: '11201',
-          reference: '123456789',
-          status: 'pending',
-          paymentUrl: ''
-        },
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      
-      return res.json(testPayment);
+      return res.status(404).json({ message: "Payment not found" });
     }
     
-    // Get reservation to check ownership
-    const reservation = await storage.getReservation(payment.reservationId);
-    if (!reservation) {
-      return res.status(404).json({ message: "Associated reservation not found" });
+    // Only users should access their own payments or admin can access all
+    if (payment.userId !== userId && !req.session.user?.isAdmin) {
+      return res.status(403).json({ message: "You don't have permission to view this payment" });
     }
     
-    // Check if user is the owner of the reservation or an admin
-    const user = await storage.getUser(userId);
-    if (reservation.userId !== userId && user?.role !== "admin") {
-      return res.status(403).json({ message: "Forbidden" });
-    }
-    
-    res.json(payment);
+    return res.json(payment);
   }));
 
   app.get("/api/reservations/:reservationId/payments", isAuthenticated, handleErrors(async (req: Request, res: Response) => {
@@ -616,102 +620,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       name: req.body.name,
       phone: req.body.phone
     });
-    let paymentResponse;
     
-    // Process payment based on method
-    if (method === 'card') {
-      // Get return and cancel URLs from request
-      const { returnUrl, cancelUrl } = req.body;
-      
-      if (!returnUrl || !cancelUrl) {
-        return res.status(400).json({ message: "Return and cancel URLs are required for card payments" });
-      }
-      
-      paymentResponse = await eupagoService.createCardPayment({
-        amount,
-        reference,
-        description,
-        email: user?.email || '',
-        name: `${user?.firstName} ${user?.lastName}`,
-        returnUrl,
-        cancelUrl
-      });
-    } else if (method === 'mbway') {
-      // Get phone number from request
-      const { phoneNumber } = req.body;
-      
-      if (!phoneNumber) {
-        return res.status(400).json({ message: "Phone number is required for MBWay payments" });
-      }
-      
-      paymentResponse = await eupagoService.createMbwayPayment({
-        amount,
-        reference,
-        description,
-        email: user?.email || '',
-        name: `${user?.firstName} ${user?.lastName}`,
-        phoneNumber
-      });
-    } else if (method === 'multibanco') {
-      paymentResponse = await eupagoService.createMultibancoPayment({
-        amount,
-        reference,
-        description,
-        email: user?.email || '',
-        name: `${user?.firstName} ${user?.lastName}`,
-        phone: user && user.phone ? user.phone : undefined,
-        validDays: 5 // Valid for 5 days
-      });
-    } else if (method === 'transfer') {
-      paymentResponse = await eupagoService.createTransferPayment({
-        amount,
-        reference,
-        description,
-        email: user?.email || '',
-        name: `${user?.firstName} ${user?.lastName}`,
-        phone: user && user.phone ? user.phone : undefined,
-        validDays: 5 // Valid for 5 days
+    // Verificar se o processamento de pagamento foi bem-sucedido
+    if (!paymentResult.success) {
+      return res.status(400).json({ 
+        message: paymentResult.message || "Falha no processamento do pagamento" 
       });
     }
     
-    if (!paymentResponse || !paymentResponse.success) {
-      return res.status(500).json({ 
-        message: "Failed to create payment", 
-        error: paymentResponse?.message || "Unknown error" 
+    // Criar registro de pagamento no banco de dados
+    try {
+      const payment = await storage.createPayment({
+        userId,
+        reservationId,
+        amount: Number(amount),
+        method,
+        status: "pending",
+        reference: paymentResult.paymentReference,
+        details: {
+          entity: paymentResult.entity,
+          reference: paymentResult.reference,
+          status: paymentResult.status,
+          paymentUrl: paymentResult.paymentUrl,
+          expirationDate: paymentResult.expirationDate,
+          mbwayAlias: method === 'mbway' ? req.body.phone : undefined
+        }
+      });
+      
+      return res.status(200).json({
+        success: true,
+        payment,
+        paymentDetails: paymentResult
+      });
+    } catch (error) {
+      console.error("Falha ao salvar registro de pagamento:", error);
+      
+      // Retorna os detalhes do pagamento mesmo que falhe ao salvar no banco
+      return res.status(200).json({
+        success: true,
+        payment: null,
+        paymentDetails: paymentResult,
+        warning: "O pagamento foi processado, mas houve uma falha ao registrá-lo no sistema."
       });
     }
-    
-    // Create payment in our database
-    const paymentData = insertPaymentSchema.parse({
-      reservationId,
-      amount, // Amount in cents
-      method,
-      status: "pending",
-      transactionId: paymentResponse.reference,
-      paymentDate: new Date(),
-      eupagoDetails: {
-        paymentUrl: paymentResponse.paymentUrl,
-        reference: paymentResponse.reference,
-        entity: paymentResponse.entity,
-        mbwayAlias: paymentResponse.mbwayAlias,
-        status: paymentResponse.status
-      }
-    });
-    
-    const newPayment = await storage.createPayment(paymentData);
-    
-    // Return payment information with additional details from eupago
-    res.status(201).json({
-      ...newPayment,
-      eupagoDetails: {
-        paymentUrl: paymentResponse.paymentUrl,
-        reference: paymentResponse.reference,
-        entity: paymentResponse.entity,
-        mbwayAlias: paymentResponse.mbwayAlias
-      }
-    });
   }));
-
+  
   // Order routes
   app.get("/api/orders", isAdmin, handleErrors(async (req: Request, res: Response) => {
     const orders = await storage.getAllOrders();
@@ -734,7 +687,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(403).json({ message: "Forbidden" });
     }
     
-    const orders = await storage.getReservationOrders(reservationId);
+    const orders = await storage.getOrdersByReservationId(reservationId);
     res.json(orders);
   }));
 
@@ -754,9 +707,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(403).json({ message: "Forbidden" });
     }
     
-    // Create order
+    // Create order data
     const orderData = insertOrderSchema.parse({
       ...req.body,
+      userId,
       reservationId
     });
     
@@ -767,9 +721,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User routes (admin only)
   app.get("/api/users", isAdmin, handleErrors(async (req: Request, res: Response) => {
     const users = await storage.getAllUsers();
-    // Omit passwords
-    const usersWithoutPasswords = users.map(({ password, ...user }) => user);
-    res.json(usersWithoutPasswords);
+    res.json(users);
   }));
 
   app.get("/api/users/:id", isAdmin, handleErrors(async (req: Request, res: Response) => {
@@ -780,112 +732,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ message: "User not found" });
     }
     
-    // Omit password
-    const { password, ...userWithoutPassword } = user;
-    
-    res.json(userWithoutPassword);
+    return res.json(user);
   }));
 
-  // Stats routes (admin only)
+  // Stats for dashboard
   app.get("/api/stats/dashboard", isAdmin, handleErrors(async (req: Request, res: Response) => {
-    // Calculate today's date
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Get stats for dashboard
+    const totalUsers = await storage.countTotalUsers();
+    const totalReservations = await storage.countTotalReservations();
+    const upcomingReservations = await storage.countUpcomingReservations();
+    const totalRevenue = await storage.calculateTotalRevenue();
     
-    // Get reservations for today
-    const todayReservations = await storage.getReservationsByDate(today);
-    
-    // Get cancelled reservations
-    const cancelledReservations = await storage.getReservationsByStatus("cancelled");
-    
-    // Get all users
-    const users = await storage.getAllUsers();
-    const customerCount = users.filter(user => user.role === "customer").length;
-    
-    // Get all payments
-    const payments = await storage.getAllPayments();
-    const todayPayments = payments.filter(payment => {
-      if (!payment.paymentDate) return false;
-      const paymentDate = new Date(payment.paymentDate);
-      return paymentDate >= today && payment.status === "completed";
-    });
-    
-    // Calculate daily revenue
-    const dailyRevenue = todayPayments.reduce((sum, payment) => sum + payment.amount, 0);
-    
-    // Get recent reservations (last 7 days)
-    const lastWeek = new Date();
-    lastWeek.setDate(lastWeek.getDate() - 7);
-    
-    const allReservations = await storage.getAllReservations();
-    const recentReservations = allReservations.filter(res => {
-      const resDate = new Date(res.date);
-      return resDate >= lastWeek;
-    });
-    
-    // Group reservations by day for the last 7 days
-    const reservationsByDay = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      date.setHours(0, 0, 0, 0);
-      
-      const nextDay = new Date(date);
-      nextDay.setDate(nextDay.getDate() + 1);
-      
-      const count = recentReservations.filter(res => {
-        const resDate = new Date(res.date);
-        return resDate >= date && resDate < nextDay;
-      }).length;
-      
-      return {
-        date: date.toISOString().split('T')[0],
-        count
-      };
-    }).reverse();
-    
-    // Get popular menu items based on orders
-    const menuItems = await storage.getAllMenuItems();
-    
-    // Generate some sample data for popular items (this would normally come from real orders)
-    const popularItems = menuItems.slice(0, 5).map(item => ({
-      id: item.id,
-      name: item.name,
-      count: Math.floor(Math.random() * 20) + 1 // Random count between 1-20
-    }));
-    
-    // Generate some sample data for daily revenue (this would normally come from real payments)
-    const revenueByDay = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      
-      return {
-        date: date.toISOString().split('T')[0],
-        amount: Math.floor(Math.random() * 5000) + 1000 // Random amount between 1000-6000
-      };
-    }).reverse();
-    
-    // Return dashboard data
     res.json({
-      todayReservations: todayReservations.length,
-      cancelledReservations: cancelledReservations.length,
-      customerCount,
-      dailyRevenue,
-      reservationsByDay,
-      popularItems,
-      revenueByDay,
-      pendingPayments: payments.filter(p => p.status === "pending").length
+      totalUsers,
+      totalReservations,
+      upcomingReservations,
+      totalRevenue
     });
   }));
 
-  // API health check
+  // Health check endpoint
   app.get("/api/health", (req: Request, res: Response) => {
-    res.json({ status: "ok", env: process.env.NODE_ENV });
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
-  
+
   // Settings routes
   app.get("/api/settings", isAdmin, handleErrors(async (req: Request, res: Response) => {
-    const settings = await storage.getAllSettings();
-    res.json(settings);
+    const allSettings = await storage.getAllSettings();
+    res.json(allSettings);
   }));
 
   app.get("/api/settings/:category", isAdmin, handleErrors(async (req: Request, res: Response) => {
