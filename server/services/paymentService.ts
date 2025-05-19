@@ -101,7 +101,8 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
           ...simulatedResponse,
           entity: '11111',
           reference: '999 999 999',
-          expirationDate: new Date(Date.now() + 72*3600*1000).toISOString()
+          // Expiração curta para o Multibanco (5 minutos) para suportar o contador regressivo
+          expirationDate: new Date(Date.now() + 5 * 60 * 1000).toISOString()
         };
       } else if (paymentData.method === 'mbway') {
         simulatedResponse = {
@@ -121,7 +122,8 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
       } else if (paymentData.method === 'multibanco') {
         simulatedResponse.entity = '12345';
         simulatedResponse.reference = '123 456 789';
-        simulatedResponse.expirationDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
+        // Expiração curta para o Multibanco (5 minutos) para suportar o contador regressivo
+        simulatedResponse.expirationDate = new Date(Date.now() + 5 * 60 * 1000).toISOString();
       }
 
       return simulatedResponse;
