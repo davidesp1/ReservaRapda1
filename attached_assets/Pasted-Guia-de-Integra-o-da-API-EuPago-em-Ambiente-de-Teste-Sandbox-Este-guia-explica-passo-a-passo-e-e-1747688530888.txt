@@ -1,0 +1,122 @@
+Guia de Integração da API EuPago em Ambiente de Teste (Sandbox)
+Este guia explica, passo a passo e em detalhes, como configurar e integrar a API EuPago no seu projeto (frontend e backend), partindo do zero e sem pressupor conhecimento prévio.
+
+1. Pré-requisitos 
+1. Node.js (v14+) e npm/yarn instalados. 
+2. Projeto existente com backend em Node.js e frontend em React. 
+3. Acesso ao código-fonte na sua máquina. 
+
+2. Configuração de Variáveis de Ambiente
+1. No diretório raiz do backend, crie um arquivo .env (não commitá-lo ao Git): touch .env
+2.  
+3. Adicione as seguintes linhas ao .env: EUPAGO_BASE_URL=https://sandbox.eupago.pt/api
+4. EUPAGO_API_KEY=Sua_Chave_De_API_Aqui
+5.  
+6. No seu server/integrations/eupago/client.ts, instale o pacote dotenv (se ainda não tiver): npm install dotenv
+7.  
+8. No topo de client.ts, carregue as variáveis: import "dotenv/config";             // 1ª linha
+9. import fetch from 'node-fetch';
+10.  
+
+3. Ajustar o Cliente HTTP (client.ts)
+Abra server/integrations/eupago/client.ts e faça as seguintes modificações:
+1. Base URL - baseURL: process.env.EUPAGO_BASE_URL || 'https://sandbox.eupago.pt/clientes/rest_api',
+2. + baseURL: process.env.EUPAGO_BASE_URL || 'https://sandbox.eupago.pt/api',
+3.  
+4. Método de requisição real (substituir o bloco de simulação): async request(endpoint: string, data: any): Promise<EupagoResponse> {
+5.   if (!this.apiKey) throw new Error('EUPAGO_API_KEY não configurada');
+6.   const url = `${this.baseURL}${endpoint}`;
+7.  
+* // console.log(...) // remova simulação 
+* // if (endpoint === ... ) ... retornos simulados 
+* // Chamada real à API EuPago 
+* const response = await fetch(url, { 
+*  method: 'POST',
+*  
+*  headers: {
+*  
+*    'Content-Type': 'application/json',
+*  
+*    'Authorization': `Bearer ${this.apiKey}`
+*  
+*  },
+*  
+*  body: JSON.stringify(data)
+*  
+* }); 
+* const result = await response.json(); 
+* if (!response.ok || !result.sucesso) { 
+*  throw new Error(result.mensagem || 'Erro na API EuPago');
+*  
+* } 
+* return result; }``` 
+3. Endpoints principais:
+    * Multibanco: POST /reference/create Parâmetros obrigatórios: valor (em cêntimos ou euros), idempotencia (identificador único). 
+    * MBWay: POST /mbway/create Parâmetros: valor, telemovel, idempotencia. 
+    * Cartão (OAuth2):
+        * Primeiro obtenha um token: POST /auth/token com grant_type=client_credentials e sua chave. 
+        * Use esse token em Authorization: Bearer <token> para POST /payments/card/create. 
+    * Status: POST /payments/status com referencia. 
+
+4. Configuração de Rotas (backend)
+Em server/routes.ts, adicione/endpoints:
+import eupagoClient from './integrations/eupago/client';
+
+// 1. Criar Multibanco
+app.post('/api/payments/multibanco', async (req, res) => {
+  const { valor, idempotencia } = req.body;
+  try {
+    const resp = await eupagoClient.request('/reference/create', { valor, idempotencia });
+    return res.json(resp);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 2. Criar MBWay
+app.post('/api/payments/mbway', async (req, res) => {
+  const { valor, telemovel, idempotencia } = req.body;
+  try {
+    const resp = await eupagoClient.request('/mbway/create', { valor, telemovel, idempotencia });
+    return res.json(resp);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 3. Status
+app.post('/api/payments/status', async (req, res) => {
+  const { referencia } = req.body;
+  try {
+    const resp = await eupagoClient.request('/payments/status', { referencia });
+    return res.json(resp);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+Nota: ajuste server/services/paymentService.ts para chamar essas rotas e persistir dados no DB.
+
+5. Frontend: Consumo de APIs
+1. Em client/src/hooks/usePayment.ts, crie funções: export async function createMultibanco(valor, idempotencia) {
+2.   return apiRequest('POST', '/api/payments/multibanco', { valor, idempotencia });
+3. }
+4. export async function createMBWay(valor, telemovel, idempotencia) {
+5.   return apiRequest('POST', '/api/payments/mbway', { valor, telemovel, idempotencia });
+6. }
+7. export async function checkStatus(referencia) {
+8.   return apiRequest('POST', '/api/payments/status', { referencia });
+9. }
+10.  
+11. Em Reservations.tsx, ao chamar submitStep3 ou usar o useMutation, substitua por: const multibancoMutation = useMutation(data => createMultibanco(data.valor, data.idempotencia));
+12.  
+13. Atualize o modal PaymentDetailsModal para exibir entidade, referencia, dataLimite retornados. 
+
+6. Testando no Sandbox
+1. Inicie o backend com npm run dev (ou yarn dev). 
+2. Verifique as rotas usando ferramentas como Postman:
+    * POST http://localhost:3000/api/payments/multibanco com JSON { valor: 1000, idempotencia: 'pedido-123' }. 
+3. Abra o frontend (npm start) e faça uma reserva, selecione Multibanco e confira se aparecem os dados corretos. 
+
+7. Conclusão
+Após esses passos, seu projeto estará integrado ao EuPago em ambiente de testes. Basta trocar as variáveis EUPAGO_BASE_URL e EUPAGO_API_KEY para produção quando for deployar.
+Qualquer dúvida, estou à disposição!

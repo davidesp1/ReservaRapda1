@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import session from "express-session";
 import MemoryStore from "memorystore";
 import { processPayment, checkPaymentStatus } from "./services/paymentService";
+import eupagoClient from "./integrations/eupago/client";
 import { 
   insertUserSchema, 
   insertMenuCategorySchema, 
