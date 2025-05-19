@@ -32,8 +32,10 @@ interface PaymentResponseData {
  */
 export async function processPayment(paymentData: PaymentRequestData): Promise<PaymentResponseData> {
   try {
-    // Usar API key definida ou chave de teste para ambiente de desenvolvimento
-    const apiKey = process.env.EUPAGO_API_KEY || 'demo-key-for-development';
+    console.log(`Processando pagamento ${paymentData.method} para referência ${paymentData.reference}`);
+
+    // Forçar o modo de simulação para testes
+    process.env.EUPAGO_SIMULATION = 'true';
 
     let paymentResult;
 
