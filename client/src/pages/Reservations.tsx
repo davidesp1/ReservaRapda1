@@ -104,9 +104,9 @@ const Reservations: React.FC = () => {
     enabled: !!isAuthenticated,
   });
   
-  // Fetch available tables for the selected date and party size
+  // Fetch available tables for the selected date, time and party size
   const { data: availableTables, isLoading: tablesLoading, refetch: refetchTables } = useQuery<any[]>({
-    queryKey: ['/api/tables/available', { date: selectedDate?.toISOString(), time: selectedTime, partySize }],
+    queryKey: ['/api/tables/available', { date: selectedDate?.toISOString(), time: selectedTimeValue, partySize }],
     queryFn: async ({ queryKey }) => {
       const [_, params] = queryKey;
       const { date, time, partySize } = params as { date?: string; time?: string; partySize: number };
@@ -510,7 +510,13 @@ const Reservations: React.FC = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{t('Time')}</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select 
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                handleTimeChange(value);
+                              }} 
+                              value={field.value}
+                            >
                             <SelectTrigger>
                               <SelectValue placeholder={t('SelectTime')}>
                                 {field.value ? (
