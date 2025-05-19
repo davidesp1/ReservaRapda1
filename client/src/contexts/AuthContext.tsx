@@ -85,8 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isLoading, isError]);
 
   // Login mutation
-  const loginMutation = useMutation<User, Error, { email: string; password: string }>({
-    mutationFn: async (credentials: { email: string; password: string }) => {
+  const loginMutation = useMutation<User, Error, { email?: string; username?: string; password: string }>({
+    mutationFn: async (credentials: { email?: string; username?: string; password: string }) => {
       const response = await apiRequest('POST', '/api/auth/login', credentials);
       return response.json();
     },
@@ -153,8 +153,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   });
 
-  const login = async (email: string, password: string): Promise<User> => {
-    const userData = await loginMutation.mutateAsync({ email, password });
+  const login = async (usernameOrEmail: string, password: string): Promise<User> => {
+    // Verificar se o valor fornecido parece um email (contém @)
+    const isEmail = usernameOrEmail.includes('@');
+    const credentials = isEmail 
+      ? { email: usernameOrEmail, password } 
+      : { username: usernameOrEmail, password };
+    
+    const userData = await loginMutation.mutateAsync(credentials);
     return userData;
   };
 

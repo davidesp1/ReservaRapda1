@@ -202,7 +202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Check if category has menu items
-    const menuItems = await storage.getMenuItemsByCategoryId(id);
+    const menuItems = await storage.getMenuItemsByCategory(id);
     if (menuItems.length > 0) {
       return res.status(400).json({ message: "Cannot delete category with menu items" });
     }
@@ -362,7 +362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Otherwise, return only user's reservations
-    const reservations = await storage.getReservationsByUserId(userId);
+    const reservations = await storage.getUserReservations(userId);
     res.json(reservations);
   }));
   

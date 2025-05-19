@@ -34,7 +34,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loginSchema = z.object({
-    email: z.string().email({ message: 'Email inválido' }).min(1, { message: 'Email é obrigatório' }),
+    email: z.string().min(1, { message: 'Username ou email é obrigatório' }),
     password: z.string().min(1, { message: 'Senha é obrigatória' }),
   });
 
