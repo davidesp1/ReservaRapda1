@@ -1,0 +1,229 @@
+# Guia de Integração EuPago (Sandbox) para o projeto “Opa que Delícia"
+
+Este documento descreve, de forma detalhada e passo a passo, como configurar e integrar os métodos de pagamento **Multibanco**, **MBWay** e **Cartão** da EuPago em ambiente de testes. Não é necessário ter nenhum conhecimento prévio sobre EuPago: siga cada etapa com atenção.
+
+---
+
+## 1. Configuração das Credenciais e Variáveis de Ambiente
+
+1. Crie uma conta de **sandbox** em [https://sandbox.eupago.pt](https://sandbox.eupago.pt).
+
+2. Gere ou copie sua **API Key** de testes.
+
+3. No arquivo raiz do servidor, crie (ou atualize) o `.env` com as seguintes variáveis:
+
+   ```dotenv
+   # Endpoint base para chamadas de API (JSON)
+   EUPAGO_BASE_URL=https://sandbox.eupago.pt/api
+
+   # Endpoint base para redirecionamento de pagamentos com cartão
+   EUPAGO_CARD_BASE_URL=https://sandbox.eupago.pt/clientes/rest_api
+
+   # Chave secreta de API (sandbox)
+   EUPAGO_API_KEY=SUA_DEMO_KEY_AQUI
+
+   # Habilita modo de simulação (não faz chamadas reais)
+   EUPAGO_SIMULATION=true
+   ```
+
+4. Reinicie o servidor para garantir que as novas variáveis sejam carregadas.
+
+---
+
+## 2. Cliente HTTP (`server/integrations/eupago/client.ts`)
+
+Este módulo unifica as chamadas à API EuPago.
+
+### 2.1. Ajustes necessários
+
+* **Ler o modo de simulação** e só embaralhar respostas quando `EUPAGO_SIMULATION=true`.
+* **Incluir endpoints específicos** de cada serviço.
+* **Adicionar tratamento para cartão**.
+
+```ts
+import fetch from 'node-fetch';
+import { EupagoResponse } from './types';
+
+const eupagoClient = {
+  apiKey: process.env.EUPAGO_API_KEY || '',
+  baseURL: process.env.EUPAGO_BASE_URL || '',
+  cardBaseURL: process.env.EUPAGO_CARD_BASE_URL || '',
+  simulation: process.env.EUPAGO_SIMULATION === 'true',
+
+  async request(endpoint: string, data: any): Promise<EupagoResponse> {
+    if (!this.apiKey) throw new Error('EUPAGO_API_KEY não configurada');
+
+    // Se estiver em simulação, retorne respostas de teste
+    if (this.simulation) {
+      console.log(`[SIM] POST ${endpoint}`, data);
+      switch (endpoint) {
+        case '/reference/create':
+          return { sucesso: true, entidade: '11111', referencia: '999 999 999', valor: data.valor, estado: 'pendente', dataLimite: new Date(Date.now() + 72*3600e3).toISOString() };
+
+        case '/mbway/create':
+          return { sucesso: true, referencia: 'MBW-' + Date.now(), valor: data.valor, estado: 'pendente', telemovel: data.telemovel };
+
+        case '/card/create':
+          // Passe de referência válida para redirecionamento
+          return { sucesso: true, referencia: 'RES-' + Date.now(), valor: data.valor, estado: 'pendente' };
+
+        case '/payments/status':
+          return { sucesso: true, referencia: data.referencia, valor: data.valor, estado: 'pago', dataPagamento: new Date().toISOString() };
+
+        default:
+          throw new Error(`Endpoint de simulação não implementado: ${endpoint}`);
+      }
+    }
+
+    // Ambiente real: faça fetch para a API EuPago
+    const url = `${this.baseURL}${endpoint}`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!resp.ok) {
+      throw new Error(`EuPago ${endpoint} falhou: ${resp.status}`);
+    }
+    return resp.json();
+  }
+};
+
+export default eupagoClient;
+```
+
+---
+
+## 3. Serviço de Pagamento (`server/integrations/eupago/payments.ts`)
+
+Centralize a lógica de cada método:
+
+```ts
+import eupagoClient from './client';
+
+export async function createMultibanco(valor: number) {
+  const r = await eupagoClient.request('/reference/create', { valor });
+  if (!r.sucesso) throw new Error(r.mensagem || 'Erro Multibanco');
+  return { entidade: r.entidade, referencia: r.referencia, dataLimite: r.dataLimite };
+}
+
+export async function createMbway(valor: number, telemovel: string) {
+  const r = await eupagoClient.request('/mbway/create', { valor, telemovel });
+  if (!r.sucesso) throw new Error(r.mensagem || 'Erro MBWay');
+  return { referencia: r.referencia };
+}
+
+export async function createCard(valor: number, descricao: string) {
+  const r = await eupagoClient.request('/card/create', { valor, descricao });
+  if (!r.sucesso) throw new Error(r.mensagem || 'Erro Cartão');
+
+  // Monta URL de checkout EuPago (sandbox)
+  const redirectUrl = `${eupagoClient.cardBaseURL}/pagamento?ref=${encodeURIComponent(r.referencia)}`;
+  return { url: redirectUrl };
+}
+
+export async function checkStatus(referencia: string) {
+  const r = await eupagoClient.request('/payments/status', { referencia });
+  return r.estado;
+}
+```
+
+---
+
+## 4. Rotas de API (`server/routes.ts`)
+
+Exponha `/api/payments/process`:
+
+```ts
+import express from 'express';
+import { createMultibanco, createMbway, createCard } from './integrations/eupago/payments';
+
+const router = express.Router();
+
+router.post('/payments/process', async (req, res) => {
+  const { method, amount, phone, description } = req.body;
+  try {
+    let result;
+    switch (method) {
+      case 'multibanco':
+        result = await createMultibanco(amount);
+        return res.json({ ...result, method });
+
+      case 'mbway':
+        result = await createMbway(amount, phone);
+        return res.json({ ...result, method });
+
+      case 'card':
+        result = await createCard(amount, description);
+        return res.json({ ...result, method });
+
+      default:
+        throw new Error('Método de pagamento inválido');
+    }
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+export default router;
+```
+
+---
+
+## 5. Frontend (React)
+
+### 5.1. Chamada de processo de pagamento
+
+No hook `usePayment.ts`, adapte o processamento:
+
+```ts
+export async function processPayment({ method, amount, phone, description }) {
+  const resp = await apiRequest('POST', '/api/payments/process', { method, amount, phone, description });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.message);
+  return data;
+}
+```
+
+### 5.2. Ação no componente de reserva (`Reservations.tsx`)
+
+```ts
+// Ao selecionar Cartão:
+if (method === 'card') {
+  const { url } = await processPayment({ method, amount: total, description: desc });
+  window.open(url, '_blank');
+}
+```
+
+### 5.3. Exibição de detalhes Multibanco e MBWay
+
+Nos casos `multibanco` e `mbway`, receba `entidade` e `referencia` (e `telemovel`) e abra seu modal:
+
+```ts
+if (method === 'multibanco') setPaymentDetails({ entity: data.entidade, reference: data.referencia, expirationDate: data.dataLimite });
+if (method === 'mbway')    setPaymentDetails({ phone: user.phone, reference: data.referencia });
+setPaymentModalOpen(true);
+```
+
+---
+
+## 6. Testes em Sandbox
+
+1. **Multibanco**: use o número `11111` e referência `999 999 999` gerados no simulado. Confirme status com `/payments/status`.
+2. **MBWay**: verifique SMS simulado no console e aguarde callback (trajeto manual).
+3. **Cartão**: abra o URL de checkout no sandbox. Se der 404, verifique se o `ref` existe na sandbox (você pode usar a interface web do sandbox para criar referências reais).
+
+---
+
+## 7. Dicas Finais
+
+* Desabilite **HMR overlay** do Vite para capturar logs de erro HTTP.
+* Registre no console todas as respostas do `eupagoClient.request` para facilitar debug.
+* Em produção, remova `EUPAGO_SIMULATION=true` e teste com credenciais reais.
+
+> Este guia serve como base completa para integrar o EuPago em testes. Se surgir qualquer dúvida, consulte a [documentação oficial](https://eupago.readme.io).

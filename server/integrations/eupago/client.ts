@@ -2,69 +2,11 @@ import "dotenv/config";
 import fetch from 'node-fetch';
 import { EupagoResponse } from './types';
 
-// Função de simulação unificada
-function simulate(endpoint: string, data: any): EupagoResponse {
-  console.log(`Simulando requisição para ${endpoint} com os dados:`, data);
-  
-  // Simulação para Multibanco
-  if (endpoint === '/reference/create') {
-    return {
-      sucesso: true,
-      entidade: '11111',
-      referencia: '999 999 999',
-      valor: data.valor || 0,
-      estado: 'pendente',
-      dataLimite: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
-    };
-  } 
-  
-  // Simulação para MBWay
-  if (endpoint === '/mbway/create') {
-    return {
-      sucesso: true,
-      referencia: 'mbw_' + Date.now(),
-      valor: data.valor || 0,
-      estado: 'pendente',
-      telemovel: data.telemovel || '',
-    };
-  } 
-  
-  // Simulação para verificação de status
-  if (endpoint === '/payments/status') {
-    return {
-      sucesso: true,
-      referencia: data.referencia || '',
-      valor: data.valor || 0,
-      estado: 'pago',
-      dataPagamento: new Date().toISOString(),
-    };
-  }
-  
-  // Simulação para pagamento com cartão
-  if (endpoint === '/card/create') {
-    const cardBaseUrl = process.env.EUPAGO_CARD_BASE_URL || 'https://sandbox.eupago.pt/clientes/rest_api';
-    return {
-      sucesso: true,
-      referencia: 'card_' + Date.now(),
-      valor: data.valor || 0,
-      estado: 'pendente',
-      url: `${cardBaseUrl}/pagamento?ref=${Date.now()}`,
-    };
-  }
-  
-  // Resposta padrão para outros endpoints
-  return {
-    sucesso: true,
-    referencia: 'ref_' + Date.now(),
-    valor: data.valor || 0,
-    estado: 'pendente',
-  };
-}
-
-// Cliente unificado para a API do Eupago
 const eupagoClient = {
+  apiKey: process.env.EUPAGO_API_KEY || '',
   baseURL: process.env.EUPAGO_BASE_URL || 'https://sandbox.eupago.pt/api',
-  apiKey: process.env.EUPAGO_API_KEY,
+  cardBaseURL: process.env.EUPAGO_CARD_BASE_URL || 'https://sandbox.eupago.pt/clientes/rest_api',
+  simulation: process.env.EUPAGO_SIMULATION === 'true',
 
   // Método genérico para fazer requisições à API do Eupago
   async request(endpoint: string, data: any): Promise<EupagoResponse> {
@@ -72,11 +14,59 @@ const eupagoClient = {
       throw new Error('EUPAGO_API_KEY não configurada');
     }
 
-    // Verificar se estamos em modo de simulação
-    if (process.env.EUPAGO_SIMULATION === 'true') {
-      return simulate(endpoint, data);
+    // Se estiver em simulação, retorne respostas de teste
+    if (this.simulation) {
+      console.log(`[SIM] POST ${endpoint}`, data);
+      
+      switch (endpoint) {
+        case '/reference/create':
+          return { 
+            sucesso: true, 
+            entidade: '11111', 
+            referencia: '999 999 999', 
+            valor: data.valor, 
+            estado: 'pendente', 
+            dataLimite: new Date(Date.now() + 72*3600*1000).toISOString() 
+          };
+
+        case '/mbway/create':
+          return { 
+            sucesso: true, 
+            referencia: 'MBW-' + Date.now(), 
+            valor: data.valor, 
+            estado: 'pendente', 
+            telemovel: data.telemovel 
+          };
+
+        case '/card/create':
+          // Construir referência para simulação de cartão
+          const referencia = 'CARD-' + Date.now();
+          // Construir URL completo para redirecionamento
+          const redirectUrl = `${this.cardBaseURL}/pagamento?ref=${referencia}`;
+          
+          return { 
+            sucesso: true, 
+            referencia: referencia, 
+            valor: data.valor, 
+            estado: 'pendente',
+            url: redirectUrl
+          };
+
+        case '/payments/status':
+          return { 
+            sucesso: true, 
+            referencia: data.referencia, 
+            valor: data.valor || 0, 
+            estado: 'pago', 
+            dataPagamento: new Date().toISOString() 
+          };
+
+        default:
+          throw new Error(`Endpoint de simulação não implementado: ${endpoint}`);
+      }
     }
-    
+
+    // Ambiente real: faça fetch para a API EuPago
     try {
       const url = `${this.baseURL}${endpoint}`;
       console.log(`Fazendo requisição real para ${url} com os dados:`, data);
