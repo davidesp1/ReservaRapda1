@@ -21,44 +21,55 @@ Este sistema foi desenvolvido para atender às necessidades específicas do rest
 
 - **Frontend**: React com TypeScript, Shadcn/UI, Tailwind CSS
 - **Backend**: Express.js, Node.js
-- **Banco de Dados**: PostgreSQL com Drizzle ORM
+- **Banco de Dados**: Supabase (PostgreSQL) com Drizzle ORM
+- **Armazenamento**: Supabase Storage para imagens e arquivos
 - **Autenticação**: Sistema próprio com sessões
 - **Validação**: Zod
 - **Processamento de Pagamentos**: Integração com Eupago
 - **Localização**: i18next para internacionalização
 - **Estado**: React Query
 
-## 🔧 Instalação
-
-Siga estes passos para instalar e executar o projeto localmente:
+## 🚀 Início Rápido
 
 ```bash
 # Clonar o repositório
-git clone https://github.com/seu-usuario/opa-que-delicia.git
-cd opa-que-delicia
+git clone https://github.com/davidesp1/ReservaRapda.git
+cd ReservaRapda
 
 # Instalar dependências
 npm install
 
-# Configurar variáveis de ambiente
-# Copie o arquivo .env.example para .env e preencha as variáveis necessárias
-cp .env.example .env
+# Preparar o Supabase
+# 1. Crie um projeto no Supabase
+# 2. Execute o script database_setup.sql no editor SQL
+# 3. Configure os buckets para armazenamento de imagens
+# Veja SUPABASE_SETUP.md para instruções detalhadas
 
-# Executar migrações do banco de dados
-npm run db:migrate
+# Configurar ambiente local
+# Crie um arquivo .env.local com as configurações necessárias
+# Veja o modelo em QUICK_START.md
 
 # Iniciar o servidor de desenvolvimento
 npm run dev
 ```
 
-## 🔑 Variáveis de Ambiente
+O sistema estará disponível em: http://localhost:5000
 
-As seguintes variáveis de ambiente são necessárias:
+Para instruções detalhadas, consulte [QUICK_START.md](QUICK_START.md).
 
-- `DATABASE_URL`: URL de conexão com o banco de dados PostgreSQL
-- `SESSION_SECRET`: Chave secreta para sessões
-- `EUPAGO_API_KEY`: Chave da API do Eupago para processamento de pagamentos
-- `NODE_ENV`: Ambiente de execução (`development`, `production`)
+## 🔨 Ambiente de Desenvolvimento
+
+- O sistema inclui um modo de simulação que não requer APIs externas
+- Conta administrativa padrão: `admin` / `admin123`
+- Hot Module Replacement (HMR) habilitado para desenvolvimento rápido
+- Banco de dados PostgreSQL facilmente configurável com script pronto
+
+## 🌐 Modo Simulação
+
+No ambiente de desenvolvimento, o sistema opera com simulação completa:
+- Processamento de pagamentos sem necessidade de gateway externo
+- Dados iniciais já configurados para teste imediato
+- Todas as funcionalidades disponíveis sem dependências externas
 
 ## 📋 Estrutura do Banco de Dados
 
@@ -79,7 +90,9 @@ O sistema utiliza as seguintes tabelas principais:
 ### Cliente
 - Visualização da página inicial com informações do restaurante
 - Criação e gerenciamento de reservas
+- Seleção de mesas disponíveis com informações em tempo real
 - Visualização do menu e seleção de itens
+- Pagamento via Multibanco, MBWay ou Cartão
 - Perfil personalizado com preferências
 - Histórico de reservas e pagamentos
 
