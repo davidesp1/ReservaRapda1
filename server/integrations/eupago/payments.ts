@@ -8,24 +8,18 @@ import { PaymentResult, CardPaymentData } from './types';
  * @returns Resultado do pagamento com referência Multibanco
  */
 export async function criarMultibanco(orderId: string, amount: number): Promise<PaymentResult> {
-  try {
-    // Simulação para desenvolvimento
-    // Retornar dados fictícios para testes sem depender da API externa
-    return {
-      success: true,
-      reference: "999 999 999",
-      entity: "11111",
-      value: amount.toString(),
-      status: 'pending',
-      expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-      message: 'Multibanco criado com sucesso (ambiente de teste)'
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message || 'Erro ao criar referência Multibanco',
-    };
-  }
+  console.log("Criando simulação de pagamento Multibanco", orderId, amount);
+  
+  // Simulação direta sem tentar conectar com API externa
+  return {
+    success: true,
+    reference: "999 999 999",
+    entity: "11111",
+    value: amount.toString(),
+    status: 'pending',
+    expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+    message: 'Multibanco criado com sucesso (ambiente de teste)'
+  };
 }
 
 /**
@@ -36,23 +30,17 @@ export async function criarMultibanco(orderId: string, amount: number): Promise<
  * @returns Resultado do pagamento MB WAY
  */
 export async function criarMbway(orderId: string, amount: number, telefone: string): Promise<PaymentResult> {
-  try {
-    // Simulação para desenvolvimento
-    // Retornar dados fictícios para testes sem depender da API externa
-    return {
-      success: true,
-      reference: `MBWAY-${orderId}`,
-      value: amount.toString(),
-      status: 'pending',
-      message: 'Pagamento MB WAY solicitado. Verifique o seu telemóvel. (ambiente de teste)',
-      phone: telefone
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message || 'Erro ao criar pagamento MB WAY',
-    };
-  }
+  console.log("Criando simulação de pagamento MBWay", orderId, amount, telefone);
+  
+  // Simulação direta sem tentar conectar com API externa
+  return {
+    success: true,
+    reference: `MBWAY-${orderId}`,
+    value: amount.toString(),
+    status: 'pending',
+    message: 'Pagamento MB WAY solicitado. Verifique o seu telemóvel. (ambiente de teste)',
+    phone: telefone
+  };
 }
 
 /**
@@ -68,23 +56,17 @@ export async function criarCartao(data: {
   cartao_cvc?: string;
   email?: string;
 }): Promise<PaymentResult> {
-  try {
-    // Simulação para desenvolvimento
-    // Retornar dados fictícios para testes sem depender da API externa
-    return {
-      success: true,
-      reference: `CARD-${data.id}`,
-      value: data.valor.toString(),
-      status: 'pending',
-      paymentUrl: 'https://sandbox.eupago.pt/pagamento?simulacao=1',
-      message: 'Redirecionando para a página de pagamento com cartão (ambiente de teste)',
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message || 'Erro ao criar pagamento com cartão',
-    };
-  }
+  console.log("Criando simulação de pagamento com Cartão", data.id, data.valor);
+  
+  // Simulação direta sem tentar conectar com API externa
+  return {
+    success: true,
+    reference: `CARD-${data.id}`,
+    value: data.valor.toString(),
+    status: 'pending',
+    paymentUrl: 'https://sandbox.eupago.pt/pagamento?simulacao=1',
+    message: 'Redirecionando para a página de pagamento com cartão (ambiente de teste)',
+  };
 }
 
 /**
@@ -93,24 +75,13 @@ export async function criarCartao(data: {
  * @returns Status atual do pagamento
  */
 export async function verificarStatusPagamento(reference: string): Promise<PaymentResult> {
-  try {
-    const response = await eupagoClient.request('/payment/check', {
-      referencia: reference,
-    });
-
-    return {
-      success: true,
-      reference: response.referencia,
-      status: response.estado || 'pending',
-      message: response.estado === 'paga' 
-        ? 'Pagamento concluído com sucesso' 
-        : 'Pagamento pendente',
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message || 'Erro ao verificar status do pagamento',
-      status: 'error',
-    };
-  }
+  console.log("Verificando simulação de status do pagamento", reference);
+  
+  // Simulação direta sem tentar conectar com API externa
+  return {
+    success: true,
+    reference: reference,
+    status: 'paid',
+    message: 'Pagamento concluído com sucesso (ambiente de teste)',
+  };
 }
