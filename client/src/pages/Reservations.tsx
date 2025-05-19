@@ -10,6 +10,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { 
   Table, 
   TableBody, 
   TableCell, 
@@ -300,9 +308,16 @@ const Reservations: React.FC = () => {
     setCurrentStep(3);
   };
   
-  // Estado para controlar o processamento do pagamento
+  // Estados para o controle do pagamento
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  
+  // Função para fechar o modal de pagamento e prosseguir para a confirmação
+  const handlePaymentCompleted = () => {
+    setPaymentModalOpen(false);
+    setCurrentStep(4); // Avançar para confirmação
+  };
   
   // Submeter etapa 3 - Pagamento
   const submitStep3 = async (paymentMethod: string) => {
@@ -335,19 +350,63 @@ const Reservations: React.FC = () => {
         throw new Error(result.message || 'Erro ao processar pagamento');
       }
       
-      // Atualizar dados da reserva com os dados de pagamento
-      setReservationData(prev => ({
-        ...prev,
-        paymentMethod,
-        paymentStatus: 'paid',
-        confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
-        paymentReference: result.paymentReference,
-        paymentUrl: result.paymentUrl,
-        paymentDetails: result
-      }));
-      
-      // Avançar para a etapa final
-      setCurrentStep(4);
+      // Verificar se é necessário alguma ação de pagamento adicional
+      if (paymentMethod === 'multibanco' && result.entity && result.reference) {
+        // Atualizar dados da reserva com as referências multibanco
+        setReservationData(prev => ({
+          ...prev,
+          paymentMethod,
+          paymentStatus: 'pending',
+          confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+          paymentReference: result.paymentReference,
+          paymentDetails: {
+            ...result,
+            entityNumber: result.entity,
+            referenceNumber: result.reference
+          }
+        }));
+        // Continua na etapa 3 mostrando informações de pagamento
+        setPaymentModalOpen(true);
+      } else if (paymentMethod === 'mbway' && result.phone) {
+        // Atualizar dados da reserva com as referências mbway
+        setReservationData(prev => ({
+          ...prev,
+          paymentMethod,
+          paymentStatus: 'pending',
+          confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+          paymentReference: result.paymentReference,
+          paymentDetails: result
+        }));
+        // Mostra modal com informações de pagamento mbway
+        setPaymentModalOpen(true);
+      } else if (paymentMethod === 'card' && result.paymentUrl) {
+        // Abrir URL de pagamento em nova janela
+        window.open(result.paymentUrl, '_blank');
+        // Atualizar dados da reserva
+        setReservationData(prev => ({
+          ...prev,
+          paymentMethod,
+          paymentStatus: 'pending',
+          confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+          paymentReference: result.paymentReference,
+          paymentUrl: result.paymentUrl,
+          paymentDetails: result
+        }));
+        // Mostra modal esperando confirmação de pagamento
+        setPaymentModalOpen(true);
+      } else {
+        // Para outros métodos ou simulação, avançar diretamente
+        setReservationData(prev => ({
+          ...prev,
+          paymentMethod,
+          paymentStatus: 'paid',
+          confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+          paymentReference: result.paymentReference,
+          paymentDetails: result
+        }));
+        // Avançar para a etapa final
+        setCurrentStep(4);
+      }
     } catch (error: any) {
       console.error('Erro no pagamento:', error);
       setPaymentError(error.message || 'Ocorreu um erro ao processar o pagamento. Por favor, tente novamente.');
