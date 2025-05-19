@@ -113,10 +113,21 @@ const PaymentDetailsModal: React.FC<PaymentDetailsModalProps> = ({
               <div className="text-sm text-gray-600">
                 {t('RedirectedToPaymentPage')}
               </div>
-              {paymentUrl && (
+              {(paymentUrl || paymentDetails?.reference) && (
                 <Button
                   className="w-full bg-brasil-blue hover:bg-blue-700"
-                  onClick={() => window.open(paymentUrl, '_blank')}
+                  onClick={() => {
+                    // Se temos uma URL de pagamento direta, usamos ela
+                    if (paymentUrl) {
+                      window.open(paymentUrl, '_blank');
+                    } 
+                    // Caso contrário, construímos a URL baseada na referência
+                    else if (paymentDetails?.reference) {
+                      const baseUrl = 'https://sandbox.eupago.pt/clientes/rest_api';
+                      const url = `${baseUrl}/pagamento?ref=${paymentDetails.reference}`;
+                      window.open(url, '_blank');
+                    }
+                  }}
                 >
                   {t('OpenPaymentPage')}
                 </Button>
