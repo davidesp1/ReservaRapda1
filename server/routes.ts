@@ -446,6 +446,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(payments);
   }));
   
+  // Processa um novo pagamento usando a API Eupago
+  app.post("/api/payments/process", isAuthenticated, handleErrors(async (req: Request, res: Response) => {
+    const { method, amount, reference, description, email, name, phone } = req.body;
+    const userId = req.session.userId!;
+    
+    if (!method || amount === undefined || !reference) {
+      return res.status(400).json({ message: "Informações de pagamento incompletas" });
+    }
+    
+    const paymentResult = await processPayment({
+      method,
+      amount: Number(amount),
+      reference,
+      description: description || `Reserva ${reference}`,
+      email: email || req.session.user?.email,
+      name: name || req.session.user?.username,
+      phone
+    });
+    
+    if (!paymentResult.success) {
+      return res.status(400).json({ 
+        message: paymentResult.message || "Falha no processamento do pagamento" 
+      });
+    }
+    
+    // Cria registro de pagamento no banco de dados
+    try {
+      await storage.createPayment({
+        userId,
+        reservationId: null, // Será atualizado quando a reserva for criada
+        amount: Number(amount),
+        method,
+        status: "pending",
+        reference: paymentResult.paymentReference,
+        details: JSON.stringify(paymentResult)
+      });
+    } catch (error) {
+      console.error("Falha ao salvar registro de pagamento:", error);
+      // Continua mesmo assim, já que o pagamento foi processado
+    }
+    
+    return res.status(200).json(paymentResult);
+  }));
+  
+  // Verifica o status de um pagamento
+  app.get("/api/payments/status/:reference", isAuthenticated, handleErrors(async (req: Request, res: Response) => {
+    const { reference } = req.params;
+    
+    if (!reference) {
+      return res.status(400).json({ message: "Referência de pagamento é obrigatória" });
+    }
+    
+    const statusResult = await checkPaymentStatus(reference);
+    return res.json(statusResult);
+  }));
+  
   app.get("/api/payments/:id", isAuthenticated, handleErrors(async (req: Request, res: Response) => {
     const paymentId = parseInt(req.params.id);
     const userId = req.session.userId!;
