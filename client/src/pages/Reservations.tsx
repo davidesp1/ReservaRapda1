@@ -79,6 +79,7 @@ interface PaymentDetails {
 interface ExtendedReservationData extends ReservationData {
   paymentDetails?: PaymentDetails;
   paymentUrl?: string;
+  paymentReference?: string;
 }
 
 const Reservations: React.FC = () => {
@@ -355,6 +356,7 @@ const Reservations: React.FC = () => {
         email: user?.email,
         name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.username,
         phone: user?.phone || '',
+        reservationId: reservationData.id // Adicionar ID da reserva para associar o pagamento
       };
       
       // Chamar API para processar o pagamento
