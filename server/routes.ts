@@ -554,7 +554,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Processa um novo pagamento usando a API Eupago
   app.post("/api/payments/process", isAuthenticated, handleErrors(async (req: Request, res: Response) => {
-    const { method, amount, reference, description, email, name, phone } = req.body;
+    const { method, amount, reference, description, email, name, phone, reservationId } = req.body;
     const userId = req.session.userId!;
     
     if (!method || amount === undefined || !reference) {
@@ -580,20 +580,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Cria registro de pagamento no banco de dados
     try {
-      await storage.createPayment({
-        userId,
-        amount: Number(amount),
-        method,
-        status: "pending",
-        reference: paymentResult.paymentReference,
-        details: {
-          entity: paymentResult.entity,
-          reference: paymentResult.reference,
-          status: paymentResult.status,
-          paymentUrl: paymentResult.paymentUrl,
-          expirationDate: paymentResult.expirationDate
-        }
-      });
+      if (reservationId) {
+        console.log(`Criando registro de pagamento para reserva ${reservationId}`);
+        await storage.createPayment({
+          userId,
+          reservationId: Number(reservationId),
+          amount: Number(amount),
+          method,
+          status: "pending",
+          reference: paymentResult.paymentReference,
+          details: {
+            entity: paymentResult.entity,
+            reference: paymentResult.reference,
+            status: paymentResult.status,
+            paymentUrl: paymentResult.paymentUrl,
+            expirationDate: paymentResult.expirationDate
+          }
+        });
+      } else {
+        console.log(`Processando pagamento sem reserva associada (modo simulação): ${reference}`);
+        // No modo de simulação, não salvamos no banco se não tiver reservationId
+      }
     } catch (error) {
       console.error("Falha ao salvar registro de pagamento:", error);
       // Continua mesmo assim, já que o pagamento foi processado
