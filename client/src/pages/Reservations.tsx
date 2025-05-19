@@ -347,6 +347,9 @@ const Reservations: React.FC = () => {
         0
       ) || 0;
       
+      // Gerar código de confirmação único
+      const confirmationCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+      
       // Preparar dados para o pagamento
       const paymentData = {
         method: paymentMethod,
@@ -359,6 +362,8 @@ const Reservations: React.FC = () => {
         reservationId: reservationData.id // Adicionar ID da reserva para associar o pagamento
       };
       
+      console.log(`Processando pagamento ${paymentMethod}`, paymentData);
+      
       // Chamar API para processar o pagamento
       const response = await apiRequest('POST', '/api/payments/process', paymentData);
       const result = await response.json();
@@ -367,45 +372,43 @@ const Reservations: React.FC = () => {
         throw new Error(result.message || 'Erro ao processar pagamento');
       }
       
-      // Atualizar dados da reserva com informações de pagamento
-      const confirmationCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+      console.log(`Resposta do pagamento ${paymentMethod}:`, result);
       
-      if (paymentMethod === 'multibanco' && result.entity && result.reference) {
-        // Atualizar dados para pagamento Multibanco
+      // Processar o resultado do pagamento conforme o método
+      if (paymentMethod === 'multibanco') {
         setReservationData({
           ...reservationData,
           paymentMethod,
           paymentStatus: 'pending',
           confirmationCode,
           paymentReference: result.paymentReference,
+          total: total,
           paymentDetails: {
             entity: result.entity,
             reference: result.reference,
             expirationDate: result.expirationDate
           }
         });
-        
-        // Abrir modal de pagamento
+        console.log("Abrindo modal de pagamento Multibanco");
         setPaymentModalOpen(true);
       } 
       else if (paymentMethod === 'mbway') {
-        // Atualizar dados para pagamento MBWay
         setReservationData({
           ...reservationData,
           paymentMethod,
           paymentStatus: 'pending',
           confirmationCode,
           paymentReference: result.paymentReference,
+          total: total,
           paymentDetails: {
             phone: paymentData.phone
           }
         });
-        
-        // Abrir modal de pagamento
+        console.log("Abrindo modal de pagamento MBWay");
         setPaymentModalOpen(true);
       }
-      else if (paymentMethod === 'card' && result.paymentUrl) {
-        // Atualizar dados para pagamento com cartão
+      else if (paymentMethod === 'card') {
+        // Atualizar dados da reserva
         setReservationData({
           ...reservationData,
           paymentMethod,
@@ -413,67 +416,33 @@ const Reservations: React.FC = () => {
           confirmationCode,
           paymentReference: result.paymentReference,
           paymentUrl: result.paymentUrl,
-          paymentDetails: {}
+          total: total,
+          paymentDetails: {
+            reference: result.reference
+          }
         });
         
-        // Abrir modal de pagamento
+        // Se temos URL de pagamento, abrir em nova janela
+        if (result.paymentUrl) {
+          console.log("Abrindo URL de pagamento:", result.paymentUrl);
+          window.open(result.paymentUrl, '_blank');
+        }
+        
+        console.log("Abrindo modal de pagamento com cartão");
         setPaymentModalOpen(true);
-      }
-      
-      // Verificar se é necessário alguma ação de pagamento adicional
-      if (paymentMethod === 'multibanco' && result.entity && result.reference) {
-        // Atualizar dados da reserva com as referências multibanco
-        setReservationData(prev => ({
-          ...prev,
-          paymentMethod,
-          paymentStatus: 'pending',
-          confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
-          paymentReference: result.paymentReference,
-          paymentDetails: {
-            ...result,
-            entityNumber: result.entity,
-            referenceNumber: result.reference
-          }
-        }));
-        // Continua na etapa 3 mostrando informações de pagamento
-        setPaymentModalOpen(true);
-      } else if (paymentMethod === 'mbway' && result.phone) {
-        // Atualizar dados da reserva com as referências mbway
-        setReservationData(prev => ({
-          ...prev,
-          paymentMethod,
-          paymentStatus: 'pending',
-          confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
-          paymentReference: result.paymentReference,
-          paymentDetails: result
-        }));
-        // Mostra modal com informações de pagamento mbway
-        setPaymentModalOpen(true);
-      } else if (paymentMethod === 'card' && result.paymentUrl) {
-        // Abrir URL de pagamento em nova janela
-        window.open(result.paymentUrl, '_blank');
-        // Atualizar dados da reserva
-        setReservationData(prev => ({
-          ...prev,
-          paymentMethod,
-          paymentStatus: 'pending',
-          confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
-          paymentReference: result.paymentReference,
-          paymentUrl: result.paymentUrl,
-          paymentDetails: result
-        }));
-        // Mostra modal esperando confirmação de pagamento
-        setPaymentModalOpen(true);
-      } else {
-        // Para outros métodos ou simulação, avançar diretamente
-        setReservationData(prev => ({
-          ...prev,
+      } 
+      else {
+        // Para outros métodos ou simulação
+        setReservationData({
+          ...reservationData,
           paymentMethod,
           paymentStatus: 'paid',
-          confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+          confirmationCode,
           paymentReference: result.paymentReference,
+          total: total,
           paymentDetails: result
-        }));
+        });
+        
         // Avançar para a etapa final
         setCurrentStep(4);
       }
