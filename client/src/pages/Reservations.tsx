@@ -1787,7 +1787,22 @@ const Reservations: React.FC = () => {
         {pageContent}
       </CustomerLayout>
       
-      {/* Modal de pagamento Multibanco melhorado */}
+      {/* Modal de formulário de cartão */}
+      <CardDetailsForm
+        open={showCardForm}
+        onOpenChange={setShowCardForm}
+        onSubmit={handleCardFormSubmit}
+      />
+      
+      {/* Modal de formulário MBWay */}
+      <MBWayForm
+        open={showMBWayForm}
+        onOpenChange={setShowMBWayForm}
+        onSubmit={handleMBWayFormSubmit}
+        defaultPhone={user?.phone || ''}
+      />
+      
+      {/* Modal de pagamento */}
       <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
