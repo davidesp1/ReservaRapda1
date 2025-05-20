@@ -174,15 +174,7 @@ const MenuPage = () => {
                     <p className="text-gray-600 text-sm">{item.description}</p>
                   </CardContent>
                   
-                  <CardFooter className="pt-0">
-                    <Button 
-                      className="w-full bg-brasil-green text-white hover:bg-brasil-green/90"
-                      disabled={!item.available}
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      {t('AddToOrder')}
-                    </Button>
-                  </CardFooter>
+                  {/* Removido o botão de adicionar ao pedido */}
                 </Card>
               ))}
             </div>
