@@ -1,8 +1,8 @@
 import eupagoClient from "../integrations/eupago/client";
 import { EupagoResponse } from "../integrations/eupago/types";
 
-// Verificar se estamos em modo de simulação
-const SIMULATION_MODE = process.env.EUPAGO_SIMULATION === 'true' || process.env.NODE_ENV === 'development';
+// Verificar se estamos em modo de simulação (agora desativado por padrão)
+const SIMULATION_MODE = process.env.EUPAGO_SIMULATION === 'true';
 
 // Função para simular pagamento em modo de desenvolvimento
 function simulatePayment(method: string, amount: number, phone?: string): EupagoResponse {
@@ -112,7 +112,7 @@ export async function getPaymentStatus(reference: string): Promise<EupagoRespons
   }
   
   try {
-    return eupagoClient.request("/clientes/rest_api/payments/status", { referencia: reference });
+    return eupagoClient.request("/payments/status", { referencia: reference });
   } catch (error) {
     console.error(`Erro ao verificar status do pagamento:`, error);
     

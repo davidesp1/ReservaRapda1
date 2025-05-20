@@ -1,21 +1,21 @@
 import fetch from "node-fetch";
 
-// Definir a URL base do EuPago baseado no ambiente (sandbox ou produção)
-const API_BASE_URL = process.env.EUPAGO_BASE_URL || "https://sandbox.eupago.pt/clientes/rest_api";
-const API_KEY = process.env.EUPAGO_API_KEY || "demo-36a89-2b75-42";
+// Definir a URL base do EuPago baseado no ambiente (produção)
+const API_BASE_URL = process.env.EUPAGO_BASE_URL || "https://clientes.eupago.pt/api";
+const API_KEY = process.env.EUPAGO_API_KEY || "demo-1408-87fc-3618-cc0";
 
 // Cliente para a API EuPago
 const eupagoClient = {
   // Métodos específicos por tipo de pagamento
   multibanco(data: { valor: number, per_dup?: number }) {
-    return this.request('/clientes/rest_api/multibanco/create', {
+    return this.request('/multibanco/create', {
       valor: data.valor,
       per_dup: data.per_dup || 0
     });
   },
   
   mbway(data: { valor: number, telemovel: string }) {
-    return this.request('/clientes/rest_api/mbway/create', {
+    return this.request('/mbway/create', {
       valor: data.valor,
       telemovel: data.telemovel
     });
@@ -23,7 +23,7 @@ const eupagoClient = {
   
   card(data: { valor: number, referencia?: string }) {
     const ref = data.referencia || `REF-${Date.now()}`;
-    return this.request('/clientes/rest_api/pagamentovpos/create', {
+    return this.request('/pagamentovpos/create', {
       valor: data.valor,
       referencia: ref
     });
