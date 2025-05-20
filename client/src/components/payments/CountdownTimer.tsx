@@ -1,22 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Clock } from 'lucide-react';
+import { Clock, AlertTriangle } from 'lucide-react';
 import { useCancelPayment } from '@/hooks/usePayment';
 import { useToast } from '@/hooks/use-toast';
 
 interface CountdownTimerProps {
   expirationDate: string;
-  reference?: string;
-  onExpire: () => void;
+  reference: string;
+  onExpire?: () => void;
 }
 
-const CountdownTimer: React.FC<CountdownTimerProps> = ({
-  expirationDate,
-  reference,
-  onExpire
-}) => {
+const CountdownTimer: React.FC<CountdownTimerProps> = ({ expirationDate, reference, onExpire }) => {
   const { t } = useTranslation();
   const [remainingTime, setRemainingTime] = useState<number>(0);
+  const [isExpired, setIsExpired] = useState<boolean>(false);
   const cancelPaymentMutation = useCancelPayment();
   const { toast } = useToast();
 
@@ -30,20 +27,10 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
       
       setRemainingTime(diff);
       
-      // Se o tempo expirou, cancelar o pagamento automaticamente
-      if (diff <= 0 && reference) {
-        clearInterval(interval);
-        
-        cancelPaymentMutation.mutate(reference, {
-          onSuccess: () => {
-            toast({
-              title: t('PaymentCancelled'),
-              description: t('PaymentExpired'),
-              variant: 'destructive'
-            });
-            onExpire();
-          }
-        });
+      // Se o tempo expirou
+      if (diff <= 0 && !isExpired) {
+        setIsExpired(true);
+        handleExpiration();
       }
     };
     
@@ -52,30 +39,51 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
     const interval = setInterval(calculateRemainingTime, 1000);
     
     return () => clearInterval(interval);
-  }, [expirationDate, reference, cancelPaymentMutation, toast, onExpire, t]);
+  }, [expirationDate, isExpired]);
+
+  const handleExpiration = () => {
+    if (reference) {
+      cancelPaymentMutation.mutate(reference, {
+        onSuccess: () => {
+          toast({
+            title: t('PaymentCancelled'),
+            description: t('PaymentExpired'),
+            variant: 'destructive'
+          });
+          
+          if (onExpire) {
+            onExpire();
+          }
+        }
+      });
+    }
+  };
 
   // Formata o tempo restante
-  const hours = Math.floor(remainingTime / (1000 * 60 * 60));
-  const minutes = Math.floor((remainingTime / (1000 * 60)) % 60);
-  const seconds = Math.floor((remainingTime / 1000) % 60);
+  const formatTime = () => {
+    const hours = Math.floor(remainingTime / (1000 * 60 * 60));
+    const minutes = Math.floor((remainingTime / (1000 * 60)) % 60);
+    const seconds = Math.floor((remainingTime / 1000) % 60);
+    
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
   
   return (
-    <div className="flex items-center justify-center bg-gray-100 p-3 rounded-lg mb-4">
-      <Clock className="text-brasil-blue mr-2 h-5 w-5" />
-      <div className="font-medium">
-        {remainingTime > 0 ? (
-          <span>
+    <div className={`flex items-center justify-center ${isExpired ? 'bg-red-100' : 'bg-gray-100'} p-3 rounded-lg mb-4`}>
+      {isExpired ? (
+        <>
+          <AlertTriangle className="text-red-500 mr-2 h-5 w-5" />
+          <div className="font-medium text-red-500">{t('PaymentExpired')}</div>
+        </>
+      ) : (
+        <>
+          <Clock className="text-brasil-blue mr-2 h-5 w-5" />
+          <div className="font-medium">
             {t('ExpiresIn')}: 
-            <span className="ml-2 font-bold">
-              {String(hours).padStart(2, '0')}:
-              {String(minutes).padStart(2, '0')}:
-              {String(seconds).padStart(2, '0')}
-            </span>
-          </span>
-        ) : (
-          <span className="text-red-500">{t('PaymentExpired')}</span>
-        )}
-      </div>
+            <span className="ml-2 font-bold">{formatTime()}</span>
+          </div>
+        </>
+      )}
     </div>
   );
 };

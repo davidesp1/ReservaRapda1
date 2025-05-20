@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PaymentDetailsModal from '@/components/payments/PaymentDetailsModal';
 import CountdownTimer from '@/components/payments/CountdownTimer';
+import QRCodeDisplay from '@/components/payments/QRCodeDisplay';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { 
   Table, 
@@ -1637,33 +1638,25 @@ const Reservations: React.FC = () => {
                   </span>
                 </div>
                 
-                {/* QR Code (simulado) */}
-                <div className="flex justify-center mb-4">
-                  <div className="bg-white border border-gray-200 p-3 rounded">
-                    <div className="w-32 h-32 bg-gray-200 flex items-center justify-center">
-                      <div className="text-center text-sm text-gray-500">QR Code</div>
-                    </div>
-                  </div>
-                </div>
+                {/* QR Code e Código de barras */}
+                <QRCodeDisplay 
+                  entity={reservationData.paymentDetails.entity || '12345'}
+                  reference={reservationData.paymentDetails.reference || '123 456 789'}
+                  amount={Number(reservationData.total || 0)}
+                />
                 
+                {/* Informações de pagamento */}
                 <div className="flex justify-between">
                   <span className="font-medium">{t('Entity')}:</span>
-                  <span className="font-bold">{reservationData.paymentDetails.entity || '11111'}</span>
+                  <span className="font-bold">{reservationData.paymentDetails.entity || '12345'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">{t('Reference')}:</span>
-                  <span className="font-bold">{reservationData.paymentDetails.reference || '999 999 999'}</span>
+                  <span className="font-bold">{reservationData.paymentDetails.reference || '123 456 789'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">{t('Amount')}:</span>
                   <span className="font-bold">€{Number(reservationData.total || 0).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                </div>
-                
-                {/* Código de barras (simulado) */}
-                <div className="mt-4 border-t pt-4">
-                  <div className="w-full h-12 bg-gray-200 flex items-center justify-center">
-                    <div className="text-center text-sm text-gray-500">{t('Barcode')}</div>
-                  </div>
                 </div>
               </div>
             )}
