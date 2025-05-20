@@ -75,16 +75,7 @@ router.get("/api/tables/available", async (req, res) => {
   }
 });
 
-// Pagamentos
-router.post("/api/payments/process", async (req, res) => {
-  try {
-    const { method, amount, telemovel } = req.body;
-    const result = await processPayment(method, amount, telemovel);
-    res.json(result);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// Deixamos apenas a implementação mais abaixo com a validação completa
 
 router.get("/api/payments/status/:referencia", async (req, res) => {
   try {
