@@ -51,7 +51,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
+      console.log('Enviando login com:', data);
       const userData = await login(data.email, data.password);
+      console.log('Login bem-sucedido, dados do usuário:', userData);
       onClose();
       
       // Redirecionar baseado no papel do usuário
