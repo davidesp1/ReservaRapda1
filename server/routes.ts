@@ -169,4 +169,75 @@ router.get("/api/reservations", isAuthenticated, async (req, res) => {
   }
 });
 
+// Rota para processamento de pagamentos
+router.post("/api/payments/process", isAuthenticated, async (req, res) => {
+  try {
+    const { method, amount, phone, cardholderName, cardNumber, expiryDate, cvv } = req.body;
+    
+    // Verificar se o método é suportado
+    if (!['multibanco', 'mbway', 'card'].includes(method)) {
+      return res.status(400).json({ error: 'Método de pagamento não suportado' });
+    }
+    
+    // Verificar campos obrigatórios por método
+    if (method === 'mbway' && !phone) {
+      return res.status(400).json({ error: 'Número de telefone é obrigatório para pagamentos MBWay' });
+    }
+    
+    // Processar o pagamento com base no método
+    let result;
+    try {
+      if (method === 'multibanco') {
+        result = await processPayment('multibanco', amount);
+      } else if (method === 'mbway') {
+        result = await processPayment('mbway', amount, phone);
+      } else if (method === 'card') {
+        // Para cartão, apenas geramos uma referência aqui, o redirecionamento acontece no front-end
+        result = await processPayment('card', amount);
+      }
+      
+      console.log(`Pagamento ${method} processado:`, result);
+      
+      res.json({
+        success: true,
+        ...result
+      });
+    } catch (error: any) {
+      console.error(`Erro ao processar pagamento ${method}:`, error);
+      throw error;
+    }
+  } catch (err: any) {
+    console.error("Erro no processamento do pagamento:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Rota para verificar status do pagamento
+router.get("/api/payments/status/:reference", async (req, res) => {
+  try {
+    const reference = req.params.reference;
+    const result = await getPaymentStatus(reference);
+    res.json(result);
+  } catch (err: any) {
+    console.error("Erro ao verificar status do pagamento:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Rota para cancelar pagamento
+router.post("/api/payments/cancel", isAuthenticated, async (req, res) => {
+  try {
+    const { reference } = req.body;
+    if (!reference) {
+      return res.status(400).json({ error: 'Referência do pagamento é obrigatória' });
+    }
+    
+    const result = await cancelPayment(reference);
+    res.json(result);
+  } catch (err: any) {
+    console.error("Erro ao cancelar pagamento:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
