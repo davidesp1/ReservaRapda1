@@ -1265,7 +1265,7 @@ const Reservations: React.FC = () => {
                                 </div>
                               )}
                             </div>
-                            {!cardDetails && selectedPaymentMethod === 'card' && (
+                            {selectedPaymentMethod === 'card' && (
                               <Button 
                                 size="sm" 
                                 variant="outline"
@@ -1274,7 +1274,7 @@ const Reservations: React.FC = () => {
                                   setShowCardForm(true);
                                 }}
                               >
-                                {t('AddCard')}
+                                {cardDetails ? t('ChangeCard') : t('AddCard')}
                               </Button>
                             )}
                           </CardContent>
@@ -1297,7 +1297,7 @@ const Reservations: React.FC = () => {
                                 </div>
                               )}
                             </div>
-                            {!mbwayPhone && selectedPaymentMethod === 'mbway' && (
+                            {selectedPaymentMethod === 'mbway' && (
                               <Button 
                                 size="sm" 
                                 variant="outline"
@@ -1306,7 +1306,7 @@ const Reservations: React.FC = () => {
                                   setShowMBWayForm(true);
                                 }}
                               >
-                                {t('AddPhone')}
+                                {mbwayPhone ? t('ChangePhone') : t('AddPhone')}
                               </Button>
                             )}
                           </CardContent>
@@ -1772,10 +1772,10 @@ const Reservations: React.FC = () => {
     </CustomerLayout>
   );
   
-  // Definindo o conteúdo da página
-  const pageContent = (
+  // Renderizar o conteúdo da página baseado no estado atual
+  const renderPageContent = () => (
     <div className="container max-w-7xl mx-auto py-6 space-y-8">
-      {isCreateMode ? renderCreateReservationSection() : renderReservationsList()}
+      {isCreatingReservation ? renderReservationStep() : renderReservationsList()}
     </div>
   );
   
@@ -1784,7 +1784,7 @@ const Reservations: React.FC = () => {
     <>
       <CustomerLayout>
         {/* Conteúdo principal da página */}
-        {pageContent}
+        {renderPageContent()}
       </CustomerLayout>
       
       {/* Modal de formulário de cartão */}
