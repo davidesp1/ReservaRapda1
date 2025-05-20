@@ -2,7 +2,7 @@ import eupagoClient from "../integrations/eupago/client";
 import { EupagoResponse } from "../integrations/eupago/types";
 
 // Verificar se estamos em modo de simulação
-const SIMULATION_MODE = process.env.EUPAGO_SIMULATION === 'true';
+const SIMULATION_MODE = process.env.EUPAGO_SIMULATION === 'true' || process.env.NODE_ENV === 'development';
 
 // Função para simular pagamento em modo de desenvolvimento
 function simulatePayment(method: string, amount: number, phone?: string): EupagoResponse {
@@ -68,15 +68,15 @@ export async function processPayment(
   // Se não estamos em simulação, chamar a API real do EuPago
   try {
     if (method === "multibanco") {
-      return eupagoClient.request("/reference/create", { valor: amount });
+      return eupagoClient.multibanco({ valor: amount, per_dup: 0 });
     } 
     else if (method === "mbway") {
       if (!phone) throw new Error("Número de telefone é obrigatório para MBWay");
-      return eupagoClient.request("/mbway/create", { valor: amount, telemovel: phone });
+      return eupagoClient.mbway({ valor: amount, telemovel: phone });
     } 
     else if (method === "card") {
       const referencia = `CARD-${Date.now()}`;
-      return eupagoClient.request("/card/create", { valor: amount, referencia });
+      return eupagoClient.card({ valor: amount, referencia });
     }
     
     throw new Error(`Método de pagamento '${method}' não suportado`);
@@ -112,7 +112,7 @@ export async function getPaymentStatus(reference: string): Promise<EupagoRespons
   }
   
   try {
-    return eupagoClient.request("/payments/status", { referencia: reference });
+    return eupagoClient.request("/clientes/rest_api/payments/status", { referencia: reference });
   } catch (error) {
     console.error(`Erro ao verificar status do pagamento:`, error);
     
