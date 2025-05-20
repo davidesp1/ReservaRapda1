@@ -160,10 +160,13 @@ const Reservations: React.FC = () => {
   });
   
   // Fetch menu items
-  const { data: menuItems, isLoading: menuItemsLoading } = useQuery({
+  const { data: menuCategories, isLoading: menuItemsLoading } = useQuery({
     queryKey: ['/api/menu-items'],
     enabled: !!isAuthenticated && currentStep === 2,
   });
+  
+  // Estado para controlar categoria atual sendo exibida
+  const [currentCategory, setCurrentCategory] = useState<number>(0);
   
   // Time slots available for reservations
   const timeSlots = [
@@ -947,43 +950,143 @@ const Reservations: React.FC = () => {
                     <div className="flex justify-center py-8">
                       <div className="animate-spin w-8 h-8 border-4 border-brasil-green border-t-transparent rounded-full"></div>
                     </div>
-                  ) : menuItems && Array.isArray(menuItems) ? (
+                  ) : menuCategories && Array.isArray(menuCategories) ? (
                     <div className="space-y-8">
-                      {menuItems.map((categoryGroup: any) => (
-                        <div key={categoryGroup.category.id} className="space-y-4">
-                          <h3 className="text-lg font-semibold border-b pb-2 text-brasil-blue">
-                            {categoryGroup.category.name}
+                      {/* Indicadores de progresso da categoria */}
+                      <div className="flex justify-center space-x-2 mb-6">
+                        {menuCategories.map((categoryGroup: any, index: number) => (
+                          <div 
+                            key={categoryGroup.category.id}
+                            className={`h-2 w-10 rounded-full transition-colors cursor-pointer ${currentCategory === index ? 'bg-brasil-green' : 'bg-gray-200'}`}
+                            onClick={() => setCurrentCategory(index)}
+                          ></div>
+                        ))}
+                      </div>
+                      
+                      {/* Título da categoria atual */}
+                      {menuCategories[currentCategory] && (
+                        <div className="text-center">
+                          <h3 className="text-xl font-semibold text-brasil-blue mb-1">
+                            {menuCategories[currentCategory].category.name}
                           </h3>
-                          {categoryGroup.items && categoryGroup.items.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {categoryGroup.items.map((item: any) => (
-                                <Card key={item.id} className="overflow-hidden flex flex-col h-full border-brasil-blue/20">
-                                  <div className="p-3">
-                                    <div className="flex justify-between">
-                                      <div>
-                                        <h4 className="font-medium">{item.name}</h4>
-                                        <p className="text-sm text-gray-500 line-clamp-2">{item.description}</p>
-                                      </div>
-                                      <div className="font-semibold text-brasil-green">€{(Number(item.price) / 100).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                                    </div>
-                                    <Button 
-                                      size="sm" 
-                                      className="mt-2 bg-brasil-green hover:bg-green-700 text-white"
-                                      onClick={() => addMenuItem(item)}
-                                    >
-                                      <Plus className="h-4 w-4 mr-1" /> {t('Add')}
-                                    </Button>
-                                  </div>
-                                </Card>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="text-center py-4 text-gray-400 italic">
-                              {t('NoCategoryItems')}
-                            </div>
-                          )}
+                          <p className="text-sm text-gray-500">
+                            {t('CategoryStep')} {currentCategory + 1} {t('of')} {menuCategories.length}
+                          </p>
                         </div>
-                      ))}
+                      )}
+                      
+                      {/* Itens da categoria atual */}
+                      {menuCategories[currentCategory] && menuCategories[currentCategory].items && menuCategories[currentCategory].items.length > 0 ? (
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            {/* Opção sem seleção/pular */}
+                            <Card className="overflow-hidden flex flex-col h-full border-brasil-blue/20 bg-gray-50">
+                              <div className="p-3">
+                                <div className="flex justify-between">
+                                  <div>
+                                    <h4 className="font-medium">{t('NoSelection')}</h4>
+                                    <p className="text-sm text-gray-500 line-clamp-2">{t('SkipThisCategory')}</p>
+                                  </div>
+                                </div>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  className="mt-2 border-brasil-blue text-brasil-blue hover:bg-brasil-blue/10"
+                                  onClick={() => {
+                                    // Avançar para a próxima categoria sem adicionar item
+                                    if (currentCategory < menuCategories.length - 1) {
+                                      setCurrentCategory(currentCategory + 1);
+                                    } else {
+                                      // Se for a última categoria, avançar para o próximo passo
+                                      submitStep2();
+                                    }
+                                  }}
+                                >
+                                  {t('Skip')}
+                                </Button>
+                              </div>
+                            </Card>
+                            
+                            {/* Itens da categoria */}
+                            {menuCategories[currentCategory].items.map((item: any) => (
+                              <Card key={item.id} className="overflow-hidden flex flex-col h-full border-brasil-blue/20">
+                                <div className="p-3">
+                                  <div className="flex justify-between">
+                                    <div>
+                                      <h4 className="font-medium">{item.name}</h4>
+                                      <p className="text-sm text-gray-500 line-clamp-2">{item.description}</p>
+                                    </div>
+                                    <div className="font-semibold text-brasil-green">€{(Number(item.price) / 100).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                  </div>
+                                  <Button 
+                                    size="sm" 
+                                    className="mt-2 bg-brasil-green hover:bg-green-700 text-white"
+                                    onClick={() => {
+                                      // Adicionar item e avançar para a próxima categoria
+                                      addMenuItem(item);
+                                      
+                                      // Se não for a última categoria, avançar para a próxima
+                                      if (currentCategory < menuCategories.length - 1) {
+                                        setCurrentCategory(currentCategory + 1);
+                                      } else {
+                                        // Se for a última categoria, avançar para o próximo passo
+                                        submitStep2();
+                                      }
+                                    }}
+                                  >
+                                    <Plus className="h-4 w-4 mr-1" /> {t('Add')}
+                                  </Button>
+                                </div>
+                              </Card>
+                            ))}
+                          </div>
+                          
+                          {/* Botões de navegação entre categorias */}
+                          <div className="flex justify-between mt-8">
+                            <Button
+                              variant="outline"
+                              onClick={() => setCurrentCategory(Math.max(0, currentCategory - 1))}
+                              disabled={currentCategory === 0}
+                              className="border-brasil-blue text-brasil-blue"
+                            >
+                              {t('Previous')}
+                            </Button>
+                            
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                if (currentCategory < menuCategories.length - 1) {
+                                  setCurrentCategory(currentCategory + 1);
+                                } else {
+                                  submitStep2();
+                                }
+                              }}
+                              className="border-brasil-blue text-brasil-blue"
+                            >
+                              {currentCategory === menuCategories.length - 1 ? t('Finish') : t('Next')}
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center py-4 text-gray-400 italic">
+                          {t('NoCategoryItems')}
+                          <div className="mt-4">
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                if (currentCategory < menuCategories.length - 1) {
+                                  setCurrentCategory(currentCategory + 1);
+                                } else {
+                                  submitStep2();
+                                }
+                              }}
+                              className="border-brasil-blue text-brasil-blue"
+                            >
+                              {currentCategory === menuCategories.length - 1 ? t('Finish') : t('Next')}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center py-8 text-gray-500">
