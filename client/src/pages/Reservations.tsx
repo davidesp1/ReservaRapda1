@@ -1212,42 +1212,77 @@ const Reservations: React.FC = () => {
                         )}
                         
                         <Card 
-                          className="cursor-pointer hover:border-brasil-green border-2 transition-colors"
-                          onClick={() => submitStep3('card')}
+                          className={`cursor-pointer hover:border-brasil-green border-2 transition-colors ${selectedPaymentMethod === 'card' ? 'border-brasil-green' : 'border-gray-200'}`}
+                          onClick={() => handlePaymentMethodSelect('card')}
                         >
                           <CardContent className="p-4 flex items-center">
                             <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
                               <CreditCard className="h-6 w-6 text-brasil-blue" />
                             </div>
-                            <div>
+                            <div className="flex-1">
                               <h4 className="font-medium">{t('CreditCard')}</h4>
                               <p className="text-sm text-gray-500">{t('CreditCardDescription')}</p>
+                              {cardDetails && (
+                                <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-100 text-sm">
+                                  <p>**** **** **** {cardDetails.cardNumber.slice(-4)}</p>
+                                  <p>{cardDetails.cardholderName}</p>
+                                </div>
+                              )}
                             </div>
+                            {!cardDetails && selectedPaymentMethod === 'card' && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowCardForm(true);
+                                }}
+                              >
+                                {t('AddCard')}
+                              </Button>
+                            )}
                           </CardContent>
                         </Card>
                         
                         <Card 
-                          className="cursor-pointer hover:border-brasil-green border-2 transition-colors"
-                          onClick={() => submitStep3('mbway')}
+                          className={`cursor-pointer hover:border-brasil-green border-2 transition-colors ${selectedPaymentMethod === 'mbway' ? 'border-brasil-green' : 'border-gray-200'}`}
+                          onClick={() => handlePaymentMethodSelect('mbway')}
                         >
                           <CardContent className="p-4 flex items-center">
                             <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
-                              <i className="fas fa-mobile-alt text-brasil-blue"></i>
+                              <Smartphone className="h-6 w-6 text-brasil-blue" />
                             </div>
-                            <div>
+                            <div className="flex-1">
                               <h4 className="font-medium">MBWay</h4>
                               <p className="text-sm text-gray-500">{t('MBWayDescription')}</p>
+                              {mbwayPhone && (
+                                <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-100 text-sm">
+                                  <p>{mbwayPhone}</p>
+                                </div>
+                              )}
                             </div>
+                            {!mbwayPhone && selectedPaymentMethod === 'mbway' && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowMBWayForm(true);
+                                }}
+                              >
+                                {t('AddPhone')}
+                              </Button>
+                            )}
                           </CardContent>
                         </Card>
                         
                         <Card 
-                          className="cursor-pointer hover:border-brasil-green border-2 transition-colors"
-                          onClick={() => submitStep3('multibanco')}
+                          className={`cursor-pointer hover:border-brasil-green border-2 transition-colors ${selectedPaymentMethod === 'multibanco' ? 'border-brasil-green' : 'border-gray-200'}`}
+                          onClick={() => handlePaymentMethodSelect('multibanco')}
                         >
                           <CardContent className="p-4 flex items-center">
                             <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
-                              <i className="fas fa-university text-brasil-blue"></i>
+                              <Landmark className="h-6 w-6 text-brasil-blue" />
                             </div>
                             <div>
                               <h4 className="font-medium">Multibanco</h4>
@@ -1255,6 +1290,17 @@ const Reservations: React.FC = () => {
                             </div>
                           </CardContent>
                         </Card>
+                        
+                        {selectedPaymentMethod && (
+                          <div className="mt-6">
+                            <Button 
+                              className="w-full bg-brasil-green hover:bg-green-700 text-white"
+                              onClick={() => submitStep3(selectedPaymentMethod)}
+                            >
+                              {t('ProceedToPayment')}
+                            </Button>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
