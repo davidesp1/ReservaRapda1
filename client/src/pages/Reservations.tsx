@@ -993,13 +993,8 @@ const Reservations: React.FC = () => {
                                   variant="outline"
                                   className="mt-2 border-brasil-blue text-brasil-blue hover:bg-brasil-blue/10"
                                   onClick={() => {
-                                    // Avançar para a próxima categoria sem adicionar item
-                                    if (currentCategory < menuCategories.length - 1) {
-                                      setCurrentCategory(currentCategory + 1);
-                                    } else {
-                                      // Se for a última categoria, avançar para o próximo passo
-                                      submitStep2();
-                                    }
+                                    // Aqui não fazemos nada, apenas oferecemos o botão como uma opção visual
+                                    // O usuário avançará usando os botões de navegação no final da página
                                   }}
                                 >
                                   {t('Skip')}
@@ -1021,18 +1016,7 @@ const Reservations: React.FC = () => {
                                   <Button 
                                     size="sm" 
                                     className="mt-2 bg-brasil-green hover:bg-green-700 text-white"
-                                    onClick={() => {
-                                      // Adicionar item e avançar para a próxima categoria
-                                      addMenuItem(item);
-                                      
-                                      // Se não for a última categoria, avançar para a próxima
-                                      if (currentCategory < menuCategories.length - 1) {
-                                        setCurrentCategory(currentCategory + 1);
-                                      } else {
-                                        // Se for a última categoria, avançar para o próximo passo
-                                        submitStep2();
-                                      }
-                                    }}
+                                    onClick={() => addMenuItem(item)}
                                   >
                                     <Plus className="h-4 w-4 mr-1" /> {t('Add')}
                                   </Button>
