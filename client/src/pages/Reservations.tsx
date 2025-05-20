@@ -1015,7 +1015,7 @@ const Reservations: React.FC = () => {
                               </div>
                               <div className="text-right">
                                 <div className="text-sm font-semibold">
-                                  €{Number(item.price * item.quantity).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                  €{((Number(item.price) / 100) * item.quantity).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                 </div>
                                 <Button 
                                   variant="ghost" 
@@ -1033,7 +1033,7 @@ const Reservations: React.FC = () => {
                         <div className="pt-2 border-t border-gray-200">
                           <div className="flex justify-between font-semibold">
                             <span>{t('Total')}</span>
-                            <span>€{Number(reservationData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                            <span>€{Number(reservationData.items.reduce((sum, item) => sum + ((Number(item.price) / 100) * item.quantity), 0)).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                           </div>
                         </div>
                         
