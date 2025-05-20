@@ -106,15 +106,43 @@ router.post("/api/payments/cancel", async (req, res) => {
   }
 });
 
+// Rota para categorias do menu
+router.get("/api/menu-categories", async (req, res) => {
+  try {
+    const categories = await queryClient`
+      SELECT * FROM menu_categories
+      ORDER BY name
+    `;
+    
+    res.json(categories);
+  } catch (err: any) {
+    console.error("Erro ao buscar categorias do menu:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Rota para itens do menu
 router.get("/api/menu-items", async (req, res) => {
   try {
+    // Buscar itens com informações da categoria
     const menuItems = await queryClient`
-      SELECT * FROM menu_items
-      ORDER BY category_id, name
+      SELECT mi.*, mc.name as category_name
+      FROM menu_items mi
+      JOIN menu_categories mc ON mi.category_id = mc.id
+      ORDER BY mi.category_id, mi.name
     `;
     
-    res.json(menuItems);
+    // Agrupar os itens por categoria
+    const categories = await queryClient`SELECT * FROM menu_categories ORDER BY name`;
+    
+    const menuByCategory = categories.map(category => {
+      return {
+        category: category,
+        items: menuItems.filter(item => item.category_id === category.id)
+      };
+    });
+    
+    res.json(menuByCategory);
   } catch (err: any) {
     console.error("Erro ao buscar itens do menu:", err);
     res.status(500).json({ error: err.message });

@@ -948,30 +948,42 @@ const Reservations: React.FC = () => {
                       <div className="animate-spin w-8 h-8 border-4 border-brasil-green border-t-transparent rounded-full"></div>
                     </div>
                   ) : menuItems && Array.isArray(menuItems) ? (
-                    <div className="space-y-6">
-                      {/* Aqui poderia agrupar por categoria se necessário */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {menuItems.map((item: any) => (
-                          <Card key={item.id} className="overflow-hidden flex flex-col h-full">
-                            <div className="p-3">
-                              <div className="flex justify-between">
-                                <div>
-                                  <h4 className="font-medium">{item.name}</h4>
-                                  <p className="text-sm text-gray-500 line-clamp-2">{item.description}</p>
-                                </div>
-                                <div className="font-semibold text-brasil-green">€{(Number(item.price) / 100).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                              </div>
-                              <Button 
-                                size="sm" 
-                                className="mt-2 bg-brasil-green hover:bg-green-700 text-white"
-                                onClick={() => addMenuItem(item)}
-                              >
-                                <Plus className="h-4 w-4 mr-1" /> {t('Add')}
-                              </Button>
+                    <div className="space-y-8">
+                      {menuItems.map((categoryGroup: any) => (
+                        <div key={categoryGroup.category.id} className="space-y-4">
+                          <h3 className="text-lg font-semibold border-b pb-2 text-brasil-blue">
+                            {categoryGroup.category.name}
+                          </h3>
+                          {categoryGroup.items && categoryGroup.items.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {categoryGroup.items.map((item: any) => (
+                                <Card key={item.id} className="overflow-hidden flex flex-col h-full border-brasil-blue/20">
+                                  <div className="p-3">
+                                    <div className="flex justify-between">
+                                      <div>
+                                        <h4 className="font-medium">{item.name}</h4>
+                                        <p className="text-sm text-gray-500 line-clamp-2">{item.description}</p>
+                                      </div>
+                                      <div className="font-semibold text-brasil-green">€{(Number(item.price) / 100).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                    </div>
+                                    <Button 
+                                      size="sm" 
+                                      className="mt-2 bg-brasil-green hover:bg-green-700 text-white"
+                                      onClick={() => addMenuItem(item)}
+                                    >
+                                      <Plus className="h-4 w-4 mr-1" /> {t('Add')}
+                                    </Button>
+                                  </div>
+                                </Card>
+                              ))}
                             </div>
-                          </Card>
-                        ))}
-                      </div>
+                          ) : (
+                            <div className="text-center py-4 text-gray-400 italic">
+                              {t('NoCategoryItems')}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className="text-center py-8 text-gray-500">
