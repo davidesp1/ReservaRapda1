@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PaymentDetailsModal from '@/components/payments/PaymentDetailsModal';
+import CountdownTimer from '@/components/payments/CountdownTimer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { 
   Table, 
@@ -1589,15 +1590,22 @@ const Reservations: React.FC = () => {
     </CustomerLayout>
   );
   
+  // Definindo o conteúdo da página
+  const pageContent = (
+    <div className="container max-w-7xl mx-auto py-6 space-y-8">
+      {isCreateMode ? renderCreateReservationSection() : renderReservationsList()}
+    </div>
+  );
+  
   // Modal de pagamento
   return (
     <>
       <CustomerLayout>
         {/* Conteúdo principal da página */}
-        {mainContent}
+        {pageContent}
       </CustomerLayout>
       
-      {/* Modal de pagamento */}
+      {/* Modal de pagamento Multibanco melhorado */}
       <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -1613,6 +1621,31 @@ const Reservations: React.FC = () => {
             {/* Detalhes de pagamento Multibanco */}
             {reservationData.paymentMethod === 'multibanco' && reservationData.paymentDetails && (
               <div className="space-y-4">
+                {/* Contador regressivo */}
+                {reservationData.paymentDetails.expirationDate && (
+                  <CountdownTimer 
+                    expirationDate={reservationData.paymentDetails.expirationDate}
+                    reference={reservationData.paymentDetails.reference}
+                    onExpire={() => setPaymentModalOpen(false)}
+                  />
+                )}
+                
+                {/* Status do pagamento */}
+                <div className="text-center mb-4">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    {t('Pending')}
+                  </span>
+                </div>
+                
+                {/* QR Code (simulado) */}
+                <div className="flex justify-center mb-4">
+                  <div className="bg-white border border-gray-200 p-3 rounded">
+                    <div className="w-32 h-32 bg-gray-200 flex items-center justify-center">
+                      <div className="text-center text-sm text-gray-500">QR Code</div>
+                    </div>
+                  </div>
+                </div>
+                
                 <div className="flex justify-between">
                   <span className="font-medium">{t('Entity')}:</span>
                   <span className="font-bold">{reservationData.paymentDetails.entity || '11111'}</span>
@@ -1625,12 +1658,13 @@ const Reservations: React.FC = () => {
                   <span className="font-medium">{t('Amount')}:</span>
                   <span className="font-bold">€{Number(reservationData.total || 0).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
-                {reservationData.paymentDetails.expirationDate && (
-                  <div className="flex justify-between">
-                    <span className="font-medium">{t('ExpirationDate')}:</span>
-                    <span>{new Date(reservationData.paymentDetails.expirationDate).toLocaleDateString()}</span>
+                
+                {/* Código de barras (simulado) */}
+                <div className="mt-4 border-t pt-4">
+                  <div className="w-full h-12 bg-gray-200 flex items-center justify-center">
+                    <div className="text-center text-sm text-gray-500">{t('Barcode')}</div>
                   </div>
-                )}
+                </div>
               </div>
             )}
             
