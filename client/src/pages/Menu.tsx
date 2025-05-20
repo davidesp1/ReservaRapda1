@@ -17,12 +17,19 @@ interface MenuItem {
   description: string;
   price: number;
   image: string;
-  categoryId: number;
+  category_id: number;
   available: boolean;
   popular: boolean;
   vegetarian: boolean;
-  glutenFree: boolean;
-  spicyLevel: number;
+  gluten_free: boolean;
+  spicy_level: number;
+  category_name: string;
+}
+
+// Interface para o formato de resposta da API
+interface MenuByCategory {
+  category: MenuCategory;
+  items: MenuItem[];
 }
 
 // Define o tipo para uma categoria do menu
@@ -42,21 +49,29 @@ const MenuPage = () => {
     queryKey: ['/api/menu-categories'],
   });
   
-  // Buscar itens do menu
-  const { data: items, isLoading: itemsLoading, error: itemsError } = useQuery<MenuItem[]>({
+  // Buscar itens do menu organizados por categoria
+  const { data: menuByCategory, isLoading: itemsLoading, error: itemsError } = useQuery<MenuByCategory[]>({
     queryKey: ['/api/menu-items'],
   });
   
+  // Função para obter todos os itens a partir da resposta organizada por categoria
+  const getAllItems = () => {
+    if (!menuByCategory) return [];
+    
+    // Flatmap para extrair todos os itens de todas as categorias
+    return menuByCategory.flatMap(categoryData => categoryData.items);
+  };
+  
   // Função para filtrar itens por categoria
   const getFilteredItems = () => {
-    if (!items) return [];
+    const allItems = getAllItems();
     
     if (activeCategory === 'all') {
-      return items;
+      return allItems;
     }
     
     const categoryId = parseInt(activeCategory);
-    return items.filter(item => item.categoryId === categoryId);
+    return allItems.filter(item => item.category_id === categoryId);
   };
   
   // Função para renderizar o nível de picância
@@ -130,9 +145,13 @@ const MenuPage = () => {
                 <Card key={item.id} className="overflow-hidden hover:shadow-lg transition">
                   <div className="relative h-48">
                     <img 
-                      src={item.image} 
+                      src={item.image || 'https://placehold.co/600x400/gray/white?text=Imagem+Indisponível'} 
                       alt={item.name} 
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://placehold.co/600x400/gray/white?text=Imagem+Indisponível';
+                      }}
                     />
                     {item.popular && (
                       <Badge className="absolute top-2 right-2 bg-brasil-red">
@@ -148,24 +167,25 @@ const MenuPage = () => {
                         €{(Number(item.price) / 100).toFixed(2)}
                       </div>
                     </div>
-                    {(item.vegetarian || item.glutenFree) && (
+                    <p className="text-sm text-gray-500">{item.category_name}</p>
+                    {(item.vegetarian || item.gluten_free) && (
                       <div className="flex gap-2 mt-1">
                         {item.vegetarian && (
                           <Badge variant="outline" className="text-green-600 border-green-600">
                             {t('Vegetarian')}
                           </Badge>
                         )}
-                        {item.glutenFree && (
+                        {item.gluten_free && (
                           <Badge variant="outline" className="text-amber-600 border-amber-600">
                             {t('Glutenfree')}
                           </Badge>
                         )}
                       </div>
                     )}
-                    {item.spicyLevel > 0 && (
+                    {item.spicy_level > 0 && (
                       <div className="mt-1">
                         <span className="text-sm text-gray-600 mr-2">{t('SpiceLevel')}:</span>
-                        {renderSpicyLevel(item.spicyLevel)}
+                        {renderSpicyLevel(item.spicy_level)}
                       </div>
                     )}
                   </CardHeader>
