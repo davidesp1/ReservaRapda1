@@ -14,9 +14,8 @@ const eupagoClient = {
       throw new Error('EUPAGO_API_KEY não configurada');
     }
 
-    // *SEMPRE* use simulação para testes - removemos a verificação this.simulation
-    // porque estamos tendo problemas com a API real mesmo após definir EUPAGO_SIMULATION=true
-    {
+    // Verificar se estamos em modo de simulação
+    if (this.simulation) {
       console.log(`[SIM] POST ${endpoint}`, data);
       
       switch (endpoint) {

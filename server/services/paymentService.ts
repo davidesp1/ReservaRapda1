@@ -34,8 +34,8 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
   try {
     console.log(`Processando pagamento ${paymentData.method} para referência ${paymentData.reference}`);
 
-    // Forçar o modo de simulação para testes
-    process.env.EUPAGO_SIMULATION = 'true';
+    // Verificar se estamos em modo de produção ou simulação
+    const isSimulation = process.env.EUPAGO_SIMULATION === 'true';
 
     let paymentResult;
 
@@ -82,12 +82,11 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
       throw new Error(paymentResult.message || 'Falha no processamento do pagamento');
     }
 
-    // Sempre usar modo de simulação para estabilidade
-    // Desativamos a verificação de EUPAGO_SIMULATION para garantir que sempre
-    // retornamos respostas simuladas, evitando falhas na API externa
-    {
+    // Verificar se estamos em modo de simulação
+    if (isSimulation) {
+      console.log(`Processando pagamento sem reserva associada (modo simulação): ${paymentData.reference}`);
+      
       // Simulamos a resposta para teste em sandbox
-      // A resposta varia dependendo do método de pagamento
       let simulatedResponse: PaymentResponseData = {
         success: true,
         paymentReference: paymentData.reference,
@@ -195,7 +194,9 @@ export async function checkPaymentStatus(reference: string): Promise<PaymentResp
 
     // Se estamos em modo de simulação, mantemos o status como pendente
     // para evitar que a simulação mostre um pagamento concluído incorretamente
-    if (process.env.EUPAGO_SIMULATION === 'true') {
+    const isSimulation = process.env.EUPAGO_SIMULATION === 'true';
+    if (isSimulation) {
+      console.log(`Verificando status do pagamento ${reference}`);
       return {
         success: true,
         paymentReference: reference,
