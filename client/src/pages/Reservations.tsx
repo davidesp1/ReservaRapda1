@@ -1693,7 +1693,7 @@ const Reservations: React.FC = () => {
   // Definindo o conteúdo da página
   const pageContent = (
     <div className="container max-w-7xl mx-auto py-6 space-y-8">
-      {isCreateMode ? renderCreateReservationSection() : renderReservationsList()}
+      {isCreatingReservation ? renderReservationStep() : renderExistingReservations()}
     </div>
   );
   
@@ -1722,10 +1722,10 @@ const Reservations: React.FC = () => {
             {reservationData.paymentMethod === 'multibanco' && reservationData.paymentDetails && (
               <div className="space-y-4">
                 {/* Contador regressivo */}
-                {reservationData.paymentDetails.expirationDate && (
+                {reservationData.paymentDetails?.expirationDate && (
                   <CountdownTimer 
-                    expirationDate={reservationData.paymentDetails.expirationDate}
-                    reference={reservationData.paymentDetails.reference}
+                    expirationDate={reservationData.paymentDetails?.expirationDate}
+                    reference={reservationData.paymentDetails?.reference}
                     onExpire={() => setPaymentModalOpen(false)}
                   />
                 )}
@@ -1739,19 +1739,19 @@ const Reservations: React.FC = () => {
                 
                 {/* QR Code e Código de barras */}
                 <QRCodeDisplay 
-                  entity={reservationData.paymentDetails.entity || '12345'}
-                  reference={reservationData.paymentDetails.reference || '123 456 789'}
+                  entity={reservationData.paymentDetails?.entity || '12345'}
+                  reference={reservationData.paymentDetails?.reference || '123 456 789'}
                   amount={Number(reservationData.total || 0)}
                 />
                 
                 {/* Informações de pagamento */}
                 <div className="flex justify-between">
                   <span className="font-medium">{t('Entity')}:</span>
-                  <span className="font-bold">{reservationData.paymentDetails.entity || '12345'}</span>
+                  <span className="font-bold">{reservationData.paymentDetails?.entity || '12345'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">{t('Reference')}:</span>
-                  <span className="font-bold">{reservationData.paymentDetails.reference || '123 456 789'}</span>
+                  <span className="font-bold">{reservationData.paymentDetails?.reference || '123 456 789'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">{t('Amount')}:</span>
@@ -1765,7 +1765,7 @@ const Reservations: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="font-medium">{t('PhoneNumber')}:</span>
-                  <span className="font-bold">{reservationData.paymentDetails.phone || user?.phone}</span>
+                  <span className="font-bold">{reservationData.paymentDetails?.phone || user?.phone}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">{t('Amount')}:</span>
