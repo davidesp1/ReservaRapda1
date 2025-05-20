@@ -5,9 +5,15 @@ import {
   cancelPayment,
 } from "./services/paymentService";
 import { db } from "./db";
-import { users } from "../shared/schema";
+import * as schema from "../shared/schema";
 import { eq } from "drizzle-orm";
 import { compare, hash } from "bcryptjs";
+
+declare module 'express-session' {
+  interface SessionData {
+    userId: number;
+  }
+}
 
 const router = express.Router();
 
@@ -18,8 +24,8 @@ router.post("/api/auth/register", async (req, res) => {
     
     // Verificar se usuário ou email já existem
     const existingUser = await db.query.users.findFirst({
-      where: ({ username: usernameCol, email: emailCol }) => 
-        eq(usernameCol, username) || eq(emailCol, email)
+      where: (users) => 
+        eq(users.username, username) || eq(users.email, email)
     });
     
     if (existingUser) {
@@ -32,7 +38,7 @@ router.post("/api/auth/register", async (req, res) => {
     const hashedPassword = await hash(password, 10);
     
     // Inserir novo usuário
-    const [newUser] = await db.insert(users).values({
+    const [newUser] = await db.insert(schema.users).values({
       username,
       email,
       password: hashedPassword,
@@ -58,8 +64,8 @@ router.post("/api/auth/login", async (req, res) => {
     
     // Buscar usuário por email ou username
     const user = email 
-      ? await db.query.users.findFirst({ where: eq(users.email, email) })
-      : await db.query.users.findFirst({ where: eq(users.username, username) });
+      ? await db.query.users.findFirst({ where: eq(schema.users.email, email) })
+      : await db.query.users.findFirst({ where: eq(schema.users.username, username) });
     
     if (!user) {
       return res.status(401).json({ message: "Credenciais inválidas" });
@@ -72,9 +78,9 @@ router.post("/api/auth/login", async (req, res) => {
     }
     
     // Atualizar última data de login
-    await db.update(users)
+    await db.update(schema.users)
       .set({ lastLogin: new Date() })
-      .where(eq(users.id, user.id));
+      .where(eq(schema.users.id, user.id));
     
     // Guardar usuário na sessão
     if (req.session) {
@@ -111,7 +117,7 @@ router.get("/api/auth/me", async (req, res) => {
     }
     
     const user = await db.query.users.findFirst({
-      where: eq(users.id, req.session.userId)
+      where: eq(schema.users.id, req.session.userId)
     });
     
     if (!user) {

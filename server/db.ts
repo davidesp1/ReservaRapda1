@@ -14,7 +14,7 @@ const connectionString = process.env.DATABASE_URL;
 // Para queries SQL usando postgres-js
 const queryClient = postgres(connectionString, { ssl: 'require' });
 // Para o Drizzle ORM
-export const db = drizzle(queryClient);
+export const db = drizzle(queryClient, { schema });
 
 // Expor o cliente Supabase para funcionalidades adicionais quando necessário
 export const supabase = createClient(

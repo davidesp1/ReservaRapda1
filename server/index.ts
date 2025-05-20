@@ -1,11 +1,31 @@
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
+import PgSession from "connect-pg-simple";
 
 import router from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { db } from "./db";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Configuração da sessão
+const PgStore = PgSession(session);
+app.use(session({
+  store: new PgStore({
+    conString: process.env.DATABASE_URL,
+    tableName: 'sessions',
+    createTableIfMissing: true
+  }),
+  secret: process.env.SESSION_SECRET || 'opa-que-delicia-session-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 dias
+  }
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();
