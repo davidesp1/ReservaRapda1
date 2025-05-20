@@ -145,7 +145,7 @@ const MenuPage = () => {
                     <div className="flex justify-between items-start">
                       <CardTitle className="text-xl font-montserrat">{item.name}</CardTitle>
                       <div className="text-xl font-bold text-brasil-blue">
-                        €{item.price.toFixed(2)}
+                        €{(Number(item.price) / 100).toFixed(2)}
                       </div>
                     </div>
                     {(item.vegetarian || item.glutenFree) && (
