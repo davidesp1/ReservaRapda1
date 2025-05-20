@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Dialog,
@@ -9,13 +9,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CreditCard, Smartphone, Landmark } from 'lucide-react';
+import { CreditCard, Smartphone, Landmark, Clock } from 'lucide-react';
+import { useCancelPayment } from '@/hooks/usePayment';
+import { useToast } from '@/hooks/use-toast';
 
 interface PaymentDetails {
   entity?: string;
   reference?: string;
   expirationDate?: string;
   phone?: string;
+  status?: string;
 }
 
 interface PaymentDetailsModalProps {
@@ -38,6 +41,42 @@ const PaymentDetailsModal: React.FC<PaymentDetailsModalProps> = ({
   onConfirm
 }) => {
   const { t } = useTranslation();
+  const [remainingTime, setRemainingTime] = useState<number>(0);
+  const cancelPaymentMutation = useCancelPayment();
+  const { toast } = useToast();
+  
+  // Calcula e atualiza o tempo restante para expiração
+  useEffect(() => {
+    if (!open || paymentMethod !== 'multibanco' || !paymentDetails?.expirationDate) return;
+    
+    const calculateRemainingTime = () => {
+      const now = new Date();
+      const expiration = new Date(paymentDetails.expirationDate || '');
+      const diff = Math.max(0, expiration.getTime() - now.getTime());
+      
+      setRemainingTime(diff);
+      
+      // Se o tempo expirou, cancelar o pagamento automaticamente
+      if (diff <= 0 && paymentDetails.reference) {
+        cancelPaymentMutation.mutate(paymentDetails.reference, {
+          onSuccess: () => {
+            toast({
+              title: t('PaymentCancelled'),
+              description: t('PaymentExpired'),
+              variant: 'destructive'
+            });
+            onOpenChange(false);
+          }
+        });
+      }
+    };
+    
+    // Calcula imediatamente e depois a cada segundo
+    calculateRemainingTime();
+    const interval = setInterval(calculateRemainingTime, 1000);
+    
+    return () => clearInterval(interval);
+  }, [open, paymentMethod, paymentDetails, cancelPaymentMutation, toast, onOpenChange, t]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -69,6 +108,45 @@ const PaymentDetailsModal: React.FC<PaymentDetailsModalProps> = ({
           {/* Detalhes de pagamento Multibanco */}
           {paymentMethod === 'multibanco' && paymentDetails && (
             <div className="space-y-4">
+              {/* Contador regressivo */}
+              <div className="flex items-center justify-center bg-gray-100 p-3 rounded-lg mb-4">
+                <Clock className="text-brasil-blue mr-2 h-5 w-5" />
+                <div className="font-medium">
+                  {remainingTime > 0 ? (
+                    <span>
+                      {t('ExpiresIn')}: 
+                      <span className="ml-2 font-bold">
+                        {String(Math.floor(remainingTime / (1000 * 60 * 60))).padStart(2, '0')}:
+                        {String(Math.floor((remainingTime / (1000 * 60)) % 60)).padStart(2, '0')}:
+                        {String(Math.floor((remainingTime / 1000) % 60)).padStart(2, '0')}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-red-500">{t('PaymentExpired')}</span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Status de pagamento */}
+              <div className="text-center mb-4">
+                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                  paymentDetails.status === 'pago' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {paymentDetails.status === 'pago' ? t('Paid') : t('Pending')}
+                </span>
+              </div>
+              
+              {/* QR Code (simulado) */}
+              <div className="flex justify-center mb-4">
+                <div className="bg-white border border-gray-200 p-3 rounded">
+                  <div className="w-32 h-32 bg-gray-200 flex items-center justify-center">
+                    <div className="text-center text-sm text-gray-500">QR Code</div>
+                  </div>
+                </div>
+              </div>
+              
               <div className="flex justify-between">
                 <span className="font-medium">{t('Entity')}:</span>
                 <span className="font-bold">{paymentDetails.entity || '11111'}</span>
@@ -81,12 +159,13 @@ const PaymentDetailsModal: React.FC<PaymentDetailsModalProps> = ({
                 <span className="font-medium">{t('Amount')}:</span>
                 <span className="font-bold">€{Number(total).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
               </div>
-              {paymentDetails.expirationDate && (
-                <div className="flex justify-between">
-                  <span className="font-medium">{t('ExpirationDate')}:</span>
-                  <span>{new Date(paymentDetails.expirationDate).toLocaleDateString()}</span>
+              
+              {/* Código de barras (simulado) */}
+              <div className="mt-4 border-t pt-4">
+                <div className="w-full h-12 bg-gray-200 flex items-center justify-center">
+                  <div className="text-center text-sm text-gray-500">{t('Barcode')}</div>
                 </div>
-              )}
+              </div>
             </div>
           )}
           

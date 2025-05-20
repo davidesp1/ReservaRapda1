@@ -404,6 +404,10 @@ const resources = {
       "Completed": "Concluído",
       "Pending": "Pendente",
       "Failed": "Falhou",
+      "Paid": "Pago",
+      "ExpiresIn": "Expira em",
+      "PaymentExpired": "Pagamento expirado",
+      "Barcode": "Código de barras",
       "PaymentNotFound": "Pagamento não encontrado",
       "PaymentNotFoundDescription": "Não foi possível encontrar os detalhes deste pagamento."
     }

@@ -90,6 +90,15 @@ export async function checkPaymentStatus(params: StatusCheckParams): Promise<{ s
   return { status: response.estado || 'desconhecido' };
 }
 
+// Função para cancelar um pagamento
+export async function cancelPayment(reference: string): Promise<{ success: boolean, message: string }> {
+  const response = await apiRequest('POST', '/api/payments/cancel', { reference }) as any;
+  return {
+    success: response.success || false,
+    message: response.message || 'Pagamento cancelado'
+  };
+}
+
 // Hooks para usar com React Query
 export function useCreateMultibanco() {
   return useMutation({
@@ -100,6 +109,12 @@ export function useCreateMultibanco() {
 export function useCreateMBWay() {
   return useMutation({
     mutationFn: (params: MBWayPaymentParams) => createMBWay(params)
+  });
+}
+
+export function useCancelPayment() {
+  return useMutation({
+    mutationFn: (reference: string) => cancelPayment(reference)
   });
 }
 
