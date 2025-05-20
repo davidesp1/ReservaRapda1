@@ -1,0 +1,171 @@
+1. Preparar variáveis de ambiente
+No seu .env (tanto local quanto em produção), defina:
+
+env
+Copiar
+Editar
+EUPAGO_BASE_URL=https://sandbox.eupago.pt/api          # Base da API REST
+EUPAGO_API_KEY=SEU_DEMO_KEY                             # Chave fornecida pelo EuPago
+EUPAGO_SIMULATION=true                                  # (opcional) para usar simulação
+Obs: Não use em produção a sandbox URL; a URL real é https://api.eupago.pt/api.
+
+2. Backend: criação de referência Multibanco
+Cliente HTTP
+Em server/integrations/eupago/client.ts, certifique-se de que existe um método para criar “reference” (Multibanco):
+
+ts
+Copiar
+Editar
+async function createMbReference(amount: number, orderId: string): Promise<{ entidade: string; referencia: string; dataLimite: string }> {
+  const payload = { valor: amount, pedido: orderId };
+  const resp = await this.request('/reference/create', payload);
+  if (!resp.sucesso) throw new Error('Eupago /reference/create falhou');
+  return {
+    entidade: resp.entidade,
+    referencia: resp.referencia,
+    dataLimite: resp.dataLimite
+  };
+}
+Rota de processamento
+Em server/routes.ts, adicione:
+
+ts
+Copiar
+Editar
+import { createMbReference } from './services/paymentService';
+
+router.post('/api/payments/multibanco', async (req, res) => {
+  const { amount, orderId, userId } = req.body;
+  try {
+    const { entidade, referencia, dataLimite } = await createMbReference(amount, orderId);
+    // Salve no DB:
+    await savePayment({ userId, method: 'multibanco', reference: referencia, entity: entidade, expiresAt: dataLimite, amount });
+    return res.json({ entity: entidade, reference: referencia, expirationDate: dataLimite });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+Serviço
+Em server/services/paymentService.ts, exponha:
+
+ts
+Copiar
+Editar
+export async function createMultibanco(amount: number, orderId: string) {
+  return eupagoClient.createMbReference(amount, orderId);
+}
+Armazenamento
+No seu server/storage.ts (ou ORM), implemente savePayment para gravar todos os campos:
+
+ts
+Copiar
+Editar
+export async function savePayment({ userId, method, reference, entity, expiresAt, amount }) {
+  await db('payments').insert({ user_id: userId, method, reference, entity, expires_at: expiresAt, amount, status: 'pending' });
+}
+3. Frontend: disparar pedido e exibir modal
+Hook de API
+Em client/src/hooks/usePayment.ts, adicione:
+
+ts
+Copiar
+Editar
+export function useCreateMultibanco() {
+  return useMutation(({ amount, orderId }) =>
+    apiRequest('POST', '/api/payments/multibanco', { amount, orderId })
+      .then(res => res.json())
+  );
+}
+Disparo no componente de reserva
+No Reservations.tsx, dentro do handler de “submitStep3” para Multibanco, substitua pela chamada:
+
+ts
+Copiar
+Editar
+const mbwayMutation = useCreateMultibanco();
+
+// ao clicar em “Multibanco”:
+mbwayMutation.mutate({ amount: total, orderId: reservationId }, {
+  onSuccess: ({ entity, reference, expirationDate }) => {
+    setReservationData(prev => ({
+      ...prev,
+      paymentMethod: 'multibanco',
+      paymentDetails: { entity, reference, expirationDate },
+      paymentStatus: 'pending'
+    }));
+    setPaymentModalOpen(true);
+  },
+  onError: error => toast({ title: 'Erro no Multibanco', description: error.message, variant: 'destructive' })
+});
+Modal com contador
+Em PaymentDetailsModal.tsx, adicione dentro do efeito:
+
+ts
+Copiar
+Editar
+const [remainingMs, setRemainingMs] = useState(0);
+const cancelMb = useCancelPayment(); // ver passo 4
+
+useEffect(() => {
+  if (paymentMethod !== 'multibanco' || !paymentDetails?.expirationDate) return;
+  const expires = new Date(paymentDetails.expirationDate).getTime();
+  const tick = () => {
+    const diff = Math.max(0, expires - Date.now());
+    setRemainingMs(diff);
+    if (diff === 0) {
+      clearInterval(timer);
+      cancelMb.mutate(paymentDetails.reference);
+    }
+  };
+  tick();
+  const timer = setInterval(tick, 1000);
+  return () => clearInterval(timer);
+}, [paymentDetails, paymentMethod]);
+E no JSX do modal:
+
+tsx
+Copiar
+Editar
+{paymentMethod === 'multibanco' && (
+  <div className="text-center mb-4">
+    Expira em: 
+    <strong>
+      {String(Math.floor(remainingMs/60000)).padStart(2,'0')}:
+      {String(Math.floor(remainingMs/1000)%60).padStart(2,'0')}
+    </strong>
+  </div>
+)}
+4. Cancelamento automático
+Hook de cancelamento
+Em client/src/hooks/usePayment.ts:
+
+ts
+Copiar
+Editar
+export function useCancelPayment() {
+  return useMutation((reference: string) =>
+    apiRequest('POST', '/api/payments/cancel', { reference })
+  );
+}
+Rota no backend
+Já criada no passo 2.1: /api/payments/cancel, que chama cancelPayment(reference).
+
+Marca cancelado no banco
+Em server/storage.ts, markPaymentCancelled atualiza status = 'cancelled'.
+
+5. Fluxo final
+Usuário escolhe Multibanco → front chama /api/payments/multibanco → salva referência no DB.
+
+Abre o modal com:
+
+Entidade (“entity”)
+
+Referência (“reference”)
+
+Contador regressivo de 30 min (calculado de expirationDate).
+
+Quando o cronômetro zera → dispara /api/payments/cancel → marca cancelled no DB → fecha modal e notifica usuário.
+
+Paralelamente, seu backend pode ter um webhook ou cron job que verifica status de referências pendentes e atualiza para paid se detectar o pagamento no EuPago.
+
+Com esses 5 passos você terá o fluxo Multibanco completo, exibindo um contador de 30 min e cancelando automaticamente os pagamentos não concluídos.

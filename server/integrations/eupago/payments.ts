@@ -103,3 +103,31 @@ export async function checkPaymentStatus(referencia: string): Promise<PaymentRes
       : 'Pagamento pendente',
   };
 }
+
+/**
+ * Cancela um pagamento pendente
+ * @param referencia Referência do pagamento
+ * @returns Resultado do cancelamento
+ */
+export async function cancelPayment(referencia: string): Promise<PaymentResult> {
+  console.log("Cancelando pagamento", referencia);
+  
+  try {
+    const response = await eupagoClient.request('/payments/cancel', { referencia });
+    
+    return {
+      success: true,
+      reference: referencia,
+      status: 'cancelled',
+      message: 'Pagamento cancelado com sucesso',
+    };
+  } catch (error) {
+    console.error("Erro ao cancelar pagamento:", error);
+    return {
+      success: false,
+      reference: referencia,
+      status: 'error',
+      message: 'Não foi possível cancelar o pagamento',
+    };
+  }
+}
