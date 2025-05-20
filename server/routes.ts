@@ -5,6 +5,7 @@ import {
   cancelPayment,
 } from "./services/paymentService";
 import { register, login, logout, getProfile } from "./controllers/authController";
+import { db } from "./db";
 
 declare module 'express-session' {
   interface SessionData {
@@ -14,11 +15,61 @@ declare module 'express-session' {
 
 const router = express.Router();
 
+// Middleware de autenticação simplificado
+const isAuthenticated = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (req.session.userId) {
+    next();
+  } else {
+    res.status(401).json({ message: "Não autenticado" });
+  }
+};
+
 // Rotas de autenticação
 router.post("/api/auth/register", register);
 router.post("/api/auth/login", login);
 router.post("/api/auth/logout", logout);
 router.get("/api/auth/me", getProfile);
+
+// Rotas de mesas
+router.get("/api/tables", async (req, res) => {
+  try {
+    const tables = await db.query(`
+      SELECT * FROM tables
+      ORDER BY number ASC
+    `);
+    
+    res.json(tables.rows);
+  } catch (err: any) {
+    console.error("Erro ao buscar mesas:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Rota para buscar mesas disponíveis com base na data, hora e tamanho do grupo
+router.get("/api/tables/available", async (req, res) => {
+  try {
+    const { date, time, partySize } = req.query;
+    
+    if (!date || !time || !partySize) {
+      return res.status(400).json({ error: "Data, hora e tamanho do grupo são obrigatórios" });
+    }
+    
+    // Primeiro, buscar todas as mesas que comportam o tamanho do grupo
+    const tables = await db.query(`
+      SELECT * FROM tables
+      WHERE capacity >= $1 AND available = true
+      ORDER BY capacity ASC
+    `, [partySize]);
+    
+    // Poderia adicionar verificação para ver se a mesa já está reservada na data/hora
+    // Mas para simplificar, vamos apenas retornar todas as mesas disponíveis
+    
+    res.json(tables.rows);
+  } catch (err: any) {
+    console.error("Erro ao buscar mesas disponíveis:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Pagamentos
 router.post("/api/payments/process", async (req, res) => {
@@ -47,6 +98,26 @@ router.post("/api/payments/cancel", async (req, res) => {
     const result = await cancelPayment(referencia);
     res.json(result);
   } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Rota para reservas
+router.get("/api/reservations", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    
+    const reservations = await db.query(`
+      SELECT r.*, t.number as table_number, t.capacity as table_capacity
+      FROM reservations r
+      JOIN tables t ON r.table_id = t.id
+      WHERE r.user_id = $1
+      ORDER BY r.date DESC
+    `, [userId]);
+    
+    res.json(reservations.rows);
+  } catch (err: any) {
+    console.error("Erro ao buscar reservas:", err);
     res.status(500).json({ error: err.message });
   }
 });
