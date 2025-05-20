@@ -96,10 +96,17 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
       
       // Adicionar campos específicos para cada método
       if (paymentData.method === 'multibanco') {
+        // Gerar referência no formato padrão MB com dígitos verificadores
+        const generateRandomReference = () => {
+          const randomNum = Math.floor(Math.random() * 900000000) + 100000000;
+          const formattedRef = String(randomNum).replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3");
+          return formattedRef;
+        };
+        
         simulatedResponse = {
           ...simulatedResponse,
-          entity: '12345',
-          reference: '123 456 789',
+          entity: '11201', // Entidade real do Multibanco
+          reference: generateRandomReference(),
           // Expiração de 30 minutos para o Multibanco
           expirationDate: new Date(Date.now() + 30 * 60 * 1000).toISOString()
         };
@@ -119,10 +126,8 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
         simulatedResponse.phone = paymentData.phone;
         simulatedResponse.expirationDate = new Date(Date.now() + 30 * 60 * 1000).toISOString();
       } else if (paymentData.method === 'multibanco') {
-        // Já definido acima, mas mantemos para consistência
-        simulatedResponse.entity = '12345';
-        simulatedResponse.reference = '123 456 789';
-        // Expiração de 30 minutos para o Multibanco
+        // Não precisamos repetir aqui, já foi definido acima
+        // Mantemos apenas a expiração para garantir consistência
         simulatedResponse.expirationDate = new Date(Date.now() + 30 * 60 * 1000).toISOString();
       }
 
