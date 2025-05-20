@@ -1,30 +1,15 @@
 import React, { useState, useEffect } from "react";
 
-export interface CountdownTimerProps {
-  expirationDate?: string;
-  reference?: string;
-  initialMinutes?: number;
+interface CountdownTimerProps {
+  initialMinutes: number;
   onExpire: () => void;
 }
 
 const CountdownTimer: React.FC<CountdownTimerProps> = ({
-  expirationDate,
-  reference,
-  initialMinutes = 30,
+  initialMinutes,
   onExpire,
 }) => {
-  // Calculamos segundos restantes com base na data de expiração ou minutos iniciais
-  const calculateInitialSeconds = () => {
-    if (expirationDate) {
-      const expDate = new Date(expirationDate);
-      const now = new Date();
-      const diffMs = expDate.getTime() - now.getTime();
-      return Math.max(0, Math.floor(diffMs / 1000));
-    }
-    return initialMinutes * 60;
-  };
-
-  const [secondsLeft, setSecondsLeft] = useState(calculateInitialSeconds());
+  const [secondsLeft, setSecondsLeft] = useState(initialMinutes * 60);
 
   useEffect(() => {
     if (secondsLeft <= 0) {

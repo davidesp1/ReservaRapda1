@@ -154,13 +154,13 @@ router.get("/api/reservations", isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.userId;
     
-    // Convertemos userId para número para garantir compatibilidade com o banco
-    const userIdNumber = userId ? Number(userId) : 0;
-    
-    // Inicializar array vazio
-    const reservations = userIdNumber > 0 
-      ? await storage.getUserReservations(userIdNumber)
-      : [];
+    const reservations = await queryClient`
+      SELECT r.*, t.number as table_number, t.capacity as table_capacity
+      FROM reservations r
+      JOIN tables t ON r.table_id = t.id
+      WHERE r.user_id = ${userId}
+      ORDER BY r.date DESC
+    `;
     
     res.json(reservations);
   } catch (err: any) {
