@@ -1,0 +1,136 @@
+1. Backend: rota e serviço de cancelamento
+1.1. Adicione um endpoint POST /api/payments/cancel
+Em server/routes.ts:
+
+ts
+Copiar
+Editar
+// logo após as rotas de status, adicione:
+import { cancelPayment } from './services/paymentService';
+
+router.post('/api/payments/cancel', async (req, res) => {
+  const { reference } = req.body;
+  try {
+    await cancelPayment(reference);
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error('Erro cancelando pagamento:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+1.2. Implemente cancelPayment no service
+Em server/services/paymentService.ts:
+
+ts
+Copiar
+Editar
+import eupagoClient from '../integrations/eupago/client';
+import { markPaymentCancelled } from '../storage';
+
+export async function cancelPayment(reference: string) {
+  // 1) opcional: chamar API Eupago se suportar cancelamento
+  // await eupagoClient.request('/payments/cancel', { referencia: reference });
+
+  // 2) marcar no banco
+  await markPaymentCancelled(reference);
+}
+E no server/storage.ts:
+
+ts
+Copiar
+Editar
+export async function markPaymentCancelled(reference: string) {
+  await db
+    .from('payments')
+    .update({ status: 'cancelled' })
+    .eq('reference', reference);
+}
+2. Frontend: countdown e cancelamento automático
+2.1. Exponha a route de cancelamento no cliente
+Em client/src/lib/queryClient.ts, adicione:
+
+ts
+Copiar
+Editar
+export function cancelPaymentRequest(reference: string) {
+  return apiRequest('POST', '/api/payments/cancel', { reference });
+}
+2.2. Em PaymentDetailsModal.tsx, monte o contador
+Estado para o timer
+
+ts
+Copiar
+Editar
+const [remaining, setRemaining] = useState<number>(0);
+Hook de efeito para inicializar a contagem quando abrir o modal de Multibanco:
+
+ts
+Copiar
+Editar
+useEffect(() => {
+  if (reservationData.paymentMethod === 'multibanco' && reservationData.paymentDetails?.expirationDate) {
+    const expiresAt = new Date(reservationData.paymentDetails.expirationDate).getTime();
+    const update = () => {
+      const now = Date.now();
+      const diff = Math.max(0, expiresAt - now);
+      setRemaining(diff);
+      if (diff === 0) {
+        clearInterval(interval);
+        cancelMutation.mutate(reservationData.paymentReference!);
+      }
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }
+}, [reservationData.paymentDetails, reservationData.paymentMethod]);
+Mutation de cancelamento:
+
+ts
+Copiar
+Editar
+import { useMutation } from '@tanstack/react-query';
+import { cancelPaymentRequest } from '@/lib/queryClient';
+
+const cancelMutation = useMutation({
+  mutationFn: (ref: string) => cancelPaymentRequest(ref),
+  onSuccess: () => {
+    toast({ title: 'Pagamento expirado e cancelado', variant: 'destructive' });
+    // opcional: feche modal ou atualize UI
+    onClose();
+  }
+});
+Renderize o timer no modal:
+
+tsx
+Copiar
+Editar
+{reservationData.paymentMethod === 'multibanco' && (
+  <div className="text-center mb-4">
+    <span>Tempo restante: </span>
+    <strong>
+      {Math.floor(remaining / 60000)
+        .toString()
+        .padStart(2,'0')}:
+      {(Math.floor(remaining / 1000) % 60)
+        .toString()
+        .padStart(2,'0')}
+    </strong>
+  </div>
+)}
+3. Fluxo completo
+Usuário escolhe Multibanco → backend chama /reference/create → salva expirationDate no registro DB.
+
+Front abre modal com expirationDate e inicia countdown.
+
+Quando remaining === 0:
+
+cancelPayment é disparado automaticamente.
+
+Marca o pagamento como cancelled no DB.
+
+Modal exibe toast de “Pagamento expirado e cancelado” e fecha.
+
+Se o usuário pagar antes do fim do timer, ao verificar status (via webhook ou polling) você atualiza para paid e limpa o timer.
+
+Com isso, seu sistema Multibanco aguarda até 30 min e então cancela o pagamento não recebido automaticamente.

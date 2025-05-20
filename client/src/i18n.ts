@@ -347,6 +347,8 @@ const resources = {
       "Processing": "Processando",
       "PaymentTimeout": "Tempo Expirado",
       "PaymentTimeoutDescription": "O tempo para pagamento expirou. Por favor, faça uma nova reserva.",
+      "ReservationPending": "Reserva Pendente",
+      "ReservationPendingDescription": "Sua reserva está pendente de confirmação de pagamento.",
       "MultibancoCTA": "Use estes dados para realizar o pagamento através do Multibanco ou aplicativo bancário.",
       "PaymentPendingApproval": "Pagamento pendente de aprovação",
       "TimeRemaining": "Tempo restante",

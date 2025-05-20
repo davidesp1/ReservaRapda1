@@ -99,10 +99,10 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
       if (paymentData.method === 'multibanco') {
         simulatedResponse = {
           ...simulatedResponse,
-          entity: '11111',
-          reference: '999 999 999',
-          // Expiração curta para o Multibanco (5 minutos) para suportar o contador regressivo
-          expirationDate: new Date(Date.now() + 5 * 60 * 1000).toISOString()
+          entity: '12345',
+          reference: '123 456 789',
+          // Expiração de 30 minutos para o Multibanco
+          expirationDate: new Date(Date.now() + 30 * 60 * 1000).toISOString()
         };
       } else if (paymentData.method === 'mbway') {
         simulatedResponse = {
@@ -120,10 +120,11 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
         simulatedResponse.phone = paymentData.phone;
         simulatedResponse.expirationDate = new Date(Date.now() + 30 * 60 * 1000).toISOString();
       } else if (paymentData.method === 'multibanco') {
+        // Já definido acima, mas mantemos para consistência
         simulatedResponse.entity = '12345';
         simulatedResponse.reference = '123 456 789';
-        // Expiração curta para o Multibanco (5 minutos) para suportar o contador regressivo
-        simulatedResponse.expirationDate = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+        // Expiração de 30 minutos para o Multibanco
+        simulatedResponse.expirationDate = new Date(Date.now() + 30 * 60 * 1000).toISOString();
       }
 
       return simulatedResponse;
@@ -158,18 +159,48 @@ export async function processPayment(paymentData: PaymentRequestData): Promise<P
  * @param reference Referência do pagamento a verificar
  * @returns Status atualizado do pagamento
  */
+/**
+ * Cancela um pagamento pendente
+ * 
+ * @param reference Referência do pagamento a ser cancelado
+ * @returns Resultado do cancelamento
+ */
+export async function cancelPayment(reference: string): Promise<PaymentResponseData> {
+  try {
+    // Em um sistema real, aqui chamaríamos a API do EuPago para cancelar o pagamento
+    // await eupagoClient.request('/payments/cancel', { referencia: reference });
+    
+    // No modo de simulação, apenas retornamos uma resposta de sucesso
+    return {
+      success: true,
+      paymentReference: reference,
+      status: 'cancelled',
+      message: 'Pagamento cancelado com sucesso',
+    };
+  } catch (error: any) {
+    console.error('Erro ao cancelar pagamento:', error);
+    return {
+      success: false,
+      paymentReference: reference,
+      message: error.message || 'Ocorreu um erro ao cancelar o pagamento',
+      status: 'error',
+    };
+  }
+}
+
 export async function checkPaymentStatus(reference: string): Promise<PaymentResponseData> {
   try {
     // Verificar status do pagamento com o serviço do Eupago
     const statusResult = await checkEupagoPaymentStatus(reference);
 
-    // Se estamos em modo de simulação, retornar um status fixo
+    // Se estamos em modo de simulação, mantemos o status como pendente
+    // para evitar que a simulação mostre um pagamento concluído incorretamente
     if (process.env.EUPAGO_SIMULATION === 'true') {
       return {
         success: true,
         paymentReference: reference,
-        status: 'paid', // Simulando um pagamento concluído
-        message: 'Pagamento concluído com sucesso',
+        status: 'pending', // Mantemos como pendente para a demonstração
+        message: 'Pagamento ainda está pendente',
       };
     }
 
