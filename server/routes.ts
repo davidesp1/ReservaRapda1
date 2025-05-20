@@ -75,27 +75,7 @@ router.get("/api/tables/available", async (req, res) => {
   }
 });
 
-// Deixamos apenas a implementação mais abaixo com a validação completa
-
-router.get("/api/payments/status/:referencia", async (req, res) => {
-  try {
-    const { referencia } = req.params;
-    const status = await getPaymentStatus(referencia);
-    res.json(status);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.post("/api/payments/cancel", async (req, res) => {
-  try {
-    const { referencia } = req.body;
-    const result = await cancelPayment(referencia);
-    res.json(result);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// As rotas de pagamento estão implementadas abaixo
 
 // Rota para categorias do menu
 router.get("/api/menu-categories", async (req, res) => {
@@ -165,6 +145,8 @@ router.post("/api/payments/process", isAuthenticated, async (req, res) => {
   try {
     const { method, amount, phone, cardholderName, cardNumber, expiryDate, cvv } = req.body;
     
+    console.log(`Recebida solicitação de pagamento - Método: ${method}, Valor: ${amount}€`);
+    
     // Verificar se o método é suportado
     if (!['multibanco', 'mbway', 'card'].includes(method)) {
       return res.status(400).json({ error: 'Método de pagamento não suportado' });
@@ -175,7 +157,7 @@ router.post("/api/payments/process", isAuthenticated, async (req, res) => {
       return res.status(400).json({ error: 'Número de telefone é obrigatório para pagamentos MBWay' });
     }
     
-    // Processar o pagamento com base no método
+    // Processar o pagamento usando o serviço
     let result;
     try {
       if (method === 'multibanco') {
@@ -185,17 +167,23 @@ router.post("/api/payments/process", isAuthenticated, async (req, res) => {
       } else if (method === 'card') {
         // Para cartão, apenas geramos uma referência aqui, o redirecionamento acontece no front-end
         result = await processPayment('card', amount);
+      } else {
+        throw new Error(`Método de pagamento '${method}' não implementado`);
       }
       
-      console.log(`Pagamento ${method} processado:`, result);
+      console.log(`Pagamento ${method} processado com sucesso:`, result);
       
       res.json({
         success: true,
+        method,
         ...result
       });
     } catch (error: any) {
       console.error(`Erro ao processar pagamento ${method}:`, error);
-      throw error;
+      return res.status(500).json({ 
+        success: false, 
+        error: error.message || `Erro ao processar pagamento ${method}` 
+      });
     }
   } catch (err: any) {
     console.error("Erro no processamento do pagamento:", err);

@@ -1257,7 +1257,10 @@ const Reservations: React.FC = () => {
                         
                         <Card 
                           className={`cursor-pointer hover:border-brasil-green border-2 transition-colors ${selectedPaymentMethod === 'card' ? 'border-brasil-green' : 'border-gray-200'}`}
-                          onClick={() => handlePaymentMethodSelect('card')}
+                          onClick={() => {
+                            handlePaymentMethodSelect('card');
+                            setShowCardForm(true);  // Abrir o modal imediatamente ao selecionar cartão
+                          }}
                         >
                           <CardContent className="p-4 flex items-center">
                             <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
@@ -1290,7 +1293,10 @@ const Reservations: React.FC = () => {
                         
                         <Card 
                           className={`cursor-pointer hover:border-brasil-green border-2 transition-colors ${selectedPaymentMethod === 'mbway' ? 'border-brasil-green' : 'border-gray-200'}`}
-                          onClick={() => handlePaymentMethodSelect('mbway')}
+                          onClick={() => {
+                            handlePaymentMethodSelect('mbway');
+                            setShowMBWayForm(true); // Abrir o modal imediatamente ao selecionar MBWay
+                          }}
                         >
                           <CardContent className="p-4 flex items-center">
                             <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
