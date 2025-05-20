@@ -106,6 +106,21 @@ router.post("/api/payments/cancel", async (req, res) => {
   }
 });
 
+// Rota para itens do menu
+router.get("/api/menu-items", async (req, res) => {
+  try {
+    const menuItems = await queryClient`
+      SELECT * FROM menu_items
+      ORDER BY category_id, name
+    `;
+    
+    res.json(menuItems);
+  } catch (err: any) {
+    console.error("Erro ao buscar itens do menu:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Rota para reservas
 router.get("/api/reservations", isAuthenticated, async (req, res) => {
   try {
