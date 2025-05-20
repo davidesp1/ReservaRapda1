@@ -34,7 +34,7 @@ const eupagoClient = {
 
   // Método para fazer requisições à API
   async request(endpoint: string, data: Record<string, any> = {}): Promise<any> {
-    const url = API_BASE_URL + (endpoint.startsWith('/') ? endpoint.substring(1) : endpoint);
+    const url = API_BASE_URL + (endpoint.startsWith('/') ? endpoint : '/' + endpoint);
     
     // Incluir a API key no corpo da requisição
     const requestData = {
