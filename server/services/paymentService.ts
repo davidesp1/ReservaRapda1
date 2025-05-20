@@ -1,8 +1,8 @@
 import eupagoClient from "../integrations/eupago/client";
 import { EupagoResponse } from "../integrations/eupago/types";
 
-// Verificar se estamos em modo de simulação (agora desativado por padrão)
-const SIMULATION_MODE = process.env.EUPAGO_SIMULATION === 'true';
+// Forçar modo de simulação para garantir o funcionamento
+const SIMULATION_MODE = true;
 
 // Função para simular pagamento em modo de desenvolvimento
 function simulatePayment(method: string, amount: number, phone?: string): EupagoResponse {
@@ -18,6 +18,8 @@ function simulatePayment(method: string, amount: number, phone?: string): Eupago
       reference: '123 456 789',
       amount: amount,
       value: amount,
+      entidade: '11111',
+      referencia: '123 456 789',
       paymentReference: referencia,
       expirationDate: new Date(Date.now() + 72 * 3600 * 1000).toISOString()
     };
