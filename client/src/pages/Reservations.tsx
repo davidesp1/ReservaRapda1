@@ -497,8 +497,16 @@ const Reservations: React.FC = () => {
         description: `Reserva ${format(reservationData.date, 'dd/MM/yyyy')} - ${reservationData.time}`,
         email: user?.email,
         name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.username,
-        phone: user?.phone || '',
-        reservationId: reservationData.id // Adicionar ID da reserva para associar o pagamento
+        phone: mbwayPhone || user?.phone || '',
+        reservationId: reservationData.id, // Adicionar ID da reserva para associar o pagamento
+        
+        // Adicionar detalhes do cartão se o método for cartão
+        ...(paymentMethod === 'card' && cardDetails && {
+          cardholderName: cardDetails.cardholderName,
+          cardNumber: cardDetails.cardNumber.replace(/\s/g, ''),
+          expiryDate: cardDetails.expiryDate,
+          cvv: cardDetails.cvv
+        })
       };
       
       console.log(`Processando pagamento ${paymentMethod}`, paymentData);
