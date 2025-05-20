@@ -8,14 +8,14 @@ const API_KEY = process.env.EUPAGO_API_KEY || "demo-1408-87fc-3618-cc0";
 const eupagoClient = {
   // Métodos específicos por tipo de pagamento
   multibanco(data: { valor: number, per_dup?: number }) {
-    return this.request('/reference/create', {
+    return this.request('/api/reference/create', {
       valor: data.valor,
       per_dup: data.per_dup || 0
     });
   },
   
   mbway(data: { valor: number, telemovel: string }) {
-    return this.request('/mbway/create', {
+    return this.request('/api/mbway/create', {
       valor: data.valor,
       telemovel: data.telemovel
     });
@@ -23,12 +23,12 @@ const eupagoClient = {
   
   card(data: { valor: number, referencia?: string }) {
     const ref = data.referencia || `REF-${Date.now()}`;
-    const CARD_API_URL = process.env.EUPAGO_CARD_BASE_URL || "https://sandbox.eupago.pt/clientes/rest_api";
-    return this.request('/pagamento/gerar', {
+    const CARD_API_URL = process.env.EUPAGO_CARD_BASE_URL || "https://sandbox.eupago.pt";
+    return this.request('/api/pagamento/gerar', {
       valor: data.valor,
       referencia: ref,
       // URL específica para cartões
-      callback_url: `${CARD_API_URL}/pagamento/callback`
+      callback_url: `${CARD_API_URL}/api/pagamento/callback`
     });
   },
 
