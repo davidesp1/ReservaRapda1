@@ -11,8 +11,8 @@ if (!process.env.DATABASE_URL) {
 
 // Para conexão direta com PostgreSQL no Supabase
 const connectionString = process.env.DATABASE_URL;
-// Para queries SQL usando postgres-js
-const queryClient = postgres(connectionString, { ssl: 'require' });
+// Para queries SQL usando postgres-js - exportamos para uso direto em outros arquivos
+export const queryClient = postgres(connectionString, { ssl: 'require' });
 // Para o Drizzle ORM
 export const db = drizzle(queryClient, { schema });
 

@@ -5,7 +5,9 @@ import {
   cancelPayment,
 } from "./services/paymentService";
 import { register, login, logout, getProfile } from "./controllers/authController";
-import { db } from "./db";
+import { db as drizzleDb, queryClient } from "./db";
+import { eq, gte, desc, and, sql } from "drizzle-orm";
+import * as schema from "@shared/schema";
 
 declare module 'express-session' {
   interface SessionData {
@@ -30,15 +32,15 @@ router.post("/api/auth/login", login);
 router.post("/api/auth/logout", logout);
 router.get("/api/auth/me", getProfile);
 
-// Rotas de mesas
+// Rotas de mesas usando queryClient para SQL direto
 router.get("/api/tables", async (req, res) => {
   try {
-    const tables = await db.query(`
+    const tables = await queryClient`
       SELECT * FROM tables
       ORDER BY number ASC
-    `);
+    `;
     
-    res.json(tables.rows);
+    res.json(tables);
   } catch (err: any) {
     console.error("Erro ao buscar mesas:", err);
     res.status(500).json({ error: err.message });
@@ -55,16 +57,18 @@ router.get("/api/tables/available", async (req, res) => {
     }
     
     // Primeiro, buscar todas as mesas que comportam o tamanho do grupo
-    const tables = await db.query(`
+    const partySizeNum = parseInt(partySize as string);
+    
+    const tables = await queryClient`
       SELECT * FROM tables
-      WHERE capacity >= $1 AND available = true
+      WHERE capacity >= ${partySizeNum} AND available = true
       ORDER BY capacity ASC
-    `, [partySize]);
+    `;
     
     // Poderia adicionar verificação para ver se a mesa já está reservada na data/hora
     // Mas para simplificar, vamos apenas retornar todas as mesas disponíveis
     
-    res.json(tables.rows);
+    res.json(tables);
   } catch (err: any) {
     console.error("Erro ao buscar mesas disponíveis:", err);
     res.status(500).json({ error: err.message });
@@ -107,15 +111,15 @@ router.get("/api/reservations", isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.userId;
     
-    const reservations = await db.query(`
+    const reservations = await queryClient`
       SELECT r.*, t.number as table_number, t.capacity as table_capacity
       FROM reservations r
       JOIN tables t ON r.table_id = t.id
-      WHERE r.user_id = $1
+      WHERE r.user_id = ${userId}
       ORDER BY r.date DESC
-    `, [userId]);
+    `;
     
-    res.json(reservations.rows);
+    res.json(reservations);
   } catch (err: any) {
     console.error("Erro ao buscar reservas:", err);
     res.status(500).json({ error: err.message });
