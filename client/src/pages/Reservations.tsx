@@ -959,7 +959,7 @@ const Reservations: React.FC = () => {
                                   <h4 className="font-medium">{item.name}</h4>
                                   <p className="text-sm text-gray-500 line-clamp-2">{item.description}</p>
                                 </div>
-                                <div className="font-semibold text-brasil-green">€{Number(item.price).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                <div className="font-semibold text-brasil-green">€{(Number(item.price) / 100).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                               </div>
                               <Button 
                                 size="sm" 
