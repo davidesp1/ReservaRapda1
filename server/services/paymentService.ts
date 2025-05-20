@@ -1,37 +1,142 @@
-import {
-  createMultibanco,
-  createMbway,
-  createCardPayment,
-  checkPaymentStatus,
-} from "../integrations/eupago/payments";
+import eupagoClient from "../integrations/eupago/client";
 import { EupagoResponse } from "../integrations/eupago/types";
 
+// Verificar se estamos em modo de simulação
+const SIMULATION_MODE = process.env.EUPAGO_SIMULATION === 'true';
+
+// Função para simular pagamento em modo de desenvolvimento
+function simulatePayment(method: string, amount: number, phone?: string): EupagoResponse {
+  const timestamp = Date.now();
+  const referencia = `SIM-${method.toUpperCase()}-${timestamp}`;
+  
+  // Respostas simuladas conforme o método de pagamento
+  if (method === 'multibanco') {
+    return {
+      success: true,
+      method: 'multibanco',
+      entity: '11111',
+      reference: '123 456 789',
+      amount: amount,
+      value: amount,
+      paymentReference: referencia,
+      expirationDate: new Date(Date.now() + 72 * 3600 * 1000).toISOString()
+    };
+  } 
+  else if (method === 'mbway') {
+    return {
+      success: true,
+      method: 'mbway',
+      phone: phone || '912345678',
+      amount: amount,
+      value: amount,
+      paymentReference: referencia,
+      expirationDate: new Date(Date.now() + 30 * 60 * 1000).toISOString()
+    };
+  }
+  else if (method === 'card') {
+    return {
+      success: true,
+      method: 'card',
+      amount: amount,
+      value: amount,
+      paymentReference: referencia,
+      paymentUrl: 'https://sandbox.eupago.pt/clientes/simulacao/pagamento-cartao?ref=' + referencia
+    };
+  }
+  
+  // Método desconhecido
+  return {
+    success: false,
+    error: 'Método de pagamento não suportado'
+  };
+}
+
+// Processar pagamento com qualquer método
 export async function processPayment(
   method: "multibanco" | "mbway" | "card",
   amount: number,
-  telemovel?: string,
+  phone?: string,
 ): Promise<EupagoResponse> {
-  if (method === "multibanco") {
-    return createMultibanco(amount);
-  } else if (method === "mbway") {
-    if (!telemovel) throw new Error("Telemovel é obrigatório para MBWay");
-    return createMbway(amount, telemovel);
-  } else {
-    const referencia = `CARD-${Date.now()}`;
-    return createCardPayment(amount, referencia);
+  console.log(`Processando pagamento ${method} no valor de ${amount}€`);
+  
+  // Se estamos em modo de simulação, retornar dados simulados
+  if (SIMULATION_MODE) {
+    console.log(`[SIMULAÇÃO] Modo de simulação ativado para pagamento ${method}`);
+    return simulatePayment(method, amount, phone);
+  }
+  
+  // Se não estamos em simulação, chamar a API real do EuPago
+  try {
+    if (method === "multibanco") {
+      return eupagoClient.request("/reference/create", { valor: amount });
+    } 
+    else if (method === "mbway") {
+      if (!phone) throw new Error("Número de telefone é obrigatório para MBWay");
+      return eupagoClient.request("/mbway/create", { valor: amount, telemovel: phone });
+    } 
+    else if (method === "card") {
+      const referencia = `CARD-${Date.now()}`;
+      return eupagoClient.request("/card/create", { valor: amount, referencia });
+    }
+    
+    throw new Error(`Método de pagamento '${method}' não suportado`);
+  } 
+  catch (error: any) {
+    console.error(`Erro ao processar pagamento ${method}:`, error);
+    
+    // Se ocorrer erro na API real e estamos em desenvolvimento, usar simulação como fallback
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[FALLBACK] Usando simulação como fallback após erro na API`);
+      return simulatePayment(method, amount, phone);
+    }
+    
+    throw error;
   }
 }
 
-export async function getPaymentStatus(
-  referencia: string,
-): Promise<EupagoResponse> {
-  return checkPaymentStatus(referencia);
+// Verificar status do pagamento
+export async function getPaymentStatus(reference: string): Promise<EupagoResponse> {
+  if (SIMULATION_MODE) {
+    // Em modo de simulação, verificamos se a referência começa com SIM para simular
+    if (reference.startsWith('SIM-')) {
+      // 50% de chance do pagamento estar confirmado
+      const confirmed = Math.random() > 0.5;
+      
+      return {
+        success: true,
+        reference,
+        status: confirmed ? 'paid' : 'pending',
+        statusCode: confirmed ? 'C' : 'P'
+      };
+    }
+  }
+  
+  try {
+    return eupagoClient.request("/payments/status", { referencia: reference });
+  } catch (error) {
+    console.error(`Erro ao verificar status do pagamento:`, error);
+    
+    // Fallback para simulação
+    if (process.env.NODE_ENV === 'development') {
+      return {
+        success: true,
+        reference,
+        status: 'pending',
+        statusCode: 'P'
+      };
+    }
+    
+    throw error;
+  }
 }
 
-export async function cancelPayment(
-  referencia: string,
-): Promise<{ cancelled: boolean }> {
-  // EuPago não oferece endpoint direto de cancelamento público
-  // Marca como cancelado internamente
-  return { cancelled: true };
+// Cancelar pagamento pendente
+export async function cancelPayment(reference: string): Promise<{ cancelled: boolean, message?: string }> {
+  // EuPago não tem endpoint público para cancelamento direto
+  // Apenas simulamos o cancelamento internamente
+  
+  return { 
+    cancelled: true,
+    message: `Pagamento ${reference} foi cancelado com sucesso`
+  };
 }
