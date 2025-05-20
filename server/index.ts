@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import PgSession from "connect-pg-simple";
+import { createServer } from "http";
 
 import router from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -58,7 +59,8 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await app.use(router);
+  const server = createServer(app);
+  app.use(router);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

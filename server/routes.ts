@@ -117,7 +117,7 @@ router.get("/api/auth/me", async (req, res) => {
     }
     
     const user = await db.query.users.findFirst({
-      where: eq(schema.users.id, req.session.userId)
+      where: (users) => eq(users.id, Number(req.session.userId))
     });
     
     if (!user) {
