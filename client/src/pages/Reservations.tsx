@@ -1332,8 +1332,20 @@ const Reservations: React.FC = () => {
                             <Button 
                               className="w-full bg-brasil-green hover:bg-green-700 text-white"
                               onClick={() => submitStep3(selectedPaymentMethod)}
+                              disabled={
+                                (selectedPaymentMethod === 'card' && !cardDetails) ||
+                                (selectedPaymentMethod === 'mbway' && !mbwayPhone) ||
+                                isProcessingPayment
+                              }
                             >
-                              {t('ProceedToPayment')}
+                              {isProcessingPayment ? (
+                                <div className="flex items-center">
+                                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                                  {t('Processing')}
+                                </div>
+                              ) : (
+                                t('ProceedToPayment')
+                              )}
                             </Button>
                           </div>
                         )}
@@ -1772,6 +1784,107 @@ const Reservations: React.FC = () => {
     </CustomerLayout>
   );
   
+  // Função para renderizar a lista de reservas
+  const renderReservationsList = () => (
+    <div>
+      <Card className="shadow-md">
+        <CardHeader className="pb-4 border-b">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-xl">{t('YourReservations')}</CardTitle>
+              <CardDescription>
+                {t('ManageYourReservations')}
+              </CardDescription>
+            </div>
+            <Button 
+              className="bg-brasil-green hover:bg-green-700 text-white"
+              onClick={() => setIsCreatingReservation(true)}
+            >
+              {t('NewReservation')}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-6">
+          {reservationsLoading ? (
+            <div className="flex justify-center py-10">
+              <div className="animate-spin w-10 h-10 border-4 border-brasil-green border-t-transparent rounded-full"></div>
+            </div>
+          ) : userReservations && userReservations.length > 0 ? (
+            <div className="overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('Date')}</TableHead>
+                    <TableHead>{t('Time')}</TableHead>
+                    <TableHead>{t('People')}</TableHead>
+                    <TableHead>{t('Status')}</TableHead>
+                    <TableHead>{t('Actions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {userReservations.map((reservation: any) => {
+                    const reservationDate = new Date(reservation.date);
+                    const formattedDate = format(reservationDate, 'PPP');
+                    const formattedTime = format(reservationDate, 'HH:mm');
+                    
+                    return (
+                      <TableRow key={reservation.id}>
+                        <TableCell>{formattedDate}</TableCell>
+                        <TableCell>{formattedTime}</TableCell>
+                        <TableCell>{reservation.partySize}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={
+                            reservation.status === 'confirmed' 
+                              ? 'bg-green-50 text-green-700 border-green-200' 
+                              : reservation.status === 'cancelled'
+                                ? 'bg-red-50 text-red-700 border-red-200'
+                                : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                          }>
+                            {t(reservation.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button variant="outline" size="sm">
+                              {t('View')}
+                            </Button>
+                            
+                            {reservation.status !== 'cancelled' && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="text-red-500 border-red-200 hover:bg-red-50"
+                                onClick={() => handleDeleteReservation(reservation.id)}
+                              >
+                                {t('Cancel')}
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-10">
+              <AlertCircle className="mx-auto h-10 w-10 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium mb-2">{t('NoReservations')}</h3>
+              <p className="text-gray-500 mb-6">{t('NoReservationsDescription')}</p>
+              <Button 
+                className="bg-brasil-green hover:bg-green-700 text-white"
+                onClick={() => setIsCreatingReservation(true)}
+              >
+                {t('MakeYourFirstReservation')}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   // Renderizar o conteúdo da página baseado no estado atual
   const renderPageContent = () => (
     <div className="container max-w-7xl mx-auto py-6 space-y-8">
