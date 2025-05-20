@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 
-// Definir a URL base do EuPago baseado no ambiente (produção)
-const API_BASE_URL = process.env.EUPAGO_BASE_URL || "https://clientes.eupago.pt/api";
+// Definir a URL base do EuPago para ambiente real
+const API_BASE_URL = process.env.EUPAGO_BASE_URL || "https://api.eupago.pt";
 const API_KEY = process.env.EUPAGO_API_KEY || "demo-1408-87fc-3618-cc0";
 
 // Cliente para a API EuPago

@@ -1,8 +1,8 @@
 import eupagoClient from "../integrations/eupago/client";
 import { EupagoResponse } from "../integrations/eupago/types";
 
-// Forçar modo de simulação para garantir o funcionamento
-const SIMULATION_MODE = true;
+// Nunca usar simulação em ambiente real
+const SIMULATION_MODE = false;
 
 // Função para simular pagamento em modo de desenvolvimento
 function simulatePayment(method: string, amount: number, phone?: string): EupagoResponse {
@@ -86,11 +86,9 @@ export async function processPayment(
   catch (error: any) {
     console.error(`Erro ao processar pagamento ${method}:`, error);
     
-    // Se ocorrer erro na API real e estamos em desenvolvimento, usar simulação como fallback
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[FALLBACK] Usando simulação como fallback após erro na API`);
-      return simulatePayment(method, amount, phone);
-    }
+    // Sem fallback para simulação em caso de erro
+    console.log(`Erro na API real sem fallback para simulação`);
+    // Não usaremos simulação em nenhuma circunstância
     
     throw error;
   }
@@ -118,15 +116,9 @@ export async function getPaymentStatus(reference: string): Promise<EupagoRespons
   } catch (error) {
     console.error(`Erro ao verificar status do pagamento:`, error);
     
-    // Fallback para simulação
-    if (process.env.NODE_ENV === 'development') {
-      return {
-        success: true,
-        reference,
-        status: 'pending',
-        statusCode: 'P'
-      };
-    }
+    // Não usamos fallback para simulação em ambiente real
+    console.log(`Não usando fallback para simulação em getPaymentStatus`);
+    // Em ambiente real, sempre retornamos o erro real para o usuário
     
     throw error;
   }
