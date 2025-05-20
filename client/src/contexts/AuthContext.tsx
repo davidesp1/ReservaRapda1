@@ -154,12 +154,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const login = async (usernameOrEmail: string, password: string): Promise<User> => {
+    console.log('Tentando login com:', { usernameOrEmail, isEmail: usernameOrEmail.includes('@') });
+    
     // Verificar se o valor fornecido parece um email (contém @)
     const isEmail = usernameOrEmail.includes('@');
     const credentials = isEmail 
       ? { email: usernameOrEmail, password } 
       : { username: usernameOrEmail, password };
     
+    console.log('Enviando credenciais:', JSON.stringify(credentials));
     const userData = await loginMutation.mutateAsync(credentials);
     return userData;
   };
