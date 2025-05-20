@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PaymentDetailsModal from '@/components/payments/PaymentDetailsModal';
 import CountdownTimer from '@/components/payments/CountdownTimer';
 import QRCodeDisplay from '@/components/payments/QRCodeDisplay';
+import CardDetailsForm from '@/components/payments/CardDetailsForm';
+import MBWayForm from '@/components/payments/MBWayForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { 
   Table, 
@@ -116,6 +118,13 @@ const Reservations: React.FC = () => {
   
   // Estado para controlar o modal de pagamento
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  
+  // Estados para o novo fluxo de pagamento
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | 'mbway' | 'multibanco' | null>(null);
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [showMBWayForm, setShowMBWayForm] = useState(false);
+  const [cardDetails, setCardDetails] = useState<{ cardholderName: string; cardNumber: string; expiryDate: string; cvv: string } | null>(null);
+  const [mbwayPhone, setMbwayPhone] = useState<string | null>(null);
   
   // Redirect if not authenticated
   useEffect(() => {
@@ -333,6 +342,33 @@ const Reservations: React.FC = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   
+  // Função para lidar com a seleção do método de pagamento
+  const handlePaymentMethodSelect = (method: 'card' | 'mbway' | 'multibanco') => {
+    setSelectedPaymentMethod(method);
+  };
+
+  // Função para lidar com a submissão do formulário de cartão
+  const handleCardFormSubmit = (data: { cardholderName: string; cardNumber: string; expiryDate: string; cvv: string }) => {
+    setCardDetails(data);
+    setShowCardForm(false);
+    
+    toast({
+      title: t('CardDetailsAdded'),
+      description: t('CardDetailsSaved'),
+    });
+  };
+
+  // Função para lidar com a submissão do formulário MBWay
+  const handleMBWayFormSubmit = (data: { phone: string }) => {
+    setMbwayPhone(data.phone);
+    setShowMBWayForm(false);
+    
+    toast({
+      title: t('MBWayNumberAdded'),
+      description: t('MBWayNumberSaved'),
+    });
+  };
+
   // Função para fechar o modal de pagamento e prosseguir para a confirmação
   const handlePaymentCompleted = () => {
     // Importante: não fechamos o modal aqui para Multibanco
