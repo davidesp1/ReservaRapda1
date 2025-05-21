@@ -618,4 +618,86 @@ router.get('/api/pos/orders', async (req, res) => {
   }
 });
 
+// Rotas para configurações de pagamento
+router.get("/api/settings/payments", async (req, res) => {
+  try {
+    // Buscar todas as configurações da categoria 'payments'
+    const paymentSettings = await drizzleDb.select()
+      .from(schema.settings)
+      .where(eq(schema.settings.category, 'payments'));
+    
+    // Transformar o array de configurações em um objeto mais fácil de usar
+    const settingsObject: Record<string, string> = {};
+    paymentSettings.forEach(setting => {
+      settingsObject[setting.key] = setting.value || '';
+    });
+    
+    res.json(settingsObject);
+  } catch (err: any) {
+    console.error("Erro ao buscar configurações de pagamento:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
+  try {
+    const settings = req.body;
+    
+    // Validar se o usuário é admin antes de permitir alterações
+    const user = await drizzleDb.select()
+      .from(schema.users)
+      .where(eq(schema.users.id, req.session.userId))
+      .limit(1);
+    
+    if (!user || user.length === 0 || user[0].role !== 'admin') {
+      return res.status(403).json({ message: "Apenas administradores podem alterar configurações" });
+    }
+    
+    // Processar cada configuração
+    const results = [];
+    
+    for (const [key, value] of Object.entries(settings)) {
+      // Verificar se a configuração já existe
+      const existingSetting = await drizzleDb.select()
+        .from(schema.settings)
+        .where(and(
+          eq(schema.settings.category, 'payments'),
+          eq(schema.settings.key, key)
+        ))
+        .limit(1);
+      
+      if (existingSetting.length > 0) {
+        // Atualizar configuração existente
+        const updated = await drizzleDb
+          .update(schema.settings)
+          .set({ 
+            value: String(value),
+            updatedAt: new Date()
+          })
+          .where(eq(schema.settings.id, existingSetting[0].id))
+          .returning();
+        
+        results.push(updated[0]);
+      } else {
+        // Criar nova configuração
+        const inserted = await drizzleDb
+          .insert(schema.settings)
+          .values({
+            category: 'payments',
+            key: key,
+            value: String(value),
+          })
+          .returning();
+        
+        results.push(inserted[0]);
+      }
+    }
+    
+    res.json({ message: "Configurações de pagamento atualizadas com sucesso", settings: results });
+  } catch (err: any) {
+    console.error("Erro ao atualizar configurações de pagamento:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
