@@ -647,16 +647,43 @@ router.get("/api/settings", async (req, res) => {
 
 router.get("/api/settings/payments", async (req, res) => {
   try {
-    // Buscar todas as configurações da categoria 'payments'
-    const paymentSettings = await drizzleDb.select()
-      .from(schema.settings)
-      .where(eq(schema.settings.category, 'payments'));
+    // Buscar configurações da tabela payment_settings
+    const result = await queryClient`
+      SELECT * FROM payment_settings ORDER BY id LIMIT 1
+    `;
     
-    // Transformar o array de configurações em um objeto mais fácil de usar
-    const settingsObject: Record<string, string> = {};
-    paymentSettings.forEach(setting => {
-      settingsObject[setting.key] = setting.value || '';
-    });
+    if (result.length === 0) {
+      // Se não existirem configurações, retornar valores padrão
+      console.log("Nenhuma configuração de pagamento encontrada, retornando valores padrão");
+      return res.json({
+        acceptCard: true,
+        acceptMBWay: true,
+        acceptMultibanco: true,
+        acceptBankTransfer: true,
+        acceptCash: true,
+        eupagoApiKey: '',
+        requirePrepayment: false,
+        requirePrepaymentAmount: 0,
+        showPricesWithTax: true,
+        taxRate: 23
+      });
+    }
+    
+    // Mapear para o formato esperado pelo frontend
+    const paymentSetting = result[0];
+    const settingsObject = {
+      acceptCard: paymentSetting.enable_card,
+      acceptMBWay: paymentSetting.enable_mbway,
+      acceptMultibanco: paymentSetting.enable_multibanco,
+      acceptBankTransfer: paymentSetting.enable_bank_transfer,
+      acceptCash: paymentSetting.enable_cash,
+      eupagoApiKey: paymentSetting.eupago_api_key || '',
+      // Valores fixos para campos que não estão na tabela
+      requirePrepayment: false,
+      requirePrepaymentAmount: 0,
+      showPricesWithTax: true,
+      taxRate: 23
+    };
     
     console.log("Configurações de pagamento encontradas:", settingsObject);
     
@@ -686,96 +713,78 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
       return res.status(403).json({ message: "Apenas administradores podem alterar configurações" });
     }
     
-    // Log detalhado das configurações recebidas
     console.log("Recebendo configurações de pagamento:", JSON.stringify(settings, null, 2));
     
-    // Lista de opções booleanas que sabemos que devem existir
-    const booleanOptions = [
-      'acceptCard', 
-      'acceptMBWay', 
-      'acceptMultibanco', 
-      'acceptBankTransfer', 
-      'acceptCash', 
-      'requirePrepayment', 
-      'showPricesWithTax'
-    ];
+    // Verificar se já existe um registro de configurações
+    const existingSettings = await queryClient`
+      SELECT * FROM payment_settings ORDER BY id LIMIT 1
+    `;
     
-    // Garantir que todas as opções booleanas estejam presentes
-    for (const option of booleanOptions) {
-      if (settings[option] === undefined) {
-        console.log(`Opção ${option} não encontrada, definindo como false por padrão`);
-        settings[option] = false;
-      }
+    let result;
+    
+    // Mapear as configurações do frontend para o formato do banco
+    const dbSettings = {
+      enable_card: Boolean(settings.acceptCard),
+      enable_mbway: Boolean(settings.acceptMBWay),
+      enable_multibanco: Boolean(settings.acceptMultibanco),
+      enable_bank_transfer: Boolean(settings.acceptBankTransfer),
+      enable_cash: Boolean(settings.acceptCash),
+      eupago_api_key: settings.eupagoApiKey || '',
+      updated_at: new Date()
+    };
+    
+    console.log("Configurações formatadas para o banco:", dbSettings);
+    
+    if (existingSettings.length > 0) {
+      // Atualizar configurações existentes
+      console.log("Atualizando configurações existentes");
+      
+      result = await queryClient`
+        UPDATE payment_settings 
+        SET 
+          enable_card = ${dbSettings.enable_card},
+          enable_mbway = ${dbSettings.enable_mbway},
+          enable_multibanco = ${dbSettings.enable_multibanco},
+          enable_bank_transfer = ${dbSettings.enable_bank_transfer},
+          enable_cash = ${dbSettings.enable_cash},
+          eupago_api_key = ${dbSettings.eupago_api_key},
+          updated_at = ${dbSettings.updated_at}
+        WHERE id = ${existingSettings[0].id}
+        RETURNING *
+      `;
+    } else {
+      // Criar novas configurações
+      console.log("Criando novas configurações");
+      
+      result = await queryClient`
+        INSERT INTO payment_settings (
+          enable_card, enable_mbway, enable_multibanco, 
+          enable_bank_transfer, enable_cash, eupago_api_key, updated_at
+        ) VALUES (
+          ${dbSettings.enable_card},
+          ${dbSettings.enable_mbway},
+          ${dbSettings.enable_multibanco},
+          ${dbSettings.enable_bank_transfer},
+          ${dbSettings.enable_cash},
+          ${dbSettings.eupago_api_key},
+          ${dbSettings.updated_at}
+        )
+        RETURNING *
+      `;
     }
     
-    // Processar cada configuração
-    const results = [];
-    
-    console.log("Processando configurações de pagamento:", JSON.stringify(settings, null, 2));
-    
-    // Processar cada configuração em sequência para evitar problemas de concorrência
-    for (const [key, value] of Object.entries(settings)) {
-      try {
-        // Converter para o formato correto para armazenamento
-        const stringValue = typeof value === 'boolean' ? String(value) : String(value);
-        
-        console.log(`Processando configuração: ${key} = ${stringValue} (tipo: ${typeof value})`);
-        
-        // Verificar se a configuração já existe
-        const existingSetting = await drizzleDb.select()
-          .from(schema.settings)
-          .where(and(
-            eq(schema.settings.category, 'payments'),
-            eq(schema.settings.key, key)
-          ))
-          .limit(1);
-        
-        let result;
-        
-        if (existingSetting.length > 0) {
-          // Atualizar configuração existente
-          console.log(`Atualizando configuração existente: ${key}`);
-          result = await drizzleDb
-            .update(schema.settings)
-            .set({ 
-              value: stringValue,
-              updatedAt: new Date()
-            })
-            .where(eq(schema.settings.id, existingSetting[0].id))
-            .returning();
-        } else {
-          // Criar nova configuração
-          console.log(`Criando nova configuração: ${key}`);
-          result = await drizzleDb
-            .insert(schema.settings)
-            .values({
-              category: 'payments',
-              key: key,
-              value: stringValue,
-            })
-            .returning();
-        }
-        
-        if (result && result.length > 0) {
-          results.push(result[0]);
-        }
-      } catch (error) {
-        console.error(`Erro ao processar configuração ${key}:`, error);
-        // Continuar com as outras configurações mesmo se uma falhar
-      }
-    }
+    console.log("Configurações salvas no banco:", result);
     
     // Verificar banco de dados após as atualizações
-    const updatedSettings = await drizzleDb.select()
-      .from(schema.settings)
-      .where(eq(schema.settings.category, 'payments'));
+    const updatedSettings = await queryClient`
+      SELECT * FROM payment_settings
+    `;
     
-    console.log("Configurações após atualização:", updatedSettings);
+    console.log("Estado atual das configurações de pagamento:", updatedSettings);
     
     res.json({ 
       message: "Configurações de pagamento atualizadas com sucesso", 
-      settings: results,
-      currentSettings: updatedSettings
+      settings: result
     });
   } catch (err: any) {
     console.error("Erro ao atualizar configurações de pagamento:", err);
