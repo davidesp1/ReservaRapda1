@@ -1,18 +1,20 @@
-import express from 'express';
+import { Router } from 'express';
+import { z } from 'zod';
 import { storage } from '../storage';
+import { validate } from '../middleware/validate';
 import { updatePaymentSettingsSchema } from '@shared/schema';
-import { zodMiddleware } from '../middleware/zod';
 
-const router = express.Router();
+const router = Router();
 
-// Rota para obter as configurações de pagamento
-router.get('/api/settings/payment', async (req, res) => {
+/**
+ * GET /api/settings/payment
+ * Obter configurações de pagamento
+ */
+router.get('/', async (req, res) => {
   try {
-    // Buscar configurações de pagamento
-    const paymentSettings = await storage.getPaymentSettings();
+    const settings = await storage.getPaymentSettings();
     
-    // Se não existir nenhuma configuração, retornar valores padrão
-    if (!paymentSettings) {
+    if (!settings) {
       return res.json({
         eupagoApiKey: '',
         enabledPaymentMethods: {
@@ -25,69 +27,75 @@ router.get('/api/settings/payment', async (req, res) => {
       });
     }
     
-    // Transformar o formato do banco para o formato da API
-    const response = {
-      eupagoApiKey: paymentSettings.eupagoApiKey,
+    return res.json({
+      eupagoApiKey: settings.eupagoApiKey,
       enabledPaymentMethods: {
-        card: paymentSettings.enableCard,
-        mbway: paymentSettings.enableMbway,
-        multibanco: paymentSettings.enableMultibanco,
-        bankTransfer: paymentSettings.enableBankTransfer,
-        cash: paymentSettings.enableCash
+        card: settings.enableCard,
+        mbway: settings.enableMbway,
+        multibanco: settings.enableMultibanco,
+        bankTransfer: settings.enableBankTransfer,
+        cash: settings.enableCash
       }
-    };
-    
-    res.json(response);
+    });
   } catch (error) {
-    console.error('Erro ao buscar configurações de pagamento:', error);
-    res.status(500).json({ message: 'Erro ao buscar configurações de pagamento' });
+    console.error('Erro ao obter configurações de pagamento:', error);
+    res.status(500).json({ message: 'Erro ao obter configurações de pagamento' });
   }
 });
 
-// Middleware de validação com Zod
-const validatePaymentSettings = zodMiddleware(updatePaymentSettingsSchema);
-
-// Rota para atualizar as configurações de pagamento
-router.put('/api/settings/payment', validatePaymentSettings, async (req, res) => {
+/**
+ * POST /api/settings/payment
+ * Salvar configurações de pagamento
+ */
+router.post('/', validate(updatePaymentSettingsSchema), async (req, res) => {
   try {
     const { eupagoApiKey, enabledPaymentMethods } = req.body;
     
-    // Verificar se o usuário é admin
-    const user = req.user as any;
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ message: 'Acesso negado. Apenas administradores podem atualizar configurações.' });
-    }
-    
-    // Transformar para o formato do banco de dados
-    const paymentSettingsData = {
+    const settings = await storage.upsertPaymentSettings({
       eupagoApiKey,
       enableCard: enabledPaymentMethods.card,
       enableMbway: enabledPaymentMethods.mbway,
       enableMultibanco: enabledPaymentMethods.multibanco,
       enableBankTransfer: enabledPaymentMethods.bankTransfer,
       enableCash: enabledPaymentMethods.cash
-    };
-    
-    // Atualizar ou criar as configurações
-    const updatedSettings = await storage.updatePaymentSettings(paymentSettingsData);
+    });
     
     res.json({
       success: true,
-      message: 'Configurações de pagamento atualizadas com sucesso',
-      data: {
-        eupagoApiKey: updatedSettings.eupagoApiKey,
-        enabledPaymentMethods: {
-          card: updatedSettings.enableCard,
-          mbway: updatedSettings.enableMbway,
-          multibanco: updatedSettings.enableMultibanco,
-          bankTransfer: updatedSettings.enableBankTransfer,
-          cash: updatedSettings.enableCash
-        }
-      }
+      settings
     });
   } catch (error) {
-    console.error('Erro ao atualizar configurações de pagamento:', error);
-    res.status(500).json({ message: 'Erro ao atualizar configurações de pagamento' });
+    console.error('Erro ao salvar configurações de pagamento:', error);
+    res.status(500).json({ message: 'Erro ao salvar configurações de pagamento' });
+  }
+});
+
+/**
+ * POST /api/settings/payment/test
+ * Testar conexão com API EuPago
+ */
+router.post('/test', validate(z.object({ apiKey: z.string() })), async (req, res) => {
+  try {
+    const { apiKey } = req.body;
+    
+    // Implementação simples para teste - em produção usaria o cliente real EuPago
+    // Considerar mover para um serviço dedicado em produção
+    if (!apiKey) {
+      return res.status(400).json({ message: 'Chave de API não fornecida' });
+    }
+    
+    // Simular teste de conexão - esta parte seria substituída pela chamada real à API
+    const isValid = apiKey.length >= 8;
+    
+    if (!isValid) {
+      return res.status(400).json({ message: 'Chave de API inválida' });
+    }
+    
+    // Em um caso real, faríamos uma chamada à API para verificar a validade da chave
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erro ao testar conexão com EuPago:', error);
+    res.status(500).json({ message: 'Erro ao testar conexão com EuPago' });
   }
 });
 

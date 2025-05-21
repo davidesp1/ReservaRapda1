@@ -1191,8 +1191,47 @@ export class DatabaseStorage implements IStorage {
         
       return settings;
     } catch (error) {
-      console.error("Erro ao buscar configurações de pagamento:", error);
+      console.error("Error getting payment settings:", error);
       return undefined;
+    }
+  }
+  
+  async upsertPaymentSettings(settings: Partial<PaymentSetting>): Promise<PaymentSetting> {
+    try {
+      const existingSettings = await this.getPaymentSettings();
+      
+      if (existingSettings) {
+        // Update existing settings
+        const [updated] = await db
+          .update(paymentSettings)
+          .set({
+            ...settings,
+            updatedAt: new Date()
+          })
+          .where(eq(paymentSettings.id, existingSettings.id))
+          .returning();
+          
+        return updated;
+      } else {
+        // Insert new settings
+        const [created] = await db
+          .insert(paymentSettings)
+          .values({
+            eupagoApiKey: settings.eupagoApiKey || '',
+            enableCard: settings.enableCard !== undefined ? settings.enableCard : true,
+            enableMbway: settings.enableMbway !== undefined ? settings.enableMbway : true,
+            enableMultibanco: settings.enableMultibanco !== undefined ? settings.enableMultibanco : true,
+            enableBankTransfer: settings.enableBankTransfer !== undefined ? settings.enableBankTransfer : true,
+            enableCash: settings.enableCash !== undefined ? settings.enableCash : true,
+            updatedAt: new Date()
+          })
+          .returning();
+          
+        return created;
+      }
+    } catch (error) {
+      console.error("Error upserting payment settings:", error);
+      throw new Error("Failed to update payment settings");
     }
   }
   
