@@ -619,6 +619,32 @@ router.get('/api/pos/orders', async (req, res) => {
 });
 
 // Rotas para configurações de pagamento
+// Rota principal para todas as configurações
+router.get("/api/settings", async (req, res) => {
+  try {
+    // Buscar todas as configurações de todas as categorias
+    const allSettings = await drizzleDb.select()
+      .from(schema.settings);
+    
+    // Agrupar por categoria
+    const settingsByCategory: Record<string, Record<string, string>> = {};
+    
+    allSettings.forEach(setting => {
+      if (!settingsByCategory[setting.category]) {
+        settingsByCategory[setting.category] = {};
+      }
+      settingsByCategory[setting.category][setting.key] = setting.value || '';
+    });
+    
+    console.log("Configurações completas encontradas:", settingsByCategory);
+    
+    res.json(settingsByCategory);
+  } catch (err: any) {
+    console.error("Erro ao buscar todas as configurações:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get("/api/settings/payments", async (req, res) => {
   try {
     // Buscar todas as configurações da categoria 'payments'
@@ -631,6 +657,8 @@ router.get("/api/settings/payments", async (req, res) => {
     paymentSettings.forEach(setting => {
       settingsObject[setting.key] = setting.value || '';
     });
+    
+    console.log("Configurações de pagamento encontradas:", settingsObject);
     
     res.json(settingsObject);
   } catch (err: any) {

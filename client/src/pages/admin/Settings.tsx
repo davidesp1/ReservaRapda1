@@ -156,14 +156,18 @@ const Settings: React.FC = () => {
   // Fetch settings data
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ['/api/settings'],
-    enabled: isAuthenticated && isAdmin,
-    onSuccess: (data) => {
-      console.log("Configurações carregadas do servidor:", data);
+    enabled: isAuthenticated && isAdmin
+  });
+  
+  // Atualizar formulários quando os dados são carregados
+  useEffect(() => {
+    if (settings) {
+      console.log("Configurações carregadas do servidor:", settings);
       
-      // Atualizar formulários com dados do servidor
-      if (data && data.payments) {
+      // Atualizar formulário de pagamentos
+      if (settings.payments) {
         // Converter strings "true"/"false" para boolean
-        const paymentSettings = Object.entries(data.payments).reduce((acc, [key, value]) => {
+        const paymentSettings = Object.entries(settings.payments).reduce((acc, [key, value]) => {
           if (value === 'true') acc[key] = true;
           else if (value === 'false') acc[key] = false;
           else acc[key] = value;
@@ -174,19 +178,20 @@ const Settings: React.FC = () => {
         paymentForm.reset(paymentSettings);
       }
       
-      if (data && data.general) {
-        generalForm.reset(data.general);
+      // Atualizar outros formulários
+      if (settings.general) {
+        generalForm.reset(settings.general);
       }
       
-      if (data && data.reservations) {
-        reservationForm.reset(data.reservations);
+      if (settings.reservations) {
+        reservationForm.reset(settings.reservations);
       }
       
-      if (data && data.notifications) {
-        notificationForm.reset(data.notifications);
+      if (settings.notifications) {
+        notificationForm.reset(settings.notifications);
       }
     }
-  });
+  }, [settings, generalForm, reservationForm, paymentForm, notificationForm]);
 
   // Update general settings mutation
   const updateGeneralSettingsMutation = useMutation({
