@@ -128,6 +128,16 @@ const Settings: React.FC = () => {
       eupagoApiKey: '',
     },
   });
+  
+  // Log para depuração
+  const onPaymentFormChange = () => {
+    console.log("Formulário de pagamento atualizado:", paymentForm.getValues());
+  };
+  
+  useEffect(() => {
+    const subscription = paymentForm.watch(onPaymentFormChange);
+    return () => subscription.unsubscribe();
+  }, [paymentForm]);
 
   // Notification settings form
   const notificationForm = useForm<z.infer<typeof notificationSettingsSchema>>({
@@ -688,8 +698,6 @@ const Settings: React.FC = () => {
                   <Separator className="my-6" />
 
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium">{t('PaymentMethods')}</h3>
-                    
                     <h3 className="text-lg font-medium mt-6">{t('PaymentGatewaySettings')}</h3>
                     
                     <div className="p-6 border rounded-md bg-slate-50 mt-2 mb-6">
@@ -710,7 +718,9 @@ const Settings: React.FC = () => {
                         )}
                       />
                     </div>
-
+                    
+                    <h3 className="text-lg font-medium">{t('PaymentMethods')}</h3>
+                    
                     <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
                       <div className="flex">
                         <div className="flex-shrink-0">
@@ -726,8 +736,6 @@ const Settings: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    
-                    <Separator className="my-4" />
                     
                     <FormField
                       control={paymentForm.control}
