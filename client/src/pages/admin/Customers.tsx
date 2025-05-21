@@ -64,10 +64,13 @@ const Customers: React.FC = () => {
     }
   });
   
-  // Fetch customers
+  // Fetch customers com atualizações em tempo real
   const { data: customers, isLoading: customersLoading } = useQuery<any>({
     queryKey: ['/api/users'],
     enabled: isAuthenticated && isAdmin,
+    refetchInterval: 30000, // Atualiza a cada 30 segundos
+    refetchIntervalInBackground: true,
+    staleTime: 10000, // Considera os dados obsoletos após 10 segundos
   });
 
   // Filter customers based on search

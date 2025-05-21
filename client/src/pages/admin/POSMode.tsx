@@ -34,13 +34,18 @@ const POSMode = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("cash");
   
-  // Carregar métodos de pagamento disponíveis
+  // Carregar métodos de pagamento disponíveis com atualização automática
   const { data: paymentSettings } = useQuery({
     queryKey: ['/api/settings/payments'],
+    refetchInterval: 10000, // Atualiza a cada 10 segundos
+    refetchIntervalInBackground: true,
   });
   
+  // Carregar produtos do menu com atualização automática
   const { data: menuItemsData, isLoading } = useQuery({
     queryKey: ['/api/menu-items'],
+    refetchInterval: 15000, // Atualiza a cada 15 segundos
+    refetchIntervalInBackground: true,
   });
   
   // Os dados já vêm agrupados por categoria, então não precisamos de uma consulta separada
