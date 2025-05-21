@@ -596,7 +596,27 @@ router.post('/api/pos/orders', async (req, res) => {
       printedReceipt: orderData.printReceipt || false,
     }).returning();
     
-    res.status(201).json(newOrder[0]);
+    // Criar também um registro na tabela de pagamentos para sincronizar com a página de Finanças
+    const paymentMethod = orderData.paymentMethod || 'cash';
+    const paymentRecord = await drizzleDb.insert(schema.payments).values({
+      amount: calculatedTotal, // Valor total do pedido
+      method: paymentMethod, // Método de pagamento selecionado
+      status: 'completed', // Pagamentos do POS são sempre concluídos imediatamente
+      orderId: newOrder[0].id, // Referência ao pedido criado
+      paymentDate: new Date(), // Data e hora atual
+      transactionId: `POS-${Date.now()}`, // Identificador único da transação
+      details: {
+        orderType: 'pos',
+        items: validatedItems.length,
+        paymentMethod: paymentMethod
+      }
+    }).returning();
+    
+    // Retornar o pedido e o pagamento associado
+    res.status(201).json({
+      order: newOrder[0],
+      payment: paymentRecord[0]
+    });
   } catch (error: any) {
     console.error('Erro ao criar pedido POS:', error);
     res.status(500).json({ error: error.message || 'Erro ao processar o pedido' });
