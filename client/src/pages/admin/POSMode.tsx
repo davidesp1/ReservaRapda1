@@ -608,6 +608,24 @@ const POSMode = () => {
                     </div>
                   </div>
                 )}
+                
+                {/* Opção Multibanco (TPA) - Apenas disponível no POS */}
+                <div 
+                  className={`p-3 border rounded-lg cursor-pointer flex items-center ${
+                    selectedPaymentMethod === 'multibanco_tpa' ? 'border-primary bg-primary/5' : 'border-gray-300'
+                  }`}
+                  onClick={() => setSelectedPaymentMethod('multibanco_tpa')}
+                >
+                  <div className={`w-6 h-6 rounded-full border mr-3 flex items-center justify-center ${
+                    selectedPaymentMethod === 'multibanco_tpa' ? 'border-primary' : 'border-gray-300'
+                  }`}>
+                    {selectedPaymentMethod === 'multibanco_tpa' && <Check className="h-4 w-4 text-primary" />}
+                  </div>
+                  <div>
+                    <div className="font-medium">{t('Multibanco (TPA)')}</div>
+                    <div className="text-sm text-gray-500">{t('Terminal de Pagamento Automático')}</div>
+                  </div>
+                </div>
               </div>
             </div>
             
