@@ -357,6 +357,8 @@ const resources = {
       AcceptBankTransfer: "Aceitar Transferência Bancária",
       AcceptCash: "Aceitar Dinheiro",
       RequirePrepayment: "Exigir Pré-pagamento",
+      RequirePrepaymentsForReservations: "Exigir pagamento antecipado para reservas",
+      PaymentGatewaySettings: "Configurações do Gateway de Pagamento",
       OnlyVisibleToAdmin: "Visível apenas para administradores e no POS",
       CashPaymentVisibleOnlyToAdmin: "Pagamentos em dinheiro são visíveis apenas para administradores e no modo POS, nunca expostos como opção ao cliente.",
       ImportantNote: "Nota Importante",

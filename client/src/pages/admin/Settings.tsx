@@ -690,6 +690,27 @@ const Settings: React.FC = () => {
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">{t('PaymentMethods')}</h3>
                     
+                    <h3 className="text-lg font-medium mt-6">{t('PaymentGatewaySettings')}</h3>
+                    
+                    <div className="p-6 border rounded-md bg-slate-50 mt-2 mb-6">
+                      <FormField
+                        control={paymentForm.control}
+                        name="eupagoApiKey"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-lg font-semibold">{t('EuPagoAPIKey')}</FormLabel>
+                            <FormDescription className="mb-2">
+                              {t('EuPagoAPIKeyDescription')}
+                            </FormDescription>
+                            <FormControl>
+                              <Input {...field} type="password" className="font-mono" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
                     <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
                       <div className="flex">
                         <div className="flex-shrink-0">
@@ -705,23 +726,6 @@ const Settings: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    
-                    <FormField
-                      control={paymentForm.control}
-                      name="eupagoApiKey"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('EuPagoAPIKey')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="password" />
-                          </FormControl>
-                          <FormDescription>
-                            {t('EuPagoAPIKeyDescription')}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                     
                     <Separator className="my-4" />
                     
@@ -837,7 +841,10 @@ const Settings: React.FC = () => {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
-                            <FormLabel>{t('AcceptCash')}</FormLabel>
+                            <FormLabel>{t('RequirePrepayment')}</FormLabel>
+                            <FormDescription>
+                              {t('RequirePrepaymentsForReservations')}
+                            </FormDescription>
                           </div>
                           <FormControl>
                             <Switch

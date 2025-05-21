@@ -7,7 +7,8 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { 
   FaUtensils, FaChartLine, FaUsers, FaBookOpen, 
   FaChair, FaCoins, FaCreditCard, FaCalendarCheck, 
-  FaCog, FaSignOutAlt, FaBars, FaTimes, FaCashRegister
+  FaCog, FaSignOutAlt, FaBars, FaTimes, FaCashRegister,
+  FaMoneyBillWave
 } from 'react-icons/fa';
 
 interface SidebarProps {
