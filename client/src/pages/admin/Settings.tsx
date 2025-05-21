@@ -53,6 +53,7 @@ const paymentSettingsSchema = z.object({
   acceptMBWay: z.boolean(),
   acceptMultibanco: z.boolean(),
   acceptBankTransfer: z.boolean(),
+  acceptMultibancoTPA: z.boolean(),
   requirePrepayment: z.boolean(),
   requirePrepaymentAmount: z.coerce.number().min(0, 'Valor não pode ser negativo'),
   showPricesWithTax: z.boolean(),
@@ -121,6 +122,7 @@ const Settings: React.FC = () => {
       acceptMBWay: true,
       acceptMultibanco: true,
       acceptBankTransfer: true,
+      acceptMultibancoTPA: true,
       requirePrepayment: false,
       requirePrepaymentAmount: 0,
       showPricesWithTax: true,
@@ -313,6 +315,7 @@ const Settings: React.FC = () => {
       acceptMultibanco: Boolean(data.acceptMultibanco),
       acceptBankTransfer: Boolean(data.acceptBankTransfer),
       acceptCash: Boolean(data.acceptCash),
+      acceptMultibancoTPA: Boolean(data.acceptMultibancoTPA),
       requirePrepayment: Boolean(data.requirePrepayment),
       showPricesWithTax: Boolean(data.showPricesWithTax)
     };
@@ -940,6 +943,28 @@ const Settings: React.FC = () => {
                               <FormLabel>{t('AcceptCash')}</FormLabel>
                               <FormDescription>
                                 {t('PaidAtRestaurant')}
+                              </FormDescription>
+                              <p className="text-xs text-amber-600">{t('OnlyVisibleToAdmin')}</p>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={paymentForm.control}
+                        name="acceptMultibancoTPA"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                            <div className="space-y-0.5">
+                              <FormLabel>Multibanco (TPA)</FormLabel>
+                              <FormDescription>
+                                Terminal de pagamento automático físico
                               </FormDescription>
                               <p className="text-xs text-amber-600">{t('OnlyVisibleToAdmin')}</p>
                             </div>
