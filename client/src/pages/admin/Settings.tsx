@@ -798,64 +798,94 @@ const Settings: React.FC = () => {
                       <FormField
                         control={paymentForm.control}
                         name="acceptCard"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                            <div className="space-y-0.5">
-                              <FormLabel>{t('AcceptCard')}</FormLabel>
-                              <FormDescription>
-                                {t('ProcessedByEuPago')}
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          // Verificar se tem uma API key
+                          const apiKey = paymentForm.watch('eupagoApiKey') || '';
+                          const hasApiKey = apiKey.trim().length > 0;
+                          
+                          return (
+                            <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                              <div className="space-y-0.5">
+                                <FormLabel>{t('AcceptCard')}</FormLabel>
+                                <FormDescription>
+                                  {t('ProcessedByEuPago')}
+                                </FormDescription>
+                                {!hasApiKey && (
+                                  <p className="text-xs text-red-600">{t('RequiresEuPagoAPIKey')}</p>
+                                )}
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={hasApiKey ? field.value : false}
+                                  onCheckedChange={field.onChange}
+                                  disabled={!hasApiKey}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          );
+                        }}
                       />
 
                       <FormField
                         control={paymentForm.control}
                         name="acceptMBWay"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                            <div className="space-y-0.5">
-                              <FormLabel>{t('AcceptMBWay')}</FormLabel>
-                              <FormDescription>
-                                {t('ProcessedByEuPago')}
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          // Verificar se tem uma API key
+                          const apiKey = paymentForm.watch('eupagoApiKey') || '';
+                          const hasApiKey = apiKey.trim().length > 0;
+                          
+                          return (
+                            <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                              <div className="space-y-0.5">
+                                <FormLabel>{t('AcceptMBWay')}</FormLabel>
+                                <FormDescription>
+                                  {t('ProcessedByEuPago')}
+                                </FormDescription>
+                                {!hasApiKey && (
+                                  <p className="text-xs text-red-600">{t('RequiresEuPagoAPIKey')}</p>
+                                )}
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={hasApiKey ? field.value : false}
+                                  onCheckedChange={field.onChange}
+                                  disabled={!hasApiKey}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          );
+                        }}
                       />
                       
                       <FormField
                         control={paymentForm.control}
                         name="acceptMultibanco"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                            <div className="space-y-0.5">
-                              <FormLabel>{t('AcceptMultibanco')}</FormLabel>
-                              <FormDescription>
-                                {t('ProcessedByEuPago')}
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          // Verificar se tem uma API key
+                          const apiKey = paymentForm.watch('eupagoApiKey') || '';
+                          const hasApiKey = apiKey.trim().length > 0;
+                          
+                          return (
+                            <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                              <div className="space-y-0.5">
+                                <FormLabel>{t('AcceptMultibanco')}</FormLabel>
+                                <FormDescription>
+                                  {t('ProcessedByEuPago')}
+                                </FormDescription>
+                                {!hasApiKey && (
+                                  <p className="text-xs text-red-600">{t('RequiresEuPagoAPIKey')}</p>
+                                )}
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={hasApiKey ? field.value : false}
+                                  onCheckedChange={field.onChange}
+                                  disabled={!hasApiKey}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          );
+                        }}
                       />
                       
                       <FormField

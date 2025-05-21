@@ -726,13 +726,19 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
     const beforeSettings = await queryClient`SELECT * FROM payment_settings`;
     console.log("Estado ANTES da atualização:", beforeSettings);
     
+    // Processar a API key primeiro, pois ela afeta outras configurações
+    const apiKey = settings.eupagoApiKey || '';
+    const hasApiKey = apiKey.trim().length > 0;
+    
     // Converter os valores para certeza de tipo
-    const cardValue = settings.acceptCard === true;
-    const mbwayValue = settings.acceptMBWay === true;
-    const multibancoValue = settings.acceptMultibanco === true;
+    // Se não houver API key, forçar métodos de pagamento EuPago como false
+    const cardValue = hasApiKey ? settings.acceptCard === true : false;
+    const mbwayValue = hasApiKey ? settings.acceptMBWay === true : false;
+    const multibancoValue = hasApiKey ? settings.acceptMultibanco === true : false;
+    
+    // Métodos que não dependem da API key do EuPago
     const bankTransferValue = settings.acceptBankTransfer === true;
     const cashValue = settings.acceptCash === true;
-    const apiKey = settings.eupagoApiKey || '';
     
     // Novos campos adicionados - forçar tipos corretos
     const currency = settings.currency || 'EUR';
@@ -755,6 +761,8 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
     else if (settings.showPricesWithTax === "true") showPricesWithTax = true;
     else if (settings.showPricesWithTax === "false") showPricesWithTax = false;
     else showPricesWithTax = true;
+    
+    console.log("API Key presente:", hasApiKey, "Comprimento:", apiKey.length);
     
     console.log("Valores convertidos para inserção:", {
       cardValue, mbwayValue, multibancoValue, bankTransferValue, cashValue, apiKey,
