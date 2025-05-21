@@ -93,10 +93,10 @@ const Dashboard: React.FC = () => {
           type: 'doughnut',
           data: {
             labels: dashboardStats?.categoryData?.labels || [
-              t('Dashboard_MainDishes'), 
-              t('Dashboard_Drinks'), 
-              t('Dashboard_Desserts'), 
-              t('Dashboard_Appetizers')
+              t('Category_MainDishes'), 
+              t('Category_Drinks'), 
+              t('Category_Desserts'), 
+              t('Category_Appetizers')
             ],
             datasets: [{
               data: dashboardStats?.categoryData?.values || [0, 0, 0, 0],
