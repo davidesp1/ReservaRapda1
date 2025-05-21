@@ -7,7 +7,8 @@ import {
   Payment, InsertPayment,
   Order, InsertOrder,
   Setting, InsertSetting,
-  users, menuCategories, menuItems, tables, reservations, payments, orders, settings
+  PaymentSetting, InsertPaymentSetting,
+  users, menuCategories, menuItems, tables, reservations, payments, orders, settings, paymentSettings
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, sql, like } from "drizzle-orm";
@@ -73,6 +74,10 @@ export interface IStorage {
   getSettingsByCategory(category: string): Promise<Record<string, string>>;
   getAllSettings(): Promise<Record<string, Record<string, string>>>;
   updateSettings(category: string, settingsData: Record<string, string>): Promise<boolean>;
+  
+  // Payment Settings
+  getPaymentSettings(): Promise<PaymentSetting | undefined>;
+  updatePaymentSettings(data: Partial<InsertPaymentSetting>): Promise<PaymentSetting>;
 }
 
 export class MemStorage implements IStorage {
