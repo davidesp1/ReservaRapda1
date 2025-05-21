@@ -27,6 +27,16 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, CreditCard, Banknote, Landmark, QrCode, ArrowRight } from 'lucide-react';
 
+// Interface para os dados de configuração de pagamento retornados pela API
+interface PaymentSettingsData {
+  acceptCard: string;
+  acceptMBWay: string;
+  acceptMultibanco: string;
+  acceptBankTransfer: string;
+  acceptCash: string;
+  eupagoApiKey?: string;
+}
+
 // Schema para as configurações de pagamento
 const paymentSettingsSchema = z.object({
   acceptCard: z.boolean().default(true),
@@ -59,7 +69,7 @@ const PaymentSettings: React.FC = () => {
   });
 
   // Buscar as configurações atuais
-  const { data: settings, isLoading: settingsLoading } = useQuery({
+  const { data: settings, isLoading: settingsLoading } = useQuery<PaymentSettingsData>({
     queryKey: ['/api/settings/payments'],
     enabled: isAuthenticated && isAdmin
   });
@@ -67,14 +77,15 @@ const PaymentSettings: React.FC = () => {
   // Atualizar o formulário quando os dados são carregados
   useEffect(() => {
     if (settings) {
-      form.reset({
+      const formData = {
         acceptCard: settings.acceptCard !== 'false',
         acceptMBWay: settings.acceptMBWay !== 'false',
         acceptMultibanco: settings.acceptMultibanco !== 'false',
         acceptBankTransfer: settings.acceptBankTransfer !== 'false',
         acceptCash: settings.acceptCash !== 'false',
         eupagoApiKey: settings.eupagoApiKey || '',
-      });
+      };
+      form.reset(formData);
     }
   }, [settings, form]);
 
@@ -165,7 +176,7 @@ const PaymentSettings: React.FC = () => {
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">{t('PaymentMethods')}</h3>
                 
-                <Alert variant="warning" className="bg-yellow-50 border-yellow-200 text-yellow-800">
+                <Alert className="bg-yellow-50 border-yellow-200 text-yellow-800">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>{t('ImportantNote')}</AlertTitle>
                   <AlertDescription>
