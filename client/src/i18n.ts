@@ -176,6 +176,12 @@ const resources = {
       Category_Drinks: "Bebidas",
       Category_Desserts: "Sobremesas",
       Category_Appetizers: "Entradas",
+      
+      // Dashboard Performance
+      DashboardPerformance: "Desempenho",
+      DashboardLast7Days: "Últimos 7 Dias",
+      DashboardLast30Days: "Últimos 30 Dias",
+      DashboardThisYear: "Este Ano",
       ExportReports: "Exportar Relatórios",
       GenerateAndDownloadReports: "Gere e baixe relatórios em PDF ou Excel",
       ReportType: "Tipo de Relatório",
@@ -1016,6 +1022,12 @@ const resources = {
       Category_Drinks: "Bebidas", 
       Category_Desserts: "Postres",
       Category_Appetizers: "Entrantes",
+      
+      // Dashboard Performance
+      DashboardPerformance: "Rendimiento",
+      DashboardLast7Days: "Últimos 7 Días",
+      DashboardLast30Days: "Últimos 30 Días",
+      DashboardThisYear: "Este Año",
 
       // Forms
       Save: "Guardar",

@@ -548,11 +548,11 @@ const Dashboard: React.FC = () => {
     <section className="px-4 py-3">
       <div className="bg-white rounded-lg shadow p-3">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="font-semibold">{t('Performance')}</h3>
+          <h3 className="font-semibold">{t('DashboardPerformance')}</h3>
           <select className="text-xs bg-gray-100 rounded px-2 py-1 border border-gray-200">
-            <option>{t('Last7Days')}</option>
-            <option>{t('Last30Days')}</option>
-            <option>{t('ThisYear')}</option>
+            <option>{t('DashboardLast7Days')}</option>
+            <option>{t('DashboardLast30Days')}</option>
+            <option>{t('DashboardThisYear')}</option>
           </select>
         </div>
         <div className="h-[200px]">
