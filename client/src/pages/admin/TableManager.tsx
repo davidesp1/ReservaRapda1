@@ -58,10 +58,12 @@ const TableManager: React.FC = () => {
     available: boolean;
   };
   
-  // Fetch tables
+  // Fetch tables - Com atualização automática a cada 15 segundos
   const { data: tables = [], isLoading: tablesLoading } = useQuery<Table[]>({
     queryKey: ['/api/tables'],
     enabled: isAuthenticated && isAdmin,
+    refetchInterval: 15000, // Refetch a cada 15 segundos para ter dados em tempo real
+    refetchIntervalInBackground: true, // Continua atualizando mesmo quando a aba não está em foco
   });
 
   // Define Reservation type
@@ -74,10 +76,12 @@ const TableManager: React.FC = () => {
     partySize: number;
   };
   
-  // Fetch reservations for selected date
+  // Fetch reservations for selected date - Com atualização automática
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery<Reservation[]>({
     queryKey: ['/api/reservations', { date: selectedDate }],
     enabled: isAuthenticated && isAdmin && !!selectedDate,
+    refetchInterval: 10000, // Refetch a cada 10 segundos
+    refetchIntervalInBackground: true,
   });
 
   // Redirect if not authenticated or not admin
