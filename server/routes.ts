@@ -597,18 +597,26 @@ router.post('/api/pos/orders', async (req, res) => {
     }).returning();
     
     // Criar também um registro na tabela de pagamentos para sincronizar com a página de Finanças
-    const paymentMethod = orderData.paymentMethod || 'cash';
+    let paymentMethod = orderData.paymentMethod || 'cash';
+    
+    // Converter o método de pagamento para um valor compatível com o enum da tabela payments
+    if (paymentMethod === 'multibanco_tpa') {
+      paymentMethod = 'cash'; // Temporariamente, tratamos Multibanco TPA como dinheiro
+    }
+    
     const paymentRecord = await drizzleDb.insert(schema.payments).values({
+      userId: orderData.userId || 1, // ID do usuário que está realizando o pagamento
       amount: calculatedTotal, // Valor total do pedido
-      method: paymentMethod, // Método de pagamento selecionado
+      method: paymentMethod as any, // Método de pagamento já convertido para um valor válido
       status: 'completed', // Pagamentos do POS são sempre concluídos imediatamente
-      orderId: newOrder[0].id, // Referência ao pedido criado
-      paymentDate: new Date(), // Data e hora atual
+      reference: `POS-Order-${newOrder[0].id}`, // Referência ao pedido
       transactionId: `POS-${Date.now()}`, // Identificador único da transação
+      paymentDate: new Date(), // Data e hora atual
       details: {
         orderType: 'pos',
+        orderId: newOrder[0].id,
         items: validatedItems.length,
-        paymentMethod: paymentMethod
+        originalPaymentMethod: orderData.paymentMethod // Guardamos o método original nos detalhes
       }
     }).returning();
     
