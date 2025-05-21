@@ -60,11 +60,13 @@ const Finance: React.FC = () => {
     return payments.filter((payment: any) => {
       const searchLower = searchText.toLowerCase();
       const matchesSearch = 
-        payment.transactionId?.toLowerCase().includes(searchLower) ||
-        payment.reservationId.toString().includes(searchLower);
+        (payment.transaction_id?.toLowerCase()?.includes(searchLower) || false) ||
+        (payment.reference?.toLowerCase()?.includes(searchLower) || false) ||
+        (payment.reservation_id ? payment.reservation_id.toString().includes(searchLower) : false) ||
+        (payment.details?.orderId ? payment.details.orderId.toString().includes(searchLower) : false);
       
       // Date range filter
-      const paymentDate = payment.paymentDate ? new Date(payment.paymentDate) : null;
+      const paymentDate = payment.payment_date ? new Date(payment.payment_date) : null;
       const matchesDateRange = paymentDate ? 
         (!dateRange.from || paymentDate >= dateRange.from) && 
         (!dateRange.to || paymentDate <= dateRange.to) : true;
