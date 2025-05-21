@@ -37,7 +37,7 @@ type CartItem = {
 export default function POS() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<number | 'all'>('all');
@@ -72,7 +72,7 @@ export default function POS() {
   });
 
   // Carregar mesas disponíveis
-  const { data: tables = [] } = useQuery({
+  const { data: tables = [] } = useQuery<any[]>({
     queryKey: ['/api/tables'],
   });
 
