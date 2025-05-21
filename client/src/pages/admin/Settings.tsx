@@ -737,186 +737,134 @@ const Settings: React.FC = () => {
                       </div>
                     </div>
                     
-                    <FormField
-                      control={paymentForm.control}
-                      name="acceptCard"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('AcceptCard')}</FormLabel>
-                            <FormDescription>
-                              {t('ProcessedByEuPago')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-4 grid gap-4">
+                      <FormField
+                        control={paymentForm.control}
+                        name="acceptCard"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                            <div className="space-y-0.5">
+                              <FormLabel>{t('AcceptCard')}</FormLabel>
+                              <FormDescription>
+                                {t('ProcessedByEuPago')}
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
 
-                    <FormField
-                      control={paymentForm.control}
-                      name="acceptMBWay"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('AcceptMBWay')}</FormLabel>
-                            <FormDescription>
-                              {t('ProcessedByEuPago')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={paymentForm.control}
-                      name="acceptMultibanco"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('AcceptMultibanco')}</FormLabel>
-                            <FormDescription>
-                              {t('ProcessedByEuPago')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={paymentForm.control}
-                      name="acceptBankTransfer"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('AcceptBankTransfer')}</FormLabel>
-                            <FormDescription>
-                              {t('ManualVerification')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={paymentForm.control}
-                      name="acceptCash"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('AcceptCash')}</FormLabel>
-                            <FormDescription>
-                              {t('PaidAtRestaurant')}
-                            </FormDescription>
-                            <p className="text-xs text-amber-600">{t('OnlyVisibleToAdmin')}</p>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+                      <FormField
+                        control={paymentForm.control}
+                        name="acceptMBWay"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                            <div className="space-y-0.5">
+                              <FormLabel>{t('AcceptMBWay')}</FormLabel>
+                              <FormDescription>
+                                {t('ProcessedByEuPago')}
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={paymentForm.control}
+                        name="acceptMultibanco"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                            <div className="space-y-0.5">
+                              <FormLabel>{t('AcceptMultibanco')}</FormLabel>
+                              <FormDescription>
+                                {t('ProcessedByEuPago')}
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={paymentForm.control}
+                        name="acceptBankTransfer"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                            <div className="space-y-0.5">
+                              <FormLabel>{t('AcceptBankTransfer')}</FormLabel>
+                              <FormDescription>
+                                {t('ManualVerification')}
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={paymentForm.control}
+                        name="acceptCash"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                            <div className="space-y-0.5">
+                              <FormLabel>{t('AcceptCash')}</FormLabel>
+                              <FormDescription>
+                                {t('PaidAtRestaurant')}
+                              </FormDescription>
+                              <p className="text-xs text-amber-600">{t('OnlyVisibleToAdmin')}</p>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
 
-                    <FormField
-                      control={paymentForm.control}
-                      name="requirePrepayment"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('RequirePrepayment')}</FormLabel>
-                            <FormDescription>
-                              {t('RequirePrepaymentsForReservations')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={paymentForm.control}
-                      name="acceptMBWay"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('AcceptMBWay')}</FormLabel>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={paymentForm.control}
-                      name="acceptMultibanco"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('AcceptMultibanco')}</FormLabel>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={paymentForm.control}
-                      name="acceptBankTransfer"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('AcceptBankTransfer')}</FormLabel>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+                      <FormField
+                        control={paymentForm.control}
+                        name="requirePrepayment"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                            <div className="space-y-0.5">
+                              <FormLabel>{t('RequirePrepayment')}</FormLabel>
+                              <FormDescription>
+                                {t('RequirePrepaymentsForReservations')}
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
 
                   <Separator className="my-6" />
