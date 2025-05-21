@@ -520,21 +520,31 @@ const Finance: React.FC = () => {
                         </div>
                       </div>
                       <Switch 
-                        checked={paymentSettings ? 
-                          (method.id === 'card' ? paymentSettings.acceptCard : 
-                           method.id === 'mbway' ? paymentSettings.acceptMBWay :
-                           method.id === 'multibanco' ? paymentSettings.acceptMultibanco :
-                           method.id === 'transfer' ? paymentSettings.acceptBankTransfer :
-                           method.id === 'cash' ? paymentSettings.acceptCash : false) : false
+                        checked={pendingSettings ? 
+                          (method.id === 'card' ? pendingSettings.acceptCard : 
+                           method.id === 'mbway' ? pendingSettings.acceptMBWay :
+                           method.id === 'multibanco' ? pendingSettings.acceptMultibanco :
+                           method.id === 'transfer' ? pendingSettings.acceptBankTransfer :
+                           method.id === 'cash' ? pendingSettings.acceptCash : false) : false
                         }
-                        onCheckedChange={() => {}}
-                        disabled={!paymentSettings}
+                        onCheckedChange={(checked) => handlePaymentMethodChange(method.id, checked)}
+                        disabled={!pendingSettings || updatePaymentSettingsMutation.isPending}
                       />
                     </div>
                   ))}
                 </div>
                 <div className="pt-6">
-                  <Button className="w-full">{t('SaveSettings')}</Button>
+                  <Button 
+                    className="w-full" 
+                    onClick={() => {
+                      if (pendingSettings) {
+                        updatePaymentSettingsMutation.mutate(pendingSettings);
+                      }
+                    }}
+                    disabled={!pendingSettings || updatePaymentSettingsMutation.isPending}
+                  >
+                    {updatePaymentSettingsMutation.isPending ? t('Saving') : t('SaveSettings')}
+                  </Button>
                 </div>
               </div>
             </CardContent>
