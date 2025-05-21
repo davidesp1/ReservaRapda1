@@ -734,8 +734,16 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
     const cashValue = settings.acceptCash === true;
     const apiKey = settings.eupagoApiKey || '';
     
+    // Novos campos adicionados
+    const currency = settings.currency || 'EUR';
+    const taxRate = parseFloat(settings.taxRate?.toString() || '23');
+    const requirePrepayment = settings.requirePrepayment === true;
+    const prepaymentAmount = parseFloat(settings.requirePrepaymentAmount?.toString() || '0');
+    const showPricesWithTax = settings.showPricesWithTax === true;
+    
     console.log("Valores convertidos para inserção:", {
-      cardValue, mbwayValue, multibancoValue, bankTransferValue, cashValue, apiKey
+      cardValue, mbwayValue, multibancoValue, bankTransferValue, cashValue, apiKey,
+      currency, taxRate, requirePrepayment, prepaymentAmount, showPricesWithTax
     });
     
     // Executar update direto usando template strings com postgres-js
@@ -749,6 +757,11 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
           enable_bank_transfer = ${bankTransferValue},
           enable_cash = ${cashValue},
           eupago_api_key = ${apiKey},
+          currency = ${currency},
+          tax_rate = ${taxRate},
+          require_prepayment = ${requirePrepayment},
+          prepayment_amount = ${prepaymentAmount},
+          show_prices_with_tax = ${showPricesWithTax},
           updated_at = NOW()
       `;
       console.log("Resultado da operação UPDATE:", updateResult);
@@ -770,7 +783,9 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
         await queryClient`
           INSERT INTO payment_settings (
             enable_card, enable_mbway, enable_multibanco, 
-            enable_bank_transfer, enable_cash, eupago_api_key, updated_at
+            enable_bank_transfer, enable_cash, eupago_api_key,
+            currency, tax_rate, require_prepayment, 
+            prepayment_amount, show_prices_with_tax, updated_at
           ) VALUES (
             ${cardValue},
             ${mbwayValue},
@@ -778,6 +793,11 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
             ${bankTransferValue},
             ${cashValue},
             ${apiKey},
+            ${currency},
+            ${taxRate},
+            ${requirePrepayment},
+            ${prepaymentAmount},
+            ${showPricesWithTax},
             NOW()
           )
         `;
@@ -796,7 +816,9 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
         await queryClient`
           INSERT INTO payment_settings (
             enable_card, enable_mbway, enable_multibanco, 
-            enable_bank_transfer, enable_cash, eupago_api_key, updated_at
+            enable_bank_transfer, enable_cash, eupago_api_key,
+            currency, tax_rate, require_prepayment, 
+            prepayment_amount, show_prices_with_tax, updated_at
           ) VALUES (
             ${cardValue},
             ${mbwayValue},
@@ -804,6 +826,11 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
             ${bankTransferValue},
             ${cashValue},
             ${apiKey},
+            ${currency},
+            ${taxRate},
+            ${requirePrepayment},
+            ${prepaymentAmount},
+            ${showPricesWithTax},
             NOW()
           )
         `;
