@@ -626,12 +626,16 @@ router.post('/api/pos/orders', async (req, res) => {
       const amountInCents = Math.round(calculatedTotal * 100);
       
       // Usar queryClient corretamente (postgres-js)
+      // Converter a data para string ISO para evitar problemas de tipo
+      const paymentDate = new Date().toISOString();
+      const transactionId = 'POS-' + Date.now();
+      
       const result = await queryClient`
         INSERT INTO payments 
           (user_id, amount, method, status, reference, transaction_id, payment_date, details)
         VALUES 
           (${1}, ${amountInCents}, ${normalizedMethod}, ${'completed'}, 
-           ${'POS-Order-' + newOrder[0].id}, ${'POS-' + Date.now()}, ${new Date()}, 
+           ${'POS-Order-' + newOrder[0].id}, ${transactionId}, ${paymentDate}, 
            ${JSON.stringify({
              type: 'pos',
              orderId: newOrder[0].id,
