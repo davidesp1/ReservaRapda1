@@ -533,6 +533,186 @@ router.get("/api/payments/status/:reference", async (req, res) => {
   }
 });
 
+// Rota para estatísticas do dashboard
+router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
+  try {
+    // Obter vendas/receita hoje
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+    
+    // Converter para formato ISO (YYYY-MM-DD)
+    const startOfTodayStr = startOfToday.toISOString().split('T')[0];
+    const endOfTodayStr = endOfToday.toISOString().split('T')[0] + ' 23:59:59';
+    
+    // Buscar receita de hoje
+    const todayRevenue = await queryClient`
+      SELECT COALESCE(SUM(amount), 0) as revenue 
+      FROM payments 
+      WHERE payment_date >= ${startOfTodayStr} 
+      AND payment_date <= ${endOfTodayStr}
+      AND status = 'completed'
+    `;
+    
+    // Buscar receita de ontem para comparação
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const startOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0);
+    const endOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59);
+    
+    const startOfYesterdayStr = startOfYesterday.toISOString().split('T')[0];
+    const endOfYesterdayStr = endOfYesterday.toISOString().split('T')[0] + ' 23:59:59';
+    
+    const yesterdayRevenue = await queryClient`
+      SELECT COALESCE(SUM(amount), 0) as revenue 
+      FROM payments 
+      WHERE payment_date >= ${startOfYesterdayStr}
+      AND payment_date <= ${endOfYesterdayStr}
+      AND status = 'completed'
+    `;
+    
+    // Calcular mudança percentual na receita
+    const todayRevenueValue = parseInt(todayRevenue[0]?.revenue) || 0;
+    const yesterdayRevenueValue = parseInt(yesterdayRevenue[0]?.revenue) || 1; // Evitar divisão por zero
+    const revenueChange = Math.round((todayRevenueValue - yesterdayRevenueValue) / yesterdayRevenueValue * 100);
+    
+    // Reservas de hoje
+    const todayReservations = await queryClient`
+      SELECT COUNT(*) as count
+      FROM reservations
+      WHERE date >= ${startOfTodayStr}
+      AND date <= ${endOfTodayStr}
+    `;
+    
+    // Reservas de ontem
+    const yesterdayReservations = await queryClient`
+      SELECT COUNT(*) as count
+      FROM reservations
+      WHERE date >= ${startOfYesterdayStr}
+      AND date <= ${endOfYesterdayStr}
+    `;
+    
+    // Calcular mudança percentual nas reservas
+    const todayReservationsValue = parseInt(todayReservations[0]?.count) || 0;
+    const yesterdayReservationsValue = parseInt(yesterdayReservations[0]?.count) || 1; // Evitar divisão por zero
+    const reservationsChange = Math.round((todayReservationsValue - yesterdayReservationsValue) / yesterdayReservationsValue * 100);
+    
+    // Taxa de ocupação (baseada nas reservas vs. capacidade total)
+    const tables = await queryClient`SELECT SUM(capacity) as total_capacity FROM tables`;
+    const totalCapacity = parseInt(tables[0]?.total_capacity) || 1; // Evitar divisão por zero
+    
+    // Suponha que cada reserva ocupa uma mesa inteira (simplificação)
+    const occupancyRate = Math.min(100, Math.round((todayReservationsValue / totalCapacity) * 100));
+    const yesterdayOccupancyRate = Math.min(100, Math.round((yesterdayReservationsValue / totalCapacity) * 100));
+    const occupancyChange = occupancyRate - yesterdayOccupancyRate;
+    
+    // Novos clientes hoje
+    const newCustomers = await queryClient`
+      SELECT COUNT(*) as count
+      FROM users
+      WHERE member_since >= ${startOfTodayStr}
+      AND member_since <= ${endOfTodayStr}
+    `;
+    
+    // Novos clientes ontem
+    const yesterdayNewCustomers = await queryClient`
+      SELECT COUNT(*) as count
+      FROM users
+      WHERE member_since >= ${startOfYesterdayStr}
+      AND member_since <= ${endOfYesterdayStr}
+    `;
+    
+    // Calcular mudança percentual em novos clientes
+    const newCustomersValue = parseInt(newCustomers[0]?.count) || 0;
+    const yesterdayNewCustomersValue = parseInt(yesterdayNewCustomers[0]?.count) || 1; // Evitar divisão por zero
+    const customerChange = Math.round((newCustomersValue - yesterdayNewCustomersValue) / yesterdayNewCustomersValue * 100);
+    
+    // Dados de vendas por dia da semana (últimos 7 dias)
+    const last7Days = [];
+    const dayLabels = [];
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      
+      const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+      const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+      
+      const startOfDayStr = startOfDay.toISOString().split('T')[0];
+      const endOfDayStr = endOfDay.toISOString().split('T')[0] + ' 23:59:59';
+      
+      last7Days.push({ start: startOfDayStr, end: endOfDayStr });
+      
+      // Nome do dia em português
+      const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+      dayLabels.push(weekdays[date.getDay()]);
+    }
+    
+    // Buscar receita por dia
+    const dailyRevenue = [];
+    
+    for (const day of last7Days) {
+      const revenue = await queryClient`
+        SELECT COALESCE(SUM(amount), 0) as revenue 
+        FROM payments 
+        WHERE payment_date >= ${day.start}
+        AND payment_date <= ${day.end}
+        AND status = 'completed'
+      `;
+      
+      dailyRevenue.push(parseInt(revenue[0]?.revenue) / 100 || 0); // Converter para euros
+    }
+    
+    // Dados para gráfico de categorias mais vendidas (últimos 30 dias)
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+    
+    const topCategories = await queryClient`
+      SELECT mc.name, COUNT(oi.menu_item_id) as count
+      FROM order_items oi
+      JOIN menu_items mi ON oi.menu_item_id = mi.id
+      JOIN menu_categories mc ON mi.category_id = mc.id
+      JOIN orders o ON oi.order_id = o.id
+      WHERE o.created_at >= ${thirtyDaysAgoStr}
+      GROUP BY mc.name
+      ORDER BY count DESC
+      LIMIT 5
+    `;
+    
+    const categoryData = {
+      labels: topCategories.map(cat => cat.name),
+      values: topCategories.map(cat => parseInt(cat.count))
+    };
+    
+    // Retornar todos os dados para o dashboard
+    res.json({
+      todayRevenue: (todayRevenueValue / 100).toFixed(2), // Converter para euros
+      revenueChange,
+      todayReservations: todayReservationsValue,
+      reservationsChange,
+      occupancyRate,
+      occupancyChange,
+      newCustomers: newCustomersValue,
+      customerChange,
+      salesData: {
+        labels: dayLabels,
+        values: dailyRevenue
+      },
+      categoryData,
+      
+      // Dados adicionais úteis
+      totalOrders: await queryClient`SELECT COUNT(*) as count FROM orders`.then(res => parseInt(res[0]?.count) || 0),
+      totalCustomers: await queryClient`SELECT COUNT(*) as count FROM users WHERE role = 'customer'`.then(res => parseInt(res[0]?.count) || 0),
+      totalRevenue: await queryClient`SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'completed'`.then(res => (parseInt(res[0]?.total) / 100).toFixed(2) || '0.00')
+    });
+    
+  } catch (err: any) {
+    console.error("Erro ao buscar estatísticas do dashboard:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Rota para cancelar pagamento
 // Nova rota para listar todos os pagamentos - especialmente para a página de Finanças
 router.get("/api/payments", isAuthenticated, async (req, res) => {
