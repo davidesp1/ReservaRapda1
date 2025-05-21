@@ -8,7 +8,8 @@ import {
   Order, InsertOrder,
   Setting, InsertSetting,
   PaymentSetting, InsertPaymentSetting,
-  users, menuCategories, menuItems, tables, reservations, payments, orders, settings, paymentSettings
+  DatabaseSetting, InsertDatabaseSetting,
+  users, menuCategories, menuItems, tables, reservations, payments, orders, settings, paymentSettings, databaseSettings
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, sql, like } from "drizzle-orm";
@@ -78,6 +79,10 @@ export interface IStorage {
   // Payment Settings
   getPaymentSettings(): Promise<PaymentSetting | undefined>;
   updatePaymentSettings(data: Partial<InsertPaymentSetting>): Promise<PaymentSetting>;
+  
+  // Database Settings
+  getDatabaseSettings(): Promise<DatabaseSetting | undefined>;
+  updateDatabaseSettings(data: Partial<InsertDatabaseSetting>): Promise<DatabaseSetting>;
 }
 
 export class MemStorage implements IStorage {
@@ -90,6 +95,7 @@ export class MemStorage implements IStorage {
   private orders: Map<number, Order> = new Map();
   private settings: Map<string, Map<string, string>> = new Map();
   private paymentSettings: PaymentSetting | undefined;
+  private databaseSettings: DatabaseSetting | undefined;
   
   private userCurrentId: number = 1;
   private menuCategoryCurrentId: number = 1;
@@ -103,6 +109,7 @@ export class MemStorage implements IStorage {
     this.initializeData();
     this.initializeSettings();
     this.initializePaymentSettings();
+    this.initializeDatabaseSettings();
   }
 
   // Users
