@@ -111,6 +111,68 @@ export class MemStorage implements IStorage {
     this.initializePaymentSettings();
     this.initializeDatabaseSettings();
   }
+  
+  // Database Settings
+  async getDatabaseSettings(): Promise<DatabaseSetting | undefined> {
+    return this.databaseSettings;
+  }
+
+  async updateDatabaseSettings(data: Partial<InsertDatabaseSetting>): Promise<DatabaseSetting> {
+    if (!this.databaseSettings) {
+      // Criar configurações iniciais se não existirem
+      this.databaseSettings = {
+        id: 1,
+        supabaseUrl: data.supabaseUrl || '',
+        supabaseKey: data.supabaseKey || '',
+        databaseUrl: data.databaseUrl || '',
+        databaseHost: data.databaseHost || '',
+        databasePort: data.databasePort || '',
+        databaseName: data.databaseName || '',
+        databaseUser: data.databaseUser || '',
+        databasePassword: data.databasePassword || '',
+        updatedAt: new Date()
+      };
+    } else {
+      // Atualizar configurações existentes
+      this.databaseSettings = {
+        ...this.databaseSettings,
+        ...data,
+        updatedAt: new Date()
+      };
+    }
+    
+    return this.databaseSettings;
+  }
+  
+  // Payment Settings
+  async getPaymentSettings(): Promise<PaymentSetting | undefined> {
+    return this.paymentSettings;
+  }
+
+  async updatePaymentSettings(data: Partial<InsertPaymentSetting>): Promise<PaymentSetting> {
+    if (!this.paymentSettings) {
+      // Criar configurações iniciais se não existirem
+      this.paymentSettings = {
+        id: 1,
+        eupagoApiKey: data.eupagoApiKey || '',
+        enableCard: data.enableCard !== undefined ? data.enableCard : true,
+        enableMbway: data.enableMbway !== undefined ? data.enableMbway : true,
+        enableMultibanco: data.enableMultibanco !== undefined ? data.enableMultibanco : true,
+        enableBankTransfer: data.enableBankTransfer !== undefined ? data.enableBankTransfer : true,
+        enableCash: data.enableCash !== undefined ? data.enableCash : true,
+        updatedAt: new Date()
+      };
+    } else {
+      // Atualizar configurações existentes
+      this.paymentSettings = {
+        ...this.paymentSettings,
+        ...data,
+        updatedAt: new Date()
+      };
+    }
+    
+    return this.paymentSettings;
+  }
 
   // Users
   async getUser(id: number): Promise<User | undefined> {
