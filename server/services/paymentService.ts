@@ -112,7 +112,7 @@ export async function getPaymentStatus(reference: string): Promise<EupagoRespons
   }
   
   try {
-    return eupagoClient.request("/api/payments/status", { referencia: reference });
+    return eupagoClient.request("/payments/status", { referencia: reference });
   } catch (error) {
     console.error(`Erro ao verificar status do pagamento:`, error);
     

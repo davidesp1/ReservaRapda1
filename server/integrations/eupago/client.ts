@@ -1,21 +1,21 @@
 import fetch from "node-fetch";
 
 // Definir a URL base do EuPago para ambiente real
-const API_BASE_URL = process.env.EUPAGO_BASE_URL || "https://api.eupago.pt";
+const API_BASE_URL = process.env.EUPAGO_BASE_URL || "https://sandbox.eupago.pt/api";
 const API_KEY = process.env.EUPAGO_API_KEY || "demo-1408-87fc-3618-cc0";
 
 // Cliente para a API EuPago
 const eupagoClient = {
   // Métodos específicos por tipo de pagamento
   multibanco(data: { valor: number, per_dup?: number }) {
-    return this.request('/api/reference/create', {
+    return this.request('/reference/create', {
       valor: data.valor,
       per_dup: data.per_dup || 0
     });
   },
   
   mbway(data: { valor: number, telemovel: string }) {
-    return this.request('/api/mbway/create', {
+    return this.request('/mbway/create', {
       valor: data.valor,
       telemovel: data.telemovel
     });
@@ -23,12 +23,12 @@ const eupagoClient = {
   
   card(data: { valor: number, referencia?: string }) {
     const ref = data.referencia || `REF-${Date.now()}`;
-    const CARD_API_URL = process.env.EUPAGO_CARD_BASE_URL || "https://sandbox.eupago.pt";
-    return this.request('/api/pagamento/gerar', {
+    const CARD_API_URL = process.env.EUPAGO_CARD_BASE_URL || "https://clientes.eupago.pt";
+    return this.request('/pagamento/gerar', {
       valor: data.valor,
       referencia: ref,
       // URL específica para cartões
-      callback_url: `${CARD_API_URL}/api/pagamento/callback`
+      callback_url: `${CARD_API_URL}/pagamento/callback`
     });
   },
 

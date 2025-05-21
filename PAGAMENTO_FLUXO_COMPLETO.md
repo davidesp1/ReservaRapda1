@@ -143,7 +143,7 @@ Todos os pagamentos são processados através da plataforma **EuPago**, que forn
 
 ### Variáveis Importantes:
 - `EUPAGO_API_KEY` - Chave de API para autenticação com o serviço EuPago
-- `EUPAGO_BASE_URL` - URL base para as chamadas à API EuPago (ex: https://sandbox.eupago.pt/api)
+- `EUPAGO_BASE_URL` - URL base para as chamadas à API EuPago (ex: https://sandbox.eupago.pt)
 - `EUPAGO_CARD_BASE_URL` - URL específica para pagamentos com cartão
 - `EUPAGO_SIMULATION` - Controla se o sistema está em modo de simulação ('true') ou real ('false')
 
