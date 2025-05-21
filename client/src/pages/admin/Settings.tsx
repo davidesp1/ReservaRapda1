@@ -157,6 +157,35 @@ const Settings: React.FC = () => {
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ['/api/settings'],
     enabled: isAuthenticated && isAdmin,
+    onSuccess: (data) => {
+      console.log("Configurações carregadas do servidor:", data);
+      
+      // Atualizar formulários com dados do servidor
+      if (data && data.payments) {
+        // Converter strings "true"/"false" para boolean
+        const paymentSettings = Object.entries(data.payments).reduce((acc, [key, value]) => {
+          if (value === 'true') acc[key] = true;
+          else if (value === 'false') acc[key] = false;
+          else acc[key] = value;
+          return acc;
+        }, {} as Record<string, any>);
+        
+        console.log("Configurações de pagamento formatadas:", paymentSettings);
+        paymentForm.reset(paymentSettings);
+      }
+      
+      if (data && data.general) {
+        generalForm.reset(data.general);
+      }
+      
+      if (data && data.reservations) {
+        reservationForm.reset(data.reservations);
+      }
+      
+      if (data && data.notifications) {
+        notificationForm.reset(data.notifications);
+      }
+    }
   });
 
   // Update general settings mutation
