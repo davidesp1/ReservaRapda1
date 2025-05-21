@@ -643,9 +643,8 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
       
       last7Days.push({ start: startOfDayStr, end: endOfDayStr });
       
-      // Nome do dia em português
-      const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-      dayLabels.push(weekdays[date.getDay()]);
+      // Usar apenas o índice do dia (0-6) e deixar o frontend tratar a tradução
+      dayLabels.push(date.getDay().toString());
     }
     
     // Buscar receita por dia
