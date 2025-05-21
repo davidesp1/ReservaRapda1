@@ -154,7 +154,7 @@ const Dashboard: React.FC = () => {
           <div>
             <p className="text-sm text-gray-500 font-medium">{t('TodayRevenue')}</p>
             <p className="text-2xl font-bold text-gray-800 mt-1">
-              {dashboardStats?.todayRevenue ? `€ ${dashboardStats.todayRevenue.toFixed(2)}` : '€ 0,00'}
+              {dashboardStats?.todayRevenue ? `€ ${dashboardStats.todayRevenue}` : '€ 0,00'}
             </p>
             <div className="flex items-center mt-2 text-sm">
               {dashboardStats?.revenueChange > 0 ? (
