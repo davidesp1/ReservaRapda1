@@ -332,11 +332,11 @@ const MenuManager: React.FC = () => {
 
   // Handle menu item form submission
   const onItemSubmit = (data: z.infer<typeof menuItemSchema>) => {
-    // Convertemos o valor do preço de euros para centavos (int)
+    // Enviamos o preço diretamente como está, sem multiplicar por 100
+    // A conversão para centavos é feita apenas no backend
     const formattedData = {
       ...data,
-      // Multiplicamos por 100 e convertemos para inteiro
-      price: Math.round(data.price * 100)
+      price: data.price // Enviamos o valor exato, sem multiplicar
     };
     
     if (editItem) {
