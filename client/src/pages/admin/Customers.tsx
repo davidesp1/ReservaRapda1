@@ -39,10 +39,10 @@ const Customers: React.FC = () => {
     return customers.filter((customer: any) => {
       const searchLower = searchText.toLowerCase();
       return (
-        customer.firstName.toLowerCase().includes(searchLower) ||
-        customer.lastName.toLowerCase().includes(searchLower) ||
-        customer.email.toLowerCase().includes(searchLower) ||
-        customer.username.toLowerCase().includes(searchLower)
+        (customer.first_name && customer.first_name.toLowerCase().includes(searchLower)) ||
+        (customer.last_name && customer.last_name.toLowerCase().includes(searchLower)) ||
+        (customer.email && customer.email.toLowerCase().includes(searchLower)) ||
+        (customer.username && customer.username.toLowerCase().includes(searchLower))
       );
     });
   }, [customers, searchText]);
@@ -111,7 +111,7 @@ const Customers: React.FC = () => {
                   filteredCustomers.map((customer: any) => (
                     <TableRow key={customer.id}>
                       <TableCell className="font-medium">
-                        {customer.firstName} {customer.lastName}
+                        {customer.first_name} {customer.last_name}
                       </TableCell>
                       <TableCell>{customer.email}</TableCell>
                       <TableCell>{customer.username}</TableCell>
@@ -150,7 +150,7 @@ const Customers: React.FC = () => {
           <DialogHeader>
             <DialogTitle>{t('CustomerDetails')}</DialogTitle>
             <DialogDescription>
-              {viewCustomerInfo ? `${viewCustomerInfo.firstName} ${viewCustomerInfo.lastName}` : ''}
+              {viewCustomerInfo ? `${viewCustomerInfo.first_name} ${viewCustomerInfo.last_name}` : ''}
             </DialogDescription>
           </DialogHeader>
           
@@ -159,11 +159,11 @@ const Customers: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">{t('FirstName')}</label>
-                  <p className="font-semibold">{viewCustomerInfo.firstName}</p>
+                  <p className="font-semibold">{viewCustomerInfo.first_name}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">{t('LastName')}</label>
-                  <p className="font-semibold">{viewCustomerInfo.lastName}</p>
+                  <p className="font-semibold">{viewCustomerInfo.last_name}</p>
                 </div>
               </div>
               
