@@ -734,12 +734,27 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
     const cashValue = settings.acceptCash === true;
     const apiKey = settings.eupagoApiKey || '';
     
-    // Novos campos adicionados
+    // Novos campos adicionados - forçar tipos corretos
     const currency = settings.currency || 'EUR';
-    const taxRate = parseFloat(settings.taxRate?.toString() || '23');
-    const requirePrepayment = settings.requirePrepayment === true;
-    const prepaymentAmount = parseFloat(settings.requirePrepaymentAmount?.toString() || '0');
-    const showPricesWithTax = settings.showPricesWithTax === true;
+    const taxRate = settings.taxRate !== undefined ? parseFloat(settings.taxRate.toString()) : 23;
+    
+    // Garante processamento explícito de valores booleanos para evitar problemas de tipo
+    let requirePrepayment;
+    if (settings.requirePrepayment === true) requirePrepayment = true;
+    else if (settings.requirePrepayment === false) requirePrepayment = false;
+    else if (settings.requirePrepayment === "true") requirePrepayment = true;
+    else if (settings.requirePrepayment === "false") requirePrepayment = false;
+    else requirePrepayment = false;
+    
+    const prepaymentAmount = settings.requirePrepaymentAmount !== undefined ? 
+                            parseFloat(settings.requirePrepaymentAmount.toString()) : 0;
+    
+    let showPricesWithTax;
+    if (settings.showPricesWithTax === true) showPricesWithTax = true;
+    else if (settings.showPricesWithTax === false) showPricesWithTax = false;
+    else if (settings.showPricesWithTax === "true") showPricesWithTax = true;
+    else if (settings.showPricesWithTax === "false") showPricesWithTax = false;
+    else showPricesWithTax = true;
     
     console.log("Valores convertidos para inserção:", {
       cardValue, mbwayValue, multibancoValue, bankTransferValue, cashValue, apiKey,
