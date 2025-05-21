@@ -6,8 +6,7 @@ import AdminLayout from '@/components/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -43,7 +42,6 @@ const Finance: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [methodFilter, setMethodFilter] = useState<string>('all');
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [pendingSettings, setPendingSettings] = useState<any>(null);
   const { toast } = useToast();
 
   // Fetch payments com atualização em tempo real
@@ -128,67 +126,7 @@ const Finance: React.FC = () => {
     return last30Days;
   }, [payments]);
 
-  // Buscar configurações de pagamento
-  const { data: paymentSettings } = useQuery<any>({
-    queryKey: ['/api/settings/payments'],
-    enabled: isAuthenticated && isAdmin,
-    refetchInterval: 30000, // Atualiza a cada 30 segundos
-    refetchIntervalInBackground: true,
-    onSuccess: (data) => {
-      if (!pendingSettings) {
-        setPendingSettings(data);
-      }
-    }
-  });
-  
-  // Mutation para atualizar as configurações de pagamento
-  const updatePaymentSettingsMutation = useMutation({
-    mutationFn: async (settings: any) => {
-      const response = await apiRequest('POST', '/api/settings/payments', settings);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/settings/payments'] });
-      toast({
-        title: t('SettingsSaved'),
-        description: t('PaymentSettingsUpdated'),
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: t('Error'),
-        description: error.message || t('FailedToSaveSettings'),
-        variant: "destructive",
-      });
-    }
-  });
-  
-  // Função para atualizar um método de pagamento específico
-  const handlePaymentMethodChange = (methodId: string, enabled: boolean) => {
-    if (!pendingSettings) return;
-    
-    const updatedSettings = { ...pendingSettings };
-    
-    switch (methodId) {
-      case 'card':
-        updatedSettings.acceptCard = enabled;
-        break;
-      case 'mbway':
-        updatedSettings.acceptMBWay = enabled;
-        break;
-      case 'multibanco':
-        updatedSettings.acceptMultibanco = enabled;
-        break;
-      case 'transfer':
-        updatedSettings.acceptBankTransfer = enabled;
-        break;
-      case 'cash':
-        updatedSettings.acceptCash = enabled;
-        break;
-    }
-    
-    setPendingSettings(updatedSettings);
-  };
+  // Nenhuma configuração de pagamento é necessária nesta página agora
 
   // Generate payment method distribution data
   const paymentsByMethod = React.useMemo(() => {
@@ -293,10 +231,9 @@ const Finance: React.FC = () => {
       />
 
       <Tabs defaultValue={currentTab} onValueChange={setCurrentTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 md:w-[600px]">
+        <TabsList className="grid w-full grid-cols-2 md:w-[500px]">
           <TabsTrigger value="payments">{t('Payments')}</TabsTrigger>
           <TabsTrigger value="analytics">{t('Analytics')}</TabsTrigger>
-          <TabsTrigger value="payment_settings">{t('PaymentSettings')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="payments">
@@ -481,75 +418,7 @@ const Finance: React.FC = () => {
           />
         </TabsContent>
 
-        <TabsContent value="payment_settings">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('PaymentSettings')}</CardTitle>
-              <CardDescription>{t('ManageAvailablePaymentMethods')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid gap-6">
-                  {[
-                    { id: 'card', name: t('CreditCard'), icon: 'credit-card' },
-                    { id: 'mbway', name: 'MBWay', icon: 'smartphone' },
-                    { id: 'multibanco', name: 'Multibanco', icon: 'bank' },
-                    { id: 'transfer', name: t('BankTransfer'), icon: 'arrows-right-left' },
-                    { id: 'cash', name: t('Cash'), icon: 'banknote' }
-                  ].map((method) => (
-                    <div key={method.id} className="flex items-center justify-between border p-4 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="bg-muted w-10 h-10 rounded-full flex items-center justify-center">
-                          <span className="text-muted-foreground">
-                            {method.icon === 'credit-card' && <CreditCard className="h-5 w-5" />}
-                            {method.icon === 'smartphone' && <Smartphone className="h-5 w-5" />}
-                            {method.icon === 'bank' && <Landmark className="h-5 w-5" />}
-                            {method.icon === 'arrows-right-left' && <ArrowLeftRight className="h-5 w-5" />}
-                            {method.icon === 'banknote' && <Banknote className="h-5 w-5" />}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium">{method.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {method.id === 'card' && t('ProcessedByStripe')}
-                            {method.id === 'mbway' && t('ProcessedByEuPago')}
-                            {method.id === 'multibanco' && t('ProcessedByEuPago')}
-                            {method.id === 'transfer' && t('ManualVerification')}
-                            {method.id === 'cash' && t('PaidAtRestaurant')}
-                          </p>
-                        </div>
-                      </div>
-                      <Switch 
-                        checked={pendingSettings ? 
-                          (method.id === 'card' ? pendingSettings.acceptCard : 
-                           method.id === 'mbway' ? pendingSettings.acceptMBWay :
-                           method.id === 'multibanco' ? pendingSettings.acceptMultibanco :
-                           method.id === 'transfer' ? pendingSettings.acceptBankTransfer :
-                           method.id === 'cash' ? pendingSettings.acceptCash : false) : false
-                        }
-                        onCheckedChange={(checked) => handlePaymentMethodChange(method.id, checked)}
-                        disabled={!pendingSettings || updatePaymentSettingsMutation.isPending}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="pt-6">
-                  <Button 
-                    className="w-full" 
-                    onClick={() => {
-                      if (pendingSettings) {
-                        updatePaymentSettingsMutation.mutate(pendingSettings);
-                      }
-                    }}
-                    disabled={!pendingSettings || updatePaymentSettingsMutation.isPending}
-                  >
-                    {updatePaymentSettingsMutation.isPending ? t('Saving') : t('SaveSettings')}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+
       </Tabs>
     </AdminLayout>
   );
