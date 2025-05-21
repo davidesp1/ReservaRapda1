@@ -6,9 +6,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useQuery } from '@tanstack/react-query';
-import { Search, UserPlus, Eye, Edit, Trash2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Search, UserPlus, Eye, Edit, Trash2, Key, Lock } from 'lucide-react';
 import AdminLayout from '@/components/layouts/AdminLayout';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from '@/components/ui/label';
+import { apiRequest } from '@/lib/queryClient';
+import { useForm } from 'react-hook-form';
 import {
   Table,
   TableBody,
@@ -25,6 +44,25 @@ const Customers: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [viewCustomerInfo, setViewCustomerInfo] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Form para edição de cliente
+  const form = useForm({
+    defaultValues: {
+      username: '',
+      email: '',
+      first_name: '',
+      last_name: '',
+      phone: '',
+      role: 'customer',
+      status: 'active',
+      password: '********' // Senha oculta
+    }
+  });
   
   // Fetch customers
   const { data: customers, isLoading: customersLoading } = useQuery<any>({
@@ -47,10 +85,80 @@ const Customers: React.FC = () => {
     });
   }, [customers, searchText]);
   
-  // Handle opening customer details modal
+  // Mutation para atualizar usuário
+  const updateUserMutation = useMutation({
+    mutationFn: async (userData: any) => {
+      const response = await apiRequest('PUT', `/api/users/${userData.id}`, userData);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao atualizar usuário');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: t('CustomerUpdated'),
+        description: t('CustomerUpdatedSuccessfully'),
+        variant: 'default',
+      });
+      setIsEditModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t('Error'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+  
+  // Abrir modal de visualização do cliente
   const handleViewCustomer = (customer: any) => {
     setViewCustomerInfo(customer);
     setIsViewModalOpen(true);
+  };
+  
+  // Abrir modal de edição do cliente
+  const handleEditCustomer = (customer: any) => {
+    setSelectedCustomer(customer);
+    form.reset({
+      username: customer.username,
+      email: customer.email,
+      first_name: customer.first_name,
+      last_name: customer.last_name,
+      phone: customer.phone || '',
+      role: customer.role || 'customer',
+      status: customer.status || 'active',
+      password: '********' // Senha oculta
+    });
+    setIsEditModalOpen(true);
+  };
+  
+  // Abrir modal de confirmação de exclusão
+  const handleDeleteConfirm = (customer: any) => {
+    setSelectedCustomer(customer);
+    setIsDeleteModalOpen(true);
+  };
+  
+  // Enviar o formulário de edição
+  const onSubmit = (data: any) => {
+    // Remover a senha do objeto se não foi alterada (continua sendo asteriscos)
+    if (data.password === '********') {
+      delete data.password;
+    }
+    
+    // Adicionar ID do cliente
+    const userData = {
+      ...data,
+      id: selectedCustomer.id,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      postalCode: selectedCustomer.postal_code,
+      loyaltyPoints: selectedCustomer.loyalty_points
+    };
+    
+    updateUserMutation.mutate(userData);
   };
   
   if (customersLoading) {
@@ -121,10 +229,10 @@ const Customers: React.FC = () => {
                           <Button variant="ghost" size="icon" onClick={() => handleViewCustomer(customer)}>
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" onClick={() => handleEditCustomer(customer)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteConfirm(customer)}>
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
@@ -200,8 +308,242 @@ const Customers: React.FC = () => {
             <Button variant="outline" onClick={() => setIsViewModalOpen(false)}>
               {t('Close')}
             </Button>
-            <Button>
+            <Button onClick={() => {
+              setIsViewModalOpen(false);
+              handleEditCustomer(viewCustomerInfo);
+            }}>
               <Edit className="mr-2 h-4 w-4" /> {t('EditCustomer')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Customer Dialog */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t('EditCustomer')}</DialogTitle>
+            <DialogDescription>
+              {selectedCustomer ? t('EditingCustomer', { name: `${selectedCustomer.first_name} ${selectedCustomer.last_name}` }) : ''}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="first_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('FirstName')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="last_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('LastName')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('Email')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('Username')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('Phone')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Role')}</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('SelectRole')} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="customer">{t('Customer')}</SelectItem>
+                          <SelectItem value="admin">{t('Administrator')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Status')}</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('SelectStatus')} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="active">{t('Active')}</SelectItem>
+                          <SelectItem value="inactive">{t('Inactive')}</SelectItem>
+                          <SelectItem value="banned">{t('Banned')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      {t('Password')}
+                      <Lock className="ml-2 h-4 w-4 text-gray-400" />
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        type="password" 
+                        className="font-mono"
+                      />
+                    </FormControl>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {t('LeavePasswordUnchangedHint')}
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter className="pt-4">
+                <Button 
+                  variant="outline" 
+                  type="button" 
+                  onClick={() => setIsEditModalOpen(false)}
+                >
+                  {t('Cancel')}
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={updateUserMutation.isPending}
+                  className="bg-brasil-green text-white hover:bg-brasil-green/90"
+                >
+                  {updateUserMutation.isPending ? t('Saving') : t('SaveChanges')}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-500">{t('ConfirmDeletion')}</DialogTitle>
+            <DialogDescription>
+              {selectedCustomer && t('DeleteCustomerConfirmation', { 
+                name: `${selectedCustomer.first_name} ${selectedCustomer.last_name}` 
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="pt-4 space-y-2">
+            <p className="text-sm text-gray-600">
+              {t('DeleteCustomerWarning')}
+            </p>
+            
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+              <div className="flex items-center text-amber-800">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 mr-2">
+                  <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm font-medium">{t('ThisActionCannotBeUndone')}</span>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter className="pt-4">
+            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+              {t('Cancel')}
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={() => {
+                // Implementação de exclusão
+                toast({
+                  title: t('NotImplemented'),
+                  description: t('FeatureNotImplementedYet'),
+                  variant: 'destructive',
+                });
+                setIsDeleteModalOpen(false);
+              }}
+            >
+              {t('DeleteCustomer')}
             </Button>
           </DialogFooter>
         </DialogContent>
