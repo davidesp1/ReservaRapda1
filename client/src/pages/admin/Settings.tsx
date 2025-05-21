@@ -732,6 +732,9 @@ const Settings: React.FC = () => {
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
                             <FormLabel>{t('AcceptCard')}</FormLabel>
+                            <FormDescription>
+                              {t('ProcessedByEuPago')}
+                            </FormDescription>
                           </div>
                           <FormControl>
                             <Switch
@@ -745,11 +748,78 @@ const Settings: React.FC = () => {
 
                     <FormField
                       control={paymentForm.control}
-                      name="acceptDebitCards"
+                      name="acceptMBWay"
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
-                            <FormLabel>{t('AcceptDebitCards')}</FormLabel>
+                            <FormLabel>{t('AcceptMBWay')}</FormLabel>
+                            <FormDescription>
+                              {t('ProcessedByEuPago')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={paymentForm.control}
+                      name="acceptMultibanco"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-0.5">
+                            <FormLabel>{t('AcceptMultibanco')}</FormLabel>
+                            <FormDescription>
+                              {t('ProcessedByEuPago')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={paymentForm.control}
+                      name="acceptBankTransfer"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-0.5">
+                            <FormLabel>{t('AcceptBankTransfer')}</FormLabel>
+                            <FormDescription>
+                              {t('ManualVerification')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={paymentForm.control}
+                      name="acceptCash"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-0.5">
+                            <FormLabel>{t('AcceptCash')}</FormLabel>
+                            <FormDescription>
+                              {t('PaidAtRestaurant')}
+                            </FormDescription>
+                            <p className="text-xs text-amber-600">{t('OnlyVisibleToAdmin')}</p>
                           </div>
                           <FormControl>
                             <Switch
