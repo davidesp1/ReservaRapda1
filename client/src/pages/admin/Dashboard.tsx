@@ -45,9 +45,17 @@ const Dashboard: React.FC = () => {
         salesChartInstance = new Chart(salesCtx, {
           type: 'bar',
           data: {
-            labels: dashboardStats?.salesData?.labels || ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+            labels: dashboardStats?.salesData?.labels || [
+              t('Monday_Short'), 
+              t('Tuesday_Short'), 
+              t('Wednesday_Short'), 
+              t('Thursday_Short'), 
+              t('Friday_Short'), 
+              t('Saturday_Short'), 
+              t('Sunday_Short')
+            ],
             datasets: [{
-              label: 'Faturamento (€)',
+              label: t('Revenue_Currency'),
               data: dashboardStats?.salesData?.values || [0, 0, 0, 0, 0, 0, 0],
               backgroundColor: '#002776', // Brazil Blue
               borderWidth: 0,
@@ -84,7 +92,12 @@ const Dashboard: React.FC = () => {
         categoryChartInstance = new Chart(categoryCtx, {
           type: 'doughnut',
           data: {
-            labels: dashboardStats?.categoryData?.labels || ['Pratos Principais', 'Bebidas', 'Sobremesas', 'Entradas'],
+            labels: dashboardStats?.categoryData?.labels || [
+              t('MainDishes'), 
+              t('Drinks'), 
+              t('Desserts'), 
+              t('Appetizers')
+            ],
             datasets: [{
               data: dashboardStats?.categoryData?.values || [0, 0, 0, 0],
               backgroundColor: [
