@@ -606,39 +606,49 @@ router.post('/api/pos/orders', async (req, res) => {
       paymentMethod = 'cash'; // Temporariamente, tratamos Multibanco TPA como dinheiro
     }
     
+    // Variável para armazenar o registro de pagamento
+    let paymentResult = null;
+    
     try {
       // Estrutura correta seguindo exatamente o esquema da tabela 'payments'
-      const paymentRecord = await drizzleDb.insert(schema.payments).values({
-        userId: 1, // ID fixo do admin por enquanto (pode ser alterado para o usuário real quando tiver login)
-        reservationId: null, // Pagamentos de POS não estão associados a reservas
-        amount: Number(calculatedTotal), // Garantir que o valor seja um número
-        method: paymentMethod === 'card' ? 'card' : 
-                paymentMethod === 'mbway' ? 'mbway' : 
-                paymentMethod === 'multibanco' ? 'multibanco' : 
-                paymentMethod === 'transfer' ? 'transfer' : 'cash',
-        status: 'completed',
+      // Convertendo o valor para centavos (inteiro)
+      const amountInCents = Math.round(Number(calculatedTotal) * 100);
+      
+      // Convertendo para método de pagamento válido conforme o enum
+      const normalizedPaymentMethod = 
+        paymentMethod === 'card' ? 'card' : 
+        paymentMethod === 'mbway' ? 'mbway' : 
+        paymentMethod === 'multibanco' ? 'multibanco' : 
+        paymentMethod === 'transfer' ? 'transfer' : 'cash';
+      
+      // Inserção com os campos exatos do schema
+      const posPayment = await drizzleDb.insert(schema.payments).values({
+        userId: 1, // ID fixo do admin por enquanto
+        amount: amountInCents, // Valor em centavos
+        method: normalizedPaymentMethod, 
+        status: 'completed', // POS sempre completa o pagamento imediatamente
         reference: `POS-${newOrder[0].id}`,
         transactionId: `POS-${Date.now()}`,
         paymentDate: new Date(),
         details: {
-          orderType: 'pos',
-          orderId: newOrder[0].id,
-          itemCount: validatedItems.length,
-          originalMethod: orderData.paymentMethod
+          entity: "POS",
+          reference: `Order-${newOrder[0].id}`,
+          status: "completed",
         }
       }).returning();
       
-      console.log('Pagamento registrado com sucesso:', paymentRecord);
+      paymentResult = posPayment[0];
+      console.log('Pagamento registrado com sucesso:', posPayment);
     } catch (error) {
       // Registrar o erro mas permitir que a operação continue
       console.error('Erro ao registrar pagamento na tabela payments:', error);
       // Não rejeitar a requisição aqui para não impedir a criação do pedido
     }
     
-    // Retornar o pedido e o pagamento associado
+    // Retornar o pedido e o pagamento associado (se existir)
     res.status(201).json({
       order: newOrder[0],
-      payment: paymentRecord[0]
+      payment: paymentResult
     });
   } catch (error: any) {
     console.error('Erro ao criar pedido POS:', error);
