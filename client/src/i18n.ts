@@ -364,9 +364,7 @@ const resources = {
       SettingsSaveError: "Erro ao salvar configurações",
       SettingsSaveErrorDescription: "Houve um erro ao salvar as configurações de pagamento",
       Saving: "Salvando...",
-      ProcessedByEuPago: "Processado pelo EuPago",
-      ManualVerification: "Verificação manual necessária",
-      PaidAtRestaurant: "Pago no restaurante",
+
       OnlyVisibleToAdmin: "Visível apenas para administradores e no POS",
       CashPaymentVisibleOnlyToAdmin: "Pagamentos em dinheiro são visíveis apenas para administradores e no modo POS, nunca expostos como opção ao cliente.",
       ImportantNote: "Nota Importante",
