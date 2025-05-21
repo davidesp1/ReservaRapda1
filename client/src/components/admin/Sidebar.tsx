@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { 
   FaUtensils, FaChartLine, FaUsers, FaBookOpen, 
   FaChair, FaCoins, FaCreditCard, FaCalendarCheck, 
-  FaCog, FaSignOutAlt, FaBars, FaTimes
+  FaCog, FaSignOutAlt, FaBars, FaTimes, FaCashRegister
 } from 'react-icons/fa';
 
 interface SidebarProps {
@@ -56,6 +56,11 @@ const AdminSidebar: React.FC<SidebarProps> = ({ isMobile = false, onClose }) => 
       path: '/admin/reservations',
       label: t('Reservations'),
       icon: <FaCalendarCheck className="w-6 text-brasil-yellow" />
+    },
+    {
+      path: '/admin/pos',
+      label: t('POS'),
+      icon: <FaCashRegister className="w-6 text-brasil-yellow" />
     },
     {
       path: '/admin/settings',
