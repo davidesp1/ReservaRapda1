@@ -45,15 +45,28 @@ const Dashboard: React.FC = () => {
         salesChartInstance = new Chart(salesCtx, {
           type: 'bar',
           data: {
-            labels: dashboardStats?.salesData?.labels || [
-              t('Monday_Short'), 
-              t('Tuesday_Short'), 
-              t('Wednesday_Short'), 
-              t('Thursday_Short'), 
-              t('Friday_Short'), 
-              t('Saturday_Short'), 
-              t('Sunday_Short')
-            ],
+            labels: dashboardStats?.salesData?.labels 
+              ? dashboardStats.salesData.labels.map((dayIndex: string) => {
+                  const weekdayMap: {[key: string]: string} = {
+                    '0': t('Sunday_Short'),
+                    '1': t('Monday_Short'),
+                    '2': t('Tuesday_Short'),
+                    '3': t('Wednesday_Short'),
+                    '4': t('Thursday_Short'),
+                    '5': t('Friday_Short'),
+                    '6': t('Saturday_Short')
+                  };
+                  return weekdayMap[dayIndex] || dayIndex;
+                })
+              : [
+                  t('Monday_Short'), 
+                  t('Tuesday_Short'), 
+                  t('Wednesday_Short'), 
+                  t('Thursday_Short'), 
+                  t('Friday_Short'), 
+                  t('Saturday_Short'), 
+                  t('Sunday_Short')
+                ],
             datasets: [{
               label: t('Revenue_Currency'),
               data: dashboardStats?.salesData?.values || [0, 0, 0, 0, 0, 0, 0],
