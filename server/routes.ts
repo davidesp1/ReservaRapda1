@@ -661,6 +661,7 @@ router.get("/api/settings/payments", async (req, res) => {
         acceptMultibanco: true,
         acceptBankTransfer: true,
         acceptCash: true,
+        acceptMultibancoTPA: true,
         eupagoApiKey: '',
         requirePrepayment: false,
         requirePrepaymentAmount: 0,
@@ -684,6 +685,7 @@ router.get("/api/settings/payments", async (req, res) => {
       // Métodos independentes da API key
       acceptBankTransfer: paymentSetting.enable_bank_transfer,
       acceptCash: paymentSetting.enable_cash,
+      acceptMultibancoTPA: paymentSetting.enable_multibanco_tpa,
       
       // Outras configurações
       eupagoApiKey: paymentSetting.eupago_api_key || '',
@@ -751,6 +753,7 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
     // Métodos que não dependem da API key do EuPago
     const bankTransferValue = settings.acceptBankTransfer === true;
     const cashValue = settings.acceptCash === true;
+    const multibancoTPAValue = settings.acceptMultibancoTPA === true;
     
     // Novos campos adicionados - forçar tipos corretos
     const currency = settings.currency || 'EUR';
@@ -791,6 +794,7 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
           enable_multibanco = ${multibancoValue},
           enable_bank_transfer = ${bankTransferValue},
           enable_cash = ${cashValue},
+          enable_multibanco_tpa = ${multibancoTPAValue},
           eupago_api_key = ${apiKey},
           currency = ${currency},
           tax_rate = ${taxRate},
