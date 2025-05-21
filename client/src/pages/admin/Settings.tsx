@@ -901,26 +901,6 @@ const Settings: React.FC = () => {
                         )}
                       />
 
-                      <FormField
-                        control={paymentForm.control}
-                        name="requirePrepayment"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                            <div className="space-y-0.5">
-                              <FormLabel>{t('RequirePrepayment')}</FormLabel>
-                              <FormDescription>
-                                {t('RequirePrepaymentsForReservations')}
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
                     </div>
                   </div>
 
