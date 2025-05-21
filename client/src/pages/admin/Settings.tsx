@@ -159,15 +159,25 @@ const Settings: React.FC = () => {
     enabled: isAuthenticated && isAdmin
   });
   
+  // Definir o tipo correto para o objeto de configurações
+  interface SettingsType {
+    payments?: Record<string, string>;
+    general?: Record<string, string>;
+    reservations?: Record<string, string>;
+    notifications?: Record<string, string>;
+  }
+
   // Atualizar formulários quando os dados são carregados
   useEffect(() => {
     if (settings) {
       console.log("Configurações carregadas do servidor:", settings);
       
+      const typedSettings = settings as SettingsType;
+      
       // Atualizar formulário de pagamentos
-      if (settings.payments) {
+      if (typedSettings.payments) {
         // Converter strings "true"/"false" para boolean
-        const paymentSettings = Object.entries(settings.payments).reduce((acc, [key, value]) => {
+        const paymentSettings = Object.entries(typedSettings.payments).reduce((acc, [key, value]) => {
           if (value === 'true') acc[key] = true;
           else if (value === 'false') acc[key] = false;
           else acc[key] = value;
@@ -179,16 +189,16 @@ const Settings: React.FC = () => {
       }
       
       // Atualizar outros formulários
-      if (settings.general) {
-        generalForm.reset(settings.general);
+      if (typedSettings.general) {
+        generalForm.reset(typedSettings.general as Record<string, any>);
       }
       
-      if (settings.reservations) {
-        reservationForm.reset(settings.reservations);
+      if (typedSettings.reservations) {
+        reservationForm.reset(typedSettings.reservations as Record<string, any>);
       }
       
-      if (settings.notifications) {
-        notificationForm.reset(settings.notifications);
+      if (typedSettings.notifications) {
+        notificationForm.reset(typedSettings.notifications as Record<string, any>);
       }
     }
   }, [settings, generalForm, reservationForm, paymentForm, notificationForm]);
@@ -294,7 +304,20 @@ const Settings: React.FC = () => {
   };
 
   const onPaymentSubmit = (data: z.infer<typeof paymentSettingsSchema>) => {
-    updatePaymentSettingsMutation.mutate(data);
+    console.log("Enviando configurações de pagamento:", data);
+    // Garantir que os valores booleanos sejam enviados corretamente
+    const paymentSettings = {
+      ...data,
+      acceptCard: Boolean(data.acceptCard),
+      acceptMBWay: Boolean(data.acceptMBWay),
+      acceptMultibanco: Boolean(data.acceptMultibanco),
+      acceptBankTransfer: Boolean(data.acceptBankTransfer),
+      acceptCash: Boolean(data.acceptCash),
+      requirePrepayment: Boolean(data.requirePrepayment),
+      showPricesWithTax: Boolean(data.showPricesWithTax)
+    };
+    console.log("Configurações de pagamento formatadas para envio:", paymentSettings);
+    updatePaymentSettingsMutation.mutate(paymentSettings);
   };
 
   const onNotificationSubmit = (data: z.infer<typeof notificationSettingsSchema>) => {

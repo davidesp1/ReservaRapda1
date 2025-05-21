@@ -686,31 +686,56 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
       return res.status(403).json({ message: "Apenas administradores podem alterar configurações" });
     }
     
+    // Log detalhado das configurações recebidas
+    console.log("Recebendo configurações de pagamento:", JSON.stringify(settings, null, 2));
+    
+    // Lista de opções booleanas que sabemos que devem existir
+    const booleanOptions = [
+      'acceptCard', 
+      'acceptMBWay', 
+      'acceptMultibanco', 
+      'acceptBankTransfer', 
+      'acceptCash', 
+      'requirePrepayment', 
+      'showPricesWithTax'
+    ];
+    
+    // Garantir que todas as opções booleanas estejam presentes
+    for (const option of booleanOptions) {
+      if (settings[option] === undefined) {
+        console.log(`Opção ${option} não encontrada, definindo como false por padrão`);
+        settings[option] = false;
+      }
+    }
+    
     // Processar cada configuração
     const results = [];
     
-    console.log("Atualizando configurações de pagamento:", settings);
+    console.log("Processando configurações de pagamento:", JSON.stringify(settings, null, 2));
     
+    // Processar cada configuração em sequência para evitar problemas de concorrência
     for (const [key, value] of Object.entries(settings)) {
-      // Converter booleanos para string para armazenamento no banco
-      const stringValue = typeof value === 'boolean' ? String(value) : String(value);
-      
-      console.log(`Processando configuração: ${key} = ${stringValue}`);
-      
-      // Verificar se a configuração já existe
-      const existingSetting = await drizzleDb.select()
-        .from(schema.settings)
-        .where(and(
-          eq(schema.settings.category, 'payments'),
-          eq(schema.settings.key, key)
-        ))
-        .limit(1);
-      
       try {
+        // Converter para o formato correto para armazenamento
+        const stringValue = typeof value === 'boolean' ? String(value) : String(value);
+        
+        console.log(`Processando configuração: ${key} = ${stringValue} (tipo: ${typeof value})`);
+        
+        // Verificar se a configuração já existe
+        const existingSetting = await drizzleDb.select()
+          .from(schema.settings)
+          .where(and(
+            eq(schema.settings.category, 'payments'),
+            eq(schema.settings.key, key)
+          ))
+          .limit(1);
+        
+        let result;
+        
         if (existingSetting.length > 0) {
           // Atualizar configuração existente
           console.log(`Atualizando configuração existente: ${key}`);
-          const updated = await drizzleDb
+          result = await drizzleDb
             .update(schema.settings)
             .set({ 
               value: stringValue,
@@ -718,12 +743,10 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
             })
             .where(eq(schema.settings.id, existingSetting[0].id))
             .returning();
-          
-          results.push(updated[0]);
         } else {
           // Criar nova configuração
           console.log(`Criando nova configuração: ${key}`);
-          const inserted = await drizzleDb
+          result = await drizzleDb
             .insert(schema.settings)
             .values({
               category: 'payments',
@@ -731,16 +754,29 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
               value: stringValue,
             })
             .returning();
-          
-          results.push(inserted[0]);
+        }
+        
+        if (result && result.length > 0) {
+          results.push(result[0]);
         }
       } catch (error) {
         console.error(`Erro ao processar configuração ${key}:`, error);
-        throw error;
+        // Continuar com as outras configurações mesmo se uma falhar
       }
     }
     
-    res.json({ message: "Configurações de pagamento atualizadas com sucesso", settings: results });
+    // Verificar banco de dados após as atualizações
+    const updatedSettings = await drizzleDb.select()
+      .from(schema.settings)
+      .where(eq(schema.settings.category, 'payments'));
+    
+    console.log("Configurações após atualização:", updatedSettings);
+    
+    res.json({ 
+      message: "Configurações de pagamento atualizadas com sucesso", 
+      settings: results,
+      currentSettings: updatedSettings
+    });
   } catch (err: any) {
     console.error("Erro ao atualizar configurações de pagamento:", err);
     res.status(500).json({ error: err.message });
