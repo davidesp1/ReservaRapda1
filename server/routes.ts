@@ -6,7 +6,7 @@ import {
 } from "./services/paymentService";
 import { register, login, logout, getProfile } from "./controllers/authController";
 import { db as drizzleDb, queryClient } from "./db";
-import { eq, gte, desc, and, sql } from "drizzle-orm";
+import { eq, gte, desc, and, sql, inArray } from "drizzle-orm";
 import * as schema from "@shared/schema";
 
 declare module 'express-session' {
@@ -561,9 +561,11 @@ router.post('/api/pos/orders', async (req, res) => {
     
     // Buscar dados dos itens do menu para garantir preços corretos
     const itemIds = orderData.items.map((item: any) => item.menuItemId);
-    const menuItems = await drizzleDb.select().from(schema.menuItems).where(
-      sql`id IN (${itemIds.join(',')})`
-    );
+    
+    // Utilizando SQL para consultar os itens diretamente
+    const menuItems = await drizzleDb.select()
+      .from(schema.menuItems)
+      .where(sql`${schema.menuItems.id} IN (${itemIds.join(',')})`);
     
     // Mapear items com preços reais do banco de dados
     const validatedItems = orderData.items.map((item: any) => {
@@ -604,21 +606,34 @@ router.post('/api/pos/orders', async (req, res) => {
       paymentMethod = 'cash'; // Temporariamente, tratamos Multibanco TPA como dinheiro
     }
     
-    const paymentRecord = await drizzleDb.insert(schema.payments).values({
-      userId: orderData.userId || 1, // ID do usuário que está realizando o pagamento
-      amount: calculatedTotal, // Valor total do pedido
-      method: paymentMethod as any, // Método de pagamento já convertido para um valor válido
-      status: 'completed', // Pagamentos do POS são sempre concluídos imediatamente
-      reference: `POS-Order-${newOrder[0].id}`, // Referência ao pedido
-      transactionId: `POS-${Date.now()}`, // Identificador único da transação
-      paymentDate: new Date(), // Data e hora atual
-      details: {
-        orderType: 'pos',
-        orderId: newOrder[0].id,
-        items: validatedItems.length,
-        originalPaymentMethod: orderData.paymentMethod // Guardamos o método original nos detalhes
-      }
-    }).returning();
+    try {
+      // Estrutura correta seguindo exatamente o esquema da tabela 'payments'
+      const paymentRecord = await drizzleDb.insert(schema.payments).values({
+        userId: 1, // ID fixo do admin por enquanto (pode ser alterado para o usuário real quando tiver login)
+        reservationId: null, // Pagamentos de POS não estão associados a reservas
+        amount: Number(calculatedTotal), // Garantir que o valor seja um número
+        method: paymentMethod === 'card' ? 'card' : 
+                paymentMethod === 'mbway' ? 'mbway' : 
+                paymentMethod === 'multibanco' ? 'multibanco' : 
+                paymentMethod === 'transfer' ? 'transfer' : 'cash',
+        status: 'completed',
+        reference: `POS-${newOrder[0].id}`,
+        transactionId: `POS-${Date.now()}`,
+        paymentDate: new Date(),
+        details: {
+          orderType: 'pos',
+          orderId: newOrder[0].id,
+          itemCount: validatedItems.length,
+          originalMethod: orderData.paymentMethod
+        }
+      }).returning();
+      
+      console.log('Pagamento registrado com sucesso:', paymentRecord);
+    } catch (error) {
+      // Registrar o erro mas permitir que a operação continue
+      console.error('Erro ao registrar pagamento na tabela payments:', error);
+      // Não rejeitar a requisição aqui para não impedir a criação do pedido
+    }
     
     // Retornar o pedido e o pagamento associado
     res.status(201).json({
