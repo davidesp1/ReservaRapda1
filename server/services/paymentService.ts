@@ -74,7 +74,7 @@ export class PaymentService {
     try {
       let details: any = null;
       let reference: string | null = null;
-      let status = "pending";
+      let status: "pending" | "completed" | "failed" | "refunded" | null = "pending";
       
       // Para pagamentos em dinheiro, não precisamos processar pelo gateway
       if (method === "cash") {
@@ -123,7 +123,7 @@ export class PaymentService {
         userId,
         reservationId: reservationId || null,
         reference,
-        status,
+        status: status as "pending" | "completed" | "failed" | "refunded" | null,
         details
       });
 

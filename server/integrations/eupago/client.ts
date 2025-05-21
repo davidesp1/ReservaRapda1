@@ -192,11 +192,14 @@ export class EuPagoClient {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as { message: string };
         throw new Error(errorData.message || "Erro ao criar pagamento com cartão");
       }
 
-      const data = await response.json();
+      const data = await response.json() as { 
+        paymentUrl: string; 
+        status: string;
+      };
       return {
         paymentUrl: data.paymentUrl,
         status: data.status
@@ -241,7 +244,7 @@ export class EuPagoClient {
         return "error";
       }
 
-      const data = await response.json();
+      const data = await response.json() as { status: string };
       return data.status;
     } catch (error) {
       console.error("Erro ao verificar estado do pagamento:", error);

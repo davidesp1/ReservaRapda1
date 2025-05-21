@@ -38,7 +38,7 @@ export default function PaymentSettings() {
 
   // Query to fetch payment settings
   const { data: paymentSettings, isLoading } = useQuery({
-    queryKey: ["/api/payment-settings"],
+    queryKey: ["/api/settings/payment"],
     onSuccess: (data) => {
       if (data) {
         setEupagoApiKey(data.eupagoApiKey || "");
@@ -60,7 +60,7 @@ export default function PaymentSettings() {
   // Mutation to update payment settings
   const updateSettingsMutation = useMutation({
     mutationFn: async (settings: any) => {
-      const response = await apiRequest("POST", "/api/payment-settings", settings);
+      const response = await apiRequest("POST", "/api/settings/payment", settings);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Falha ao atualizar configurações");
@@ -72,7 +72,7 @@ export default function PaymentSettings() {
         title: t('paymentSettings.saveSuccess'),
         description: t('paymentSettings.settingsSaved'),
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/payment-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/payment"] });
     },
     onError: (error: Error) => {
       toast({
