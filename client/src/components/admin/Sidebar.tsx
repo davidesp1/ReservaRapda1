@@ -53,11 +53,7 @@ const AdminSidebar: React.FC<SidebarProps> = ({ isMobile = false, onClose }) => 
       label: t('Finance'),
       icon: <FaCoins className="w-6 text-brasil-yellow" />
     },
-    {
-      path: '/admin/payment-settings',
-      label: t('PaymentSettings'),
-      icon: <FaMoneyBillWave className="w-6 text-brasil-yellow" />
-    },
+
     {
       path: '/admin/pos',
       label: t('Modo POS'),
