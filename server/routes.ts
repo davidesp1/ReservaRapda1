@@ -77,7 +77,7 @@ router.get("/api/tables/available", async (req, res) => {
 
 // As rotas de pagamento estão implementadas abaixo
 
-// Rota para categorias do menu
+// Rotas para categorias do menu
 router.get("/api/menu-categories", async (req, res) => {
   try {
     const categories = await queryClient`
@@ -88,6 +88,89 @@ router.get("/api/menu-categories", async (req, res) => {
     res.json(categories);
   } catch (err: any) {
     console.error("Erro ao buscar categorias do menu:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Adicionar categoria
+router.post("/api/menu-categories", isAuthenticated, async (req, res) => {
+  try {
+    const { name, description } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: "Nome da categoria é obrigatório" });
+    }
+    
+    const result = await queryClient`
+      INSERT INTO menu_categories (name, description)
+      VALUES (${name}, ${description || null})
+      RETURNING *
+    `;
+    
+    res.status(201).json(result[0]);
+  } catch (err: any) {
+    console.error("Erro ao criar categoria:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Atualizar categoria
+router.put("/api/menu-categories/:id", isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: "Nome da categoria é obrigatório" });
+    }
+    
+    const result = await queryClient`
+      UPDATE menu_categories
+      SET name = ${name}, description = ${description || null}
+      WHERE id = ${parseInt(id)}
+      RETURNING *
+    `;
+    
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Categoria não encontrada" });
+    }
+    
+    res.json(result[0]);
+  } catch (err: any) {
+    console.error("Erro ao atualizar categoria:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Excluir categoria
+router.delete("/api/menu-categories/:id", isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Verificar se existem itens associados a esta categoria
+    const items = await queryClient`
+      SELECT COUNT(*) as count FROM menu_items WHERE category_id = ${parseInt(id)}
+    `;
+    
+    if (items[0].count > 0) {
+      return res.status(400).json({ 
+        error: "Não é possível excluir a categoria pois existem itens associados a ela" 
+      });
+    }
+    
+    const result = await queryClient`
+      DELETE FROM menu_categories
+      WHERE id = ${parseInt(id)}
+      RETURNING *
+    `;
+    
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Categoria não encontrada" });
+    }
+    
+    res.json({ success: true, message: "Categoria excluída com sucesso" });
+  } catch (err: any) {
+    console.error("Erro ao excluir categoria:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -116,6 +199,148 @@ router.get("/api/menu-items", async (req, res) => {
     res.json(menuByCategory);
   } catch (err: any) {
     console.error("Erro ao buscar itens do menu:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Buscar item do menu por ID
+router.get("/api/menu-items/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await queryClient`
+      SELECT mi.*, mc.name as category_name
+      FROM menu_items mi
+      JOIN menu_categories mc ON mi.category_id = mc.id
+      WHERE mi.id = ${parseInt(id)}
+    `;
+    
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Item não encontrado" });
+    }
+    
+    res.json(result[0]);
+  } catch (err: any) {
+    console.error("Erro ao buscar item do menu:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Adicionar item do menu
+router.post("/api/menu-items", isAuthenticated, async (req, res) => {
+  try {
+    const { name, description, price, categoryId, featured, imageUrl } = req.body;
+    
+    if (!name || !categoryId || price === undefined) {
+      return res.status(400).json({ error: "Nome, categoria e preço são obrigatórios" });
+    }
+    
+    // Verificar se a categoria existe
+    const categoryCheck = await queryClient`
+      SELECT * FROM menu_categories WHERE id = ${parseInt(categoryId)}
+    `;
+    
+    if (categoryCheck.length === 0) {
+      return res.status(400).json({ error: "Categoria não encontrada" });
+    }
+    
+    const result = await queryClient`
+      INSERT INTO menu_items (name, description, price, category_id, featured, image_url)
+      VALUES (
+        ${name}, 
+        ${description || null}, 
+        ${parseInt(price)}, 
+        ${parseInt(categoryId)}, 
+        ${featured || false}, 
+        ${imageUrl || null}
+      )
+      RETURNING *
+    `;
+    
+    res.status(201).json(result[0]);
+  } catch (err: any) {
+    console.error("Erro ao criar item do menu:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Atualizar item do menu
+router.put("/api/menu-items/:id", isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, price, categoryId, featured, imageUrl } = req.body;
+    
+    if (!name || !categoryId || price === undefined) {
+      return res.status(400).json({ error: "Nome, categoria e preço são obrigatórios" });
+    }
+    
+    // Verificar se a categoria existe
+    const categoryCheck = await queryClient`
+      SELECT * FROM menu_categories WHERE id = ${parseInt(categoryId)}
+    `;
+    
+    if (categoryCheck.length === 0) {
+      return res.status(400).json({ error: "Categoria não encontrada" });
+    }
+    
+    const result = await queryClient`
+      UPDATE menu_items
+      SET 
+        name = ${name},
+        description = ${description || null},
+        price = ${parseInt(price)},
+        category_id = ${parseInt(categoryId)},
+        featured = ${featured || false},
+        image_url = ${imageUrl || null}
+      WHERE id = ${parseInt(id)}
+      RETURNING *
+    `;
+    
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Item não encontrado" });
+    }
+    
+    res.json(result[0]);
+  } catch (err: any) {
+    console.error("Erro ao atualizar item do menu:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Excluir item do menu
+router.delete("/api/menu-items/:id", isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Verificar se o item existe antes de excluir
+    const itemCheck = await queryClient`
+      SELECT * FROM menu_items WHERE id = ${parseInt(id)}
+    `;
+    
+    if (itemCheck.length === 0) {
+      return res.status(404).json({ error: "Item não encontrado" });
+    }
+    
+    // Verificar se o item está sendo usado em pedidos
+    const orderItemsCheck = await queryClient`
+      SELECT COUNT(*) as count FROM order_items WHERE menu_item_id = ${parseInt(id)}
+    `;
+    
+    if (orderItemsCheck[0].count > 0) {
+      return res.status(400).json({ 
+        error: "Não é possível excluir o item pois ele está sendo usado em pedidos" 
+      });
+    }
+    
+    const result = await queryClient`
+      DELETE FROM menu_items
+      WHERE id = ${parseInt(id)}
+      RETURNING *
+    `;
+    
+    res.json({ success: true, message: "Item excluído com sucesso" });
+  } catch (err: any) {
+    console.error("Erro ao excluir item do menu:", err);
     res.status(500).json({ error: err.message });
   }
 });
