@@ -143,7 +143,7 @@ const MenuManager: React.FC = () => {
     return menuItems.filter((item: any) => {
       const searchLower = searchText.toLowerCase();
       const matchesSearch = 
-        item.name.toLowerCase().includes(searchLower) ||
+        (item.name && item.name.toLowerCase().includes(searchLower)) ||
         (item.description && item.description.toLowerCase().includes(searchLower));
       
       const matchesCategory = currentCategoryId === null || currentCategoryId === "all" || 
