@@ -32,6 +32,111 @@ router.post("/api/auth/login", login);
 router.post("/api/auth/logout", logout);
 router.get("/api/auth/me", getProfile);
 
+// Rotas para gerenciamento de usuários/clientes
+router.get("/api/users", isAuthenticated, async (req, res) => {
+  try {
+    const users = await queryClient`
+      SELECT id, username, email, first_name, last_name, phone, role, status, 
+             loyalty_points, member_since, last_login
+      FROM users
+      ORDER BY last_name, first_name
+    `;
+    
+    res.json(users);
+  } catch (err: any) {
+    console.error("Erro ao buscar usuários:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Buscar usuário por ID
+router.get("/api/users/:id", isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await queryClient`
+      SELECT id, username, email, first_name, last_name, phone, address, 
+             city, postal_code, country, birth_date, profile_picture, 
+             biography, role, preferences, member_since, last_login, 
+             status, loyalty_points
+      FROM users
+      WHERE id = ${parseInt(id)}
+    `;
+    
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+    
+    // Por segurança, não retornar a senha
+    res.json(result[0]);
+  } catch (err: any) {
+    console.error("Erro ao buscar usuário:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Atualizar usuário
+router.put("/api/users/:id", isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      username, email, firstName, lastName, phone, address, city, 
+      postalCode, country, role, status, loyaltyPoints 
+    } = req.body;
+    
+    // Verificar campos obrigatórios
+    if (!username || !email || !firstName || !lastName) {
+      return res.status(400).json({ error: "Campos obrigatórios não preenchidos" });
+    }
+    
+    // Verificar se o email já está sendo usado (exceto pelo próprio usuário)
+    const emailCheck = await queryClient`
+      SELECT id FROM users WHERE email = ${email} AND id != ${parseInt(id)}
+    `;
+    
+    if (emailCheck.length > 0) {
+      return res.status(400).json({ error: "E-mail já está sendo usado por outro usuário" });
+    }
+    
+    // Verificar se o username já está sendo usado (exceto pelo próprio usuário)
+    const usernameCheck = await queryClient`
+      SELECT id FROM users WHERE username = ${username} AND id != ${parseInt(id)}
+    `;
+    
+    if (usernameCheck.length > 0) {
+      return res.status(400).json({ error: "Nome de usuário já está sendo usado" });
+    }
+    
+    const result = await queryClient`
+      UPDATE users
+      SET 
+        username = ${username},
+        email = ${email},
+        first_name = ${firstName},
+        last_name = ${lastName},
+        phone = ${phone || null},
+        address = ${address || null},
+        city = ${city || null},
+        postal_code = ${postalCode || null},
+        country = ${country || null},
+        role = ${role || 'customer'},
+        status = ${status || 'active'},
+        loyalty_points = ${loyaltyPoints || 0}
+      WHERE id = ${parseInt(id)}
+      RETURNING id, username, email, first_name, last_name, phone, role, status, loyalty_points
+    `;
+    
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+    
+    res.json(result[0]);
+  } catch (err: any) {
+    console.error("Erro ao atualizar usuário:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Rotas de mesas usando queryClient para SQL direto
 router.get("/api/tables", async (req, res) => {
   try {
