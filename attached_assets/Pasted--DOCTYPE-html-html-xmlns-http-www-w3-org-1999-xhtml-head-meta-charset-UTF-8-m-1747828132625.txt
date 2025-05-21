@@ -1,0 +1,566 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>::-webkit-scrollbar { display: none;}</style>
+    <script>
+        tailwind.config = {
+  "theme": {
+    "extend": {
+      "colors": {
+        "primary": "#009c3b",
+        "secondary": "#ffdf00",
+        "dark": "#002776",
+        "danger": "#c8102e"
+      },
+      "fontFamily": {
+        "montserrat": [
+          "Montserrat",
+          "sans-serif"
+        ],
+        "opensans": [
+          "Open Sans",
+          "sans-serif"
+        ]
+      }
+    },
+    "fontFamily": {
+      "sans": [
+        "Inter",
+        "sans-serif"
+      ]
+    }
+  }
+};</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" /><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap" /><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="bg-gray-100 font-opensans">
+
+<div id="pos-system" class="h-[900px] flex flex-col">
+    <!-- Main Content Area -->
+    <div id="main-content" class="flex-1 flex">
+        <!-- Product Selection Area -->
+        <div id="product-selection" class="w-2/3 bg-white p-4 overflow-y-auto">
+            <!-- Header with Exit Button -->
+            <div id="header" class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800 font-montserrat">Ponto de Venda</h1>
+                <button id="exit-pos" class="px-4 py-2 bg-danger text-white rounded-lg font-medium hover:bg-red-700 transition flex items-center">
+                    <i class="fa-solid fa-arrow-right-from-bracket mr-2"></i>
+                    Sair do modo POS
+                </button>
+            </div>
+            
+            <!-- Categories Tabs -->
+            <div id="categories-tabs" class="flex space-x-2 overflow-x-auto pb-2 mb-6">
+                <button class="px-4 py-2 bg-dark text-white rounded-lg font-medium">
+                    Todos
+                </button>
+                <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">
+                    Pratos Principais
+                </button>
+                <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">
+                    Entradas
+                </button>
+                <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">
+                    Sobremesas
+                </button>
+                <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">
+                    Bebidas
+                </button>
+                <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">
+                    Combos
+                </button>
+            </div>
+
+            <!-- Search Bar -->
+            <div id="search-bar" class="mb-6">
+                <div class="relative">
+                    <input type="text" placeholder="Buscar produto..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-dark" />
+                    <i class="fa-solid fa-search absolute right-3 top-3 text-gray-400"></i>
+                </div>
+            </div>
+
+            <!-- Products Grid - Pratos Principais -->
+            <div id="pratos-principais" class="mb-8">
+                <h2 class="text-lg font-semibold text-gray-700 mb-3">Pratos Principais</h2>
+                <div class="grid grid-cols-4 gap-4">
+                    <!-- Product 1 -->
+                    <div id="product-1" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/8b0d31e1ff-2892159d020e4f042a69.png" alt="brazilian feijoada with rice and orange slices, professional food photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Feijoada Completa</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 59,90</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product 2 -->
+                    <div id="product-2" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/7d92a761d2-f5b50138edf40811923b.png" alt="brazilian moqueca with fish and shrimp in clay pot, professional food photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Moqueca de Peixe</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 79,90</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product 3 -->
+                    <div id="product-3" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/7276f27bb0-c975cd389486f0b8d7a1.png" alt="brazilian picanha steak with farofa and vinaigrette, professional food photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Picanha na Brasa</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 89,90</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product 4 -->
+                    <div id="product-4" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/0c62e36157-1f6a5e493cee77becf5a.png" alt="brazilian strogonoff with rice and potato sticks, professional food photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Strogonoff de Frango</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 49,90</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Products Grid - Entradas -->
+            <div id="entradas" class="mb-8">
+                <h2 class="text-lg font-semibold text-gray-700 mb-3">Entradas</h2>
+                <div class="grid grid-cols-4 gap-4">
+                    <!-- Product 5 -->
+                    <div id="product-5" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/fe4c345016-ace9f50077870837c285.png" alt="brazilian pao de queijo cheese bread, professional food photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Pão de Queijo (6 un)</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 19,90</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product 6 -->
+                    <div id="product-6" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/dab5532939-1c442807e52e7465bd86.png" alt="brazilian coxinha fried chicken croquettes, professional food photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Coxinha (4 un)</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 24,90</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product 7 -->
+                    <div id="product-7" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/c957d11a87-4d15c96d9abb851799c2.png" alt="brazilian pastel fried pastry with meat filling, professional food photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Pastel de Carne (3 un)</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 22,90</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product 8 -->
+                    <div id="product-8" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/24cc5795d0-95f4a6085e3017f1d25d.png" alt="brazilian kibe fried croquettes, professional food photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Kibe (4 un)</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 21,90</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Products Grid - Sobremesas -->
+            <div id="sobremesas" class="mb-8">
+                <h2 class="text-lg font-semibold text-gray-700 mb-3">Sobremesas</h2>
+                <div class="grid grid-cols-4 gap-4">
+                    <!-- Product 9 -->
+                    <div id="product-9" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/8308186ed4-df86f23443e1c4866b96.png" alt="brazilian pudim de leite flan dessert, professional food photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Pudim de Leite</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 15,90</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product 10 -->
+                    <div id="product-10" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/c0378118db-b0a6c147b8e9c954569e.png" alt="brazilian brigadeiro chocolate truffle dessert, professional food photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Brigadeiro (3 un)</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 12,90</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product 11 -->
+                    <div id="product-11" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/30de62254e-b8e9869d161637a59507.png" alt="brazilian acai bowl with fruits and granola, professional food photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Açaí na Tigela</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 18,90</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product 12 -->
+                    <div id="product-12" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/e2112bdb84-7e12f2d23c120188285f.png" alt="brazilian quindim coconut custard dessert, professional food photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Quindim</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 14,90</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Products Grid - Bebidas -->
+            <div id="bebidas" class="mb-8">
+                <h2 class="text-lg font-semibold text-gray-700 mb-3">Bebidas</h2>
+                <div class="grid grid-cols-4 gap-4">
+                    <!-- Product 13 -->
+                    <div id="product-13" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/7e5ddf2633-9c1ee9b71e6ea5d62e18.png" alt="brazilian caipirinha cocktail with lime and ice, professional drink photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Caipirinha</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 24,90</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product 14 -->
+                    <div id="product-14" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/c2d4e4dab2-6fd1f3773eb9c5e901e4.png" alt="guarana brazilian soda in a glass with ice, professional drink photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Guaraná</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 8,90</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product 15 -->
+                    <div id="product-15" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/865e3d76f5-a0ba9e92dcd4632bcd9c.png" alt="fresh coconut water in coconut shell, professional drink photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Água de Coco</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 12,90</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product 16 -->
+                    <div id="product-16" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition">
+                        <div class="h-32 w-full overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/6f569e2eb7-1c76d18e34d284e5ea9d.png" alt="brazilian craft beer in a glass, professional drink photography, square format" />
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-medium text-gray-800">Cerveja Artesanal</h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="font-bold text-primary">R$ 16,90</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Summary Area -->
+        <div id="order-summary" class="w-1/3 bg-gray-50 border-l border-gray-200 flex flex-col">
+            <!-- Order Header -->
+            <div class="p-4 border-b border-gray-200 bg-white">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-800 font-montserrat">Pedido Atual</h2>
+                    <div class="flex space-x-2">
+                        <button class="p-2 text-gray-500 hover:text-danger rounded">
+                            <i class="fa-solid fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mt-2 flex items-center">
+                    <div class="flex-1">
+                        <select class="w-full p-2 border border-gray-300 rounded-lg text-gray-700">
+                            <option>Mesa 1</option>
+                            <option>Mesa 2</option>
+                            <option>Mesa 3</option>
+                            <option>Mesa 4</option>
+                            <option>Para Viagem</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Items List -->
+            <div class="flex-1 overflow-y-auto p-4">
+                <!-- Item 1 -->
+                <div id="order-item-1" class="bg-white rounded-lg shadow-sm p-3 mb-3">
+                    <div class="flex items-center">
+                        <div class="h-14 w-14 bg-gray-100 rounded-md overflow-hidden mr-3">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/bc7253828a-faa33751048761e2e7ec.png" alt="brazilian feijoada close up, professional food photography" />
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-medium text-gray-800">Feijoada Completa</h3>
+                            <div class="flex justify-between mt-1">
+                                <div class="flex items-center">
+                                    <button class="w-6 h-6 bg-gray-200 rounded-md flex items-center justify-center hover:bg-gray-300">
+                                        <i class="fa-solid fa-minus text-xs"></i>
+                                    </button>
+                                    <span class="mx-2 font-medium">1</span>
+                                    <button class="w-6 h-6 bg-gray-200 rounded-md flex items-center justify-center hover:bg-gray-300">
+                                        <i class="fa-solid fa-plus text-xs"></i>
+                                    </button>
+                                </div>
+                                <span class="font-bold text-primary">R$ 59,90</span>
+                            </div>
+                        </div>
+                        <button class="ml-2 text-gray-400 hover:text-danger">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Item 2 -->
+                <div id="order-item-2" class="bg-white rounded-lg shadow-sm p-3 mb-3">
+                    <div class="flex items-center">
+                        <div class="h-14 w-14 bg-gray-100 rounded-md overflow-hidden mr-3">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/e89c5e2f11-ca364597708dba6b9329.png" alt="pao de queijo brazilian cheese bread close up, professional food photography" />
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-medium text-gray-800">Pão de Queijo (6 un)</h3>
+                            <div class="flex justify-between mt-1">
+                                <div class="flex items-center">
+                                    <button class="w-6 h-6 bg-gray-200 rounded-md flex items-center justify-center hover:bg-gray-300">
+                                        <i class="fa-solid fa-minus text-xs"></i>
+                                    </button>
+                                    <span class="mx-2 font-medium">2</span>
+                                    <button class="w-6 h-6 bg-gray-200 rounded-md flex items-center justify-center hover:bg-gray-300">
+                                        <i class="fa-solid fa-plus text-xs"></i>
+                                    </button>
+                                </div>
+                                <span class="font-bold text-primary">R$ 39,80</span>
+                            </div>
+                        </div>
+                        <button class="ml-2 text-gray-400 hover:text-danger">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Item 3 -->
+                <div id="order-item-3" class="bg-white rounded-lg shadow-sm p-3 mb-3">
+                    <div class="flex items-center">
+                        <div class="h-14 w-14 bg-gray-100 rounded-md overflow-hidden mr-3">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/579a373eab-84568a6104a319858564.png" alt="caipirinha cocktail close up, professional drink photography" />
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-medium text-gray-800">Caipirinha</h3>
+                            <div class="flex justify-between mt-1">
+                                <div class="flex items-center">
+                                    <button class="w-6 h-6 bg-gray-200 rounded-md flex items-center justify-center hover:bg-gray-300">
+                                        <i class="fa-solid fa-minus text-xs"></i>
+                                    </button>
+                                    <span class="mx-2 font-medium">2</span>
+                                    <button class="w-6 h-6 bg-gray-200 rounded-md flex items-center justify-center hover:bg-gray-300">
+                                        <i class="fa-solid fa-plus text-xs"></i>
+                                    </button>
+                                </div>
+                                <span class="font-bold text-primary">R$ 49,80</span>
+                            </div>
+                        </div>
+                        <button class="ml-2 text-gray-400 hover:text-danger">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Item 4 -->
+                <div id="order-item-4" class="bg-white rounded-lg shadow-sm p-3 mb-3">
+                    <div class="flex items-center">
+                        <div class="h-14 w-14 bg-gray-100 rounded-md overflow-hidden mr-3">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/8308186ed4-c01821422589e5f0f319.png" alt="brazilian pudim de leite flan dessert close up, professional food photography" />
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-medium text-gray-800">Pudim de Leite</h3>
+                            <div class="flex justify-between mt-1">
+                                <div class="flex items-center">
+                                    <button class="w-6 h-6 bg-gray-200 rounded-md flex items-center justify-center hover:bg-gray-300">
+                                        <i class="fa-solid fa-minus text-xs"></i>
+                                    </button>
+                                    <span class="mx-2 font-medium">1</span>
+                                    <button class="w-6 h-6 bg-gray-200 rounded-md flex items-center justify-center hover:bg-gray-300">
+                                        <i class="fa-solid fa-plus text-xs"></i>
+                                    </button>
+                                </div>
+                                <span class="font-bold text-primary">R$ 15,90</span>
+                            </div>
+                        </div>
+                        <button class="ml-2 text-gray-400 hover:text-danger">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="border-t border-gray-200 p-4 bg-white">
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Subtotal</span>
+                        <span class="font-medium">R$ 165,40</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Taxa de serviço (10%)</span>
+                        <span class="font-medium">R$ 16,54</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Desconto</span>
+                        <span class="font-medium text-danger">- R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between pt-2 border-t border-gray-200">
+                        <span class="font-bold text-gray-800">Total</span>
+                        <span class="font-bold text-primary text-xl">R$ 181,94</span>
+                    </div>
+                </div>
+                
+                <!-- Payment Button -->
+                <div class="space-y-2">
+                    <button id="checkout-button" class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-green-600 transition flex items-center justify-center">
+                        <i class="fa-solid fa-check mr-2"></i>
+                        Finalizar Pedido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Add event listeners for product selection
+    document.querySelectorAll('#product-selection [id^="product-"]').forEach(product =&gt; {
+        product.addEventListener('click', function() {
+            // Add product to order (in a real app, this would update the order)
+            // This is just a visual indication that the product was clicked
+            this.classList.add('ring-2', 'ring-dark');
+            setTimeout(() =&gt; {
+                this.classList.remove('ring-2', 'ring-dark');
+            }, 300);
+        });
+    });
+    
+    // Add event listeners for quantity adjustment
+    document.querySelectorAll('#order-summary [id^="order-item-"]').forEach(item =&gt; {
+        const minusBtn = item.querySelector('.fa-minus').parentElement;
+        const plusBtn = item.querySelector('.fa-plus').parentElement;
+        const quantityEl = item.querySelector('.flex-1 .flex .font-medium');
+        
+        minusBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            let quantity = parseInt(quantityEl.textContent);
+            if (quantity &gt; 1) {
+                quantityEl.textContent = quantity - 1;
+                // Update price (in a real app)
+            }
+        });
+        
+        plusBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            let quantity = parseInt(quantityEl.textContent);
+            quantityEl.textContent = quantity + 1;
+            // Update price (in a real app)
+        });
+    });
+    
+    // Exit POS mode button
+    document.getElementById('exit-pos').addEventListener('click', function() {
+        alert('Saindo do modo POS');
+        // In a real app, this would navigate back to the dashboard
+    });
+    
+    // Checkout button
+    document.getElementById('checkout-button').addEventListener('click', function() {
+        alert('Pedido finalizado com sucesso!');
+        // In a real app, this would process the order
+    });
+</script>
+
+
+</body></html>
