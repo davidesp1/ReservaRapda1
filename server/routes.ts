@@ -630,11 +630,13 @@ router.post('/api/pos/orders', async (req, res) => {
       const paymentDate = new Date().toISOString();
       const transactionId = 'POS-' + Date.now();
       
+      // Adicionando o campo reservationId (usando o id do pedido como valor temporário)
+      // Isso garante que não violamos a restrição NOT NULL no banco
       const result = await queryClient`
         INSERT INTO payments 
-          (user_id, amount, method, status, reference, transaction_id, payment_date, details)
+          (user_id, reservation_id, amount, method, status, reference, transaction_id, payment_date, details)
         VALUES 
-          (${1}, ${amountInCents}, ${normalizedMethod}, ${'completed'}, 
+          (${1}, ${newOrder[0].id}, ${amountInCents}, ${normalizedMethod}, ${'completed'}, 
            ${'POS-Order-' + newOrder[0].id}, ${transactionId}, ${paymentDate}, 
            ${JSON.stringify({
              type: 'pos',
