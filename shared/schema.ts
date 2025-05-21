@@ -328,7 +328,26 @@ export const updatePaymentSettingsSchema = z.object({
   }),
 });
 
+// Database Settings Schema
+export const insertDatabaseSettingsSchema = createInsertSchema(databaseSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const updateDatabaseSettingsSchema = z.object({
+  supabaseUrl: z.string().url({ message: "URL inválida" }).min(1),
+  supabaseKey: z.string().min(1),
+  databaseUrl: z.string().min(1),
+  databaseHost: z.string().min(1),
+  databasePort: z.string().min(1),
+  databaseName: z.string().min(1),
+  databaseUser: z.string().min(1),
+  databasePassword: z.string().min(1),
+});
+
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingsSchema>;
 export type PaymentSetting = typeof paymentSettings.$inferSelect;
 export type InsertPaymentSetting = z.infer<typeof insertPaymentSettingsSchema>;
+export type DatabaseSetting = typeof databaseSettings.$inferSelect;
+export type InsertDatabaseSetting = z.infer<typeof insertDatabaseSettingsSchema>;
