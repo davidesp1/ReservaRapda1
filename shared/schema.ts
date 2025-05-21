@@ -7,9 +7,10 @@ import { z } from "zod";
 export const userRoleEnum = pgEnum('user_role', ['customer', 'admin']);
 export const reservationStatusEnum = pgEnum('reservation_status', ['pending', 'confirmed', 'cancelled', 'completed', 'no-show']);
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'completed', 'failed', 'refunded']);
-export const paymentMethodEnum = pgEnum('payment_method', ['card', 'mbway', 'multibanco', 'transfer']);
+export const paymentMethodEnum = pgEnum('payment_method', ['card', 'mbway', 'multibanco', 'transfer', 'cash']);
 export const tableCategoryEnum = pgEnum('table_category', ['standard', 'vip', 'outdoor', 'private']);
 export const dietaryPreferenceEnum = pgEnum('dietary_preference', ['vegetarian', 'vegan', 'gluten-free', 'lactose-free', 'pescatarian', 'halal', 'kosher', 'none']);
+export const orderStatusEnum = pgEnum('order_status', ['pending', 'processing', 'completed', 'cancelled']);
 
 // Users
 export const users = pgTable("users", {
@@ -163,9 +164,11 @@ export const insertUserDietaryPreferenceSchema = createInsertSchema(userDietaryP
 // Orders (for future implementation)
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
-  reservationId: integer("reservation_id").notNull(),
+  reservationId: integer("reservation_id"),
   userId: integer("user_id").notNull(),
-  status: text("status").default("pending"),
+  tableId: integer("table_id"),
+  status: orderStatusEnum("status").default("pending"),
+  type: text("type").default("reservation"), // reservation, pos
   items: json("items").$type<Array<{
     menuItemId: number,
     quantity: number,
@@ -176,15 +179,22 @@ export const orders = pgTable("orders", {
   totalAmount: integer("total_amount").notNull(), // Amount in cents
   specialInstructions: text("special_instructions"),
   orderTime: timestamp("order_time").defaultNow(),
+  paymentMethod: paymentMethodEnum("payment_method").default("cash"),
+  paymentStatus: paymentStatusEnum("payment_status").default("pending"),
+  paymentId: integer("payment_id"),
   estimatedDeliveryTime: timestamp("estimated_delivery_time"),
   actualDeliveryTime: timestamp("actual_delivery_time"),
+  discount: integer("discount").default(0), // Discount in cents
+  tax: integer("tax").default(0), // Tax in cents
   rating: integer("rating"), // Customer rating (1-5)
   feedback: text("feedback"), // Customer feedback
   createdAt: timestamp("created_at").defaultNow(),
+  printedReceipt: boolean("printed_receipt").default(false),
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({
   id: true,
+  createdAt: true,
 });
 
 // Types export

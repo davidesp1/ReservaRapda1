@@ -219,4 +219,73 @@ router.post("/api/payments/cancel", isAuthenticated, async (req, res) => {
   }
 });
 
+// Rotas para o sistema POS
+router.post('/api/pos/orders', async (req, res) => {
+  try {
+    const orderData = req.body;
+    
+    // Validação básica
+    if (!orderData.items || !orderData.totalAmount || orderData.items.length === 0) {
+      return res.status(400).json({ error: 'Dados do pedido inválidos' });
+    }
+    
+    // Buscar dados dos itens do menu para garantir preços corretos
+    const itemIds = orderData.items.map((item: any) => item.menuItemId);
+    const menuItems = await drizzleDb.select().from(schema.menuItems).where(
+      sql`id IN (${itemIds.join(',')})`
+    );
+    
+    // Mapear items com preços reais do banco de dados
+    const validatedItems = orderData.items.map((item: any) => {
+      const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
+      return {
+        menuItemId: item.menuItemId,
+        quantity: item.quantity,
+        price: menuItem?.price || 0,
+        notes: item.notes,
+        modifications: item.modifications
+      };
+    });
+    
+    // Recalcular o valor total com base nos preços reais
+    const calculatedTotal = validatedItems.reduce((sum: number, item: any) => {
+      return sum + (item.price * item.quantity);
+    }, 0);
+    
+    // Criar o pedido
+    const newOrder = await drizzleDb.insert(schema.orders).values({
+      userId: orderData.userId || 1, // Default para o primeiro usuário se não especificado
+      type: 'pos',
+      status: 'completed',
+      items: validatedItems,
+      totalAmount: calculatedTotal,
+      paymentMethod: orderData.paymentMethod || 'cash',
+      paymentStatus: 'completed',
+      discount: orderData.discount || 0,
+      tax: orderData.tax || 0,
+      printedReceipt: orderData.printReceipt || false,
+    }).returning();
+    
+    res.status(201).json(newOrder[0]);
+  } catch (error: any) {
+    console.error('Erro ao criar pedido POS:', error);
+    res.status(500).json({ error: error.message || 'Erro ao processar o pedido' });
+  }
+});
+
+// Rota para buscar todos os pedidos POS
+router.get('/api/pos/orders', async (req, res) => {
+  try {
+    const orders = await drizzleDb.select()
+      .from(schema.orders)
+      .where(eq(schema.orders.type, 'pos'))
+      .orderBy(desc(schema.orders.createdAt));
+    
+    res.json(orders);
+  } catch (error: any) {
+    console.error('Erro ao buscar pedidos POS:', error);
+    res.status(500).json({ error: error.message || 'Erro ao buscar pedidos' });
+  }
+});
+
 export default router;

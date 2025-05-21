@@ -124,9 +124,82 @@ const POSMode = () => {
   };
   
   const handleFinalizeOrder = () => {
-    // Implementar a lógica de finalização de pedido
-    alert("Pedido finalizado com sucesso!");
-    setOrderItems([]);
+    // Usar SweetAlert2 para confirmar a finalização
+    import('sweetalert2').then((Swal) => {
+      Swal.default.fire({
+        title: t('Finalizar Pedido'),
+        text: t('Escolha a opção desejada:'),
+        icon: 'question',
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonColor: '#009c3b',
+        denyButtonColor: '#002776',
+        cancelButtonColor: '#c8102e',
+        confirmButtonText: t('Gravar'),
+        denyButtonText: t('Gravar e Imprimir'),
+        cancelButtonText: t('Cancelar')
+      }).then((result) => {
+        if (result.isConfirmed || result.isDenied) {
+          const printReceipt = result.isDenied;
+          
+          // Preparar os dados do pedido para enviar para a API
+          const orderData = {
+            items: orderItems.map(item => ({
+              menuItemId: item.menuItem.id,
+              quantity: item.quantity,
+              price: item.menuItem.price,
+              notes: '',
+              modifications: []
+            })),
+            totalAmount: totalPrice,
+            paymentMethod: 'cash', // Padrão
+            discount: 0,
+            tax: 0,
+            printReceipt,
+            type: 'pos'
+          };
+          
+          // Enviar os dados para a API
+          fetch('/api/pos/orders', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(orderData),
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(t('Erro ao salvar pedido'));
+            }
+            return response.json();
+          })
+          .then(data => {
+            // Mostrar mensagem de sucesso
+            Swal.default.fire({
+              title: t('Sucesso!'),
+              text: printReceipt 
+                ? t('Pedido finalizado e enviado para impressão.') 
+                : t('Pedido finalizado com sucesso!'),
+              icon: 'success',
+              timer: 2000,
+              showConfirmButton: false
+            });
+            
+            // Limpar o pedido atual
+            setOrderItems([]);
+          })
+          .catch(error => {
+            // Mostrar mensagem de erro
+            Swal.default.fire({
+              title: t('Erro!'),
+              text: error.message,
+              icon: 'error',
+              confirmButtonColor: '#009c3b'
+            });
+          });
+        }
+      });
+    });
   };
   
   const filterItems = (items: MenuItem[]) => {
