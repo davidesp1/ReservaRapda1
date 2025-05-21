@@ -455,11 +455,14 @@ router.get("/api/reservations", isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.userId;
     
+    // Garantir que userId seja tratado como um número e nunca undefined
+    const safeUserId = userId ? Number(userId) : 0;
+    
     const reservations = await queryClient`
       SELECT r.*, t.number as table_number, t.capacity as table_capacity
       FROM reservations r
       JOIN tables t ON r.table_id = t.id
-      WHERE r.user_id = ${userId}
+      WHERE r.user_id = ${safeUserId}
       ORDER BY r.date DESC
     `;
     
@@ -974,10 +977,11 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
     
     // Validar se o usuário é admin antes de permitir alterações
     const userId = req.session.userId;
+    const safeUserId = userId ? Number(userId) : 0;
     
     // Verificar se o usuário é admin
     const userResult = await queryClient`
-      SELECT role FROM users WHERE id = ${userId}
+      SELECT role FROM users WHERE id = ${safeUserId}
     `;
     
     console.log("Verificando permissões do usuário:", userId, userResult);
