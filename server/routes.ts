@@ -646,9 +646,12 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
     // Validar se o usuário é admin antes de permitir alterações
     const userId = req.session.userId;
     
+    // Verificar se o usuário é admin
     const userResult = await queryClient`
       SELECT role FROM users WHERE id = ${userId}
     `;
+    
+    console.log("Verificando permissões do usuário:", userId, userResult);
     
     const user = userResult[0];
     if (!user || user.role !== 'admin') {
@@ -658,7 +661,14 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
     // Processar cada configuração
     const results = [];
     
+    console.log("Atualizando configurações de pagamento:", settings);
+    
     for (const [key, value] of Object.entries(settings)) {
+      // Converter booleanos para string para armazenamento no banco
+      const stringValue = typeof value === 'boolean' ? String(value) : String(value);
+      
+      console.log(`Processando configuração: ${key} = ${stringValue}`);
+      
       // Verificar se a configuração já existe
       const existingSetting = await drizzleDb.select()
         .from(schema.settings)
@@ -668,30 +678,37 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
         ))
         .limit(1);
       
-      if (existingSetting.length > 0) {
-        // Atualizar configuração existente
-        const updated = await drizzleDb
-          .update(schema.settings)
-          .set({ 
-            value: String(value),
-            updatedAt: new Date()
-          })
-          .where(eq(schema.settings.id, existingSetting[0].id))
-          .returning();
-        
-        results.push(updated[0]);
-      } else {
-        // Criar nova configuração
-        const inserted = await drizzleDb
-          .insert(schema.settings)
-          .values({
-            category: 'payments',
-            key: key,
-            value: String(value),
-          })
-          .returning();
-        
-        results.push(inserted[0]);
+      try {
+        if (existingSetting.length > 0) {
+          // Atualizar configuração existente
+          console.log(`Atualizando configuração existente: ${key}`);
+          const updated = await drizzleDb
+            .update(schema.settings)
+            .set({ 
+              value: stringValue,
+              updatedAt: new Date()
+            })
+            .where(eq(schema.settings.id, existingSetting[0].id))
+            .returning();
+          
+          results.push(updated[0]);
+        } else {
+          // Criar nova configuração
+          console.log(`Criando nova configuração: ${key}`);
+          const inserted = await drizzleDb
+            .insert(schema.settings)
+            .values({
+              category: 'payments',
+              key: key,
+              value: stringValue,
+            })
+            .returning();
+          
+          results.push(inserted[0]);
+        }
+      } catch (error) {
+        console.error(`Erro ao processar configuração ${key}:`, error);
+        throw error;
       }
     }
     
