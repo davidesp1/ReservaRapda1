@@ -31,6 +31,13 @@ const POSMode = () => {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("cash");
+  
+  // Carregar métodos de pagamento disponíveis
+  const { data: paymentSettings } = useQuery({
+    queryKey: ['/api/settings/payments'],
+  });
   
   const { data: menuItemsData, isLoading } = useQuery({
     queryKey: ['/api/menu-items'],
@@ -123,7 +130,15 @@ const POSMode = () => {
     setOrderItems([]);
   };
   
+  // Abrir o modal de seleção de método de pagamento
   const handleFinalizeOrder = () => {
+    setIsPaymentModalOpen(true);
+  };
+  
+  // Processar o pedido após selecionar o método de pagamento
+  const handleProcessOrder = () => {
+    setIsPaymentModalOpen(false);
+    
     // Usar SweetAlert2 para confirmar a finalização
     import('sweetalert2').then((Swal) => {
       Swal.default.fire({
@@ -152,7 +167,7 @@ const POSMode = () => {
               modifications: []
             })),
             totalAmount: totalPrice,
-            paymentMethod: 'cash', // Padrão
+            paymentMethod: selectedPaymentMethod, // Usar o método de pagamento selecionado
             discount: 0,
             tax: 0,
             printReceipt,
