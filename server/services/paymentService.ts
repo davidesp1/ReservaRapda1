@@ -1,136 +1,186 @@
-import eupagoClient from "../integrations/eupago/client";
-import { EupagoResponse } from "../integrations/eupago/types";
+import { EuPagoClient } from "../integrations/eupago/client";
+import { storage } from "../storage";
 
-// Nunca usar simulação em ambiente real
-const SIMULATION_MODE = false;
+/**
+ * Serviço para gerenciar pagamentos utilizando o EuPago
+ */
+export class PaymentService {
+  private eupagoClient: EuPagoClient | null = null;
 
-// Função para simular pagamento em modo de desenvolvimento
-function simulatePayment(method: string, amount: number, phone?: string): EupagoResponse {
-  const timestamp = Date.now();
-  const referencia = `SIM-${method.toUpperCase()}-${timestamp}`;
-  
-  // Respostas simuladas conforme o método de pagamento
-  if (method === 'multibanco') {
-    return {
-      success: true,
-      method: 'multibanco',
-      entity: '11111',
-      reference: '123 456 789',
-      amount: amount,
-      value: amount,
-      entidade: '11111',
-      referencia: '123 456 789',
-      paymentReference: referencia,
-      expirationDate: new Date(Date.now() + 72 * 3600 * 1000).toISOString()
-    };
-  } 
-  else if (method === 'mbway') {
-    return {
-      success: true,
-      method: 'mbway',
-      phone: phone || '912345678',
-      amount: amount,
-      value: amount,
-      paymentReference: referencia,
-      expirationDate: new Date(Date.now() + 30 * 60 * 1000).toISOString()
-    };
-  }
-  else if (method === 'card') {
-    return {
-      success: true,
-      method: 'card',
-      amount: amount,
-      value: amount,
-      paymentReference: referencia,
-      paymentUrl: 'https://sandbox.eupago.pt/clientes/simulacao/pagamento-cartao?ref=' + referencia
-    };
-  }
-  
-  // Método desconhecido
-  return {
-    success: false,
-    error: 'Método de pagamento não suportado'
-  };
-}
-
-// Processar pagamento com qualquer método
-export async function processPayment(
-  method: "multibanco" | "mbway" | "card",
-  amount: number,
-  phone?: string,
-): Promise<EupagoResponse> {
-  console.log(`Processando pagamento ${method} no valor de ${amount}€`);
-  
-  // Se estamos em modo de simulação, retornar dados simulados
-  if (SIMULATION_MODE) {
-    console.log(`[SIMULAÇÃO] Modo de simulação ativado para pagamento ${method}`);
-    return simulatePayment(method, amount, phone);
-  }
-  
-  // Se não estamos em simulação, chamar a API real do EuPago
-  try {
-    if (method === "multibanco") {
-      return eupagoClient.multibanco({ valor: amount, per_dup: 0 });
-    } 
-    else if (method === "mbway") {
-      if (!phone) throw new Error("Número de telefone é obrigatório para MBWay");
-      return eupagoClient.mbway({ valor: amount, telemovel: phone });
-    } 
-    else if (method === "card") {
-      const referencia = `CARD-${Date.now()}`;
-      return eupagoClient.card({ valor: amount, referencia });
-    }
-    
-    throw new Error(`Método de pagamento '${method}' não suportado`);
-  } 
-  catch (error: any) {
-    console.error(`Erro ao processar pagamento ${method}:`, error);
-    
-    // Sem fallback para simulação em caso de erro
-    console.log(`Erro na API real sem fallback para simulação`);
-    // Não usaremos simulação em nenhuma circunstância
-    
-    throw error;
-  }
-}
-
-// Verificar status do pagamento
-export async function getPaymentStatus(reference: string): Promise<EupagoResponse> {
-  if (SIMULATION_MODE) {
-    // Em modo de simulação, verificamos se a referência começa com SIM para simular
-    if (reference.startsWith('SIM-')) {
-      // 50% de chance do pagamento estar confirmado
-      const confirmed = Math.random() > 0.5;
+  /**
+   * Inicializa o cliente EuPago com a chave API
+   */
+  async initEuPagoClient(): Promise<boolean> {
+    try {
+      // Buscar configurações de pagamento do banco de dados
+      const settings = await storage.getPaymentSettings();
       
-      return {
-        success: true,
-        reference,
-        status: confirmed ? 'paid' : 'pending',
-        statusCode: confirmed ? 'C' : 'P'
-      };
+      if (!settings?.eupagoApiKey) {
+        console.error("API key do EuPago não configurada");
+        return false;
+      }
+
+      this.eupagoClient = new EuPagoClient(settings.eupagoApiKey);
+      return true;
+    } catch (error) {
+      console.error("Erro ao inicializar o cliente EuPago:", error);
+      return false;
     }
   }
-  
-  try {
-    return eupagoClient.request("/payments/status", { referencia: reference });
-  } catch (error) {
-    console.error(`Erro ao verificar status do pagamento:`, error);
+
+  /**
+   * Testa a conexão com a API do EuPago
+   */
+  async testConnection(apiKey: string): Promise<boolean> {
+    try {
+      const testClient = new EuPagoClient(apiKey);
+      return await testClient.validateApiKey();
+    } catch (error) {
+      console.error("Erro ao testar conexão com EuPago:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Cria um novo pagamento
+   */
+  async createPayment(options: {
+    method: "multibanco" | "mbway" | "card" | "bankTransfer" | "cash";
+    amount: number;
+    userId: number;
+    reservationId?: number | null;
+    description?: string;
+    clientName?: string;
+    clientEmail?: string;
+    clientPhone?: string;
+    returnUrl?: string;
+  }): Promise<{
+    id: number;
+    reference?: string;
+    details: any;
+    status: string;
+  }> {
+    if (!this.eupagoClient) {
+      const initialized = await this.initEuPagoClient();
+      if (!initialized) {
+        throw new Error("Não foi possível inicializar o cliente de pagamento");
+      }
+    }
+
+    const { method, amount, userId, reservationId, description } = options;
+    const paymentDescription = 
+      description || `Pagamento ${reservationId ? 'reserva #' + reservationId : ''} - Opa que Delícia`;
     
-    // Não usamos fallback para simulação em ambiente real
-    console.log(`Não usando fallback para simulação em getPaymentStatus`);
-    // Em ambiente real, sempre retornamos o erro real para o usuário
-    
-    throw error;
+    try {
+      let details: any = null;
+      let reference: string | null = null;
+      let status = "pending";
+      
+      // Para pagamentos em dinheiro, não precisamos processar pelo gateway
+      if (method === "cash") {
+        status = "completed";
+      } 
+      // Processar pagamento pelo gateway de acordo com o método
+      else if (method === "multibanco" && this.eupagoClient) {
+        details = await this.eupagoClient.createMultibancoPayment({
+          amount,
+          description: paymentDescription,
+          clientName: options.clientName,
+          clientEmail: options.clientEmail,
+          clientPhone: options.clientPhone
+        });
+        reference = details.reference;
+      } 
+      else if (method === "mbway" && this.eupagoClient && options.clientPhone) {
+        details = await this.eupagoClient.createMBWayPayment({
+          amount,
+          description: paymentDescription,
+          phoneNumber: options.clientPhone,
+          clientName: options.clientName,
+          clientEmail: options.clientEmail
+        });
+      } 
+      else if (method === "card" && this.eupagoClient && options.returnUrl) {
+        details = await this.eupagoClient.createCardPayment({
+          amount,
+          description: paymentDescription,
+          returnUrl: options.returnUrl,
+          clientName: options.clientName,
+          clientEmail: options.clientEmail
+        });
+      } 
+      else if (method === "bankTransfer" && this.eupagoClient) {
+        details = await this.eupagoClient.createBankTransferDetails();
+      } 
+      else {
+        throw new Error(`Método de pagamento inválido ou faltam informações: ${method}`);
+      }
+
+      // Salvar o pagamento no banco de dados
+      const payment = await storage.createPayment({
+        method,
+        amount,
+        userId,
+        reservationId: reservationId || null,
+        reference,
+        status,
+        details
+      });
+
+      return {
+        id: payment.id,
+        reference: payment.reference || undefined,
+        details,
+        status: payment.status || "pending",
+      };
+    } catch (error: any) {
+      console.error(`Erro ao criar pagamento ${method}:`, error);
+      throw new Error(`Falha ao processar pagamento: ${error.message}`);
+    }
+  }
+
+  /**
+   * Verifica o status de um pagamento
+   */
+  async checkPaymentStatus(paymentId: number): Promise<string> {
+    if (!this.eupagoClient) {
+      const initialized = await this.initEuPagoClient();
+      if (!initialized) {
+        throw new Error("Não foi possível inicializar o cliente de pagamento");
+      }
+    }
+
+    try {
+      // Buscar o pagamento no banco de dados
+      const payment = await storage.getPayment(paymentId);
+      if (!payment) {
+        throw new Error("Pagamento não encontrado");
+      }
+
+      // Pagamentos em dinheiro já estão completos
+      if (payment.method === "cash") {
+        return payment.status || "completed";
+      }
+
+      // Para pagamentos online, verificar o status no gateway
+      if (payment.reference && this.eupagoClient) {
+        const status = await this.eupagoClient.checkPaymentStatus(payment.reference);
+        
+        // Atualizar status do pagamento se mudou
+        if (status !== payment.status) {
+          await storage.updatePaymentStatus(paymentId, status);
+        }
+        
+        return status;
+      }
+
+      return payment.status || "pending";
+    } catch (error: any) {
+      console.error("Erro ao verificar status do pagamento:", error);
+      throw new Error(`Falha ao verificar pagamento: ${error.message}`);
+    }
   }
 }
 
-// Cancelar pagamento pendente
-export async function cancelPayment(reference: string): Promise<{ cancelled: boolean, message?: string }> {
-  // EuPago não tem endpoint público para cancelamento direto
-  // Apenas simulamos o cancelamento internamente
-  
-  return { 
-    cancelled: true,
-    message: `Pagamento ${reference} foi cancelado com sucesso`
-  };
-}
+// Exporta uma instância única do serviço de pagamento
+export const paymentService = new PaymentService();

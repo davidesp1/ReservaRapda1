@@ -176,7 +176,7 @@ export default function PaymentModal({
           </DialogDescription>
         </DialogHeader>
         
-        <Tabs defaultValue="card" onValueChange={(value: PaymentMethod) => setPaymentMethod(value)}>
+        <Tabs defaultValue="card" onValueChange={(value: string) => setPaymentMethod(value as PaymentMethod)}>
           <TabsList className="grid grid-cols-5 mb-6">
             <TabsTrigger value="card" className="flex flex-col items-center gap-1 p-2">
               <CreditCard className="h-5 w-5" />
@@ -191,7 +191,7 @@ export default function PaymentModal({
               <span className="text-xs">Multibanco</span>
             </TabsTrigger>
             <TabsTrigger value="bankTransfer" className="flex flex-col items-center gap-1 p-2">
-              <Bank className="h-5 w-5" />
+              <Building2 className="h-5 w-5" />
               <span className="text-xs">Transferência</span>
             </TabsTrigger>
             <TabsTrigger value="cash" className="flex flex-col items-center gap-1 p-2">

@@ -1,73 +1,243 @@
 import fetch from "node-fetch";
 
-// Definir a URL base do EuPago para ambiente real
-const API_BASE_URL = process.env.EUPAGO_BASE_URL || "https://sandbox.eupago.pt/api";
-const API_KEY = process.env.EUPAGO_API_KEY || "demo-1408-87fc-3618-cc0";
+/**
+ * Cliente para a API EuPago
+ * Documentação: https://www.eupago.pt/documentacao
+ */
+export class EuPagoClient {
+  private apiKey: string;
+  private baseUrl: string;
 
-// Cliente para a API EuPago
-const eupagoClient = {
-  // Métodos específicos por tipo de pagamento
-  multibanco(data: { valor: number, per_dup?: number }) {
-    return this.request('/reference/create', {
-      valor: data.valor,
-      per_dup: data.per_dup || 0
-    });
-  },
-  
-  mbway(data: { valor: number, telemovel: string }) {
-    return this.request('/mbway/create', {
-      valor: data.valor,
-      telemovel: data.telemovel
-    });
-  },
-  
-  card(data: { valor: number, referencia?: string }) {
-    const ref = data.referencia || `REF-${Date.now()}`;
-    const CARD_API_URL = process.env.EUPAGO_CARD_BASE_URL || "https://clientes.eupago.pt";
-    return this.request('/pagamento/gerar', {
-      valor: data.valor,
-      referencia: ref,
-      // URL específica para cartões
-      callback_url: `${CARD_API_URL}/pagamento/callback`
-    });
-  },
+  constructor(apiKey: string, baseUrl?: string) {
+    this.apiKey = apiKey;
+    this.baseUrl = baseUrl || "https://sandbox.eupago.pt/api";
+  }
 
-  // Método para fazer requisições à API
-  async request(endpoint: string, data: Record<string, any> = {}): Promise<any> {
-    const url = API_BASE_URL + (endpoint.startsWith('/') ? endpoint : '/' + endpoint);
-    
-    // Incluir a API key no corpo da requisição
-    const requestData = {
-      chave: API_KEY,
-      ...data,
-    };
-    
-    console.log(`[EuPago] Enviando requisição para ${endpoint}:`, requestData);
-    
+  /**
+   * Verifica se a API key é válida fazendo uma requisição simples
+   */
+  async validateApiKey(): Promise<boolean> {
     try {
-      const response = await fetch(url, {
+      const response = await fetch(`${this.baseUrl}/ping`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `ApiKey ${this.apiKey}`
+        }
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error("Erro ao validar API key:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Cria um pagamento Multibanco
+   */
+  async createMultibancoPayment(options: {
+    amount: number;
+    description: string;
+    clientName?: string;
+    clientEmail?: string;
+    clientPhone?: string;
+    reference?: string;
+    validDays?: number;
+  }): Promise<{
+    entity: string;
+    reference: string;
+    status: string;
+    expirationDate: string;
+  }> {
+    try {
+      const { amount, description, clientName, clientEmail, clientPhone, reference, validDays } = options;
+
+      const payload = {
+        payment: {
+          amount: (amount / 100).toFixed(2),
+          description,
+          type: "multibanco",
+          client: clientName,
+          email: clientEmail,
+          phone: clientPhone,
+          reference,
+          validDays: validDays || 3
+        }
+      };
+
+      const response = await fetch(`${this.baseUrl}/v1.02/references/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `ApiKey ${this.apiKey}`
         },
-        body: JSON.stringify(requestData),
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[EuPago] Erro na resposta (${response.status}):`, errorText);
-        throw new Error(`Erro na API EuPago: ${response.status} - ${errorText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erro ao criar pagamento Multibanco");
       }
 
-      const responseData = await response.json();
-      console.log(`[EuPago] Resposta recebida:`, responseData);
-      
-      return responseData;
+      const data = await response.json();
+      return {
+        entity: data.entity,
+        reference: data.reference,
+        status: data.status,
+        expirationDate: data.expirationDate
+      };
     } catch (error) {
-      console.error(`[EuPago] Erro ao fazer requisição:`, error);
+      console.error("Erro ao criar pagamento Multibanco:", error);
       throw error;
     }
   }
-};
 
-export default eupagoClient;
+  /**
+   * Cria um pagamento MBWay
+   */
+  async createMBWayPayment(options: {
+    amount: number;
+    description: string;
+    phoneNumber: string;
+    clientName?: string;
+    clientEmail?: string;
+  }): Promise<{
+    status: string;
+    mbwayAlias: string;
+  }> {
+    try {
+      const { amount, description, phoneNumber, clientName, clientEmail } = options;
+
+      const payload = {
+        payment: {
+          amount: (amount / 100).toFixed(2),
+          description,
+          type: "mbway",
+          phone: phoneNumber,
+          client: clientName,
+          email: clientEmail
+        }
+      };
+
+      const response = await fetch(`${this.baseUrl}/v1.02/mbway/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `ApiKey ${this.apiKey}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erro ao criar pagamento MBWay");
+      }
+
+      const data = await response.json();
+      return {
+        status: data.status,
+        mbwayAlias: data.alias
+      };
+    } catch (error) {
+      console.error("Erro ao criar pagamento MBWay:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Cria um pagamento com Cartão
+   */
+  async createCardPayment(options: {
+    amount: number;
+    description: string;
+    returnUrl: string;
+    clientName?: string;
+    clientEmail?: string;
+  }): Promise<{
+    paymentUrl: string;
+    status: string;
+  }> {
+    try {
+      const { amount, description, returnUrl, clientName, clientEmail } = options;
+
+      const payload = {
+        payment: {
+          amount: (amount / 100).toFixed(2),
+          description,
+          type: "credit_card",
+          client: clientName,
+          email: clientEmail,
+          successUrl: returnUrl,
+          failUrl: returnUrl,
+          backUrl: returnUrl
+        }
+      };
+
+      const response = await fetch(`${this.baseUrl}/v1.02/payments/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `ApiKey ${this.apiKey}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erro ao criar pagamento com cartão");
+      }
+
+      const data = await response.json();
+      return {
+        paymentUrl: data.paymentUrl,
+        status: data.status
+      };
+    } catch (error) {
+      console.error("Erro ao criar pagamento com cartão:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Cria detalhes para pagamento por transferência bancária
+   */
+  async createBankTransferDetails(): Promise<{
+    iban: string;
+    bankName: string;
+    status: string;
+  }> {
+    // Nota: Normalmente, o EuPago forneceria os detalhes da conta bancária diretamente,
+    // mas para este exemplo, estamos retornando dados simulados
+    return {
+      iban: "PT50000201231234567890154",
+      bankName: "Banco Exemplo",
+      status: "pending"
+    };
+  }
+
+  /**
+   * Verifica o estado de um pagamento
+   */
+  async checkPaymentStatus(reference: string): Promise<string> {
+    try {
+      const response = await fetch(`${this.baseUrl}/v1.02/references/status/${reference}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `ApiKey ${this.apiKey}`
+        }
+      });
+
+      if (!response.ok) {
+        return "error";
+      }
+
+      const data = await response.json();
+      return data.status;
+    } catch (error) {
+      console.error("Erro ao verificar estado do pagamento:", error);
+      return "error";
+    }
+  }
+}

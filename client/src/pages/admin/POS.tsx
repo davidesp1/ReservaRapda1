@@ -1,182 +1,228 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import AdminLayout from '@/layouts/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
-import PaymentModal from '@/components/pos/PaymentModal';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Minus, X, DollarSign } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import AdminLayout from "@/layouts/AdminLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Plus,
+  Minus,
+  ShoppingCart,
+  Users,
+  Receipt,
+  X,
+  Search,
+  CreditCard,
+} from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import PaymentModal from "@/components/pos/PaymentModal";
 
 export default function POS() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  const [cart, setCart] = useState<{
-    items: {
-      id: number;
-      name: string;
-      price: number; // in cents
-      quantity: number;
-    }[];
-    total: number; // in cents
-  }>({
-    items: [],
-    total: 0
-  });
 
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  // State for the POS system
+  const [cart, setCart] = useState<{ 
+    [itemId: number]: { 
+      name: string; 
+      price: number; 
+      quantity: number; 
+      menuItemId: number; 
+      notes?: string;
+    } 
+  }>({});
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
-  const [customerSearch, setCustomerSearch] = useState('');
+  const [selectedReservation, setSelectedReservation] = useState<number | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  // Fetch menu items
-  const { data: menuItems, isLoading: menuItemsLoading } = useQuery({
-    queryKey: ['/api/menu/items'],
-    retry: false,
+  // Queries
+  const { data: users = [] } = useQuery({
+    queryKey: ["/api/users"],
+    select: (data) => data.filter((user: any) => user.status !== "inactive"),
   });
 
-  // Fetch menu categories for filtering
-  const { data: menuCategories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ['/api/menu/categories'],
-    retry: false,
-  });
-
-  // Fetch users for customer selection
-  const { data: users, isLoading: usersLoading } = useQuery({
-    queryKey: ['/api/users'],
-    retry: false,
-  });
-
-  // Filter users based on search term
-  const filteredUsers = users?.filter(user => 
-    user.username.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    user.email.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    (user.firstName && user.firstName.toLowerCase().includes(customerSearch.toLowerCase())) ||
-    (user.lastName && user.lastName.toLowerCase().includes(customerSearch.toLowerCase()))
-  ) || [];
-
-  // Create a payment record after successful checkout
-  const createPaymentMutation = useMutation({
-    mutationFn: async (paymentId: number) => {
-      // We just need to invalidate the payments query cache
-      return { success: true, paymentId };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/payments'] });
-      // Reset cart
-      setCart({ items: [], total: 0 });
-      toast({
-        title: t('pos.paymentSuccess'),
-        description: t('pos.paymentSuccessDescription'),
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: t('pos.paymentError'),
-        description: error.message,
-        variant: "destructive",
-      });
+  const { data: reservations = [] } = useQuery({
+    queryKey: ["/api/reservations"],
+    enabled: !!selectedUser,
+    select: (data) => {
+      // Filter for active reservations for the selected user
+      return data.filter((res: any) => 
+        res.userId === selectedUser && 
+        ["confirmed", "pending"].includes(res.status)
+      );
     }
   });
 
-  // Handle adding an item to the cart
-  const addToCart = (item) => {
-    setCart(prev => {
-      // Check if the item is already in the cart
-      const existingItemIndex = prev.items.findIndex(i => i.id === item.id);
+  const { data: menuCategories = [] } = useQuery({
+    queryKey: ["/api/menu-categories"],
+  });
+
+  const { data: menuItems = [], isLoading: isLoadingMenuItems } = useQuery({
+    queryKey: ["/api/menu-items"],
+    select: (data) => {
+      // Filter by search query if present
+      if (searchQuery) {
+        return data.filter((item: any) => 
+          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
       
-      if (existingItemIndex >= 0) {
-        // Update quantity if item exists
-        const updatedItems = [...prev.items];
-        updatedItems[existingItemIndex].quantity += 1;
-        
-        return {
-          items: updatedItems,
-          total: prev.total + item.price
+      // Filter by category if selected
+      if (selectedCategory) {
+        return data.filter((item: any) => item.categoryId === selectedCategory);
+      }
+      
+      return data;
+    }
+  });
+
+  // Add item to cart
+  const addToCart = (itemId: number) => {
+    const item = menuItems.find((item: any) => item.id === itemId);
+    if (!item) return;
+
+    setCart(prevCart => {
+      const newCart = { ...prevCart };
+      if (newCart[itemId]) {
+        newCart[itemId] = {
+          ...newCart[itemId],
+          quantity: newCart[itemId].quantity + 1
         };
       } else {
-        // Add new item to cart
-        return {
-          items: [
-            ...prev.items,
-            {
-              id: item.id,
-              name: item.name,
-              price: item.price,
-              quantity: 1
-            }
-          ],
-          total: prev.total + item.price
+        newCart[itemId] = {
+          name: item.name,
+          price: item.price,
+          quantity: 1,
+          menuItemId: item.id
         };
       }
+      return newCart;
     });
   };
 
-  // Handle removing an item from the cart
-  const removeFromCart = (itemId) => {
-    setCart(prev => {
-      const existingItemIndex = prev.items.findIndex(i => i.id === itemId);
-      
-      if (existingItemIndex >= 0) {
-        const item = prev.items[existingItemIndex];
-        
-        if (item.quantity > 1) {
-          // Reduce quantity if more than 1
-          const updatedItems = [...prev.items];
-          updatedItems[existingItemIndex].quantity -= 1;
-          
-          return {
-            items: updatedItems,
-            total: prev.total - item.price
-          };
-        } else {
-          // Remove item if quantity is 1
-          return {
-            items: prev.items.filter(i => i.id !== itemId),
-            total: prev.total - item.price
-          };
-        }
-      }
-      
-      return prev;
-    });
-  };
-
-  // Handle removing an entire item (all quantities) from cart
-  const removeItemCompletely = (itemId) => {
-    setCart(prev => {
-      const item = prev.items.find(i => i.id === itemId);
-      
-      if (item) {
-        return {
-          items: prev.items.filter(i => i.id !== itemId),
-          total: prev.total - (item.price * item.quantity)
+  // Remove item from cart
+  const removeFromCart = (itemId: number) => {
+    setCart(prevCart => {
+      const newCart = { ...prevCart };
+      if (newCart[itemId] && newCart[itemId].quantity > 1) {
+        newCart[itemId] = {
+          ...newCart[itemId],
+          quantity: newCart[itemId].quantity - 1
         };
+      } else {
+        delete newCart[itemId];
       }
-      
-      return prev;
+      return newCart;
     });
   };
 
-  // Handle proceeding to payment
-  const handleCheckout = () => {
-    if (!selectedUser) {
+  // Clear the entire cart
+  const clearCart = () => {
+    setCart({});
+  };
+
+  // Calculate cart total
+  const getCartTotal = () => {
+    return Object.values(cart).reduce((total, item) => total + (item.price * item.quantity), 0);
+  };
+
+  // Process payment
+  const handlePaymentSuccess = async (paymentId: number) => {
+    // Create an order using the payment ID
+    if (Object.keys(cart).length === 0) {
       toast({
-        title: t('pos.noCustomerSelected'),
-        description: t('pos.selectCustomerFirst'),
+        title: t('pos.emptyCartError'),
+        description: t('pos.addItemsToCart'),
         variant: "destructive",
       });
       return;
     }
 
-    if (cart.items.length === 0) {
+    try {
+      const items = Object.values(cart).map(item => ({
+        menuItemId: item.menuItemId,
+        quantity: item.quantity,
+        price: item.price,
+        notes: item.notes || null,
+      }));
+
+      const orderData = {
+        totalAmount: getCartTotal(),
+        userId: selectedUser,
+        reservationId: selectedReservation || null,
+        items,
+        paymentId,
+        status: "completed",
+      };
+
+      await apiRequest("POST", "/api/orders", orderData);
+
       toast({
-        title: t('pos.emptyCart'),
+        title: t('pos.orderCompleted'),
+        description: t('pos.paymentSuccessful'),
+      });
+      
+      // Reset state
+      clearCart();
+      setShowPaymentModal(false);
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reservations"] });
+      
+    } catch (error: any) {
+      toast({
+        title: t('pos.orderError'),
+        description: error.message || t('pos.tryAgain'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Select a customer for the order
+  const selectCustomer = (userId: string) => {
+    setSelectedUser(parseInt(userId));
+    setSelectedReservation(null);
+  };
+
+  // Submit the order and open payment modal
+  const handleCheckout = () => {
+    if (!selectedUser) {
+      toast({
+        title: t('pos.userRequired'),
+        description: t('pos.selectUserFirst'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (Object.keys(cart).length === 0) {
+      toast({
+        title: t('pos.emptyCartError'),
         description: t('pos.addItemsToCart'),
         variant: "destructive",
       });
@@ -186,208 +232,282 @@ export default function POS() {
     setShowPaymentModal(true);
   };
 
-  // Handle payment completion
-  const handlePaymentSuccess = (paymentId: number) => {
-    setShowPaymentModal(false);
-    createPaymentMutation.mutate(paymentId);
+  // Get customer display name
+  const getCustomerName = () => {
+    if (!selectedUser) return t('pos.selectCustomer');
+    
+    const user = users.find((u: any) => u.id === selectedUser);
+    return user ? `${user.firstName} ${user.lastName}` : t('pos.unknownCustomer');
   };
-
-  // Handle selecting a customer
-  const selectUser = (userId: number) => {
-    setSelectedUser(userId);
-    setCustomerSearch('');
-  };
-
-  // Get selected user details
-  const selectedUserDetails = selectedUser ? users?.find(u => u.id === selectedUser) : null;
-
-  // Group menu items by category
-  const menuItemsByCategory = menuCategories?.map(category => ({
-    ...category,
-    items: menuItems?.filter(item => item.categoryId === category.id) || []
-  })) || [];
 
   return (
-    <AdminLayout>
-      <div className="container mx-auto py-6">
-        <h1 className="text-3xl font-bold mb-6">{t('pos.title')}</h1>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Left column - Menu */}
-          <div className="md:col-span-2">
+    <AdminLayout title={t('pos.pointOfSale')}>
+      <div className="flex flex-col min-h-screen">
+        <div className="p-4 sm:p-6 lg:p-8 flex-1 flex flex-col md:flex-row gap-6">
+          {/* Customer Selection, Cart and Payment Section */}
+          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col gap-6">
+            {/* Customer Selection */}
             <Card>
-              <CardHeader>
-                <CardTitle>{t('pos.menu')}</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Users className="h-5 w-5" /> {t('pos.customer')}
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                {categoriesLoading ? (
-                  <div className="flex items-center justify-center p-6">
-                    <div className="animate-spin w-6 h-6 border-2 border-primary rounded-full border-t-transparent" />
-                  </div>
-                ) : (
-                  <div className="space-y-8">
-                    {menuItemsByCategory.map(category => (
-                      <div key={category.id} className="space-y-4">
-                        <h3 className="text-lg font-semibold">{category.name}</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {category.items.map(item => (
-                            <div 
-                              key={item.id} 
-                              className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                              onClick={() => addToCart(item)}
-                            >
-                              <div className="font-medium">{item.name}</div>
-                              <div className="text-sm text-muted-foreground mt-1">€{(item.price / 100).toFixed(2)}</div>
-                            </div>
+                <div className="space-y-3">
+                  <Select onValueChange={selectCustomer} value={selectedUser?.toString()}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('pos.selectCustomer')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map((user: any) => (
+                        <SelectItem key={user.id} value={user.id.toString()}>
+                          {user.firstName} {user.lastName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  {selectedUser && reservations.length > 0 && (
+                    <div className="mt-3">
+                      <label className="text-sm font-medium mb-1 block">
+                        {t('pos.linkedReservation')}
+                      </label>
+                      <Select 
+                        onValueChange={(val) => setSelectedReservation(parseInt(val))}
+                        value={selectedReservation?.toString() || ""}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('pos.selectReservation')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">{t('pos.noReservation')}</SelectItem>
+                          {reservations.map((res: any) => (
+                            <SelectItem key={res.id} value={res.id.toString()}>
+                              {new Date(res.date).toLocaleDateString()} - {res.partySize} {t('pos.people')}
+                            </SelectItem>
                           ))}
-                        </div>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Cart */}
+            <Card className="flex-1 flex flex-col">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" /> {t('pos.cart')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col">
+                <div className="flex-1">
+                  {Object.keys(cart).length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground">
+                      {t('pos.emptyCart')}
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[calc(100vh-450px)]">
+                      <div className="space-y-3">
+                        {Object.entries(cart).map(([id, item]) => (
+                          <div key={id} className="flex justify-between items-center p-2 bg-muted/30 rounded-md">
+                            <div className="flex-1">
+                              <div className="font-medium">{item.name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {(item.price / 100).toFixed(2)}€ × {item.quantity}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-7 w-7"
+                                onClick={() => removeFromCart(parseInt(id))}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="w-6 text-center">{item.quantity}</span>
+                              <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-7 w-7"
+                                onClick={() => addToCart(parseInt(id))}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </ScrollArea>
+                  )}
+                </div>
+
+                <div className="border-t mt-4 pt-4">
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>{t('pos.total')}</span>
+                    <span>{(getCartTotal() / 100).toFixed(2)}€</span>
                   </div>
-                )}
+                  <div className="flex justify-between items-center mt-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={clearCart}
+                      disabled={Object.keys(cart).length === 0}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      {t('pos.clear')}
+                    </Button>
+                    <Button 
+                      onClick={handleCheckout}
+                      disabled={Object.keys(cart).length === 0 || !selectedUser}
+                    >
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      {t('pos.payment')}
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
-          
-          {/* Right column - Cart and Customer Selection */}
-          <div>
-            <div className="space-y-6">
-              {/* Customer Selection */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('pos.customer')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {selectedUserDetails ? (
-                    <div className="space-y-4">
-                      <div className="p-4 border rounded-lg">
-                        <div className="font-medium">{selectedUserDetails.firstName} {selectedUserDetails.lastName}</div>
-                        <div className="text-sm text-muted-foreground">{selectedUserDetails.email}</div>
+
+          {/* Menu Items Section */}
+          <div className="w-full md:w-2/3 lg:w-3/4">
+            <Card className="h-full flex flex-col">
+              <CardHeader className="pb-3">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Receipt className="h-5 w-5" /> {t('pos.menu')}
+                  </CardTitle>
+                  <div className="relative w-full sm:w-72">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder={t('pos.searchItems')}
+                      className="pl-8"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col pb-6">
+                <Tabs 
+                  defaultValue="all" 
+                  className="flex-1 flex flex-col"
+                  onValueChange={(value) => {
+                    setSelectedCategory(value === "all" ? null : parseInt(value));
+                    setSearchQuery("");
+                  }}
+                >
+                  <TabsList className="mb-6 flex flex-wrap justify-start h-auto pb-0">
+                    <TabsTrigger 
+                      value="all" 
+                      className="mb-2 mr-2"
+                    >
+                      {t('pos.allItems')}
+                    </TabsTrigger>
+                    {menuCategories.map((category: any) => (
+                      <TabsTrigger 
+                        key={category.id} 
+                        value={category.id.toString()}
+                        className="mb-2 mr-2"
+                      >
+                        {category.name}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  
+                  <ScrollArea className="flex-1 rounded-md border">
+                    {isLoadingMenuItems ? (
+                      <div className="p-8 text-center text-muted-foreground">
+                        {t('pos.loadingItems')}
                       </div>
-                      <Button variant="outline" onClick={() => setSelectedUser(null)} className="w-full">
-                        {t('pos.changeCustomer')}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="relative">
-                        <Input
-                          placeholder={t('pos.searchCustomers')}
-                          value={customerSearch}
-                          onChange={(e) => setCustomerSearch(e.target.value)}
-                        />
-                        {customerSearch && filteredUsers.length > 0 && (
-                          <div className="absolute z-10 w-full mt-1 bg-card border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                            {filteredUsers.map(user => (
-                              <div
-                                key={user.id}
-                                className="p-2 hover:bg-muted cursor-pointer"
-                                onClick={() => selectUser(user.id)}
-                              >
-                                <div className="font-medium">{user.firstName} {user.lastName}</div>
-                                <div className="text-xs text-muted-foreground">{user.email}</div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                    ) : menuItems.length === 0 ? (
+                      <div className="p-8 text-center text-muted-foreground">
+                        {searchQuery ? t('pos.noSearchResults') : t('pos.noItemsInCategory')}
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              
-              {/* Cart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('pos.cart')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {cart.items.length === 0 ? (
-                    <div className="text-center py-6 text-muted-foreground">
-                      {t('pos.emptyCartMessage')}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
+                    ) : (
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>{t('pos.item')}</TableHead>
-                            <TableHead className="text-right">{t('pos.price')}</TableHead>
-                            <TableHead className="text-center">{t('pos.quantity')}</TableHead>
-                            <TableHead className="text-right">{t('pos.subtotal')}</TableHead>
-                            <TableHead></TableHead>
+                            <TableHead>{t('pos.itemName')}</TableHead>
+                            <TableHead className="w-[100px] text-right">{t('pos.price')}</TableHead>
+                            <TableHead className="w-[100px]"></TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {cart.items.map(item => (
+                          {menuItems.map((item: any) => (
                             <TableRow key={item.id}>
-                              <TableCell>{item.name}</TableCell>
-                              <TableCell className="text-right">€{(item.price / 100).toFixed(2)}</TableCell>
                               <TableCell>
-                                <div className="flex items-center justify-center space-x-2">
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => removeFromCart(item.id)}
-                                  >
-                                    <Minus className="h-3 w-3" />
-                                  </Button>
-                                  <span>{item.quantity}</span>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => addToCart(item)}
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                  </Button>
+                                <div>
+                                  <div className="font-medium">{item.name}</div>
+                                  {item.description && (
+                                    <div className="text-sm text-muted-foreground">
+                                      {item.description.substring(0, 60)}
+                                      {item.description.length > 60 ? '...' : ''}
+                                    </div>
+                                  )}
+                                  {item.categoryId && (
+                                    <Badge variant="outline" className="mt-1">
+                                      {menuCategories.find((c: any) => c.id === item.categoryId)?.name}
+                                    </Badge>
+                                  )}
                                 </div>
                               </TableCell>
-                              <TableCell className="text-right font-medium">
-                                €{((item.price * item.quantity) / 100).toFixed(2)}
+                              <TableCell className="text-right">
+                                {(item.price / 100).toFixed(2)}€
                               </TableCell>
                               <TableCell>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => removeItemCompletely(item.id)}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
+                                <div className="flex items-center justify-end gap-2">
+                                  {cart[item.id] && (
+                                    <>
+                                      <Button 
+                                        variant="outline" 
+                                        size="icon" 
+                                        className="h-8 w-8"
+                                        onClick={() => removeFromCart(item.id)}
+                                      >
+                                        <Minus className="h-4 w-4" />
+                                      </Button>
+                                      <span className="w-6 text-center">
+                                        {cart[item.id]?.quantity || 0}
+                                      </span>
+                                    </>
+                                  )}
+                                  <Button 
+                                    variant="outline" 
+                                    size="icon" 
+                                    className="h-8 w-8"
+                                    onClick={() => addToCart(item.id)}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
-                      
-                      <div className="flex justify-between items-center pt-4 border-t">
-                        <div className="font-semibold text-lg">{t('pos.total')}</div>
-                        <div className="font-bold text-xl">€{(cart.total / 100).toFixed(2)}</div>
-                      </div>
-                      
-                      <Button 
-                        className="w-full"
-                        onClick={handleCheckout}
-                        disabled={cart.items.length === 0 || !selectedUser}
-                      >
-                        <DollarSign className="mr-2 h-4 w-4" />
-                        {t('pos.checkout')}
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                    )}
+                  </ScrollArea>
+                </Tabs>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
-      
+
+      {/* Payment Modal */}
       {showPaymentModal && (
         <PaymentModal
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
           onPaymentSuccess={handlePaymentSuccess}
-          totalAmount={cart.total}
-          userId={selectedUser}
+          totalAmount={getCartTotal()}
+          userId={selectedUser!}
+          reservationId={selectedReservation || undefined}
         />
       )}
     </AdminLayout>

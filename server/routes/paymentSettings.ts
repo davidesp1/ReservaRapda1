@@ -1,102 +1,95 @@
-import { Router } from 'express';
-import { z } from 'zod';
-import { storage } from '../storage';
-import { validate } from '../middleware/validate';
-import { updatePaymentSettingsSchema } from '@shared/schema';
+import { Request, Response } from "express";
+import { z } from "zod";
+import { storage } from "../storage";
+import { paymentService } from "../services/paymentService";
 
-const router = Router();
+// Schema para validação das configurações de pagamento
+const paymentSettingsSchema = z.object({
+  eupagoApiKey: z.string().min(1, "API key do EuPago é obrigatória"),
+  enabledPaymentMethods: z.array(
+    z.enum(["card", "mbway", "multibanco", "bankTransfer", "cash"])
+  ).min(1, "Pelo menos um método de pagamento deve estar habilitado"),
+});
+
+// Schema para validação do teste de API key
+const testApiKeySchema = z.object({
+  apiKey: z.string().min(1, "API key é obrigatória"),
+});
 
 /**
- * GET /api/settings/payment
- * Obter configurações de pagamento
+ * Rota para obter as configurações de pagamento
  */
-router.get('/', async (req, res) => {
+export async function getPaymentSettings(req: Request, res: Response) {
   try {
     const settings = await storage.getPaymentSettings();
     
     if (!settings) {
+      // Retornar configurações padrão se não existirem ainda
       return res.json({
-        eupagoApiKey: '',
-        enabledPaymentMethods: {
-          card: true,
-          mbway: true,
-          multibanco: true,
-          bankTransfer: true,
-          cash: true
-        }
+        eupagoApiKey: "",
+        enabledPaymentMethods: ["card", "mbway", "multibanco", "bankTransfer", "cash"],
       });
     }
     
-    return res.json({
-      eupagoApiKey: settings.eupagoApiKey,
-      enabledPaymentMethods: {
-        card: settings.enableCard,
-        mbway: settings.enableMbway,
-        multibanco: settings.enableMultibanco,
-        bankTransfer: settings.enableBankTransfer,
-        cash: settings.enableCash
-      }
-    });
-  } catch (error) {
-    console.error('Erro ao obter configurações de pagamento:', error);
-    res.status(500).json({ message: 'Erro ao obter configurações de pagamento' });
+    return res.json(settings);
+  } catch (error: any) {
+    console.error("Erro ao buscar configurações de pagamento:", error);
+    return res.status(500).json({ message: error.message || "Erro ao buscar configurações de pagamento" });
   }
-});
+}
 
 /**
- * POST /api/settings/payment
- * Salvar configurações de pagamento
+ * Rota para atualizar as configurações de pagamento
  */
-router.post('/', validate(updatePaymentSettingsSchema), async (req, res) => {
+export async function updatePaymentSettings(req: Request, res: Response) {
   try {
-    const { eupagoApiKey, enabledPaymentMethods } = req.body;
+    const validationResult = paymentSettingsSchema.safeParse(req.body);
     
-    const settings = await storage.upsertPaymentSettings({
-      eupagoApiKey,
-      enableCard: enabledPaymentMethods.card,
-      enableMbway: enabledPaymentMethods.mbway,
-      enableMultibanco: enabledPaymentMethods.multibanco,
-      enableBankTransfer: enabledPaymentMethods.bankTransfer,
-      enableCash: enabledPaymentMethods.cash
-    });
-    
-    res.json({
-      success: true,
-      settings
-    });
-  } catch (error) {
-    console.error('Erro ao salvar configurações de pagamento:', error);
-    res.status(500).json({ message: 'Erro ao salvar configurações de pagamento' });
-  }
-});
-
-/**
- * POST /api/settings/payment/test
- * Testar conexão com API EuPago
- */
-router.post('/test', validate(z.object({ apiKey: z.string() })), async (req, res) => {
-  try {
-    const { apiKey } = req.body;
-    
-    // Implementação simples para teste - em produção usaria o cliente real EuPago
-    // Considerar mover para um serviço dedicado em produção
-    if (!apiKey) {
-      return res.status(400).json({ message: 'Chave de API não fornecida' });
+    if (!validationResult.success) {
+      return res.status(400).json({ 
+        message: "Dados de configuração inválidos",
+        errors: validationResult.error.format() 
+      });
     }
     
-    // Simular teste de conexão - esta parte seria substituída pela chamada real à API
-    const isValid = apiKey.length >= 8;
+    const settings = validationResult.data;
+    
+    // Salvar as configurações no banco de dados
+    const updatedSettings = await storage.updatePaymentSettings(settings);
+    
+    return res.json(updatedSettings);
+  } catch (error: any) {
+    console.error("Erro ao atualizar configurações de pagamento:", error);
+    return res.status(500).json({ message: error.message || "Erro ao atualizar configurações de pagamento" });
+  }
+}
+
+/**
+ * Rota para testar a conexão com a API do EuPago
+ */
+export async function testPaymentConnection(req: Request, res: Response) {
+  try {
+    const validationResult = testApiKeySchema.safeParse(req.body);
+    
+    if (!validationResult.success) {
+      return res.status(400).json({ 
+        message: "API key inválida",
+        errors: validationResult.error.format() 
+      });
+    }
+    
+    const { apiKey } = validationResult.data;
+    
+    // Testar a conexão com a API do EuPago
+    const isValid = await paymentService.testConnection(apiKey);
     
     if (!isValid) {
-      return res.status(400).json({ message: 'Chave de API inválida' });
+      return res.status(400).json({ message: "API key inválida ou erro de conexão com o EuPago" });
     }
     
-    // Em um caso real, faríamos uma chamada à API para verificar a validade da chave
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Erro ao testar conexão com EuPago:', error);
-    res.status(500).json({ message: 'Erro ao testar conexão com EuPago' });
+    return res.json({ message: "Conexão bem-sucedida com a API do EuPago" });
+  } catch (error: any) {
+    console.error("Erro ao testar conexão com EuPago:", error);
+    return res.status(500).json({ message: error.message || "Erro ao testar conexão com EuPago" });
   }
-});
-
-export default router;
+}
