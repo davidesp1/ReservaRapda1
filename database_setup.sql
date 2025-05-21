@@ -5,7 +5,7 @@
 CREATE TYPE user_role AS ENUM ('customer', 'admin');
 CREATE TYPE reservation_status AS ENUM ('pending', 'confirmed', 'cancelled', 'completed', 'no-show');
 CREATE TYPE payment_status AS ENUM ('pending', 'completed', 'failed', 'refunded');
-CREATE TYPE payment_method AS ENUM ('card', 'mbway', 'multibanco', 'bankTransfer', 'cash');
+CREATE TYPE payment_method AS ENUM ('card', 'mbway', 'multibanco', 'transfer');
 CREATE TYPE table_category AS ENUM ('standard', 'vip', 'outdoor', 'private');
 CREATE TYPE dietary_preference AS ENUM ('vegetarian', 'vegan', 'gluten-free', 'lactose-free', 'pescatarian', 'halal', 'kosher', 'none');
 
@@ -194,37 +194,3 @@ VALUES
   ('hours', 'monday_to_friday', 'true'),
   ('hours', 'saturday', 'true'),
   ('hours', 'sunday', 'true');
-
--- Criação da tabela de configurações de pagamento
-CREATE TABLE payment_settings (
-  id SERIAL PRIMARY KEY,
-  eupago_api_key TEXT NOT NULL,
-  enable_card BOOLEAN DEFAULT TRUE,
-  enable_mbway BOOLEAN DEFAULT TRUE,
-  enable_multibanco BOOLEAN DEFAULT TRUE,
-  enable_bank_transfer BOOLEAN DEFAULT TRUE,
-  enable_cash BOOLEAN DEFAULT TRUE,
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Inserir dados iniciais de configuração de pagamento
-INSERT INTO payment_settings (eupago_api_key, enable_card, enable_mbway, enable_multibanco, enable_bank_transfer, enable_cash)
-VALUES ('', TRUE, TRUE, TRUE, TRUE, TRUE);
-
--- Criação da tabela de configurações de banco de dados
-CREATE TABLE database_settings (
-  id SERIAL PRIMARY KEY,
-  supabase_url TEXT NOT NULL,
-  supabase_key TEXT NOT NULL,
-  database_url TEXT NOT NULL,
-  database_host TEXT NOT NULL,
-  database_port TEXT NOT NULL,
-  database_name TEXT NOT NULL,
-  database_user TEXT NOT NULL,
-  database_password TEXT NOT NULL,
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Inserir dados iniciais de configuração de banco de dados
-INSERT INTO database_settings (supabase_url, supabase_key, database_url, database_host, database_port, database_name, database_user, database_password)
-VALUES ('', '', '', '', '', '', '', '');

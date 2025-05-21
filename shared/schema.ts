@@ -7,7 +7,7 @@ import { z } from "zod";
 export const userRoleEnum = pgEnum('user_role', ['customer', 'admin']);
 export const reservationStatusEnum = pgEnum('reservation_status', ['pending', 'confirmed', 'cancelled', 'completed', 'no-show']);
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'completed', 'failed', 'refunded']);
-export const paymentMethodEnum = pgEnum('payment_method', ['card', 'mbway', 'multibanco', 'bankTransfer', 'cash']);
+export const paymentMethodEnum = pgEnum('payment_method', ['card', 'mbway', 'multibanco', 'transfer']);
 export const tableCategoryEnum = pgEnum('table_category', ['standard', 'vip', 'outdoor', 'private']);
 export const dietaryPreferenceEnum = pgEnum('dietary_preference', ['vegetarian', 'vegan', 'gluten-free', 'lactose-free', 'pescatarian', 'halal', 'kosher', 'none']);
 
@@ -281,69 +281,10 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Payment Settings table
-export const paymentSettings = pgTable("payment_settings", {
-  id: serial("id").primaryKey(),
-  eupagoApiKey: text("eupago_api_key").notNull(),
-  enableCard: boolean("enable_card").default(true),
-  enableMbway: boolean("enable_mbway").default(true),
-  enableMultibanco: boolean("enable_multibanco").default(true),
-  enableBankTransfer: boolean("enable_bank_transfer").default(true),
-  enableCash: boolean("enable_cash").default(true),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Database Settings table
-export const databaseSettings = pgTable("database_settings", {
-  id: serial("id").primaryKey(),
-  supabaseUrl: text("supabase_url").notNull(),
-  supabaseKey: text("supabase_key").notNull(),
-  databaseUrl: text("database_url").notNull(),
-  databaseHost: text("database_host").notNull(),
-  databasePort: text("database_port").notNull(),
-  databaseName: text("database_name").notNull(),
-  databaseUser: text("database_user").notNull(),
-  databasePassword: text("database_password").notNull(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
 export const insertSettingsSchema = createInsertSchema(settings).omit({
   id: true,
   updatedAt: true,
 });
 
-export const insertPaymentSettingsSchema = createInsertSchema(paymentSettings).omit({
-  id: true,
-  updatedAt: true,
-});
-
-export const updatePaymentSettingsSchema = z.object({
-  eupagoApiKey: z.string().min(1, { message: "API Key é obrigatória" }),
-  enabledPaymentMethods: z.array(
-    z.enum(["card", "mbway", "multibanco", "bankTransfer", "cash"])
-  ).min(1, { message: "Pelo menos um método de pagamento deve estar habilitado" }),
-});
-
-// Database Settings Schema
-export const insertDatabaseSettingsSchema = createInsertSchema(databaseSettings).omit({
-  id: true,
-  updatedAt: true,
-});
-
-export const updateDatabaseSettingsSchema = z.object({
-  supabaseUrl: z.string().url({ message: "URL inválida" }).min(1),
-  supabaseKey: z.string().min(1),
-  databaseUrl: z.string().min(1),
-  databaseHost: z.string().min(1),
-  databasePort: z.string().min(1),
-  databaseName: z.string().min(1),
-  databaseUser: z.string().min(1),
-  databasePassword: z.string().min(1),
-});
-
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingsSchema>;
-export type PaymentSetting = typeof paymentSettings.$inferSelect;
-export type InsertPaymentSetting = z.infer<typeof insertPaymentSettingsSchema>;
-export type DatabaseSetting = typeof databaseSettings.$inferSelect;
-export type InsertDatabaseSetting = z.infer<typeof insertDatabaseSettingsSchema>;

@@ -1,229 +1,188 @@
-import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import {
-  Home,
-  MenuSquare,
-  Calendar,
-  Users,
-  CreditCard,
-  Settings,
-  ChevronRight,
-  LogOut,
-  BarChart,
-  ChefHat,
-  Table2,
-  CircleDollarSign,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/useAuth";
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useLocation } from 'wouter';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { 
+  FaUtensils, FaChartLine, FaUsers, FaBookOpen, 
+  FaChair, FaCoins, FaCreditCard, FaCalendarCheck, 
+  FaCog, FaSignOutAlt, FaBars, FaTimes
+} from 'react-icons/fa';
 
-export default function AdminSidebar() {
+interface SidebarProps {
+  isMobile?: boolean;
+  onClose?: () => void;
+}
+
+const AdminSidebar: React.FC<SidebarProps> = ({ isMobile = false, onClose }) => {
   const { t } = useTranslation();
+  const { user, logout } = useAuth();
   const [location] = useLocation();
-  const { user } = useAuth();
-  const [expanded, setExpanded] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      await apiRequest("GET", "/api/logout");
-      window.location.href = "/";
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+  const closeMenu = () => {
+    setIsOpen(false);
+    if (onClose) onClose();
   };
 
-  const primaryNavItems = [
+  const navItems = [
     {
-      title: t('admin.dashboard'),
-      href: "/admin",
-      icon: Home,
+      path: '/admin/dashboard',
+      label: t('Dashboard'),
+      icon: <FaChartLine className="w-6 text-brasil-yellow" />
     },
     {
-      title: t('admin.reservations'),
-      href: "/admin/reservations",
-      icon: Calendar,
+      path: '/admin/customers',
+      label: t('Customers'),
+      icon: <FaUsers className="w-6 text-brasil-yellow" />
     },
     {
-      title: t('admin.menu'),
-      href: "/admin/menu",
-      icon: MenuSquare,
+      path: '/admin/menu',
+      label: t('MenuManagement'),
+      icon: <FaBookOpen className="w-6 text-brasil-yellow" />
     },
     {
-      title: t('admin.tables'),
-      href: "/admin/tables",
-      icon: Table2,
+      path: '/admin/tables',
+      label: t('Tables'),
+      icon: <FaChair className="w-6 text-brasil-yellow" />
     },
     {
-      title: t('admin.customers'),
-      href: "/admin/customers",
-      icon: Users,
+      path: '/admin/finance',
+      label: t('Finance'),
+      icon: <FaCoins className="w-6 text-brasil-yellow" />
     },
     {
-      title: t('admin.staff'),
-      href: "/admin/staff",
-      icon: ChefHat,
+      path: '/admin/reservations',
+      label: t('Reservations'),
+      icon: <FaCalendarCheck className="w-6 text-brasil-yellow" />
     },
     {
-      title: t('admin.pos'),
-      href: "/admin/pos",
-      icon: CreditCard,
-    },
-    {
-      title: t('admin.finances'),
-      href: "/admin/finances",
-      icon: CircleDollarSign,
-    },
-    {
-      title: t('admin.reports'),
-      href: "/admin/reports",
-      icon: BarChart,
-    },
+      path: '/admin/settings',
+      label: t('Settings'),
+      icon: <FaCog className="w-6 text-brasil-yellow" />
+    }
   ];
-  
-  const secondaryNavItems = [
-    {
-      title: t('admin.settings'),
-      href: "/admin/settings",
-      icon: Settings,
-    },
-    {
-      title: t('admin.paymentSettings'),
-      href: "/admin/payment-settings",
-      icon: CreditCard,
-    },
-  ];
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  // Mobile Sidebar Component
+  const MobileSidebar = () => (
+    <div className="bg-brasil-blue text-white w-3/4 h-full max-w-xs flex flex-col">
+      <div className="flex justify-between items-center p-4 border-b border-blue-700">
+        <h2 className="font-bold text-lg">Menu</h2>
+        <button onClick={closeMenu} className="text-white">
+          <FaTimes className="text-xl" />
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        <nav className="py-2">
+          {navItems.map((item) => (
+            <Link key={item.path} href={item.path}>
+              <a 
+                className={`flex items-center px-4 py-3 ${
+                  location === item.path 
+                    ? 'bg-blue-800' 
+                    : ''
+                } cursor-pointer`}
+                onClick={closeMenu}
+              >
+                <span className="mr-3 w-6 text-center">{item.icon}</span>
+                <span>{item.label}</span>
+              </a>
+            </Link>
+          ))}
+          <button 
+            onClick={() => {
+              handleLogout();
+              closeMenu();
+            }}
+            className="flex w-full items-center px-4 py-3 cursor-pointer text-left"
+          >
+            <FaSignOutAlt className="w-6 text-brasil-yellow mr-3 text-center" />
+            <span>{t('Logout')}</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+  );
+
+  // Desktop Sidebar Component
+  const DesktopSidebar = () => (
+    <div className="fixed left-0 top-0 h-full w-64 bg-brasil-blue flex flex-col">
+      <div className="p-6">
+        <div className="flex items-center">
+          <div className="w-10 h-10 bg-brasil-yellow rounded-full flex items-center justify-center mr-2">
+            <FaUtensils className="text-brasil-blue" />
+          </div>
+          <span className="text-xl font-semibold text-white font-montserrat">
+            Opa que delicia
+          </span>
+        </div>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto">
+        <ul>
+          {navItems.map((item) => (
+            <li key={item.path} className="px-6 py-3">
+              <Link href={item.path}>
+                <a 
+                  className={`flex items-center text-white ${
+                    location === item.path 
+                      ? 'bg-brasil-blue bg-opacity-40' 
+                      : 'hover:bg-brasil-blue hover:bg-opacity-40'
+                  } rounded-lg p-2 cursor-pointer`}
+                  onClick={closeMenu}
+                >
+                  {item.icon}
+                  <span className="ml-2 font-medium">{item.label}</span>
+                </a>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+      
+      <div className="mt-auto border-t border-blue-400 p-4">
+        <button 
+          onClick={handleLogout}
+          className="flex w-full items-center text-white hover:bg-brasil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer"
+        >
+          <FaSignOutAlt className="w-6 text-brasil-yellow" />
+          <span className="ml-2 font-medium">{t('Logout')}</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return <MobileSidebar />;
+  }
 
   return (
-    <aside
-      className={cn(
-        "bg-primary-foreground border-r flex flex-col transition-all duration-300 h-screen sticky top-0",
-        expanded ? "w-64" : "w-16"
-      )}
-    >
-      {/* Logo & Toggle Button */}
-      <div className="flex items-center justify-between p-4 border-b h-16">
-        {expanded ? (
-          <Link href="/admin">
-            <a className="text-xl font-bold">Opa que Delícia</a>
-          </Link>
-        ) : (
-          <div className="w-full flex justify-center">
-            <Link href="/admin">
-              <a className="text-xl font-bold">OQD</a>
-            </Link>
-          </div>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setExpanded(!expanded)}
-          className="text-muted-foreground"
-        >
-          <ChevronRight
-            className={cn(
-              "h-5 w-5 transition-transform",
-              expanded ? "rotate-180" : ""
-            )}
-          />
-        </Button>
+    <>
+      {/* Mobile sidebar com Sheet */}
+      <div className="md:hidden">
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-white p-0 h-auto">
+              <FaBars className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 bg-brasil-blue text-white">
+            <MobileSidebar />
+          </SheetContent>
+        </Sheet>
       </div>
-
-      {/* Navigation */}
-      <ScrollArea className="flex-1">
-        <div className="px-3 py-4">
-          <div className="mb-6">
-            <div
-              className={cn(
-                "text-xs uppercase font-medium text-muted-foreground mb-2",
-                !expanded && "sr-only"
-              )}
-            >
-              {t('admin.primaryNav')}
-            </div>
-            <nav className="space-y-1">
-              {primaryNavItems.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  <a
-                    className={cn(
-                      "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                      location === item.href
-                        ? "bg-primary text-primary-foreground"
-                        : "text-foreground hover:bg-muted",
-                      !expanded && "justify-center"
-                    )}
-                  >
-                    <item.icon
-                      className={cn("h-5 w-5", expanded && "mr-3")}
-                    />
-                    {expanded && <span>{item.title}</span>}
-                  </a>
-                </Link>
-              ))}
-            </nav>
-          </div>
-
-          <div className="mb-6">
-            <div
-              className={cn(
-                "text-xs uppercase font-medium text-muted-foreground mb-2",
-                !expanded && "sr-only"
-              )}
-            >
-              {t('admin.secondaryNav')}
-            </div>
-            <nav className="space-y-1">
-              {secondaryNavItems.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  <a
-                    className={cn(
-                      "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                      location === item.href
-                        ? "bg-primary text-primary-foreground"
-                        : "text-foreground hover:bg-muted",
-                      !expanded && "justify-center"
-                    )}
-                  >
-                    <item.icon
-                      className={cn("h-5 w-5", expanded && "mr-3")}
-                    />
-                    {expanded && <span>{item.title}</span>}
-                  </a>
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </div>
-      </ScrollArea>
-
-      {/* User Info & Logout */}
-      <div className="border-t p-4">
-        <div className="flex items-center justify-between">
-          {expanded && (
-            <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                {user?.firstName?.charAt(0) || "A"}
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium">{user?.firstName || "Admin"}</p>
-                <p className="text-xs text-muted-foreground">{user?.email || ""}</p>
-              </div>
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size={expanded ? "default" : "icon"}
-            onClick={handleLogout}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <LogOut className={cn("h-5 w-5", expanded && "mr-2")} />
-            {expanded && t('common.logout')}
-          </Button>
-        </div>
+      
+      {/* Desktop sidebar */}
+      <div className="hidden md:block">
+        <DesktopSidebar />
       </div>
-    </aside>
+    </>
   );
-}
+};
+
+export default AdminSidebar;

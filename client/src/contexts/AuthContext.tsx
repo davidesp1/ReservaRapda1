@@ -59,18 +59,7 @@ interface RegisterData {
   phone?: string;
 }
 
-// Inicializando o contexto com valores padrão para evitar erros de null
-const defaultContext: AuthContextType = {
-  user: null,
-  isLoading: false,
-  isAuthenticated: false,
-  isAdmin: false,
-  login: async () => { throw new Error('AuthContext não foi inicializado'); },
-  register: async () => { throw new Error('AuthContext não foi inicializado'); },
-  logout: async () => { throw new Error('AuthContext não foi inicializado'); },
-};
-
-export const AuthContext = createContext<AuthContextType>(defaultContext);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);

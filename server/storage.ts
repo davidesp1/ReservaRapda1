@@ -7,9 +7,7 @@ import {
   Payment, InsertPayment,
   Order, InsertOrder,
   Setting, InsertSetting,
-  PaymentSetting, InsertPaymentSetting,
-  DatabaseSetting, InsertDatabaseSetting,
-  users, menuCategories, menuItems, tables, reservations, payments, orders, settings, paymentSettings, databaseSettings
+  users, menuCategories, menuItems, tables, reservations, payments, orders, settings
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, sql, like } from "drizzle-orm";
@@ -75,14 +73,6 @@ export interface IStorage {
   getSettingsByCategory(category: string): Promise<Record<string, string>>;
   getAllSettings(): Promise<Record<string, Record<string, string>>>;
   updateSettings(category: string, settingsData: Record<string, string>): Promise<boolean>;
-  
-  // Payment Settings
-  getPaymentSettings(): Promise<PaymentSetting | undefined>;
-  updatePaymentSettings(data: Partial<InsertPaymentSetting>): Promise<PaymentSetting>;
-  
-  // Database Settings
-  getDatabaseSettings(): Promise<DatabaseSetting | undefined>;
-  updateDatabaseSettings(data: Partial<InsertDatabaseSetting>): Promise<DatabaseSetting>;
 }
 
 export class MemStorage implements IStorage {
@@ -94,8 +84,6 @@ export class MemStorage implements IStorage {
   private payments: Map<number, Payment> = new Map();
   private orders: Map<number, Order> = new Map();
   private settings: Map<string, Map<string, string>> = new Map();
-  private paymentSettings: PaymentSetting | undefined;
-  private databaseSettings: DatabaseSetting | undefined;
   
   private userCurrentId: number = 1;
   private menuCategoryCurrentId: number = 1;
@@ -108,100 +96,6 @@ export class MemStorage implements IStorage {
   constructor() {
     this.initializeData();
     this.initializeSettings();
-    this.initializePaymentSettings();
-    this.initializeDatabaseSettings();
-  }
-  
-  private initializePaymentSettings() {
-    // Inicializa configurações de pagamento padrão
-    this.paymentSettings = {
-      id: 1,
-      eupagoApiKey: '',
-      enableCard: true,
-      enableMbway: true,
-      enableMultibanco: true,
-      enableBankTransfer: true,
-      enableCash: true,
-      updatedAt: new Date()
-    };
-  }
-  
-  private initializeDatabaseSettings() {
-    // Inicializa configurações de banco de dados padrão
-    this.databaseSettings = {
-      id: 1,
-      supabaseUrl: '',
-      supabaseKey: '',
-      databaseUrl: '',
-      databaseHost: '',
-      databasePort: '',
-      databaseName: '',
-      databaseUser: '',
-      databasePassword: '',
-      updatedAt: new Date()
-    };
-  }
-  
-  // Database Settings
-  async getDatabaseSettings(): Promise<DatabaseSetting | undefined> {
-    return this.databaseSettings;
-  }
-
-  async updateDatabaseSettings(data: Partial<InsertDatabaseSetting>): Promise<DatabaseSetting> {
-    if (!this.databaseSettings) {
-      // Criar configurações iniciais se não existirem
-      this.databaseSettings = {
-        id: 1,
-        supabaseUrl: data.supabaseUrl || '',
-        supabaseKey: data.supabaseKey || '',
-        databaseUrl: data.databaseUrl || '',
-        databaseHost: data.databaseHost || '',
-        databasePort: data.databasePort || '',
-        databaseName: data.databaseName || '',
-        databaseUser: data.databaseUser || '',
-        databasePassword: data.databasePassword || '',
-        updatedAt: new Date()
-      };
-    } else {
-      // Atualizar configurações existentes
-      this.databaseSettings = {
-        ...this.databaseSettings,
-        ...data,
-        updatedAt: new Date()
-      };
-    }
-    
-    return this.databaseSettings;
-  }
-  
-  // Payment Settings
-  async getPaymentSettings(): Promise<PaymentSetting | undefined> {
-    return this.paymentSettings;
-  }
-
-  async updatePaymentSettings(data: Partial<InsertPaymentSetting>): Promise<PaymentSetting> {
-    if (!this.paymentSettings) {
-      // Criar configurações iniciais se não existirem
-      this.paymentSettings = {
-        id: 1,
-        eupagoApiKey: data.eupagoApiKey || '',
-        enableCard: data.enableCard !== undefined ? data.enableCard : true,
-        enableMbway: data.enableMbway !== undefined ? data.enableMbway : true,
-        enableMultibanco: data.enableMultibanco !== undefined ? data.enableMultibanco : true,
-        enableBankTransfer: data.enableBankTransfer !== undefined ? data.enableBankTransfer : true,
-        enableCash: data.enableCash !== undefined ? data.enableCash : true,
-        updatedAt: new Date()
-      };
-    } else {
-      // Atualizar configurações existentes
-      this.paymentSettings = {
-        ...this.paymentSettings,
-        ...data,
-        updatedAt: new Date()
-      };
-    }
-    
-    return this.paymentSettings;
   }
 
   // Users
@@ -668,108 +562,6 @@ export class MemStorage implements IStorage {
 
 export class DatabaseStorage implements IStorage {
   constructor() {}
-  
-  // Payment Settings
-  async getPaymentSettings(): Promise<PaymentSetting | undefined> {
-    try {
-      const [settings] = await drizzle.select().from(schema.paymentSettings);
-      return settings;
-    } catch (error) {
-      console.error("Erro ao buscar configurações de pagamento:", error);
-      return undefined;
-    }
-  }
-  
-  async updatePaymentSettings(data: Partial<InsertPaymentSetting>): Promise<PaymentSetting> {
-    try {
-      const [settings] = await drizzle.select().from(schema.paymentSettings);
-      
-      if (settings) {
-        // Atualizar configurações existentes
-        const [updatedSettings] = await drizzle
-          .update(schema.paymentSettings)
-          .set({
-            ...data,
-            updatedAt: new Date()
-          })
-          .where(eq(schema.paymentSettings.id, settings.id))
-          .returning();
-        
-        return updatedSettings;
-      } else {
-        // Criar novas configurações
-        const [newSettings] = await drizzle
-          .insert(schema.paymentSettings)
-          .values({
-            eupagoApiKey: data.eupagoApiKey || '',
-            enableCard: data.enableCard !== undefined ? data.enableCard : true,
-            enableMbway: data.enableMbway !== undefined ? data.enableMbway : true,
-            enableMultibanco: data.enableMultibanco !== undefined ? data.enableMultibanco : true,
-            enableBankTransfer: data.enableBankTransfer !== undefined ? data.enableBankTransfer : true,
-            enableCash: data.enableCash !== undefined ? data.enableCash : true,
-            updatedAt: new Date()
-          })
-          .returning();
-        
-        return newSettings;
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar configurações de pagamento:", error);
-      throw error;
-    }
-  }
-  
-  // Database Settings
-  async getDatabaseSettings(): Promise<DatabaseSetting | undefined> {
-    try {
-      const [settings] = await drizzle.select().from(schema.databaseSettings);
-      return settings;
-    } catch (error) {
-      console.error("Erro ao buscar configurações do banco de dados:", error);
-      return undefined;
-    }
-  }
-  
-  async updateDatabaseSettings(data: Partial<InsertDatabaseSetting>): Promise<DatabaseSetting> {
-    try {
-      const [settings] = await drizzle.select().from(schema.databaseSettings);
-      
-      if (settings) {
-        // Atualizar configurações existentes
-        const [updatedSettings] = await drizzle
-          .update(schema.databaseSettings)
-          .set({
-            ...data,
-            updatedAt: new Date()
-          })
-          .where(eq(schema.databaseSettings.id, settings.id))
-          .returning();
-        
-        return updatedSettings;
-      } else {
-        // Criar novas configurações
-        const [newSettings] = await drizzle
-          .insert(schema.databaseSettings)
-          .values({
-            supabaseUrl: data.supabaseUrl || '',
-            supabaseKey: data.supabaseKey || '',
-            databaseUrl: data.databaseUrl || '',
-            databaseHost: data.databaseHost || '',
-            databasePort: data.databasePort || '',
-            databaseName: data.databaseName || '',
-            databaseUser: data.databaseUser || '',
-            databasePassword: data.databasePassword || '',
-            updatedAt: new Date()
-          })
-          .returning();
-        
-        return newSettings;
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar configurações do banco de dados:", error);
-      throw error;
-    }
-  }
 
   // Users
   async getUser(id: number): Promise<User | undefined> {
@@ -1052,18 +844,6 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updatedPayment;
   }
-  
-  async updatePaymentStatus(id: number, status: string): Promise<Payment | undefined> {
-    const [updatedPayment] = await db
-      .update(payments)
-      .set({ 
-        status: status as any, // Type casting para resolver incompatibilidade
-        ...(status === "completed" ? { paymentDate: new Date() } : {})
-      })
-      .where(eq(payments.id, id))
-      .returning();
-    return updatedPayment;
-  }
 
   async getAllPayments(): Promise<Payment[]> {
     return await db.select().from(payments);
@@ -1190,60 +970,6 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error updating settings:", error);
       return false;
-    }
-  }
-
-  // Payment Settings management
-  async getPaymentSettings(): Promise<PaymentSetting | undefined> {
-    try {
-      const [settings] = await db
-        .select()
-        .from(paymentSettings)
-        .limit(1);
-        
-      return settings;
-    } catch (error) {
-      console.error("Error getting payment settings:", error);
-      return undefined;
-    }
-  }
-  
-  async upsertPaymentSettings(settings: Partial<PaymentSetting>): Promise<PaymentSetting> {
-    try {
-      const existingSettings = await this.getPaymentSettings();
-      
-      if (existingSettings) {
-        // Update existing settings
-        const [updated] = await db
-          .update(paymentSettings)
-          .set({
-            ...settings,
-            updatedAt: new Date()
-          })
-          .where(eq(paymentSettings.id, existingSettings.id))
-          .returning();
-          
-        return updated;
-      } else {
-        // Insert new settings
-        const [created] = await db
-          .insert(paymentSettings)
-          .values({
-            eupagoApiKey: settings.eupagoApiKey || '',
-            enableCard: settings.enableCard !== undefined ? settings.enableCard : true,
-            enableMbway: settings.enableMbway !== undefined ? settings.enableMbway : true,
-            enableMultibanco: settings.enableMultibanco !== undefined ? settings.enableMultibanco : true,
-            enableBankTransfer: settings.enableBankTransfer !== undefined ? settings.enableBankTransfer : true,
-            enableCash: settings.enableCash !== undefined ? settings.enableCash : true,
-            updatedAt: new Date()
-          })
-          .returning();
-          
-        return created;
-      }
-    } catch (error) {
-      console.error("Error upserting payment settings:", error);
-      throw new Error("Failed to update payment settings");
     }
   }
 }
