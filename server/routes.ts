@@ -8,6 +8,7 @@ import { register, login, logout, getProfile } from "./controllers/authControlle
 import { db as drizzleDb, queryClient } from "./db";
 import { eq, gte, desc, and, sql } from "drizzle-orm";
 import * as schema from "@shared/schema";
+import databaseSettingsRouter from "./routes/databaseSettings";
 
 declare module 'express-session' {
   interface SessionData {
@@ -218,5 +219,8 @@ router.post("/api/payments/cancel", isAuthenticated, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Rotas para configurações do banco de dados
+router.use("/api/database-settings", isAuthenticated, databaseSettingsRouter);
 
 export default router;

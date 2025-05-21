@@ -1,81 +1,50 @@
 import express from 'express';
-import { db } from '../db';
-import { databaseSettings, updateDatabaseSettingsSchema } from '@shared/schema';
-import { eq } from 'drizzle-orm';
 import { storage } from '../storage';
 import { validateBody } from '../middleware/validation';
+import { updateDatabaseSettingsSchema } from '@shared/schema';
+import { createClient } from '@supabase/supabase-js';
 
 const router = express.Router();
 
-// Get database settings
+/**
+ * Obter as configurações do banco de dados
+ */
 router.get('/', async (req, res) => {
   try {
     const settings = await storage.getDatabaseSettings();
     
-    // Se não encontrar configurações, retorna um objeto vazio
-    if (!settings) {
-      return res.json({});
-    }
-    
-    // Remove a senha do banco de dados das configurações retornadas
-    const safeSettings = {
+    // Por segurança, não enviar senhas para o frontend
+    const safeSettings = settings ? {
       ...settings,
-      databasePassword: '********', // Oculta a senha real
-    };
+      supabaseKey: settings.supabaseKey ? '••••••••' : '',
+      databasePassword: settings.databasePassword ? '••••••••' : ''
+    } : null;
     
-    return res.json(safeSettings);
-  } catch (error) {
-    console.error('Error fetching database settings:', error);
-    return res.status(500).json({ message: 'Erro ao obter configurações do banco de dados' });
+    res.json(safeSettings);
+  } catch (error: any) {
+    console.error('Erro ao buscar configurações do banco de dados:', error);
+    res.status(500).json({ message: error.message });
   }
 });
 
-// Update database settings
-router.put('/', validateBody(updateDatabaseSettingsSchema), async (req, res) => {
+/**
+ * Atualizar as configurações do banco de dados
+ */
+router.post('/', validateBody(updateDatabaseSettingsSchema), async (req, res) => {
   try {
-    const newSettings = req.body;
-    const settings = await storage.updateDatabaseSettings(newSettings);
+    const updatedSettings = await storage.updateDatabaseSettings(req.body);
     
-    // Retorna as configurações atualizadas, mas oculta a senha
+    // Por segurança, não enviar senhas para o frontend
     const safeSettings = {
-      ...settings,
-      databasePassword: '********', // Oculta a senha real
+      ...updatedSettings,
+      supabaseKey: updatedSettings.supabaseKey ? '••••••••' : '',
+      databasePassword: updatedSettings.databasePassword ? '••••••••' : ''
     };
     
-    return res.json(safeSettings);
-  } catch (error) {
-    console.error('Error updating database settings:', error);
-    return res.status(500).json({ message: 'Erro ao atualizar configurações do banco de dados' });
-  }
-});
-
-// Test database connection
-router.post('/test', validateBody(updateDatabaseSettingsSchema), async (req, res) => {
-  try {
-    const { databaseUrl } = req.body;
-    
-    // Implementar teste de conexão aqui
-    // Este é um exemplo simples que apenas verifica se a URL de conexão está presente
-    if (!databaseUrl) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'URL de conexão inválida' 
-      });
-    }
-    
-    // Em uma implementação real, tentaria estabelecer uma conexão com o banco de dados
-    // Por enquanto, apenas simulamos um sucesso
-    
-    return res.json({ 
-      success: true, 
-      message: 'Conexão com o banco de dados estabelecida com sucesso' 
-    });
-  } catch (error) {
-    console.error('Error testing database connection:', error);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Erro ao testar conexão com o banco de dados' 
-    });
+    res.json(safeSettings);
+  } catch (error: any) {
+    console.error('Erro ao atualizar configurações do banco de dados:', error);
+    res.status(500).json({ message: error.message });
   }
 });
 

@@ -576,6 +576,108 @@ export class MemStorage implements IStorage {
 
 export class DatabaseStorage implements IStorage {
   constructor() {}
+  
+  // Payment Settings
+  async getPaymentSettings(): Promise<PaymentSetting | undefined> {
+    try {
+      const [settings] = await drizzle.select().from(schema.paymentSettings);
+      return settings;
+    } catch (error) {
+      console.error("Erro ao buscar configurações de pagamento:", error);
+      return undefined;
+    }
+  }
+  
+  async updatePaymentSettings(data: Partial<InsertPaymentSetting>): Promise<PaymentSetting> {
+    try {
+      const [settings] = await drizzle.select().from(schema.paymentSettings);
+      
+      if (settings) {
+        // Atualizar configurações existentes
+        const [updatedSettings] = await drizzle
+          .update(schema.paymentSettings)
+          .set({
+            ...data,
+            updatedAt: new Date()
+          })
+          .where(eq(schema.paymentSettings.id, settings.id))
+          .returning();
+        
+        return updatedSettings;
+      } else {
+        // Criar novas configurações
+        const [newSettings] = await drizzle
+          .insert(schema.paymentSettings)
+          .values({
+            eupagoApiKey: data.eupagoApiKey || '',
+            enableCard: data.enableCard !== undefined ? data.enableCard : true,
+            enableMbway: data.enableMbway !== undefined ? data.enableMbway : true,
+            enableMultibanco: data.enableMultibanco !== undefined ? data.enableMultibanco : true,
+            enableBankTransfer: data.enableBankTransfer !== undefined ? data.enableBankTransfer : true,
+            enableCash: data.enableCash !== undefined ? data.enableCash : true,
+            updatedAt: new Date()
+          })
+          .returning();
+        
+        return newSettings;
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar configurações de pagamento:", error);
+      throw error;
+    }
+  }
+  
+  // Database Settings
+  async getDatabaseSettings(): Promise<DatabaseSetting | undefined> {
+    try {
+      const [settings] = await drizzle.select().from(schema.databaseSettings);
+      return settings;
+    } catch (error) {
+      console.error("Erro ao buscar configurações do banco de dados:", error);
+      return undefined;
+    }
+  }
+  
+  async updateDatabaseSettings(data: Partial<InsertDatabaseSetting>): Promise<DatabaseSetting> {
+    try {
+      const [settings] = await drizzle.select().from(schema.databaseSettings);
+      
+      if (settings) {
+        // Atualizar configurações existentes
+        const [updatedSettings] = await drizzle
+          .update(schema.databaseSettings)
+          .set({
+            ...data,
+            updatedAt: new Date()
+          })
+          .where(eq(schema.databaseSettings.id, settings.id))
+          .returning();
+        
+        return updatedSettings;
+      } else {
+        // Criar novas configurações
+        const [newSettings] = await drizzle
+          .insert(schema.databaseSettings)
+          .values({
+            supabaseUrl: data.supabaseUrl || '',
+            supabaseKey: data.supabaseKey || '',
+            databaseUrl: data.databaseUrl || '',
+            databaseHost: data.databaseHost || '',
+            databasePort: data.databasePort || '',
+            databaseName: data.databaseName || '',
+            databaseUser: data.databaseUser || '',
+            databasePassword: data.databasePassword || '',
+            updatedAt: new Date()
+          })
+          .returning();
+        
+        return newSettings;
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar configurações do banco de dados:", error);
+      throw error;
+    }
+  }
 
   // Users
   async getUser(id: number): Promise<User | undefined> {

@@ -64,13 +64,13 @@ export default function DatabaseSettings() {
   const [activeTab, setActiveTab] = useState<string>('supabase');
 
   const { data: dbSettings, isLoading } = useQuery({
-    queryKey: ['/api/settings/database'],
+    queryKey: ['/api/database-settings'],
     retry: false,
   });
 
   const updateDatabaseSettings = useMutation({
     mutationFn: async (data: DatabaseSettingsFormValues) => {
-      const response = await apiRequest('PUT', '/api/settings/database', data);
+      const response = await apiRequest('POST', '/api/database-settings', data);
       return response.json();
     },
     onSuccess: () => {
@@ -78,7 +78,7 @@ export default function DatabaseSettings() {
         title: t('settings.database.success'),
         description: t('settings.database.successDescription'),
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/settings/database'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/database-settings'] });
     },
     onError: (error) => {
       toast({
@@ -91,7 +91,7 @@ export default function DatabaseSettings() {
 
   const testConnection = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/settings/database/test', form.getValues());
+      const response = await apiRequest('POST', '/api/database-settings/test', form.getValues());
       return response.json();
     },
     onSuccess: (data) => {
