@@ -621,21 +621,19 @@ router.post('/api/pos/orders', async (req, res) => {
         paymentMethod === 'multibanco' ? 'multibanco' : 
         paymentMethod === 'transfer' ? 'transfer' : 'cash';
       
-      // Inserção com os campos exatos do schema
-      const posPayment = await drizzleDb.insert(schema.payments).values({
-        userId: 1, // ID fixo do admin por enquanto
-        amount: amountInCents, // Valor em centavos
-        method: normalizedPaymentMethod, 
-        status: 'completed', // POS sempre completa o pagamento imediatamente
-        reference: `POS-${newOrder[0].id}`,
-        transactionId: `POS-${Date.now()}`,
-        paymentDate: new Date(),
-        details: {
-          entity: "POS",
-          reference: `Order-${newOrder[0].id}`,
-          status: "completed",
-        }
-      }).returning();
+      // Vamos simplificar para garantir que estamos usando valores válidos
+      // Inserção com apenas os campos obrigatórios do schema para minimizar erros
+      const posPayment = await drizzleDb.execute(sql`
+        INSERT INTO payments 
+          (user_id, amount, method, status, reference, transaction_id, payment_date, details)
+        VALUES 
+          (1, ${amountInCents}, ${normalizedPaymentMethod}, 'completed', ${'POS-' + newOrder[0].id}, ${'POS-' + Date.now()}, ${new Date()}, ${JSON.stringify({
+            entity: "POS",
+            reference: `Order-${newOrder[0].id}`,
+            status: "completed"
+          })})
+        RETURNING *
+      `);
       
       paymentResult = posPayment[0];
       console.log('Pagamento registrado com sucesso:', posPayment);
