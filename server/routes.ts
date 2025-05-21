@@ -572,8 +572,8 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
     `;
     
     // Calcular mudança percentual na receita
-    const todayRevenueValue = parseInt(todayRevenue[0]?.revenue) || 0;
-    const yesterdayRevenueValue = parseInt(yesterdayRevenue[0]?.revenue) || 1; // Evitar divisão por zero
+    const todayRevenueValue = parseFloat(todayRevenue[0]?.revenue) || 0;
+    const yesterdayRevenueValue = parseFloat(yesterdayRevenue[0]?.revenue) || 1; // Evitar divisão por zero
     const revenueChange = Math.round((todayRevenueValue - yesterdayRevenueValue) / yesterdayRevenueValue * 100);
     
     // Reservas de hoje
@@ -693,7 +693,7 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
       // Dados adicionais úteis
       totalOrders: await queryClient`SELECT COUNT(*) as count FROM orders`.then(res => parseInt(res[0]?.count) || 0).catch(() => 0),
       totalCustomers: await queryClient`SELECT COUNT(*) as count FROM users`.then(res => parseInt(res[0]?.count) || 0),
-      totalRevenue: await queryClient`SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'completed'`.then(res => (parseInt(res[0]?.total) / 100).toFixed(2) || '0.00')
+      totalRevenue: await queryClient`SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'completed'`.then(res => (parseFloat(res[0]?.total) / 100).toFixed(2) || '0.00')
     });
     
   } catch (err: any) {
