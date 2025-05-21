@@ -32,8 +32,24 @@ const Dashboard: React.FC = () => {
   });
   
   useEffect(() => {
+    // Cleanup any existing charts first
     let salesChartInstance: Chart | undefined;
     let categoryChartInstance: Chart | undefined;
+    
+    // Limpar gráficos existentes para evitar duplicação
+    if (salesChartRef.current) {
+      const existingChart = Chart.getChart(salesChartRef.current);
+      if (existingChart) {
+        existingChart.destroy();
+      }
+    }
+    
+    if (categoryChartRef.current) {
+      const existingChart = Chart.getChart(categoryChartRef.current);
+      if (existingChart) {
+        existingChart.destroy();
+      }
+    }
     
     // Só cria os gráficos quando os dados estiverem disponíveis
     if (salesChartRef.current && categoryChartRef.current && dashboardStats) {
