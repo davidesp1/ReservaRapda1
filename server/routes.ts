@@ -625,29 +625,24 @@ router.post('/api/pos/orders', async (req, res) => {
       // Valor em centavos
       const amountInCents = Math.round(calculatedTotal * 100);
       
-      // Usar queryClient diretamente para garantir compatibilidade
-      const result = await queryClient.query(
-        `INSERT INTO payments (user_id, amount, method, status, reference, transaction_id, payment_date, details) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-         RETURNING *`,
-        [
-          1, // userId fixo para o admin
-          amountInCents,
-          normalizedMethod,
-          'completed',
-          `POS-Order-${newOrder[0].id}`,
-          `POS-${Date.now()}`,
-          new Date(),
-          JSON.stringify({
-            type: 'pos',
-            orderId: newOrder[0].id,
-            items: validatedItems.length
-          })
-        ]
-      );
+      // Usar queryClient corretamente (postgres-js)
+      const result = await queryClient`
+        INSERT INTO payments 
+          (user_id, amount, method, status, reference, transaction_id, payment_date, details)
+        VALUES 
+          (${1}, ${amountInCents}, ${normalizedMethod}, ${'completed'}, 
+           ${'POS-Order-' + newOrder[0].id}, ${'POS-' + Date.now()}, ${new Date()}, 
+           ${JSON.stringify({
+             type: 'pos',
+             orderId: newOrder[0].id,
+             items: validatedItems.length
+           })})
+        RETURNING *
+      `;
       
-      if (result && result.rows && result.rows.length > 0) {
-        paymentResult = result.rows[0];
+      // postgres-js retorna os resultados diretamente como array
+      if (result && result.length > 0) {
+        paymentResult = result[0];
         console.log('Pagamento registrado com sucesso:', paymentResult);
       }
     } catch (error) {
