@@ -644,12 +644,14 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
     const settings = req.body;
     
     // Validar se o usuário é admin antes de permitir alterações
-    const user = await drizzleDb.select()
-      .from(schema.users)
-      .where(eq(schema.users.id, req.session.userId))
-      .limit(1);
+    const userId = req.session.userId;
     
-    if (!user || user.length === 0 || user[0].role !== 'admin') {
+    const userResult = await queryClient`
+      SELECT role FROM users WHERE id = ${userId}
+    `;
+    
+    const user = userResult[0];
+    if (!user || user.role !== 'admin') {
       return res.status(403).json({ message: "Apenas administradores podem alterar configurações" });
     }
     
