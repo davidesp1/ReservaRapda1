@@ -354,7 +354,7 @@ router.post("/api/menu-items", isAuthenticated, async (req, res) => {
       VALUES (
         ${name}, 
         ${description || null}, 
-        ${Math.round(parseFloat(price) * 100)}, 
+        ${parseFloat(price)}, 
         ${parseInt(categoryId)}, 
         ${featured || false}, 
         ${imageUrl || null}
@@ -393,7 +393,7 @@ router.put("/api/menu-items/:id", isAuthenticated, async (req, res) => {
       SET 
         name = ${name},
         description = ${description || null},
-        price = ${Math.round(parseFloat(price) * 100)},
+        price = ${parseFloat(price)},
         category_id = ${parseInt(categoryId)},
         featured = ${featured || false},
         image_url = ${imageUrl || null}
