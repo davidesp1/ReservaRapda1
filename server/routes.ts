@@ -713,79 +713,109 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
       return res.status(403).json({ message: "Apenas administradores podem alterar configurações" });
     }
     
-    console.log("Recebendo configurações de pagamento:", JSON.stringify(settings, null, 2));
+    console.log("Recebendo configurações de pagamento para salvar:", JSON.stringify(settings, null, 2));
     
-    // Verificar se já existe um registro de configurações
-    const existingSettings = await queryClient`
-      SELECT * FROM payment_settings ORDER BY id LIMIT 1
-    `;
-    
-    let result;
-    
-    // Mapear as configurações do frontend para o formato do banco
-    const dbSettings = {
-      enable_card: Boolean(settings.acceptCard),
-      enable_mbway: Boolean(settings.acceptMBWay),
-      enable_multibanco: Boolean(settings.acceptMultibanco),
-      enable_bank_transfer: Boolean(settings.acceptBankTransfer),
-      enable_cash: Boolean(settings.acceptCash),
-      eupago_api_key: settings.eupagoApiKey || '',
-      updated_at: new Date()
-    };
-    
-    console.log("Configurações formatadas para o banco:", dbSettings);
-    
-    if (existingSettings.length > 0) {
-      // Atualizar configurações existentes
-      console.log("Atualizando configurações existentes");
+    try {
+      // Utilizando SQL nativo para garantir total compatibilidade com PostgreSQL
+      // Primeiro verificamos se já existe um registro na tabela
+      const checkResult = await queryClient.query(`
+        SELECT COUNT(*) FROM payment_settings
+      `);
       
-      result = await queryClient`
-        UPDATE payment_settings 
-        SET 
-          enable_card = ${dbSettings.enable_card},
-          enable_mbway = ${dbSettings.enable_mbway},
-          enable_multibanco = ${dbSettings.enable_multibanco},
-          enable_bank_transfer = ${dbSettings.enable_bank_transfer},
-          enable_cash = ${dbSettings.enable_cash},
-          eupago_api_key = ${dbSettings.eupago_api_key},
-          updated_at = ${dbSettings.updated_at}
-        WHERE id = ${existingSettings[0].id}
-        RETURNING *
-      `;
-    } else {
-      // Criar novas configurações
-      console.log("Criando novas configurações");
+      const count = parseInt(checkResult.rows[0].count);
+      console.log("Registros encontrados na tabela payment_settings:", count);
       
-      result = await queryClient`
-        INSERT INTO payment_settings (
-          enable_card, enable_mbway, enable_multibanco, 
-          enable_bank_transfer, enable_cash, eupago_api_key, updated_at
-        ) VALUES (
-          ${dbSettings.enable_card},
-          ${dbSettings.enable_mbway},
-          ${dbSettings.enable_multibanco},
-          ${dbSettings.enable_bank_transfer},
-          ${dbSettings.enable_cash},
-          ${dbSettings.eupago_api_key},
-          ${dbSettings.updated_at}
-        )
-        RETURNING *
+      if (count > 0) {
+        // Atualizar configuração existente usando SQL nativo
+        console.log("Atualizando configurações existentes via SQL nativo");
+        
+        await queryClient.query(`
+          UPDATE payment_settings 
+          SET 
+            enable_card = $1,
+            enable_mbway = $2,
+            enable_multibanco = $3,
+            enable_bank_transfer = $4,
+            enable_cash = $5,
+            eupago_api_key = $6,
+            updated_at = NOW()
+        `, [
+          settings.acceptCard === true, 
+          settings.acceptMBWay === true, 
+          settings.acceptMultibanco === true, 
+          settings.acceptBankTransfer === true, 
+          settings.acceptCash === true,
+          settings.eupagoApiKey || ''
+        ]);
+      } else {
+        // Criar nova configuração usando SQL nativo
+        console.log("Criando nova configuração via SQL nativo");
+        
+        await queryClient.query(`
+          INSERT INTO payment_settings (
+            enable_card, enable_mbway, enable_multibanco, 
+            enable_bank_transfer, enable_cash, eupago_api_key, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
+        `, [
+          settings.acceptCard === true, 
+          settings.acceptMBWay === true, 
+          settings.acceptMultibanco === true, 
+          settings.acceptBankTransfer === true, 
+          settings.acceptCash === true,
+          settings.eupagoApiKey || ''
+        ]);
+      }
+      
+      // Verificar o estado atual das configurações após a atualização
+      const updatedResult = await queryClient.query(`
+        SELECT * FROM payment_settings
+      `);
+      
+      console.log("Configurações de pagamento após atualização:", updatedResult.rows);
+      
+      res.json({ 
+        message: "Configurações de pagamento atualizadas com sucesso", 
+        settings: updatedResult.rows[0]
+      });
+    } catch (sqlError) {
+      console.error("Erro SQL ao atualizar configurações de pagamento:", sqlError);
+      
+      // Tentar método alternativo - execução direta sem parâmetros
+      console.log("Tentando método de atualização alternativo...");
+      
+      // Converter os valores booleanos para literais SQL
+      const cardValue = settings.acceptCard === true ? 'TRUE' : 'FALSE';
+      const mbwayValue = settings.acceptMBWay === true ? 'TRUE' : 'FALSE';
+      const multibancoValue = settings.acceptMultibanco === true ? 'TRUE' : 'FALSE';
+      const bankTransferValue = settings.acceptBankTransfer === true ? 'TRUE' : 'FALSE';
+      const cashValue = settings.acceptCash === true ? 'TRUE' : 'FALSE';
+      const apiKey = settings.eupagoApiKey || '';
+      
+      const updateSql = `
+        UPDATE payment_settings SET 
+        enable_card = ${cardValue},
+        enable_mbway = ${mbwayValue},
+        enable_multibanco = ${multibancoValue},
+        enable_bank_transfer = ${bankTransferValue},
+        enable_cash = ${cashValue},
+        eupago_api_key = '${apiKey.replace(/'/g, "''")}',
+        updated_at = NOW()
       `;
+      
+      console.log("Executando SQL alternativo:", updateSql);
+      await queryClient.query(updateSql);
+      
+      const updatedResult = await queryClient.query(`
+        SELECT * FROM payment_settings
+      `);
+      
+      console.log("Configurações após método alternativo:", updatedResult.rows);
+      
+      res.json({ 
+        message: "Configurações de pagamento atualizadas com sucesso (método alternativo)", 
+        settings: updatedResult.rows[0]
+      });
     }
-    
-    console.log("Configurações salvas no banco:", result);
-    
-    // Verificar banco de dados após as atualizações
-    const updatedSettings = await queryClient`
-      SELECT * FROM payment_settings
-    `;
-    
-    console.log("Estado atual das configurações de pagamento:", updatedSettings);
-    
-    res.json({ 
-      message: "Configurações de pagamento atualizadas com sucesso", 
-      settings: result
-    });
   } catch (err: any) {
     console.error("Erro ao atualizar configurações de pagamento:", err);
     res.status(500).json({ error: err.message });
