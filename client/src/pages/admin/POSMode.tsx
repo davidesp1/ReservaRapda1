@@ -32,13 +32,13 @@ const POSMode = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   
-  const { data: menuItems, isLoading } = useQuery({
+  const { data: menuItemsData, isLoading } = useQuery({
     queryKey: ['/api/menu-items'],
   });
   
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ['/api/menu-categories'],
-  });
+  // Os dados já vêm agrupados por categoria, então não precisamos de uma consulta separada
+  const categories = menuItemsData ? menuItemsData.map((cat: any) => cat.category) : [];
+  const categoriesLoading = isLoading;
   
   // Efeito para lidar com a tela cheia
   useEffect(() => {
@@ -202,39 +202,60 @@ const POSMode = () => {
     });
   };
   
-  const filterItems = (items: MenuItem[]) => {
-    if (!items) return [];
+  const getAllItems = () => {
+    if (!menuItemsData) return [];
     
-    let filtered = items;
+    // Extrair todos os itens do menu de todas as categorias
+    const allItems: MenuItem[] = [];
+    menuItemsData.forEach((category: any) => {
+      if (category.items && Array.isArray(category.items)) {
+        category.items.forEach((item: any) => {
+          allItems.push({
+            ...item,
+            category: category.category
+          });
+        });
+      }
+    });
     
-    // Filtrar por categoria se não for "all"
-    if (activeCategory !== "all") {
-      filtered = filtered.filter(item => item.category.name === activeCategory);
+    return allItems;
+  };
+
+  const filterItems = () => {
+    if (!menuItemsData) return [];
+    
+    // Se for "all" e não houver busca, retorna tudo
+    if (activeCategory === "all" && !searchQuery.trim()) {
+      return menuItemsData;
     }
     
-    // Filtrar por termo de busca
+    // Se for uma categoria específica, filtra os itens dessa categoria
+    let filteredData = [...menuItemsData];
+    
+    // Filtrar por categoria
+    if (activeCategory !== "all") {
+      filteredData = filteredData.filter((cat: any) => cat.category.name === activeCategory);
+    }
+    
+    // Se tiver um termo de busca, aplicamos o filtro em todas as categorias
     if (searchQuery.trim() !== "") {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(item => 
-        item.name.toLowerCase().includes(query) || 
-        item.description.toLowerCase().includes(query)
-      );
+      
+      // Filtrar itens dentro de cada categoria
+      filteredData = filteredData.map((cat: any) => {
+        const filteredItems = cat.items.filter((item: any) => 
+          item.name.toLowerCase().includes(query) || 
+          (item.description && item.description.toLowerCase().includes(query))
+        );
+        
+        return {
+          ...cat,
+          items: filteredItems
+        };
+      }).filter((cat: any) => cat.items.length > 0); // Remover categorias sem itens
     }
     
-    return filtered;
-  };
-  
-  const categorizeItems = (items: MenuItem[]) => {
-    if (!items) return {};
-    
-    return items.reduce((acc: Record<string, MenuItem[]>, item) => {
-      const categoryName = item.category.name;
-      if (!acc[categoryName]) {
-        acc[categoryName] = [];
-      }
-      acc[categoryName].push(item);
-      return acc;
-    }, {});
+    return filteredData;
   };
   
   const totalItems = orderItems.reduce((total, item) => total + item.quantity, 0);
@@ -258,8 +279,7 @@ const POSMode = () => {
     );
   }
   
-  const filteredItems = filterItems(menuItems);
-  const categorizedItems = categorizeItems(filteredItems);
+  const filteredData = filterItems();
   
   return (
     <div className="h-screen w-screen flex flex-col bg-gray-100 overflow-hidden">
@@ -329,86 +349,49 @@ const POSMode = () => {
           </div>
           
           {/* Produtos Organizados por Categoria */}
-          {activeCategory === "all" ? (
-            Object.entries(categorizedItems).length > 0 ? (
-              Object.entries(categorizedItems).map(([categoryName, items]) => (
-                <div key={categoryName} className="mb-8">
-                  <h2 className="text-lg font-semibold text-gray-700 mb-3">{categoryName}</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {items.map((item) => (
-                      <div 
-                        key={item.id} 
-                        className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition"
-                        onClick={() => handleAddItem(item)}
-                      >
-                        <div className="h-32 w-full overflow-hidden">
-                          {item.image ? (
-                            <img 
-                              src={item.image} 
-                              alt={item.name} 
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center h-full bg-gray-200 text-gray-500">
-                              {t('Sem imagem')}
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-3">
-                          <h3 className="font-medium text-gray-800">{item.name}</h3>
-                          <div className="flex justify-between items-center mt-2">
-                            <span className="font-bold text-primary">{formatPrice(item.price)}</span>
+          {filteredData && filteredData.length > 0 ? (
+            filteredData.map((categoryData: any) => (
+              <div key={categoryData.category.id} className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-700 mb-3">{categoryData.category.name}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {categoryData.items && categoryData.items.map((item: any) => (
+                    <div 
+                      key={item.id} 
+                      className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition"
+                      onClick={() => handleAddItem({
+                        ...item,
+                        category: categoryData.category
+                      })}
+                    >
+                      <div className="h-32 w-full overflow-hidden">
+                        {item.image_url ? (
+                          <img 
+                            src={item.image_url} 
+                            alt={item.name} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full bg-gray-200 text-gray-500">
+                            {t('Sem imagem')}
                           </div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <h3 className="font-medium text-gray-800">{item.name}</h3>
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="font-bold text-primary">{formatPrice(item.price)}</span>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                {searchQuery 
-                  ? t('Nenhum item encontrado para "{{query}}"', { query: searchQuery }) 
-                  : t('Nenhum item disponível')}
               </div>
-            )
+            ))
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {filteredItems.length > 0 ? (
-                filteredItems.map((item) => (
-                  <div 
-                    key={item.id} 
-                    className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition"
-                    onClick={() => handleAddItem(item)}
-                  >
-                    <div className="h-32 w-full overflow-hidden">
-                      {item.image ? (
-                        <img 
-                          src={item.image} 
-                          alt={item.name} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full bg-gray-200 text-gray-500">
-                          {t('Sem imagem')}
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-medium text-gray-800">{item.name}</h3>
-                      <div className="flex justify-between items-center mt-2">
-                        <span className="font-bold text-primary">{formatPrice(item.price)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-4 text-center py-8 text-gray-500">
-                  {searchQuery 
-                    ? t('Nenhum item encontrado para "{{query}}"', { query: searchQuery }) 
-                    : t('Nenhum item disponível nesta categoria')}
-                </div>
-              )}
+            <div className="text-center py-8 text-gray-500">
+              {searchQuery 
+                ? t('Nenhum item encontrado para "{{query}}"', { query: searchQuery }) 
+                : t('Nenhum item disponível' + (activeCategory !== 'all' ? ` na categoria ${activeCategory}` : ''))}
             </div>
           )}
         </div>
