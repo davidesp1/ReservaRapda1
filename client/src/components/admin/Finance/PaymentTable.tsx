@@ -14,14 +14,20 @@ import {
 
 interface Payment {
   id: number;
-  reservationId: number;
+  reservation_id: number | null;
   amount: number;
   method: string;
   status: string;
-  transactionId: string;
-  paymentDate: string;
-  createdAt: string;
-  updatedAt: string;
+  transaction_id: string;
+  payment_date: string;
+  created_at: string | null;
+  updated_at?: string | null;
+  details?: any;
+  reference?: string;
+  user_id?: number;
+  username?: string;
+  email?: string;
+  payment_source?: string;
 }
 
 interface PaymentTableProps {
@@ -68,13 +74,15 @@ export default function PaymentTable({ payments, isLoading = false }: PaymentTab
             payments.map((payment) => (
               <TableRow key={payment.id}>
                 <TableCell>
-                  {payment.paymentDate ? format(new Date(payment.paymentDate), 'dd/MM/yyyy HH:mm') : '-'}
+                  {payment.payment_date ? format(new Date(payment.payment_date), 'dd/MM/yyyy HH:mm') : '-'}
                 </TableCell>
                 <TableCell className="font-medium">
-                  {payment.transactionId || '-'}
+                  {payment.transaction_id || payment.reference || '-'}
                 </TableCell>
                 <TableCell>
-                  #{payment.reservationId}
+                  {payment.reservation_id ? `#${payment.reservation_id}` : 
+                   payment.details?.orderId ? `POS #${payment.details.orderId}` : 
+                   payment.payment_source === 'pos' ? 'POS' : '-'}
                 </TableCell>
                 <TableCell className="font-medium">
                   {formatPrice(payment.amount)}
