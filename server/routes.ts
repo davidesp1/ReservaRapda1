@@ -1,14 +1,19 @@
 import express from "express";
-import {
-  processPayment,
-  getPaymentStatus,
-  cancelPayment,
-} from "./services/paymentService";
 import { register, login, logout, getProfile } from "./controllers/authController";
 import { db as drizzleDb, queryClient } from "./db";
 import { eq, gte, desc, and, sql } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import databaseSettingsRouter from "./routes/databaseSettings";
+import { 
+  processPayment,
+  getPaymentStatus,
+  cancelPayment
+} from "./routes/payments";
+import { 
+  getPaymentSettings,
+  updatePaymentSettings,
+  testPaymentConnection
+} from "./routes/paymentSettings";
 
 declare module 'express-session' {
   interface SessionData {
@@ -142,83 +147,18 @@ router.get("/api/reservations", isAuthenticated, async (req, res) => {
 });
 
 // Rota para processamento de pagamentos
-router.post("/api/payments/process", isAuthenticated, async (req, res) => {
-  try {
-    const { method, amount, phone, cardholderName, cardNumber, expiryDate, cvv } = req.body;
-    
-    console.log(`Recebida solicitação de pagamento - Método: ${method}, Valor: ${amount}€`);
-    
-    // Verificar se o método é suportado
-    if (!['multibanco', 'mbway', 'card'].includes(method)) {
-      return res.status(400).json({ error: 'Método de pagamento não suportado' });
-    }
-    
-    // Verificar campos obrigatórios por método
-    if (method === 'mbway' && !phone) {
-      return res.status(400).json({ error: 'Número de telefone é obrigatório para pagamentos MBWay' });
-    }
-    
-    // Processar o pagamento usando o serviço
-    let result;
-    try {
-      if (method === 'multibanco') {
-        result = await processPayment('multibanco', amount);
-      } else if (method === 'mbway') {
-        result = await processPayment('mbway', amount, phone);
-      } else if (method === 'card') {
-        // Para cartão, apenas geramos uma referência aqui, o redirecionamento acontece no front-end
-        result = await processPayment('card', amount);
-      } else {
-        throw new Error(`Método de pagamento '${method}' não implementado`);
-      }
-      
-      console.log(`Pagamento ${method} processado com sucesso:`, result);
-      
-      res.json({
-        success: true,
-        method,
-        ...result
-      });
-    } catch (error: any) {
-      console.error(`Erro ao processar pagamento ${method}:`, error);
-      return res.status(500).json({ 
-        success: false, 
-        error: error.message || `Erro ao processar pagamento ${method}` 
-      });
-    }
-  } catch (err: any) {
-    console.error("Erro no processamento do pagamento:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+router.post("/api/payments/process", isAuthenticated, processPayment);
 
 // Rota para verificar status do pagamento
-router.get("/api/payments/status/:reference", async (req, res) => {
-  try {
-    const reference = req.params.reference;
-    const result = await getPaymentStatus(reference);
-    res.json(result);
-  } catch (err: any) {
-    console.error("Erro ao verificar status do pagamento:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+router.get("/api/payments/:paymentId/status", getPaymentStatus);
 
 // Rota para cancelar pagamento
-router.post("/api/payments/cancel", isAuthenticated, async (req, res) => {
-  try {
-    const { reference } = req.body;
-    if (!reference) {
-      return res.status(400).json({ error: 'Referência do pagamento é obrigatória' });
-    }
-    
-    const result = await cancelPayment(reference);
-    res.json(result);
-  } catch (err: any) {
-    console.error("Erro ao cancelar pagamento:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+router.post("/api/payments/cancel", isAuthenticated, cancelPayment);
+
+// Rotas de configurações de pagamento
+router.get("/api/settings/payment", isAuthenticated, getPaymentSettings);
+router.post("/api/settings/payment", isAuthenticated, updatePaymentSettings);
+router.post("/api/settings/payment/test", isAuthenticated, testPaymentConnection);
 
 // Rotas para configurações do banco de dados
 router.use("/api/database-settings", isAuthenticated, databaseSettingsRouter);

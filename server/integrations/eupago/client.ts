@@ -76,11 +76,16 @@ export class EuPagoClient {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as { message: string };
         throw new Error(errorData.message || "Erro ao criar pagamento Multibanco");
       }
 
-      const data = await response.json();
+      const data = await response.json() as { 
+        entity: string; 
+        reference: string; 
+        status: string; 
+        expirationDate: string;
+      };
       return {
         entity: data.entity,
         reference: data.reference,
@@ -130,11 +135,14 @@ export class EuPagoClient {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as { message: string };
         throw new Error(errorData.message || "Erro ao criar pagamento MBWay");
       }
 
-      const data = await response.json();
+      const data = await response.json() as { 
+        status: string; 
+        alias: string;
+      };
       return {
         status: data.status,
         mbwayAlias: data.alias
