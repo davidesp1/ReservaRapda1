@@ -66,16 +66,20 @@ const MenuManager: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{id: number, type: 'item' | 'category'} | null>(null);
 
-  // Fetch menu categories
+  // Fetch menu categories com atualização em tempo real
   const { data: categories, isLoading: categoriesLoading } = useQuery<any>({
     queryKey: ['/api/menu-categories'],
     enabled: isAuthenticated && isAdmin,
+    refetchInterval: 20000, // Atualiza a cada 20 segundos
+    refetchIntervalInBackground: true,
   });
 
-  // Fetch menu items
+  // Fetch menu items com atualização em tempo real
   const { data: menuItemsData, isLoading: menuItemsLoading } = useQuery<any>({
     queryKey: ['/api/menu-items'],
     enabled: isAuthenticated && isAdmin,
+    refetchInterval: 15000, // Atualiza a cada 15 segundos
+    refetchIntervalInBackground: true,
   });
   
   // Transformar os dados agrupados por categoria em um array plano de itens

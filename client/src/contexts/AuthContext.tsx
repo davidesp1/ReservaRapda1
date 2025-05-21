@@ -65,11 +65,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
 
-  // Fetch current user on mount
+  // Fetch current user on mount com atualização periódica
   const { isLoading, isError } = useQuery<User>({
     queryKey: ['/api/auth/me'],
-    refetchOnWindowFocus: false,
-    retry: false
+    refetchOnWindowFocus: true,
+    refetchInterval: 60000, // Atualiza os dados do usuário a cada 60 segundos
+    refetchIntervalInBackground: true,
+    staleTime: 30000, // Considera os dados obsoletos após 30 segundos
+    retry: 1
   });
 
   // Update user state when the query data changes
