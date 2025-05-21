@@ -492,6 +492,142 @@ const POSMode = () => {
           </div>
         </div>
       </div>
+      
+      {/* Modal de Seleção de Método de Pagamento */}
+      {isPaymentModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">{t('Método de Pagamento')}</h3>
+              <button 
+                onClick={() => setIsPaymentModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-gray-600 mb-4">{t('Selecione o método de pagamento:')}</p>
+              
+              <div className="space-y-3">
+                {/* Opção Dinheiro - Sempre disponível */}
+                <div 
+                  className={`p-3 border rounded-lg cursor-pointer flex items-center ${
+                    selectedPaymentMethod === 'cash' ? 'border-primary bg-primary/5' : 'border-gray-300'
+                  }`}
+                  onClick={() => setSelectedPaymentMethod('cash')}
+                >
+                  <div className={`w-6 h-6 rounded-full border mr-3 flex items-center justify-center ${
+                    selectedPaymentMethod === 'cash' ? 'border-primary' : 'border-gray-300'
+                  }`}>
+                    {selectedPaymentMethod === 'cash' && <Check className="h-4 w-4 text-primary" />}
+                  </div>
+                  <div>
+                    <div className="font-medium">{t('Dinheiro')}</div>
+                    <div className="text-sm text-gray-500">{t('Pago no restaurante')}</div>
+                  </div>
+                </div>
+                
+                {/* Opção Transferência Bancária */}
+                {paymentSettings?.acceptBankTransfer && (
+                  <div 
+                    className={`p-3 border rounded-lg cursor-pointer flex items-center ${
+                      selectedPaymentMethod === 'bank_transfer' ? 'border-primary bg-primary/5' : 'border-gray-300'
+                    }`}
+                    onClick={() => setSelectedPaymentMethod('bank_transfer')}
+                  >
+                    <div className={`w-6 h-6 rounded-full border mr-3 flex items-center justify-center ${
+                      selectedPaymentMethod === 'bank_transfer' ? 'border-primary' : 'border-gray-300'
+                    }`}>
+                      {selectedPaymentMethod === 'bank_transfer' && <Check className="h-4 w-4 text-primary" />}
+                    </div>
+                    <div>
+                      <div className="font-medium">{t('Transferência Bancária')}</div>
+                      <div className="text-sm text-gray-500">{t('Requer verificação manual')}</div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Opção Cartão */}
+                {paymentSettings?.acceptCard && (
+                  <div 
+                    className={`p-3 border rounded-lg cursor-pointer flex items-center ${
+                      selectedPaymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-gray-300'
+                    }`}
+                    onClick={() => setSelectedPaymentMethod('card')}
+                  >
+                    <div className={`w-6 h-6 rounded-full border mr-3 flex items-center justify-center ${
+                      selectedPaymentMethod === 'card' ? 'border-primary' : 'border-gray-300'
+                    }`}>
+                      {selectedPaymentMethod === 'card' && <Check className="h-4 w-4 text-primary" />}
+                    </div>
+                    <div>
+                      <div className="font-medium">{t('Cartão')}</div>
+                      <div className="text-sm text-gray-500">{t('Crédito ou Débito')}</div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Opção Multibanco */}
+                {paymentSettings?.acceptMultibanco && (
+                  <div 
+                    className={`p-3 border rounded-lg cursor-pointer flex items-center ${
+                      selectedPaymentMethod === 'multibanco' ? 'border-primary bg-primary/5' : 'border-gray-300'
+                    }`}
+                    onClick={() => setSelectedPaymentMethod('multibanco')}
+                  >
+                    <div className={`w-6 h-6 rounded-full border mr-3 flex items-center justify-center ${
+                      selectedPaymentMethod === 'multibanco' ? 'border-primary' : 'border-gray-300'
+                    }`}>
+                      {selectedPaymentMethod === 'multibanco' && <Check className="h-4 w-4 text-primary" />}
+                    </div>
+                    <div>
+                      <div className="font-medium">{t('Multibanco')}</div>
+                      <div className="text-sm text-gray-500">{t('Referência para pagamento')}</div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Opção MBWay */}
+                {paymentSettings?.acceptMBWay && (
+                  <div 
+                    className={`p-3 border rounded-lg cursor-pointer flex items-center ${
+                      selectedPaymentMethod === 'mbway' ? 'border-primary bg-primary/5' : 'border-gray-300'
+                    }`}
+                    onClick={() => setSelectedPaymentMethod('mbway')}
+                  >
+                    <div className={`w-6 h-6 rounded-full border mr-3 flex items-center justify-center ${
+                      selectedPaymentMethod === 'mbway' ? 'border-primary' : 'border-gray-300'
+                    }`}>
+                      {selectedPaymentMethod === 'mbway' && <Check className="h-4 w-4 text-primary" />}
+                    </div>
+                    <div>
+                      <div className="font-medium">{t('MBWay')}</div>
+                      <div className="text-sm text-gray-500">{t('Pagamento via telemóvel')}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+              <button 
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
+                onClick={() => setIsPaymentModalOpen(false)}
+              >
+                {t('Cancelar')}
+              </button>
+              <button 
+                className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90"
+                onClick={handleProcessOrder}
+              >
+                {t('Continuar')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
