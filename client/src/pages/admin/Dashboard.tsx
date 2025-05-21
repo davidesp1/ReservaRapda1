@@ -35,7 +35,8 @@ const Dashboard: React.FC = () => {
     let salesChartInstance: Chart | undefined;
     let categoryChartInstance: Chart | undefined;
     
-    if (salesChartRef.current && categoryChartRef.current) {
+    // Só cria os gráficos quando os dados estiverem disponíveis
+    if (salesChartRef.current && categoryChartRef.current && dashboardStats) {
       // Renderização dos gráficos usando Chart.js
       const salesCtx = salesChartRef.current.getContext('2d');
       const categoryCtx = categoryChartRef.current.getContext('2d');
@@ -149,7 +150,7 @@ const Dashboard: React.FC = () => {
         categoryChartInstance.destroy();
       }
     };
-  }, [statsLoading]);
+  }, [statsLoading, dashboardStats, t]);
 
   if (statsLoading) {
     return (
