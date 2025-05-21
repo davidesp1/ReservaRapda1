@@ -73,10 +73,31 @@ const MenuManager: React.FC = () => {
   });
 
   // Fetch menu items
-  const { data: menuItems, isLoading: menuItemsLoading } = useQuery<any>({
-    queryKey: ['/api/menu-items', currentCategoryId ? { categoryId: currentCategoryId } : undefined],
+  const { data: menuItemsData, isLoading: menuItemsLoading } = useQuery<any>({
+    queryKey: ['/api/menu-items'],
     enabled: isAuthenticated && isAdmin,
   });
+  
+  // Transformar os dados agrupados por categoria em um array plano de itens
+  const menuItems = React.useMemo(() => {
+    if (!menuItemsData || !Array.isArray(menuItemsData)) return [];
+    
+    // Extrair todos os itens do formato agrupado por categoria
+    const allItems: any[] = [];
+    menuItemsData.forEach((categoryData: any) => {
+      if (categoryData.items && Array.isArray(categoryData.items)) {
+        categoryData.items.forEach((item: any) => {
+          allItems.push({
+            ...item,
+            categoryId: item.category_id,
+            category: categoryData.category
+          });
+        });
+      }
+    });
+    
+    return allItems;
+  }, [menuItemsData]);
 
   // Setup forms
   const itemForm = useForm<z.infer<typeof menuItemSchema>>({
