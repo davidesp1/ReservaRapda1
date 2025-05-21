@@ -319,13 +319,9 @@ export const insertPaymentSettingsSchema = createInsertSchema(paymentSettings).o
 
 export const updatePaymentSettingsSchema = z.object({
   eupagoApiKey: z.string().min(1, { message: "API Key é obrigatória" }),
-  enabledPaymentMethods: z.object({
-    card: z.boolean().default(true),
-    mbway: z.boolean().default(true),
-    multibanco: z.boolean().default(true),
-    bankTransfer: z.boolean().default(true),
-    cash: z.boolean().default(true),
-  }),
+  enabledPaymentMethods: z.array(
+    z.enum(["card", "mbway", "multibanco", "bankTransfer", "cash"])
+  ).min(1, { message: "Pelo menos um método de pagamento deve estar habilitado" }),
 });
 
 // Database Settings Schema

@@ -1052,6 +1052,18 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updatedPayment;
   }
+  
+  async updatePaymentStatus(id: number, status: string): Promise<Payment | undefined> {
+    const [updatedPayment] = await db
+      .update(payments)
+      .set({ 
+        status: status as any, // Type casting para resolver incompatibilidade
+        ...(status === "completed" ? { paymentDate: new Date() } : {})
+      })
+      .where(eq(payments.id, id))
+      .returning();
+    return updatedPayment;
+  }
 
   async getAllPayments(): Promise<Payment[]> {
     return await db.select().from(payments);
