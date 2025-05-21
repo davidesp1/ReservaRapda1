@@ -739,8 +739,11 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
     const apiKey = settings.eupagoApiKey || '';
     const hasApiKey = apiKey.trim().length > 0;
     
+    console.log(`API Key: "${apiKey}" - API Key tem valor: ${hasApiKey}`);
+    
     // Converter os valores para certeza de tipo
-    // Se não houver API key, forçar métodos de pagamento EuPago como false
+    // Se não houver API key, forçar métodos de pagamento EuPago como false independentemente dos valores enviados
+    // Isso garante consistência no banco de dados
     const cardValue = hasApiKey ? settings.acceptCard === true : false;
     const mbwayValue = hasApiKey ? settings.acceptMBWay === true : false;
     const multibancoValue = hasApiKey ? settings.acceptMultibanco === true : false;

@@ -768,9 +768,31 @@ const Settings: React.FC = () => {
                               {t('EuPagoAPIKeyDescription')}
                             </FormDescription>
                             <FormControl>
-                              <Input {...field} type="password" className="font-mono" />
+                              <Input 
+                                {...field} 
+                                type="password" 
+                                className="font-mono" 
+                                onChange={(e) => {
+                                  // Atualizar o valor da chave API
+                                  field.onChange(e);
+                                  
+                                  // Se a chave API for removida, desabilite os métodos de pagamento
+                                  const apiValue = e.target.value;
+                                  if (!apiValue || apiValue.trim() === '') {
+                                    // Desabilitar automaticamente os métodos que dependem da API
+                                    paymentForm.setValue('acceptCard', false);
+                                    paymentForm.setValue('acceptMBWay', false);
+                                    paymentForm.setValue('acceptMultibanco', false);
+                                  }
+                                }}
+                              />
                             </FormControl>
                             <FormMessage />
+                            {!field.value || field.value.trim() === '' ? (
+                              <p className="text-sm mt-2 text-amber-600">
+                                {t('RequiresEuPagoAPIKey')} para métodos de pagamento online
+                              </p>
+                            ) : null}
                           </FormItem>
                         )}
                       />
