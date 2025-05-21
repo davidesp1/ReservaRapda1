@@ -87,7 +87,7 @@ export default function PaymentSettings() {
   const testApiKeyMutation = useMutation({
     mutationFn: async () => {
       setIsTesting(true);
-      const response = await apiRequest("POST", "/api/payment-settings/test", { apiKey: eupagoApiKey });
+      const response = await apiRequest("POST", "/api/settings/payment/test", { apiKey: eupagoApiKey });
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Falha ao testar API key");

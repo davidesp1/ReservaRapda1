@@ -180,7 +180,7 @@ export default function POS() {
   };
 
   // Lidar com o pagamento concluído
-  const handlePaymentComplete = async (paymentMethod: string) => {
+  const handlePaymentComplete = async (paymentId: number) => {
     try {
       // Criar o pedido
       const orderData = {
@@ -192,7 +192,7 @@ export default function POS() {
           price: item.menuItem.price,
         })),
         total: cartTotal,
-        paymentMethod,
+        paymentId,
       };
 
       const response = await apiRequest('POST', '/api/orders', orderData);
@@ -448,9 +448,9 @@ export default function POS() {
         <PaymentModal
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
-          onPaymentComplete={handlePaymentComplete}
-          total={cartTotal}
-          isAdminMode={isAdmin}
+          onPaymentSuccess={(paymentId) => handlePaymentComplete(paymentId)}
+          totalAmount={cartTotal}
+          userId={1} // Usando ID fixo por enquanto, depois precisamos pegar o usuário autenticado
         />
       )}
     </div>
