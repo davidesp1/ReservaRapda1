@@ -48,8 +48,7 @@ const reservationSettingsSchema = z.object({
 // Configure schema for payment settings
 const paymentSettingsSchema = z.object({
   currency: z.string().min(1, 'Moeda obrigatória'),
-  acceptCreditCards: z.boolean(),
-  acceptDebitCards: z.boolean(),
+  acceptCard: z.boolean(),
   acceptCash: z.boolean(),
   acceptMBWay: z.boolean(),
   acceptMultibanco: z.boolean(),
@@ -58,6 +57,7 @@ const paymentSettingsSchema = z.object({
   requirePrepaymentAmount: z.coerce.number().min(0, 'Valor não pode ser negativo'),
   showPricesWithTax: z.boolean(),
   taxRate: z.coerce.number().min(0, 'Taxa não pode ser negativa'),
+  eupagoApiKey: z.string().optional(),
 });
 
 // Configure schema for notification settings
@@ -116,8 +116,7 @@ const Settings: React.FC = () => {
     resolver: zodResolver(paymentSettingsSchema),
     defaultValues: {
       currency: 'EUR',
-      acceptCreditCards: true,
-      acceptDebitCards: true,
+      acceptCard: true,
       acceptCash: true,
       acceptMBWay: true,
       acceptMultibanco: true,
@@ -126,6 +125,7 @@ const Settings: React.FC = () => {
       requirePrepaymentAmount: 0,
       showPricesWithTax: true,
       taxRate: 23,
+      eupagoApiKey: '',
     },
   });
 
@@ -690,13 +690,48 @@ const Settings: React.FC = () => {
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">{t('PaymentMethods')}</h3>
                     
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-yellow-800">{t('ImportantNote')}</h3>
+                          <div className="mt-2 text-sm text-yellow-700">
+                            <p>{t('CashPaymentVisibleOnlyToAdmin')}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
                     <FormField
                       control={paymentForm.control}
-                      name="acceptCreditCards"
+                      name="eupagoApiKey"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('EuPagoAPIKey')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="password" />
+                          </FormControl>
+                          <FormDescription>
+                            {t('EuPagoAPIKeyDescription')}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Separator className="my-4" />
+                    
+                    <FormField
+                      control={paymentForm.control}
+                      name="acceptCard"
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
-                            <FormLabel>{t('AcceptCreditCards')}</FormLabel>
+                            <FormLabel>{t('AcceptCard')}</FormLabel>
                           </div>
                           <FormControl>
                             <Switch
