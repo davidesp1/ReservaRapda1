@@ -112,6 +112,36 @@ export class MemStorage implements IStorage {
     this.initializeDatabaseSettings();
   }
   
+  private initializePaymentSettings() {
+    // Inicializa configurações de pagamento padrão
+    this.paymentSettings = {
+      id: 1,
+      eupagoApiKey: '',
+      enableCard: true,
+      enableMbway: true,
+      enableMultibanco: true,
+      enableBankTransfer: true,
+      enableCash: true,
+      updatedAt: new Date()
+    };
+  }
+  
+  private initializeDatabaseSettings() {
+    // Inicializa configurações de banco de dados padrão
+    this.databaseSettings = {
+      id: 1,
+      supabaseUrl: '',
+      supabaseKey: '',
+      databaseUrl: '',
+      databaseHost: '',
+      databasePort: '',
+      databaseName: '',
+      databaseUser: '',
+      databasePassword: '',
+      updatedAt: new Date()
+    };
+  }
+  
   // Database Settings
   async getDatabaseSettings(): Promise<DatabaseSetting | undefined> {
     return this.databaseSettings;
