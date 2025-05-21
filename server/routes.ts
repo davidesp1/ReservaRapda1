@@ -559,20 +559,24 @@ router.post('/api/pos/orders', async (req, res) => {
       return res.status(400).json({ error: 'Dados do pedido inválidos' });
     }
     
-    // Buscar dados dos itens do menu para garantir preços corretos
-    const itemIds = orderData.items.map((item: any) => item.menuItemId);
+    // Método alternativo para buscar itens do menu - primeiro buscar todos e depois filtrar em memória
+    const allMenuItems = await drizzleDb.select().from(schema.menuItems);
     
-    // Utilizando SQL para consultar os itens diretamente
-    const menuItems = await drizzleDb.select()
-      .from(schema.menuItems)
-      .where(sql`${schema.menuItems.id} IN (${itemIds.join(',')})`);
+    // Filtrar os itens do menu necessários
+    const menuItems = allMenuItems.filter(menuItem => 
+      orderData.items.some((item: any) => Number(item.menuItemId) === menuItem.id)
+    );
     
     // Mapear items com preços reais do banco de dados
+    // Corrigindo a comparação para garantir que os tipos sejam consistentes
     const validatedItems = orderData.items.map((item: any) => {
-      const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
+      // Converter menuItemId para número para garantir comparação correta
+      const menuItemIdNum = Number(item.menuItemId);
+      const menuItem = menuItems.find((mi) => mi.id === menuItemIdNum);
+      
       return {
-        menuItemId: item.menuItemId,
-        quantity: item.quantity,
+        menuItemId: menuItemIdNum, // Armazenar como número
+        quantity: Number(item.quantity), // Garantir que quantidade seja número
         price: menuItem?.price || 0,
         notes: item.notes,
         modifications: item.modifications
@@ -599,44 +603,53 @@ router.post('/api/pos/orders', async (req, res) => {
     }).returning();
     
     // Criar também um registro na tabela de pagamentos para sincronizar com a página de Finanças
-    let paymentMethod = orderData.paymentMethod || 'cash';
-    
-    // Converter o método de pagamento para um valor compatível com o enum da tabela payments
-    if (paymentMethod === 'multibanco_tpa') {
-      paymentMethod = 'cash'; // Temporariamente, tratamos Multibanco TPA como dinheiro
-    }
+    // Usaremos o método mais direto e confiável - a API nativa do Postgres
     
     // Variável para armazenar o registro de pagamento
     let paymentResult = null;
     
     try {
-      // Estrutura correta seguindo exatamente o esquema da tabela 'payments'
-      // Convertendo o valor para centavos (inteiro)
-      const amountInCents = Math.round(Number(calculatedTotal) * 100);
+      // Normalizar o método de pagamento
+      let normalizedMethod = orderData.paymentMethod || 'cash';
       
-      // Convertendo para método de pagamento válido conforme o enum
-      const normalizedPaymentMethod = 
-        paymentMethod === 'card' ? 'card' : 
-        paymentMethod === 'mbway' ? 'mbway' : 
-        paymentMethod === 'multibanco' ? 'multibanco' : 
-        paymentMethod === 'transfer' ? 'transfer' : 'cash';
+      // Converter métodos não padrão para valores válidos no enum
+      if (normalizedMethod === 'multibanco_tpa') {
+        normalizedMethod = 'cash';
+      }
       
-      // Vamos simplificar para garantir que estamos usando valores válidos
-      // Inserção com apenas os campos obrigatórios do schema para minimizar erros
-      const posPayment = await drizzleDb.execute(sql`
-        INSERT INTO payments 
-          (user_id, amount, method, status, reference, transaction_id, payment_date, details)
-        VALUES 
-          (1, ${amountInCents}, ${normalizedPaymentMethod}, 'completed', ${'POS-' + newOrder[0].id}, ${'POS-' + Date.now()}, ${new Date()}, ${JSON.stringify({
-            entity: "POS",
-            reference: `Order-${newOrder[0].id}`,
-            status: "completed"
-          })})
-        RETURNING *
-      `);
+      // Garantir que o método é um dos valores aceitos
+      if (!['cash', 'card', 'mbway', 'multibanco', 'transfer'].includes(normalizedMethod)) {
+        normalizedMethod = 'cash';
+      }
       
-      paymentResult = posPayment[0];
-      console.log('Pagamento registrado com sucesso:', posPayment);
+      // Valor em centavos
+      const amountInCents = Math.round(calculatedTotal * 100);
+      
+      // Usar queryClient diretamente para garantir compatibilidade
+      const result = await queryClient.query(
+        `INSERT INTO payments (user_id, amount, method, status, reference, transaction_id, payment_date, details) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+         RETURNING *`,
+        [
+          1, // userId fixo para o admin
+          amountInCents,
+          normalizedMethod,
+          'completed',
+          `POS-Order-${newOrder[0].id}`,
+          `POS-${Date.now()}`,
+          new Date(),
+          JSON.stringify({
+            type: 'pos',
+            orderId: newOrder[0].id,
+            items: validatedItems.length
+          })
+        ]
+      );
+      
+      if (result && result.rows && result.rows.length > 0) {
+        paymentResult = result.rows[0];
+        console.log('Pagamento registrado com sucesso:', paymentResult);
+      }
     } catch (error) {
       // Registrar o erro mas permitir que a operação continue
       console.error('Erro ao registrar pagamento na tabela payments:', error);
