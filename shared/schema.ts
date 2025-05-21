@@ -293,6 +293,20 @@ export const paymentSettings = pgTable("payment_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Database Settings table
+export const databaseSettings = pgTable("database_settings", {
+  id: serial("id").primaryKey(),
+  supabaseUrl: text("supabase_url").notNull(),
+  supabaseKey: text("supabase_key").notNull(),
+  databaseUrl: text("database_url").notNull(),
+  databaseHost: text("database_host").notNull(),
+  databasePort: text("database_port").notNull(),
+  databaseName: text("database_name").notNull(),
+  databaseUser: text("database_user").notNull(),
+  databasePassword: text("database_password").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertSettingsSchema = createInsertSchema(settings).omit({
   id: true,
   updatedAt: true,
