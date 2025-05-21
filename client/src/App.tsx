@@ -32,6 +32,8 @@ import Finance from "@/pages/admin/Finance";
 import ReportsManager from "@/pages/admin/ReportsManager";
 import Settings from "@/pages/admin/Settings";
 import ReservationManager from "@/pages/admin/ReservationManager";
+import POS from "@/pages/admin/POS";
+import PaymentSettings from "@/pages/admin/PaymentSettings";
 
 // Loading spinner component
 const LoadingSpinner = () => (
@@ -109,7 +111,9 @@ function Router() {
       <Route path="/admin/finance" component={Finance} />
       <Route path="/admin/reports" component={ReportsManager} />
       <Route path="/admin/settings" component={Settings} />
+      <Route path="/admin/settings/payments" component={PaymentSettings} />
       <Route path="/admin/reservations" component={ReservationManager} />
+      <Route path="/admin/pos" component={POS} />
       
       {/* Error pages */}
       <Route path="/error/:code" component={CustomError} />
