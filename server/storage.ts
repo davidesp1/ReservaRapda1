@@ -89,6 +89,7 @@ export class MemStorage implements IStorage {
   private payments: Map<number, Payment> = new Map();
   private orders: Map<number, Order> = new Map();
   private settings: Map<string, Map<string, string>> = new Map();
+  private paymentSettings: PaymentSetting | undefined;
   
   private userCurrentId: number = 1;
   private menuCategoryCurrentId: number = 1;
@@ -101,6 +102,7 @@ export class MemStorage implements IStorage {
   constructor() {
     this.initializeData();
     this.initializeSettings();
+    this.initializePaymentSettings();
   }
 
   // Users
@@ -975,6 +977,61 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error updating settings:", error);
       return false;
+    }
+  }
+
+  // Payment Settings management
+  async getPaymentSettings(): Promise<PaymentSetting | undefined> {
+    try {
+      const [settings] = await db
+        .select()
+        .from(paymentSettings)
+        .limit(1);
+        
+      return settings;
+    } catch (error) {
+      console.error("Erro ao buscar configurações de pagamento:", error);
+      return undefined;
+    }
+  }
+  
+  async updatePaymentSettings(data: Partial<InsertPaymentSetting>): Promise<PaymentSetting> {
+    try {
+      // Verificar se já existe configuração
+      const existingSettings = await this.getPaymentSettings();
+      
+      if (existingSettings) {
+        // Atualizar configuração existente
+        const [updatedSettings] = await db
+          .update(paymentSettings)
+          .set({
+            ...data,
+            updatedAt: new Date()
+          })
+          .where(eq(paymentSettings.id, existingSettings.id))
+          .returning();
+          
+        return updatedSettings;
+      } else {
+        // Inserir nova configuração
+        const [newSettings] = await db
+          .insert(paymentSettings)
+          .values({
+            eupagoApiKey: data.eupagoApiKey || '',
+            enableCard: data.enableCard !== undefined ? data.enableCard : true,
+            enableMbway: data.enableMbway !== undefined ? data.enableMbway : true,
+            enableMultibanco: data.enableMultibanco !== undefined ? data.enableMultibanco : true,
+            enableBankTransfer: data.enableBankTransfer !== undefined ? data.enableBankTransfer : true,
+            enableCash: data.enableCash !== undefined ? data.enableCash : true,
+            updatedAt: new Date()
+          })
+          .returning();
+          
+        return newSettings;
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar configurações de pagamento:", error);
+      throw new Error("Falha ao atualizar configurações de pagamento");
     }
   }
 }
