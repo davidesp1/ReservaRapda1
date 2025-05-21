@@ -534,6 +534,29 @@ router.get("/api/payments/status/:reference", async (req, res) => {
 });
 
 // Rota para cancelar pagamento
+// Nova rota para listar todos os pagamentos - especialmente para a página de Finanças
+router.get("/api/payments", isAuthenticated, async (req, res) => {
+  try {
+    const payments = await queryClient`
+      SELECT p.*, u.username, u.email,
+        CASE
+          WHEN p.reservation_id IS NOT NULL THEN 'reservation'
+          WHEN p.details->>'type' = 'pos' THEN 'pos'
+          ELSE 'other'
+        END as payment_source
+      FROM payments p
+      LEFT JOIN users u ON p.user_id = u.id
+      ORDER BY p.payment_date DESC
+    `;
+    
+    console.log(`Retornando ${payments.length} pagamentos`);
+    res.json(payments);
+  } catch (err: any) {
+    console.error("Erro ao buscar pagamentos:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post("/api/payments/cancel", isAuthenticated, async (req, res) => {
   try {
     const { reference } = req.body;
