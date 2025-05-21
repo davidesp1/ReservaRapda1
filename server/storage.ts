@@ -1234,46 +1234,6 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Failed to update payment settings");
     }
   }
-  
-  async updatePaymentSettings(data: Partial<InsertPaymentSetting>): Promise<PaymentSetting> {
-    try {
-      // Verificar se já existe configuração
-      const existingSettings = await this.getPaymentSettings();
-      
-      if (existingSettings) {
-        // Atualizar configuração existente
-        const [updatedSettings] = await db
-          .update(paymentSettings)
-          .set({
-            ...data,
-            updatedAt: new Date()
-          })
-          .where(eq(paymentSettings.id, existingSettings.id))
-          .returning();
-          
-        return updatedSettings;
-      } else {
-        // Inserir nova configuração
-        const [newSettings] = await db
-          .insert(paymentSettings)
-          .values({
-            eupagoApiKey: data.eupagoApiKey || '',
-            enableCard: data.enableCard !== undefined ? data.enableCard : true,
-            enableMbway: data.enableMbway !== undefined ? data.enableMbway : true,
-            enableMultibanco: data.enableMultibanco !== undefined ? data.enableMultibanco : true,
-            enableBankTransfer: data.enableBankTransfer !== undefined ? data.enableBankTransfer : true,
-            enableCash: data.enableCash !== undefined ? data.enableCash : true,
-            updatedAt: new Date()
-          })
-          .returning();
-          
-        return newSettings;
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar configurações de pagamento:", error);
-      throw new Error("Falha ao atualizar configurações de pagamento");
-    }
-  }
 }
 
 // Initialize the database storage

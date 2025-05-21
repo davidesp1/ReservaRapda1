@@ -1,232 +1,219 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { FaCreditCard, FaMobileAlt, FaUniversity, FaMoneyBillWave, FaBarcode } from 'react-icons/fa';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from '@/lib/queryClient';
+import CardDetailsForm from '@/components/payments/CardDetailsForm';
+import MBWayForm from '@/components/payments/MBWayForm';
+import { paymentMethodEnum } from '@shared/schema';
+type PaymentMethod = typeof paymentMethodEnum.enumValues[number];
 
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  total: number;
-  onPaymentComplete: (method: string) => void;
+  onPaymentSuccess: (paymentId: number) => void;
+  totalAmount: number;
+  reservationId?: number;
+  userId: number;
 }
 
-interface PaymentSettings {
-  eupagoApiKey: string;
-  enabledPaymentMethods: {
-    card: boolean;
-    mbway: boolean;
-    multibanco: boolean;
-    bankTransfer: boolean;
-    cash: boolean;
-  };
-}
-
-export default function PaymentModal({ isOpen, onClose, total, onPaymentComplete }: PaymentModalProps) {
+export default function PaymentModal({
+  isOpen,
+  onClose,
+  onPaymentSuccess,
+  totalAmount,
+  reservationId,
+  userId
+}: PaymentModalProps) {
   const { t } = useTranslation();
-  const [paymentMethod, setPaymentMethod] = useState<string>('card');
-  const [phoneNumber, setPhoneNumber] = useState<string>('');
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  
-  // Buscar configurações de pagamento
-  const { data: settings = {} as PaymentSettings } = useQuery<PaymentSettings>({
-    queryKey: ['/api/settings/payment'],
+  const { toast } = useToast();
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [enabledMethods, setEnabledMethods] = useState({
+    card: true,
+    mbway: true,
+    multibanco: true,
+    bankTransfer: true,
+    cash: true
+  });
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [cardDetails, setCardDetails] = useState({
+    cardNumber: '',
+    cardholderName: '',
+    expiryDate: '',
+    cvv: ''
   });
 
-  // Resetar estado ao abrir modal
+  // Fetch payment settings to determine enabled payment methods
   useEffect(() => {
-    if (isOpen) {
-      setPaymentMethod('card');
-      setPhoneNumber('');
-      setIsProcessing(false);
-    }
-  }, [isOpen]);
-
-  // Definir método de pagamento padrão (primeiro método disponível)
-  useEffect(() => {
-    if (settings.enabledPaymentMethods) {
-      const methods = [
-        { id: 'card', enabled: settings.enabledPaymentMethods.card },
-        { id: 'mbway', enabled: settings.enabledPaymentMethods.mbway },
-        { id: 'multibanco', enabled: settings.enabledPaymentMethods.multibanco },
-        { id: 'bankTransfer', enabled: settings.enabledPaymentMethods.bankTransfer },
-        { id: 'cash', enabled: settings.enabledPaymentMethods.cash }
-      ];
-      
-      const firstEnabled = methods.find(m => m.enabled);
-      if (firstEnabled) {
-        setPaymentMethod(firstEnabled.id);
+    const fetchPaymentSettings = async () => {
+      try {
+        const response = await apiRequest('GET', '/api/settings/payment');
+        const data = await response.json();
+        
+        if (data) {
+          setEnabledMethods({
+            card: data.enableCard,
+            mbway: data.enableMbway,
+            multibanco: data.enableMultibanco,
+            bankTransfer: data.enableBankTransfer,
+            cash: data.enableCash
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching payment settings:", error);
       }
-    }
-  }, [settings]);
+    };
 
-  // Processar pagamento
-  const handleProcessPayment = async () => {
-    // Validação para MBWay
-    if (paymentMethod === 'mbway' && (!phoneNumber || phoneNumber.length < 9)) {
-      return;
-    }
-    
+    fetchPaymentSettings();
+  }, []);
+
+  const handlePayment = async () => {
     setIsProcessing(true);
-    
+
     try {
-      // Simulação de processamento
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      onPaymentComplete(paymentMethod);
+      const paymentData = {
+        method: paymentMethod,
+        amount: totalAmount,
+        userId,
+        reservationId: reservationId || null,
+        details: getPaymentDetails(),
+      };
+
+      // Make payment request
+      const response = await apiRequest('POST', '/api/payments', paymentData);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Payment failed');
+      }
+      
+      const data = await response.json();
+      
+      toast({
+        title: t('payment.success'),
+        description: t('payment.successDescription'),
+      });
+      
+      onPaymentSuccess(data.id);
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast({
+        title: t('payment.failed'),
+        description: error.message || t('payment.failedDescription'),
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const formattedTotal = (total / 100).toLocaleString('pt-BR', { 
-    style: 'currency', 
-    currency: 'EUR' 
-  });
+  const getPaymentDetails = () => {
+    switch (paymentMethod) {
+      case 'mbway':
+        return { phoneNumber };
+      case 'card':
+        return cardDetails;
+      default:
+        return {};
+    }
+  };
+
+  const handleCardDetailsChange = (details) => {
+    setCardDetails(details);
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{t('ProcessPayment')}</DialogTitle>
+          <DialogTitle>{t('pos.paymentTitle')}</DialogTitle>
         </DialogHeader>
         
-        <div className="py-4">
-          <div className="mb-6 text-center">
-            <Label>{t('TotalAmount')}</Label>
-            <p className="text-2xl font-bold text-primary">{formattedTotal}</p>
-          </div>
-          
-          <div className="space-y-4">
-            <Label>{t('SelectPaymentMethod')}</Label>
-            
-            <RadioGroup 
-              value={paymentMethod} 
-              onValueChange={setPaymentMethod}
-              className="grid grid-cols-1 gap-4"
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="paymentMethod">{t('payment.method')}</Label>
+            <Select
+              value={paymentMethod}
+              onValueChange={(value: PaymentMethod) => setPaymentMethod(value)}
             >
-              {/* Cartão de Crédito/Débito */}
-              {settings.enabledPaymentMethods?.card && (
-                <div className={`flex items-center p-3 cursor-pointer border rounded-lg ${paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-gray-200'}`}>
-                  <RadioGroupItem value="card" id="card" className="sr-only" />
-                  <FaCreditCard className="w-5 h-5 mr-3" />
-                  <div className="flex-1">
-                    <div className="font-medium">{t('Card')}</div>
-                    <div className="text-sm text-gray-500">{t('ProcessedByEuPago')}</div>
-                  </div>
-                  <div className={`w-5 h-5 rounded-full border ${paymentMethod === 'card' ? 'border-primary' : 'border-gray-300'} flex items-center justify-center`}>
-                    {paymentMethod === 'card' && <div className="w-3 h-3 bg-primary rounded-full" />}
-                  </div>
-                </div>
-              )}
-              
-              {/* MBWay */}
-              {settings.enabledPaymentMethods?.mbway && (
-                <div className={`flex items-center p-3 cursor-pointer border rounded-lg ${paymentMethod === 'mbway' ? 'border-primary bg-primary/5' : 'border-gray-200'}`}>
-                  <RadioGroupItem value="mbway" id="mbway" className="sr-only" />
-                  <FaMobileAlt className="w-5 h-5 mr-3" />
-                  <div className="flex-1">
-                    <div className="font-medium">MBWay</div>
-                    <div className="text-sm text-gray-500">{t('ProcessedByEuPago')}</div>
-                  </div>
-                  <div className={`w-5 h-5 rounded-full border ${paymentMethod === 'mbway' ? 'border-primary' : 'border-gray-300'} flex items-center justify-center`}>
-                    {paymentMethod === 'mbway' && <div className="w-3 h-3 bg-primary rounded-full" />}
-                  </div>
-                </div>
-              )}
-              
-              {/* Multibanco */}
-              {settings.enabledPaymentMethods?.multibanco && (
-                <div className={`flex items-center p-3 cursor-pointer border rounded-lg ${paymentMethod === 'multibanco' ? 'border-primary bg-primary/5' : 'border-gray-200'}`}>
-                  <RadioGroupItem value="multibanco" id="multibanco" className="sr-only" />
-                  <FaBarcode className="w-5 h-5 mr-3" />
-                  <div className="flex-1">
-                    <div className="font-medium">Multibanco</div>
-                    <div className="text-sm text-gray-500">{t('ProcessedByEuPago')}</div>
-                  </div>
-                  <div className={`w-5 h-5 rounded-full border ${paymentMethod === 'multibanco' ? 'border-primary' : 'border-gray-300'} flex items-center justify-center`}>
-                    {paymentMethod === 'multibanco' && <div className="w-3 h-3 bg-primary rounded-full" />}
-                  </div>
-                </div>
-              )}
-              
-              {/* Transferência Bancária */}
-              {settings.enabledPaymentMethods?.bankTransfer && (
-                <div className={`flex items-center p-3 cursor-pointer border rounded-lg ${paymentMethod === 'bankTransfer' ? 'border-primary bg-primary/5' : 'border-gray-200'}`}>
-                  <RadioGroupItem value="bankTransfer" id="bankTransfer" className="sr-only" />
-                  <FaUniversity className="w-5 h-5 mr-3" />
-                  <div className="flex-1">
-                    <div className="font-medium">{t('BankTransfer')}</div>
-                    <div className="text-sm text-gray-500">{t('ManualVerification')}</div>
-                  </div>
-                  <div className={`w-5 h-5 rounded-full border ${paymentMethod === 'bankTransfer' ? 'border-primary' : 'border-gray-300'} flex items-center justify-center`}>
-                    {paymentMethod === 'bankTransfer' && <div className="w-3 h-3 bg-primary rounded-full" />}
-                  </div>
-                </div>
-              )}
-              
-              {/* Dinheiro (apenas para Admin/POS) */}
-              {settings.enabledPaymentMethods?.cash && (
-                <div className={`flex items-center p-3 cursor-pointer border rounded-lg ${paymentMethod === 'cash' ? 'border-primary bg-primary/5' : 'border-gray-200'}`}>
-                  <RadioGroupItem value="cash" id="cash" className="sr-only" />
-                  <FaMoneyBillWave className="w-5 h-5 mr-3" />
-                  <div className="flex-1">
-                    <div className="font-medium">{t('Cash')}</div>
-                    <div className="text-sm text-gray-500">{t('PaidAtRestaurant')}</div>
-                  </div>
-                  <div className={`w-5 h-5 rounded-full border ${paymentMethod === 'cash' ? 'border-primary' : 'border-gray-300'} flex items-center justify-center`}>
-                    {paymentMethod === 'cash' && <div className="w-3 h-3 bg-primary rounded-full" />}
-                  </div>
-                </div>
-              )}
-            </RadioGroup>
-            
-            {/* Campo de telefone para MBWay */}
-            {paymentMethod === 'mbway' && (
-              <div className="mt-4">
-                <Label htmlFor="phone">{t('PhoneNumber')}</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="9XXXXXXXX"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="mt-1"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  {t('MBWayInstructions')}
-                </p>
-              </div>
-            )}
+              <SelectTrigger id="paymentMethod">
+                <SelectValue placeholder={t('payment.selectMethod')} />
+              </SelectTrigger>
+              <SelectContent>
+                {enabledMethods.cash && (
+                  <SelectItem value="cash">{t('payment.methods.cash')}</SelectItem>
+                )}
+                {enabledMethods.card && (
+                  <SelectItem value="card">{t('payment.methods.card')}</SelectItem>
+                )}
+                {enabledMethods.mbway && (
+                  <SelectItem value="mbway">{t('payment.methods.mbway')}</SelectItem>
+                )}
+                {enabledMethods.multibanco && (
+                  <SelectItem value="multibanco">{t('payment.methods.multibanco')}</SelectItem>
+                )}
+                {enabledMethods.bankTransfer && (
+                  <SelectItem value="bankTransfer">{t('payment.methods.bankTransfer')}</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
           </div>
+
+          <div className="grid gap-2">
+            <div className="font-medium">{t('payment.totalAmount')}</div>
+            <div className="text-2xl font-bold">€{(totalAmount / 100).toFixed(2)}</div>
+          </div>
+
+          {paymentMethod === 'mbway' && (
+            <MBWayForm 
+              phoneNumber={phoneNumber}
+              setPhoneNumber={setPhoneNumber}
+            />
+          )}
+
+          {paymentMethod === 'card' && (
+            <CardDetailsForm 
+              onChange={handleCardDetailsChange}
+              cardDetails={cardDetails}
+            />
+          )}
+
+          {paymentMethod === 'multibanco' && (
+            <div className="text-sm text-gray-500">
+              {t('payment.multibancoInfo')}
+            </div>
+          )}
+
+          {paymentMethod === 'bankTransfer' && (
+            <div className="text-sm text-gray-500">
+              {t('payment.bankTransferInfo')}
+            </div>
+          )}
         </div>
         
         <DialogFooter>
-          <Button
-            type="button" 
-            variant="outline"
-            onClick={onClose}
-            disabled={isProcessing}
-          >
-            {t('Cancel')}
+          <Button variant="outline" onClick={onClose} disabled={isProcessing}>
+            {t('common.cancel')}
           </Button>
-          <Button
-            type="button"
-            onClick={handleProcessPayment}
-            disabled={isProcessing || (paymentMethod === 'mbway' && (!phoneNumber || phoneNumber.length < 9))}
-            className="min-w-[100px]"
-          >
-            {isProcessing ? (
-              <span className="flex items-center gap-2">
-                <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                {t('Processing')}
-              </span>
-            ) : (
-              t('Pay')
-            )}
+          <Button onClick={handlePayment} disabled={isProcessing}>
+            {isProcessing ? t('payment.processing') : t('payment.confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>
