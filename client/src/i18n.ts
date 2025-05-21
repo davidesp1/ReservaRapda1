@@ -370,6 +370,7 @@ const resources = {
       ImportantNote: "Nota Importante",
       EuPagoAPIKey: "Chave API do EuPago",
       EuPagoAPIKeyDescription: "Chave de API para o serviço de pagamento EuPago. Esta informação é sensível e deve ser mantida segura.",
+      RequiresEuPagoAPIKey: "Requer chave API do EuPago para ativação",
       Currency: "Moeda",
       SelectCurrency: "Selecione a moeda",
       TaxRate: "Taxa de Imposto",
