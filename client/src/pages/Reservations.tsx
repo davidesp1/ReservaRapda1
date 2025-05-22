@@ -2044,14 +2044,15 @@ const Reservations: React.FC = () => {
             {/* Detalhes de pagamento Multibanco */}
             {reservationData.paymentMethod === 'multibanco' && reservationData.paymentDetails && (
               <div className="space-y-4">
-                {/* Contador regressivo */}
-                {reservationData.paymentDetails.expirationDate && (
-                  <CountdownTimer 
-                    expirationDate={reservationData.paymentDetails.expirationDate}
-                    reference={reservationData.paymentDetails.reference}
-                    onExpire={() => setPaymentModalOpen(false)}
-                  />
-                )}
+                {/* Contador regressivo com verificação automática */}
+                <CountdownTimer 
+                  expirationDate={reservationData.paymentDetails?.expirationDate || new Date(Date.now() + 72 * 3600 * 1000).toISOString()}
+                  reference={reservationData.paymentDetails?.reference || reservationData.confirmationCode}
+                  onExpire={() => {
+                    // Recarregar a página para atualizar o status
+                    queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
+                  }}
+                />
                 
                 {/* Status do pagamento */}
                 <div className="text-center mb-4">

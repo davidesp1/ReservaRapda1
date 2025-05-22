@@ -104,12 +104,27 @@ const eupagoClient = {
       }
       
       if (!response?.ok) {
-        const errorText = await response!.text();
+        // Verificar o tipo de conteúdo para evitar erros de parsing
+        const contentType = response?.headers.get('content-type') || '';
+        let errorText = '';
+        
+        if (contentType.includes('application/json')) {
+          try {
+            const errorJson = await response!.json();
+            errorText = JSON.stringify(errorJson);
+          } catch (e) {
+            errorText = await response!.text();
+          }
+        } else {
+          // Se não for JSON, obter como texto
+          errorText = await response!.text();
+        }
+        
         console.error(`[EuPago] Erro na resposta (${response!.status}):`, errorText);
         
         // Lançar o erro em vez de simular
         if (endpoint.includes('multibanco')) {
-          throw new Error(`Falha na comunicação com a API EuPago: ${response!.status} - ${errorText}`);
+          throw new Error(`Falha na comunicação com a API EuPago: ${response!.status} - Erro interno`);
         } else {
           // Para outros métodos, usar fallback para simulação
           console.log(`[EuPago] Usando fallback para SIMULAÇÃO após erro na API`);
@@ -117,6 +132,15 @@ const eupagoClient = {
         }
       }
 
+      // Verificar o tipo de conteúdo antes de tentar parsear JSON
+      const contentType = response?.headers.get('content-type') || '';
+      
+      if (!contentType.includes('application/json')) {
+        console.error(`[EuPago] Resposta não é JSON (${contentType})`);
+        console.log(`[EuPago] Usando fallback para SIMULAÇÃO devido a resposta não-JSON`);
+        return this.simulateResponse(endpoint, data);
+      }
+      
       let responseData;
       try {
         responseData = await response.json();

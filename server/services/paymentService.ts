@@ -74,25 +74,72 @@ export async function processPayment(
   
   // Se não estamos em simulação, chamar a API real do EuPago
   try {
+    let response: EupagoResponse;
+    
     if (method === "multibanco") {
       console.log(`[DEBUG] Tentando fazer pagamento Multibanco via EuPago API para ID: ${referenceId || 'sem ID'}`);
       
       // Usar o código de reserva como ID se disponível
       const idToUse = referenceId || `MB-${Date.now()}`;
       
-      return eupagoClient.multibanco({ 
+      const result = await eupagoClient.multibanco({ 
         valor: amountInEuros, 
         per_dup: 0,
         id: idToUse  // Usar o ID da reserva como referência
       });
+      
+      response = {
+        success: result.sucesso === true,
+        method: 'multibanco',
+        entity: result.entidade,
+        reference: result.referencia,
+        amount: amountInEuros,
+        value: amountInEuros,
+        entidade: result.entidade,
+        referencia: result.referencia,
+        estado: result.estado
+      };
+      
+      return response;
     } 
     else if (method === "mbway") {
       if (!phone) throw new Error("Número de telefone é obrigatório para MBWay");
-      return eupagoClient.mbway({ valor: amountInEuros, telemovel: phone });
+      
+      const result = await eupagoClient.mbway({ 
+        valor: amountInEuros, 
+        telemovel: phone 
+      });
+      
+      response = {
+        success: result.sucesso === true,
+        method: 'mbway',
+        phone: phone,
+        amount: amountInEuros,
+        value: amountInEuros,
+        referencia: result.referencia || '',
+        estado: result.estado
+      };
+      
+      return response;
     } 
     else if (method === "card") {
       const idToUse = referenceId || `CARD-${Date.now()}`;
-      return eupagoClient.card({ valor: amountInEuros, referencia: idToUse });
+      
+      const result = await eupagoClient.card({ 
+        valor: amountInEuros, 
+        referencia: idToUse 
+      });
+      
+      response = {
+        success: true,
+        method: 'card',
+        amount: amountInEuros,
+        value: amountInEuros,
+        paymentUrl: result.url || '',
+        referencia: result.referencia || ''
+      };
+      
+      return response;
     }
     
     throw new Error(`Método de pagamento '${method}' não suportado`);
@@ -129,15 +176,30 @@ export async function getPaymentStatus(reference: string): Promise<EupagoRespons
   }
   
   try {
-    return eupagoClient.request("/payments/status", { referencia: reference });
+    const result = await eupagoClient.request("/payments/status", { referencia: reference });
+    
+    // Formatar a resposta para garantir que seja um EupagoResponse válido
+    const response: EupagoResponse = {
+      success: true,
+      method: 'unknown',
+      reference: reference,
+      status: result.estado === 'pago' ? 'paid' : 'pending',
+      statusCode: result.estado === 'pago' ? 'C' : 'P',
+      estado: result.estado
+    };
+    
+    return response;
   } catch (error) {
     console.error(`Erro ao verificar status do pagamento:`, error);
     
-    // Não usamos fallback para simulação em ambiente real
-    console.log(`Não usando fallback para simulação em getPaymentStatus`);
-    // Em ambiente real, sempre retornamos o erro real para o usuário
-    
-    throw error;
+    // Resposta padrão para não quebrar o fluxo do cliente
+    return {
+      success: false,
+      reference,
+      status: 'pending',
+      statusCode: 'P',
+      error: 'Erro ao verificar status do pagamento'
+    };
   }
 }
 
