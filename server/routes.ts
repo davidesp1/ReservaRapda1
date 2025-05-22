@@ -529,11 +529,42 @@ router.post("/api/payments/process", isAuthenticated, async (req, res) => {
 router.get("/api/payments/status/:reference", async (req, res) => {
   try {
     const reference = req.params.reference;
+    
+    if (!reference) {
+      return res.status(400).json({ 
+        error: "Referência de pagamento não fornecida",
+        status: "pending" 
+      });
+    }
+    
+    console.log(`Verificando status do pagamento: ${reference}`);
+    
+    // Obter status do serviço
     const result = await getPaymentStatus(reference);
-    res.json(result);
+    
+    // Garantir formato mínimo esperado pelo cliente
+    const response = {
+      success: true,
+      reference,
+      status: (result.status === 'paid' || result.estado === 'pago') ? 'paid' : 'pending',
+      estado: result.estado || 'pending',
+      details: {
+        ...result
+      }
+    };
+    
+    console.log(`Status atual do pagamento ${reference}: ${response.status}`);
+    res.json(response);
   } catch (err: any) {
     console.error("Erro ao verificar status do pagamento:", err);
-    res.status(500).json({ error: err.message });
+    
+    // Resposta segura em caso de erro para não quebrar o fluxo do cliente
+    res.json({ 
+      success: false, 
+      status: "pending",
+      reference: req.params.reference,
+      error: err.message || "Erro ao verificar pagamento"
+    });
   }
 });
 

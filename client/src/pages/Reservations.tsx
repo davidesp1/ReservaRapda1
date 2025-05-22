@@ -10,7 +10,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PaymentDetailsModal from '@/components/payments/PaymentDetailsModal';
-import CountdownTimer from '@/components/payments/CountdownTimer';
+import CountdownTimer from '@/components/CountdownTimer';
+import PaymentStatusMonitor from '@/components/PaymentStatusMonitor';
+import FixedCountdownTimer from '@/components/FixedCountdownTimer';
 import QRCodeDisplay from '@/components/payments/QRCodeDisplay';
 import CardDetailsForm from '@/components/payments/CardDetailsForm';
 import MBWayForm from '@/components/payments/MBWayForm';
@@ -2046,9 +2048,10 @@ const Reservations: React.FC = () => {
               <div className="space-y-4">
                 {/* Contador regressivo com verificação automática */}
                 <div className="flex flex-col items-center gap-4">
-                  <PaymentStatusMonitor 
+                  <FixedCountdownTimer 
                     reference={reservationData.paymentDetails?.reference || reservationData.confirmationCode}
-                    initialStatus={reservationData.paymentStatus as any}
+                    paymentStatus={reservationData.paymentStatus as 'pending' | 'paid'}
+                    endTime={new Date(Date.now() + 72 * 3600 * 1000).toISOString()}
                     onStatusChange={(newStatus) => {
                       if (newStatus === 'paid') {
                         // Atualizar o estado local
@@ -2056,12 +2059,15 @@ const Reservations: React.FC = () => {
                           ...prev,
                           paymentStatus: 'paid'
                         }));
+                        
+                        // Mostrar notificação
+                        toast({
+                          title: t('PaymentConfirmed'),
+                          description: t('YourPaymentHasBeenConfirmed')
+                        });
                       }
                     }}
                   />
-                  <div className="text-sm text-gray-500">
-                    {t('PaymentVerification')}
-                  </div>
                 </div>
                 
                 {/* Status do pagamento */}

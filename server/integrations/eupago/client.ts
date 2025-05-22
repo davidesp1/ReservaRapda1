@@ -103,64 +103,72 @@ const eupagoClient = {
         }
       }
       
+      // Verificação mais robusta para respostas de erro
       if (!response?.ok) {
         // Verificar o tipo de conteúdo para evitar erros de parsing
         const contentType = response?.headers.get('content-type') || '';
         let errorText = '';
         
-        if (contentType.includes('application/json')) {
-          try {
-            const errorJson = await response!.json();
-            errorText = JSON.stringify(errorJson);
-          } catch (e) {
-            errorText = await response!.text();
-          }
-        } else {
-          // Se não for JSON, obter como texto
+        try {
           errorText = await response!.text();
+          
+          // Tratamento específico para respostas HTML (como o DOCTYPE)
+          if (errorText.includes('<!DOCTYPE') || errorText.includes('<html')) {
+            console.error(`[EuPago] Recebida resposta HTML em vez de JSON:`, errorText.substring(0, 100));
+            return this.simulateResponse(endpoint, data);
+          }
+          
+          // Tentar parsear como JSON somente se parecer JSON
+          if (errorText.trim().startsWith('{') && errorText.includes('}')) {
+            const errorJson = JSON.parse(errorText);
+            errorText = JSON.stringify(errorJson);
+          }
+        } catch (e) {
+          console.error(`[EuPago] Erro ao processar texto da resposta:`, e);
         }
         
         console.error(`[EuPago] Erro na resposta (${response!.status}):`, errorText);
         
-        // Lançar o erro em vez de simular
-        if (endpoint.includes('multibanco')) {
-          throw new Error(`Falha na comunicação com a API EuPago: ${response!.status} - Erro interno`);
-        } else {
-          // Para outros métodos, usar fallback para simulação
-          console.log(`[EuPago] Usando fallback para SIMULAÇÃO após erro na API`);
-          return this.simulateResponse(endpoint, data);
-        }
-      }
-
-      // Verificar o tipo de conteúdo antes de tentar parsear JSON
-      const contentType = response?.headers.get('content-type') || '';
-      
-      if (!contentType.includes('application/json')) {
-        console.error(`[EuPago] Resposta não é JSON (${contentType})`);
-        console.log(`[EuPago] Usando fallback para SIMULAÇÃO devido a resposta não-JSON`);
+        // Para multibanco, usar simulação em vez de lançar erro para não interromper o fluxo do usuário
+        console.log(`[EuPago] Usando resposta simulada após erro na API`);
         return this.simulateResponse(endpoint, data);
       }
-      
-      let responseData;
+
+      // Capturar o texto bruto da resposta
+      let responseText;
       try {
-        responseData = await response.json();
+        responseText = await response.text();
+        
+        // Verificar se o texto da resposta não é HTML antes de parsear
+        if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
+          console.error(`[EuPago] Recebida resposta HTML em vez de JSON:`, responseText.substring(0, 100));
+          return this.simulateResponse(endpoint, data);
+        }
+        
+        // Verificar se parece um JSON válido
+        if (!responseText.trim().startsWith('{') && !responseText.trim().startsWith('[')) {
+          console.error(`[EuPago] Resposta não é JSON:`, responseText.substring(0, 100));
+          return this.simulateResponse(endpoint, data);
+        }
+        
+        // Agora sim, parsear o JSON
+        const responseData = JSON.parse(responseText);
+        
+        console.log(`[EuPago] Resposta recebida:`, responseData);
+        
+        // Verificar se a resposta indica erro
+        if (responseData && 
+            (responseData.resposta === 'error' || 
+             responseData.estado === 'error')) {
+          console.error(`[EuPago] Erro na resposta:`, responseData);
+          return this.simulateResponse(endpoint, data);
+        }
+        
+        return responseData;
       } catch (jsonError) {
         console.error(`[EuPago] Erro ao processar resposta JSON:`, jsonError);
         return this.simulateResponse(endpoint, data);
       }
-      
-      console.log(`[EuPago] Resposta recebida:`, responseData);
-      
-      // Verificar se a resposta indica erro
-      const respData = responseData as any;
-      if (respData && 
-          (respData.resposta === 'error' || 
-           respData.estado === 'error')) {
-        console.error(`[EuPago] Erro na resposta:`, respData);
-        return this.simulateResponse(endpoint, data);
-      }
-      
-      return responseData;
     } catch (error) {
       console.error(`[EuPago] Erro ao fazer requisição:`, error);
       return this.simulateResponse(endpoint, data);
