@@ -651,29 +651,55 @@ const Reservations: React.FC = () => {
   
   // Finalizar processo e salvar a reserva
   const finalizeReservation = () => {
-    // Prepare reservation data
-    const dateTime = new Date(reservationData.date);
-    const [hours, minutes] = reservationData.time.split(':').map(Number);
-    dateTime.setHours(hours, minutes, 0, 0);
-    
-    // Conversão adequada para formato compatível com a API
-    const submitData = {
-      userId: user?.id,
-      date: dateTime.toISOString(),
-      tableId: reservationData.tableId,
-      partySize: reservationData.partySize,
-      notes: reservationData.notes || '',
-      status: 'confirmed',
-      confirmationCode: reservationData.confirmationCode,
-      paymentMethod: reservationData.paymentMethod,
-      paymentStatus: reservationData.paymentStatus,
-      items: reservationData.items,
-      total: reservationData.total,
-      // Valores padrão
-      duration: 120,
-    };
-    
-    createReservationMutation.mutate(submitData);
+    try {
+      console.log("Finalizando reserva:", reservationData);
+      
+      // Prepare reservation data
+      const dateTime = new Date(reservationData.date);
+      const [hours, minutes] = reservationData.time.split(':').map(Number);
+      dateTime.setHours(hours, minutes, 0, 0);
+      
+      // Verificar dados obrigatórios
+      if (!reservationData.tableId) {
+        throw new Error("Mesa não selecionada");
+      }
+      
+      if (!reservationData.partySize) {
+        throw new Error("Número de pessoas não informado");
+      }
+      
+      // Conversão adequada para formato compatível com a API
+      const submitData = {
+        userId: user?.id,
+        date: dateTime.toISOString(),
+        tableId: reservationData.tableId,
+        partySize: reservationData.partySize,
+        notes: reservationData.notes || '',
+        status: 'confirmed',
+        confirmationCode: reservationData.confirmationCode || `RES-${Date.now()}`,
+        paymentMethod: reservationData.paymentMethod || 'multibanco',
+        paymentStatus: reservationData.paymentStatus || 'pending',
+        items: reservationData.items || [],
+        total: reservationData.total || 0,
+        // Valores padrão
+        duration: 120,
+      };
+      
+      console.log("Dados da reserva a ser criada:", submitData);
+      toast({
+        title: "Salvando reserva...",
+        description: "Aguarde enquanto processamos sua reserva",
+      });
+      
+      createReservationMutation.mutate(submitData);
+    } catch (error: any) {
+      console.error("Erro ao finalizar reserva:", error);
+      toast({
+        title: "Erro ao finalizar reserva",
+        description: error.message || "Ocorreu um erro ao salvar sua reserva.",
+        variant: "destructive",
+      });
+    }
   };
   
   // Cancelar criação de reserva e voltar à lista
@@ -1579,7 +1605,7 @@ const Reservations: React.FC = () => {
                                 <div className="text-sm font-bold mb-2">{t('MultibancoPay')}</div>
                                 <div className="text-xs mb-1">{t('Entity')}: {reservationData.paymentDetails?.entity || '11111'}</div>
                                 <div className="text-xs mb-1">{t('Reference')}: {reservationData.paymentDetails?.reference || '999999999'}</div>
-                                <div className="text-xs mb-1">€{Number(reservationData.total || 0).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                <div className="text-xs mb-1">€{((reservationData.total || 0) / 100).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                               </div>
                             </div>
                           </div>
@@ -1600,7 +1626,7 @@ const Reservations: React.FC = () => {
                             <div className="w-full h-16 bg-gray-800 mx-auto flex items-center justify-center">
                               <div className="px-4 py-2 bg-white">
                                 <div className="text-xs font-mono font-bold">
-                                  {reservationData.paymentDetails?.entity || '11111'} | {reservationData.paymentDetails?.reference || '999999999'} | €{Number(reservationData.total || 0).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                  {reservationData.paymentDetails?.entity || '11111'} | {reservationData.paymentDetails?.reference || '999999999'} | €{((reservationData.total || 0) / 100).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                 </div>
                               </div>
                             </div>
