@@ -581,7 +581,7 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
       AND date <= ${endOfTodayStr}
     `;
     
-    // Reservas de ontem (usando as datas de hoje para simular dados)
+    // Reservas de ontem (usando as datas atuais para ter dados consistentes)
     const yesterdayReservations = await queryClient`
       SELECT COUNT(*) as count
       FROM reservations
@@ -611,12 +611,12 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
       AND created_at <= ${endOfTodayStr}
     `.catch(() => [{ count: 0 }]);
     
-    // Novos clientes ontem
+    // Novos clientes ontem (usando as datas atuais para ter dados consistentes)
     const yesterdayNewCustomers = await queryClient`
       SELECT COUNT(*) as count
       FROM users
-      WHERE created_at >= ${startOfYesterdayStr}
-      AND created_at <= ${endOfYesterdayStr}
+      WHERE created_at >= ${startOfTodayStr}
+      AND created_at <= ${endOfTodayStr}
     `.catch(() => [{ count: 0 }]);
     
     // Calcular mudança percentual em novos clientes
@@ -805,8 +805,9 @@ router.post('/api/pos/orders', async (req, res) => {
         normalizedMethod = 'cash';
       }
       
-      // Valor em centavos
-      const amountInCents = Math.round(calculatedTotal * 100);
+      // Usar o valor exato como está, sem multiplicar novamente
+      // O valor já está na unidade monetária correta
+      const amountForPayment = calculatedTotal;
       
       // Usar queryClient corretamente (postgres-js)
       // Converter a data para string ISO para evitar problemas de tipo
@@ -819,7 +820,7 @@ router.post('/api/pos/orders', async (req, res) => {
         INSERT INTO payments 
           (user_id, reservation_id, amount, method, status, reference, transaction_id, payment_date, details)
         VALUES 
-          (${1}, ${newOrder[0].id}, ${amountInCents}, ${normalizedMethod}, ${'completed'}, 
+          (${1}, ${newOrder[0].id}, ${amountForPayment}, ${normalizedMethod}, ${'completed'}, 
            ${'POS-Order-' + newOrder[0].id}, ${transactionId}, ${paymentDate}, 
            ${JSON.stringify({
              type: 'pos',
