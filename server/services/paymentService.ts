@@ -70,6 +70,7 @@ export async function processPayment(
   // Se não estamos em simulação, chamar a API real do EuPago
   try {
     if (method === "multibanco") {
+      console.log(`[DEBUG] Tentando fazer pagamento Multibanco via EuPago API`);
       return eupagoClient.multibanco({ valor: amount, per_dup: 0 });
     } 
     else if (method === "mbway") {
@@ -86,11 +87,14 @@ export async function processPayment(
   catch (error: any) {
     console.error(`Erro ao processar pagamento ${method}:`, error);
     
-    // Sem fallback para simulação em caso de erro
-    console.log(`Erro na API real sem fallback para simulação`);
-    // Não usaremos simulação em nenhuma circunstância
+    // Mostrar ao cliente que houve um erro no pagamento
+    // Se o erro vier da API EuPago, mostrar informações detalhadas
+    if (error.message && error.message.includes('API EuPago')) {
+      throw new Error(`Erro na API de pagamento: ${error.message}`);
+    }
     
-    throw error;
+    // Erro genérico para outros casos
+    throw new Error(`Não foi possível processar o pagamento. Por favor, tente novamente ou contate o suporte.`);
   }
 }
 

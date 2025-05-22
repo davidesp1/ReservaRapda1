@@ -1,8 +1,11 @@
 import fetch from "node-fetch";
 
-// Definir a URL base do EuPago para ambiente real
+// Definir a URL base do EuPago e API key a partir das variáveis de ambiente
 const API_BASE_URL = process.env.EUPAGO_BASE_URL || "https://sandbox.eupago.pt/api";
 const API_KEY = process.env.EUPAGO_API_KEY || "demo-1408-87fc-3618-cc0";
+
+// Log de configuração para depuração
+console.log(`[EuPago] Configurado com URL base: ${API_BASE_URL.replace(/\/api$/, '')}/api`);
 
 // Cliente para a API EuPago
 const eupagoClient = {
@@ -16,7 +19,12 @@ const eupagoClient = {
       valor: valorFormatado,
       per_dup: data.per_dup || 0,
       id: `MB-${Date.now()}`, // ID único para referência
-      descricao: "Reserva Opa que Delícia"
+      descricao: "Reserva Opa que Delícia",
+      
+      // Parâmetros adicionais que podem ser necessários na API nova
+      email: "cliente@exemplo.com",
+      meio: "multibanco",
+      info: "Info adicional"
     });
   },
   
@@ -97,9 +105,14 @@ const eupagoClient = {
         const errorText = await response!.text();
         console.error(`[EuPago] Erro na resposta (${response!.status}):`, errorText);
         
-        // Fallback para simulação em caso de erro em produção
-        console.log(`[EuPago] Usando fallback para SIMULAÇÃO após erro na API`);
-        return this.simulateResponse(endpoint, data);
+        // Lançar o erro em vez de simular
+        if (endpoint.includes('multibanco')) {
+          throw new Error(`Falha na comunicação com a API EuPago: ${response!.status} - ${errorText}`);
+        } else {
+          // Para outros métodos, usar fallback para simulação
+          console.log(`[EuPago] Usando fallback para SIMULAÇÃO após erro na API`);
+          return this.simulateResponse(endpoint, data);
+        }
       }
 
       let responseData;
