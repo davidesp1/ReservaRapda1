@@ -1,8 +1,8 @@
 import eupagoClient from "../integrations/eupago/client";
 import { EupagoResponse } from "../integrations/eupago/types";
 
-// Nunca usar simulação em ambiente real
-const SIMULATION_MODE = false;
+// Usar simulação para testes e desenvolvimento
+const SIMULATION_MODE = true;
 
 // Função para simular pagamento em modo de desenvolvimento
 function simulatePayment(method: string, amount: number, phone?: string): EupagoResponse {
