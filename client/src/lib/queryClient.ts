@@ -38,7 +38,32 @@ export const getQueryFn: <T>(options: {
     }
 
     await throwIfResNotOk(res);
-    return await res.json();
+    
+    // Capturar o texto da resposta primeiro para validar
+    const responseText = await res.text();
+    
+    // Verificar se o texto parece HTML ou DOCTYPE
+    if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
+      console.error('Recebida resposta HTML quando esperava JSON');
+      return [];  // Retornar array vazio para arrays ou objeto vazio para objetos
+    }
+    
+    // Se não for JSON válido ou estiver vazio, retornar valor seguro
+    if (!responseText.trim() || 
+        (!responseText.trim().startsWith('{') && 
+         !responseText.trim().startsWith('['))) {
+      console.error('Resposta não é JSON válido:', responseText.substring(0, 100));
+      return responseText.trim().startsWith('[') ? [] : {};
+    }
+    
+    try {
+      // Agora é seguro parsear como JSON
+      return JSON.parse(responseText);
+    } catch (error) {
+      console.error('Erro ao parsear JSON:', error);
+      // Retornar valor seguro baseado no início do texto
+      return responseText.trim().startsWith('[') ? [] : {};
+    }
   };
 
 export const queryClient = new QueryClient({
