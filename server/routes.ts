@@ -662,7 +662,7 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
         AND status = 'completed'
       `;
       
-      dailyRevenue.push(parseFloat(revenue[0]?.revenue) || 0); // Valores já estão em euros
+      dailyRevenue.push(parseFloat(revenue[0]?.revenue) / 100 || 0); // Converter centavos para euros
     }
     
     // Dados para gráfico de categorias mais vendidas 
@@ -679,7 +679,7 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
     
     // Retornar todos os dados para o dashboard
     res.json({
-      todayRevenue: (todayRevenueValue).toFixed(2), // Não precisa mais dividir por 100
+      todayRevenue: (todayRevenueValue / 100).toFixed(2), // Dividir por 100 para converter centavos para euros
       revenueChange,
       todayReservations: todayReservationsValue,
       reservationsChange,
@@ -696,7 +696,7 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
       // Dados adicionais úteis
       totalOrders: await queryClient`SELECT COUNT(*) as count FROM orders`.then(res => parseInt(res[0]?.count) || 0).catch(() => 0),
       totalCustomers: await queryClient`SELECT COUNT(*) as count FROM users`.then(res => parseInt(res[0]?.count) || 0),
-      totalRevenue: await queryClient`SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'completed'`.then(res => (parseFloat(res[0]?.total)).toFixed(2) || '0.00')
+      totalRevenue: await queryClient`SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'completed'`.then(res => (parseFloat(res[0]?.total) / 100).toFixed(2) || '0.00')
     });
     
   } catch (err: any) {
