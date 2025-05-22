@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -26,6 +27,22 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, CreditCard, Banknote, Landmark, QrCode, ArrowRight } from 'lucide-react';
 
+// Interface para os dados de configuração de pagamento retornados pela API
+interface PaymentSettingsResponse {
+  acceptCard: boolean;
+  acceptMBWay: boolean;
+  acceptMultibanco: boolean;
+  acceptBankTransfer: boolean;
+  acceptCash: boolean;
+  acceptMultibancoTPA: boolean;
+  eupagoApiKey: string;
+  currency: string;
+  taxRate: number;
+  requirePrepayment: boolean;
+  requirePrepaymentAmount: number;
+  showPricesWithTax: boolean;
+}
+
 // Schema para as configurações de pagamento
 const paymentSettingsSchema = z.object({
   acceptCard: z.boolean().default(true),
@@ -38,12 +55,11 @@ const paymentSettingsSchema = z.object({
 
 type PaymentSettings = z.infer<typeof paymentSettingsSchema>;
 
-const PaymentSettingsPage: React.FC = () => {
+const PaymentSettings: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
-  const [apiKeyValue, setApiKeyValue] = useState('');
 
   // Formulário de configurações de pagamento
   const form = useForm<PaymentSettings>({
@@ -59,7 +75,7 @@ const PaymentSettingsPage: React.FC = () => {
   });
 
   // Buscar as configurações atuais
-  const { data: settings, isLoading: settingsLoading } = useQuery({
+  const { data: settings, isLoading: settingsLoading } = useQuery<PaymentSettingsResponse>({
     queryKey: ['/api/settings/payments'],
     enabled: isAuthenticated && isAdmin
   });
@@ -67,20 +83,13 @@ const PaymentSettingsPage: React.FC = () => {
   // Atualizar o formulário quando os dados são carregados
   useEffect(() => {
     if (settings) {
-      console.log("Recebendo settings da API:", settings);
-      
-      // Atualizar campo de API key
-      if (settings.eupagoApiKey) {
-        setApiKeyValue(settings.eupagoApiKey);
-      }
-      
-      // Atualizar todos os campos do formulário
+      console.log("Configurações recebidas da API:", settings);
       form.reset({
-        acceptCard: Boolean(settings.acceptCard),
-        acceptMBWay: Boolean(settings.acceptMBWay),
-        acceptMultibanco: Boolean(settings.acceptMultibanco),
-        acceptBankTransfer: Boolean(settings.acceptBankTransfer),
-        acceptCash: Boolean(settings.acceptCash),
+        acceptCard: settings.acceptCard,
+        acceptMBWay: settings.acceptMBWay,
+        acceptMultibanco: settings.acceptMultibanco,
+        acceptBankTransfer: settings.acceptBankTransfer,
+        acceptCash: settings.acceptCash,
         eupagoApiKey: settings.eupagoApiKey || '',
       });
     }
@@ -151,43 +160,22 @@ const PaymentSettingsPage: React.FC = () => {
                   <FormField
                     control={form.control}
                     name="eupagoApiKey"
-                    render={({ field }) => {
-                      // Quando o valor mudar, atualize o formulário e o estado local
-                      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                        const newValue = e.target.value;
-                        setApiKeyValue(newValue);
-                        field.onChange(newValue);
-                      };
-                      
-                      return (
-                        <FormItem>
-                          <FormLabel className="text-lg font-semibold">{t('EuPagoAPIKey')}</FormLabel>
-                          <FormDescription className="mb-2">
-                            {t('EuPagoAPIKeyDescription')}
-                          </FormDescription>
-                          <FormControl>
-                            <div className="relative">
-                              {/* Texto visível */}
-                              <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base font-mono overflow-hidden">
-                                {apiKeyValue || "Digite sua chave API do EuPago"}
-                              </div>
-                              
-                              {/* Input real (invisível mas funcional) */}
-                              <input
-                                className="absolute inset-0 opacity-0 cursor-text"
-                                value={field.value}
-                                onChange={handleChange}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                id={field.name}
-                                autoComplete="off"
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      );
-                    }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-lg font-semibold">{t('EuPagoAPIKey')}</FormLabel>
+                        <FormDescription className="mb-2">
+                          {t('EuPagoAPIKeyDescription')}
+                        </FormDescription>
+                        <FormControl>
+                          <Input 
+                            placeholder="Digite sua chave API do EuPago" 
+                            {...field} 
+                            className="font-mono"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
               </div>
@@ -342,4 +330,4 @@ const PaymentSettingsPage: React.FC = () => {
   );
 };
 
-export default PaymentSettingsPage;
+export default PaymentSettings;
