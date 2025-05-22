@@ -627,7 +627,10 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
     const yesterdayNewCustomersValue = parseInt(yesterdayNewCustomers[0]?.count) || 1; // Evitar divisão por zero
     const customerChange = Math.round((newCustomersValue - yesterdayNewCustomersValue) / yesterdayNewCustomersValue * 100);
     
-    // Dados de vendas por dia da semana (últimos 7 dias)
+    // Dados de vendas por dia da semana (últimos 7 dias) - usando uma única consulta SQL eficiente
+    console.log('Buscando dados de vendas dos últimos 7 dias');
+    
+    // Criar array com as datas dos últimos 7 dias para referência
     const last7Days = [];
     const dayLabels = [];
     
@@ -635,35 +638,61 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       
-      const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
-      const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+      // Formatar a data como YYYY-MM-DD
+      const formattedDate = date.toISOString().split('T')[0];
+      last7Days.push(formattedDate);
       
-      const startOfDayStr = startOfDay.toISOString().split('T')[0];
-      const endOfDayStr = endOfDay.toISOString().split('T')[0] + ' 23:59:59';
-      
-      last7Days.push({ start: startOfDayStr, end: endOfDayStr });
-      
-      // Usar apenas o índice do dia (0-6) e deixar o frontend tratar a tradução
-      dayLabels.push(date.getDay().toString());
+      // Adicionar o nome do dia abreviado em português
+      const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' });
+      dayLabels.push(dayName.charAt(0).toUpperCase() + dayName.slice(1, 3));
     }
     
-    // Buscando dados reais dos últimos 7 dias
+    // Buscar dados de todos os dias de uma vez com consulta mais eficiente
+    const weeklySales = await queryClient`
+      WITH date_range AS (
+        SELECT generate_series(
+          CURRENT_DATE - INTERVAL '6 days',
+          CURRENT_DATE,
+          '1 day'::interval
+        ) AS day
+      )
+      SELECT 
+        date_range.day::date AS date,
+        COALESCE(SUM(p.amount), 0) AS revenue
+      FROM 
+        date_range
+      LEFT JOIN payments p ON 
+        CAST(p.payment_date AS DATE) = date_range.day
+        AND p.status = 'completed'
+      GROUP BY 
+        date_range.day
+      ORDER BY 
+        date_range.day ASC
+    `;
+    
+    console.log('Resultados da consulta de vendas semanais:', weeklySales);
+    
+    // Mapear os resultados para o formato esperado
     const dailyRevenue = [];
     
-    for (const day of last7Days) {
-      const daySales = await queryClient`
-        SELECT COALESCE(SUM(amount), 0) as revenue 
-        FROM payments 
-        WHERE payment_date >= ${day.start}
-        AND payment_date <= ${day.end}
-        AND status = 'completed'
-      `;
-      dailyRevenue.push(parseFloat(daySales[0]?.revenue) || 0);
+    // Inicializar com zeros
+    for (let i = 0; i < 7; i++) {
+      dailyRevenue.push(0);
     }
     
-    // Converter para euros
+    // Preencher com dados reais onde existirem
+    for (const sale of weeklySales) {
+      const saleDate = new Date(sale.date).toISOString().split('T')[0];
+      const index = last7Days.indexOf(saleDate);
+      if (index !== -1) {
+        // Converter centavos para euros
+        dailyRevenue[index] = parseFloat(sale.revenue) / 100;
+      }
+    }
+    
+    // Formatar para 2 casas decimais
     for (let i = 0; i < dailyRevenue.length; i++) {
-      dailyRevenue[i] = dailyRevenue[i] / 100;
+      dailyRevenue[i] = parseFloat(dailyRevenue[i].toFixed(2));
     }
     
     // Dados para gráfico de categorias mais vendidas 
