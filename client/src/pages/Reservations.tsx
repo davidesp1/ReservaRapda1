@@ -559,6 +559,9 @@ const Reservations: React.FC = () => {
         
         // Avançar para a etapa final
         setCurrentStep(4);
+        
+        // Salvar a reserva automaticamente no banco de dados
+        finalizeReservation();
       } 
       else if (paymentMethod === 'mbway') {
         setReservationData({
@@ -1468,14 +1471,27 @@ const Reservations: React.FC = () => {
       return (
         <div className="space-y-6">
           <Card className="shadow-md">
-            <CardHeader className="pb-4 border-b bg-green-50">
+            <CardHeader className={`pb-4 border-b ${reservationData.paymentStatus === 'paid' ? 'bg-green-50' : 'bg-yellow-50'}`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl mb-1">{t('ReservationConfirmed')}</CardTitle>
-                  <CardDescription>{t('ReservationConfirmedDescription')}</CardDescription>
+                  {reservationData.paymentStatus === 'paid' ? (
+                    <>
+                      <CardTitle className="text-xl mb-1">{t('ReservationConfirmed')}</CardTitle>
+                      <CardDescription>{t('ReservationConfirmedDescription')}</CardDescription>
+                    </>
+                  ) : (
+                    <>
+                      <CardTitle className="text-xl mb-1">{t('ReservationPending')}</CardTitle>
+                      <CardDescription>{t('PendingPaymentDescription')}</CardDescription>
+                    </>
+                  )}
                 </div>
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-500 text-white">
-                  <Check className="h-6 w-6" />
+                <div className={`flex items-center justify-center w-10 h-10 rounded-full ${reservationData.paymentStatus === 'paid' ? 'bg-green-500' : 'bg-yellow-500'} text-white`}>
+                  {reservationData.paymentStatus === 'paid' ? (
+                    <Check className="h-6 w-6" />
+                  ) : (
+                    <Clock className="h-6 w-6" />
+                  )}
                 </div>
               </div>
             </CardHeader>
@@ -1984,8 +2000,12 @@ const Reservations: React.FC = () => {
                 
                 {/* Status do pagamento */}
                 <div className="text-center mb-4">
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                    {t('Pending')}
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                    reservationData.paymentStatus === 'paid' 
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {reservationData.paymentStatus === 'paid' ? t('Paid') : t('Pending')}
                   </span>
                 </div>
                 
