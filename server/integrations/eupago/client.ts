@@ -1,11 +1,25 @@
 import fetch from "node-fetch";
 
 // Definir a URL base do EuPago e API key a partir das variáveis de ambiente
-const API_BASE_URL = process.env.EUPAGO_BASE_URL || "https://sandbox.eupago.pt/api";
+let baseUrl = process.env.EUPAGO_BASE_URL || "https://sandbox.eupago.pt/api";
+
+// Normalizar a URL base para garantir formato correto
+if (!baseUrl.endsWith('/api')) {
+  if (baseUrl.includes('/api/')) {
+    // Removemos tudo após /api/ para garantir uma URL base limpa
+    baseUrl = baseUrl.split('/api/')[0] + '/api';
+  } else if (!baseUrl.endsWith('/')) {
+    baseUrl = baseUrl + '/api';
+  } else {
+    baseUrl = baseUrl + 'api';
+  }
+}
+
+const API_BASE_URL = baseUrl;
 const API_KEY = process.env.EUPAGO_API_KEY || "demo-1408-87fc-3618-cc0";
 
 // Log de configuração para depuração
-console.log(`[EuPago] Configurado com URL base: ${API_BASE_URL.replace(/\/api$/, '')}/api`);
+console.log(`[EuPago] Configurado com URL base: ${API_BASE_URL}`);
 
 // Cliente para a API EuPago
 const eupagoClient = {
