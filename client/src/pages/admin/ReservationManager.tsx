@@ -47,6 +47,7 @@ type Reservation = {
   email: string;
   phone: string;
   confirmation_code: string;
+  reservation_code: string;
   date: string;
   party_size: number;
   status: 'confirmed' | 'pending' | 'cancelled' | 'completed';
@@ -312,7 +313,7 @@ const ReservationManager: React.FC = () => {
                   filteredReservations.map((reservation: Reservation) => (
                     <TableRow key={reservation.id}>
                       <TableCell className="font-medium">
-                        {reservation.confirmation_code ? reservation.confirmation_code.split('-')[1] || reservation.confirmation_code : 'N/A'}
+                        {reservation.reservation_code || 'N/A'}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center">
@@ -351,6 +352,11 @@ const ReservationManager: React.FC = () => {
                             <Badge className="bg-yellow-100 text-yellow-800">
                               <Clock className="w-3 h-3 mr-1" />
                               Pendente
+                            </Badge>
+                          ) : reservation.payment_status === 'refunded' ? (
+                            <Badge className="bg-purple-100 text-purple-800">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Reembolsado
                             </Badge>
                           ) : (
                             <Badge className="bg-red-100 text-red-800">

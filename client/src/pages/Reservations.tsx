@@ -453,38 +453,13 @@ const Reservations: React.FC = () => {
             
             // Se o pagamento foi confirmado, atualizar o status
             if (result.status === 'paid') {
-              // Atualizar o estado local
+              // Atualizar APENAS o estado local - NÃO fazer mudanças automáticas
               setReservationData(prev => ({
                 ...prev,
-                paymentStatus: 'paid',
-                status: 'confirmed'
+                paymentStatus: 'completed'  // Mudança apenas no estado local
               }));
               
-              // Atualizar a reserva no banco de dados se tivermos um ID
-              if (reservationData.id) {
-                try {
-                  const updateReservationData = {
-                    id: reservationData.id,
-                    paymentStatus: 'paid',
-                    status: 'confirmed'
-                  };
-                  
-                  console.log("Atualizando reserva após confirmação de pagamento:", updateReservationData);
-                  
-                  // Chamar API para atualizar a reserva
-                  const updateResponse = await apiRequest('PATCH', `/api/reservations/${reservationData.id}`, updateReservationData);
-                  
-                  if (updateResponse.ok) {
-                    console.log("Reserva atualizada com sucesso após confirmação de pagamento");
-                    // Recarregar lista de reservas
-                    queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
-                  } else {
-                    console.error("Erro ao atualizar reserva:", await updateResponse.text());
-                  }
-                } catch (updateError) {
-                  console.error("Erro ao atualizar reserva:", updateError);
-                }
-              }
+              console.log("Status do pagamento atualizado apenas localmente para 'completed'");
               
               // Mostrar notificação de pagamento confirmado
               toast({

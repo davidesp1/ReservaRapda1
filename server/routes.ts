@@ -499,6 +499,7 @@ router.get("/api/admin/reservations", isAuthenticated, async (req, res) => {
         r.party_size,
         r.status,
         r.confirmation_code,
+        r.reservation_code,
         r.payment_method,
         r.payment_status,
         r.total,
@@ -573,6 +574,18 @@ router.post("/api/reservations", isAuthenticated, async (req, res) => {
 
     // Gerar código de confirmação se não fornecido
     const finalConfirmationCode = confirmationCode || `RES-${Date.now()}`;
+    
+    // Gerar código único de 8 caracteres para a reserva
+    const generateReservationCode = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = '';
+      for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    };
+    
+    const reservationCode = generateReservationCode();
 
     // Validar userId
     if (!userId) {
