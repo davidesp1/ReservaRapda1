@@ -172,16 +172,23 @@ const PaymentSettings: React.FC = () => {
                             {t('EuPagoAPIKeyDescription')}
                           </FormDescription>
                           <FormControl>
-                            {/* Input customizado que não esconde os caracteres */}
-                            <input
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm font-mono"
-                              value={apiKey}
-                              onChange={handleChange}
-                              onBlur={field.onBlur}
-                              name={field.name}
-                              id={field.name}
-                              placeholder="Digite sua chave API do EuPago"
-                            />
+                            <div className="relative">
+                              {/* Texto visível */}
+                              <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base font-mono overflow-hidden">
+                                {apiKey || "Digite sua chave API do EuPago"}
+                              </div>
+                              
+                              {/* Input real (invisível mas funcional) */}
+                              <input
+                                className="absolute inset-0 opacity-0 cursor-text"
+                                value={apiKey}
+                                onChange={handleChange}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                id={field.name}
+                                autoComplete="off"
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
