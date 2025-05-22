@@ -495,12 +495,12 @@ router.post("/api/payments/process", isAuthenticated, async (req, res) => {
     try {
       if (method === 'multibanco') {
         // Enviar o código de confirmação como ID para o processamento
-        result = await processPayment('multibanco', amount, null, referenceId);
+        result = await processPayment('multibanco', amount, phone || undefined, referenceId);
       } else if (method === 'mbway') {
         result = await processPayment('mbway', amount, phone, referenceId);
       } else if (method === 'card') {
         // Para cartão, também enviamos o ID de referência
-        result = await processPayment('card', amount, null, referenceId);
+        result = await processPayment('card', amount, phone || undefined, referenceId);
       } else {
         throw new Error(`Método de pagamento '${method}' não implementado`);
       }
