@@ -1,21 +1,8 @@
 import fetch from "node-fetch";
 
 // Definir a URL base do EuPago e API key a partir das variáveis de ambiente
-let baseUrl = process.env.EUPAGO_BASE_URL || "https://sandbox.eupago.pt/api";
-
-// Normalizar a URL base para garantir formato correto
-if (!baseUrl.endsWith('/api')) {
-  if (baseUrl.includes('/api/')) {
-    // Removemos tudo após /api/ para garantir uma URL base limpa
-    baseUrl = baseUrl.split('/api/')[0] + '/api';
-  } else if (!baseUrl.endsWith('/')) {
-    baseUrl = baseUrl + '/api';
-  } else {
-    baseUrl = baseUrl + 'api';
-  }
-}
-
-const API_BASE_URL = baseUrl;
+// Seguindo a documentação, a URL correta é: https://sandbox.eupago.pt/clientes/rest_api
+const API_BASE_URL = "https://sandbox.eupago.pt/clientes/rest_api";
 const API_KEY = process.env.EUPAGO_API_KEY || "demo-1408-87fc-3618-cc0";
 
 // Log de configuração para depuração
@@ -28,17 +15,15 @@ const eupagoClient = {
     // Converter o valor para string com 2 casas decimais
     const valorFormatado = data.valor.toFixed(2);
     
-    // Usar o endpoint correto e parâmetros obrigatórios
+    // Gerar ID único para a referência
+    const uniqueId = `MB-${Date.now()}`;
+    
+    // Usar o endpoint correto e parâmetros obrigatórios conforme documentação
     return this.request('/multibanco/create', {
       valor: valorFormatado,
       per_dup: data.per_dup || 0,
-      id: `MB-${Date.now()}`, // ID único para referência
-      descricao: "Reserva Opa que Delícia",
-      
-      // Parâmetros adicionais que podem ser necessários na API nova
-      email: "cliente@exemplo.com",
-      meio: "multibanco",
-      info: "Info adicional"
+      id: uniqueId,
+      // Remover parâmetros desnecessários que podem estar causando o erro
     });
   },
   
@@ -72,7 +57,9 @@ const eupagoClient = {
 
   // Método para fazer requisições à API
   async request(endpoint: string, data: Record<string, any> = {}) {
-    const url = API_BASE_URL + (endpoint.startsWith('/') ? endpoint : '/' + endpoint);
+    // Conforme exemplo, a URL deve ser completa, sem concatenação de endpoint
+    // https://sandbox.eupago.pt/clientes/rest_api/multibanco/create
+    const url = `${API_BASE_URL}${endpoint}`;
     
     // Incluir a API key no corpo da requisição
     const requestData = {
@@ -89,7 +76,7 @@ const eupagoClient = {
         return this.simulateResponse(endpoint, data);
       }
       
-      // Headers adequados para a API do EuPago
+      // Headers adequados conforme documentação da API do EuPago
       const headers = {
         "Content-Type": "application/json",
         "Accept": "application/json"
