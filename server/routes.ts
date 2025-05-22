@@ -548,52 +548,41 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
     const startOfTodayStr = startOfToday.toISOString().split('T')[0];
     const endOfTodayStr = endOfToday.toISOString().split('T')[0] + ' 23:59:59';
     
-    // Buscar receita de hoje usando as datas atuais
+    // Buscar receita de hoje usando consulta com data exata - exibir valores do dia de hoje
     const todayRevenue = await queryClient`
       SELECT COALESCE(SUM(amount), 0) as revenue 
       FROM payments 
-      WHERE payment_date >= ${startOfTodayStr}
-      AND payment_date <= ${endOfTodayStr}
+      WHERE date_trunc('day', payment_date) = date_trunc('day', now())
       AND status = 'completed'
     `;
     
-    // Buscar receita de ontem
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const startOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0);
-    const endOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59);
-    
-    // Converter para formato ISO para ontem
-    const startOfYesterdayStr = startOfYesterday.toISOString().split('T')[0];
-    const endOfYesterdayStr = endOfYesterday.toISOString().split('T')[0] + ' 23:59:59';
-    
+    // Buscar receita de ontem usando função date_trunc para maior precisão
     const yesterdayRevenue = await queryClient`
       SELECT COALESCE(SUM(amount), 0) as revenue 
       FROM payments 
-      WHERE payment_date >= ${startOfYesterdayStr}
-      AND payment_date <= ${endOfYesterdayStr}
+      WHERE date_trunc('day', payment_date) = date_trunc('day', now()) - interval '1 day'
       AND status = 'completed'
     `;
     
     // Calcular mudança percentual na receita
     const todayRevenueValue = parseFloat(todayRevenue[0]?.revenue) || 0;
     const yesterdayRevenueValue = parseFloat(yesterdayRevenue[0]?.revenue) || 1; // Evitar divisão por zero
+    
+    console.log(`Dados da receita - Hoje: ${todayRevenueValue}, Ontem: ${yesterdayRevenueValue}`);
     const revenueChange = Math.round((todayRevenueValue - yesterdayRevenueValue) / yesterdayRevenueValue * 100);
     
-    // Reservas de hoje
+    // Reservas de hoje usando date_trunc para maior precisão
     const todayReservations = await queryClient`
       SELECT COUNT(*) as count
       FROM reservations
-      WHERE date >= ${startOfTodayStr}
-      AND date <= ${endOfTodayStr}
+      WHERE date_trunc('day', date) = date_trunc('day', now())
     `;
     
-    // Reservas de ontem
+    // Reservas de ontem (usando date_trunc para maior precisão)
     const yesterdayReservations = await queryClient`
       SELECT COUNT(*) as count
       FROM reservations
-      WHERE date >= ${startOfYesterdayStr}
-      AND date <= ${endOfYesterdayStr}
+      WHERE date_trunc('day', date) = date_trunc('day', now()) - interval '1 day'
     `;
     
     // Calcular mudança percentual nas reservas
@@ -610,20 +599,18 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
     const yesterdayOccupancyRate = Math.min(100, Math.round((yesterdayReservationsValue / totalCapacity) * 100));
     const occupancyChange = occupancyRate - yesterdayOccupancyRate;
     
-    // Novos clientes hoje - verificando se a coluna member_since existe
+    // Novos clientes hoje usando date_trunc para maior precisão
     const newCustomers = await queryClient`
       SELECT COUNT(*) as count
       FROM users
-      WHERE created_at >= ${startOfTodayStr}
-      AND created_at <= ${endOfTodayStr}
+      WHERE date_trunc('day', created_at) = date_trunc('day', now())
     `.catch(() => [{ count: 0 }]);
     
-    // Novos clientes ontem
+    // Novos clientes ontem usando date_trunc para maior precisão
     const yesterdayNewCustomers = await queryClient`
       SELECT COUNT(*) as count
       FROM users
-      WHERE created_at >= ${startOfYesterdayStr}
-      AND created_at <= ${endOfYesterdayStr}
+      WHERE date_trunc('day', created_at) = date_trunc('day', now()) - interval '1 day'
     `.catch(() => [{ count: 0 }]);
     
     // Calcular mudança percentual em novos clientes
