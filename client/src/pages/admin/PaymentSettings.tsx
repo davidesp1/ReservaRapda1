@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,22 +27,6 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, CreditCard, Banknote, Landmark, QrCode, ArrowRight } from 'lucide-react';
 
-// Interface para os dados de configuração de pagamento retornados pela API
-interface PaymentSettingsResponse {
-  acceptCard: boolean;
-  acceptMBWay: boolean;
-  acceptMultibanco: boolean;
-  acceptBankTransfer: boolean;
-  acceptCash: boolean;
-  acceptMultibancoTPA: boolean;
-  eupagoApiKey: string;
-  currency: string;
-  taxRate: number;
-  requirePrepayment: boolean;
-  requirePrepaymentAmount: number;
-  showPricesWithTax: boolean;
-}
-
 // Schema para as configurações de pagamento
 const paymentSettingsSchema = z.object({
   acceptCard: z.boolean().default(true),
@@ -55,11 +39,30 @@ const paymentSettingsSchema = z.object({
 
 type PaymentSettings = z.infer<typeof paymentSettingsSchema>;
 
-const PaymentSettings: React.FC = () => {
+const PaymentSettingsPage: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
+  
+  // Estado para armazenar a chave API atual (para renderização visual)
+  const [apiKeyValue, setApiKeyValue] = useState("");
+
+  // Buscar as configurações atuais diretamente do endpoint (sem tipagem complexa)
+  const { data: settings, isLoading: settingsLoading } = useQuery({
+    queryKey: ['/api/settings/payments'],
+    enabled: isAuthenticated && isAdmin,
+    onSuccess: (data) => {
+      console.log("DEBUG - Dados recebidos do servidor:", data);
+      
+      // Atualizar o valor da chave API no estado local
+      if (data && typeof data === 'object' && 'eupagoApiKey' in data) {
+        const apiKey = data.eupagoApiKey || '';
+        console.log("DEBUG - Chave API encontrada:", apiKey);
+        setApiKeyValue(apiKey);
+      }
+    }
+  });
 
   // Formulário de configurações de pagamento
   const form = useForm<PaymentSettings>({
@@ -74,30 +77,32 @@ const PaymentSettings: React.FC = () => {
     },
   });
 
-  // Buscar as configurações atuais
-  const { data: settings, isLoading: settingsLoading } = useQuery<PaymentSettingsResponse>({
-    queryKey: ['/api/settings/payments'],
-    enabled: isAuthenticated && isAdmin
-  });
-
   // Atualizar o formulário quando os dados são carregados
   useEffect(() => {
-    if (settings) {
-      console.log("Configurações recebidas da API:", settings);
-      form.reset({
-        acceptCard: settings.acceptCard,
-        acceptMBWay: settings.acceptMBWay,
-        acceptMultibanco: settings.acceptMultibanco,
-        acceptBankTransfer: settings.acceptBankTransfer,
-        acceptCash: settings.acceptCash,
+    if (settings && typeof settings === 'object') {
+      console.log("Configurações para reset do formulário:", settings);
+      
+      // Certifique-se de que temos valores booleanos para os switches
+      const formData = {
+        acceptCard: Boolean(settings.acceptCard),
+        acceptMBWay: Boolean(settings.acceptMBWay),
+        acceptMultibanco: Boolean(settings.acceptMultibanco),
+        acceptBankTransfer: Boolean(settings.acceptBankTransfer),
+        acceptCash: Boolean(settings.acceptCash),
         eupagoApiKey: settings.eupagoApiKey || '',
-      });
+      };
+      
+      console.log("Dados do formulário após conversão:", formData);
+      
+      // Reset do formulário com os dados convertidos
+      form.reset(formData);
     }
   }, [settings, form]);
 
   // Mutation para atualizar as configurações
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: PaymentSettings) => {
+      console.log("Enviando dados para o servidor:", data);
       return apiRequest('PUT', '/api/settings/payments', data);
     },
     onSuccess: () => {
@@ -125,7 +130,22 @@ const PaymentSettings: React.FC = () => {
 
   // Submit handler
   const onSubmit = (data: PaymentSettings) => {
-    updateSettingsMutation.mutate(data);
+    // Garante que a chave atual do estado local seja usada
+    const finalData = {
+      ...data,
+      eupagoApiKey: form.getValues().eupagoApiKey
+    };
+    
+    console.log("Submetendo configurações:", finalData);
+    updateSettingsMutation.mutate(finalData);
+  };
+
+  // Função para atualizar tanto o formulário quanto o estado local ao modificar a chave API
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    console.log("Nova chave API:", newValue);
+    setApiKeyValue(newValue);
+    form.setValue("eupagoApiKey", newValue);
   };
 
   if (settingsLoading || isLoading) {
@@ -157,26 +177,26 @@ const PaymentSettings: React.FC = () => {
               <div className="space-y-2">
                 <h3 className="text-lg font-medium">{t('PaymentGatewaySettings')}</h3>
                 <div className="p-6 border rounded-md bg-slate-50">
-                  <FormField
-                    control={form.control}
-                    name="eupagoApiKey"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-lg font-semibold">{t('EuPagoAPIKey')}</FormLabel>
-                        <FormDescription className="mb-2">
-                          {t('EuPagoAPIKeyDescription')}
-                        </FormDescription>
-                        <FormControl>
-                          <Input 
-                            placeholder="Digite sua chave API do EuPago" 
-                            {...field} 
-                            className="font-mono"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* Campo de API Key simplificado e com controle direto */}
+                  <div className="space-y-2">
+                    <Label htmlFor="eupagoApiKey" className="text-lg font-semibold">
+                      {t('EuPagoAPIKey')}
+                    </Label>
+                    <p className="text-sm text-gray-500 mb-2">
+                      {t('EuPagoAPIKeyDescription')}
+                    </p>
+                    <Input
+                      id="eupagoApiKey"
+                      name="eupagoApiKey"
+                      value={form.getValues().eupagoApiKey}
+                      onChange={handleApiKeyChange}
+                      placeholder="Digite sua chave API do EuPago"
+                      className="font-mono"
+                    />
+                    <div className="mt-2 text-xs text-gray-500">
+                      Valor atual: {form.getValues().eupagoApiKey || "Nenhuma chave configurada"}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -330,4 +350,4 @@ const PaymentSettings: React.FC = () => {
   );
 };
 
-export default PaymentSettings;
+export default PaymentSettingsPage;
