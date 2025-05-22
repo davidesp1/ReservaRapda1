@@ -154,18 +154,39 @@ const PaymentSettings: React.FC = () => {
                   <FormField
                     control={form.control}
                     name="eupagoApiKey"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-lg font-semibold">{t('EuPagoAPIKey')}</FormLabel>
-                        <FormDescription className="mb-2">
-                          {t('EuPagoAPIKeyDescription')}
-                        </FormDescription>
-                        <FormControl>
-                          <Input {...field} type="text" className="font-mono" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      // Usando um estado local para manter o valor visível
+                      const [apiKey, setApiKey] = React.useState(field.value || '');
+                      
+                      // Quando o valor mudar, atualize o formulário e o estado local
+                      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                        const newValue = e.target.value;
+                        setApiKey(newValue);
+                        field.onChange(newValue);
+                      };
+                      
+                      return (
+                        <FormItem>
+                          <FormLabel className="text-lg font-semibold">{t('EuPagoAPIKey')}</FormLabel>
+                          <FormDescription className="mb-2">
+                            {t('EuPagoAPIKeyDescription')}
+                          </FormDescription>
+                          <FormControl>
+                            {/* Input customizado que não esconde os caracteres */}
+                            <input
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm font-mono"
+                              value={apiKey}
+                              onChange={handleChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              id={field.name}
+                              placeholder="Digite sua chave API do EuPago"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 </div>
               </div>
