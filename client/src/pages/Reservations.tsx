@@ -1924,7 +1924,7 @@ const Reservations: React.FC = () => {
             <div className="flex justify-center py-10">
               <div className="animate-spin w-10 h-10 border-4 border-brasil-green border-t-transparent rounded-full"></div>
             </div>
-          ) : userReservations && userReservations.length > 0 ? (
+          ) : userReservations && Array.isArray(userReservations) && userReservations.length > 0 ? (
             <div className="overflow-auto">
               <Table>
                 <TableHeader>
