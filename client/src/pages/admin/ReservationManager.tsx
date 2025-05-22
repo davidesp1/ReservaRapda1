@@ -303,6 +303,7 @@ const ReservationManager: React.FC = () => {
                   <TableHead>Data</TableHead>
                   <TableHead>Hora</TableHead>
                   <TableHead>Status do pagamento</TableHead>
+                  <TableHead>Método de pagamento</TableHead>
                   <TableHead className="text-right">{t('Actions')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -311,7 +312,7 @@ const ReservationManager: React.FC = () => {
                   filteredReservations.map((reservation: Reservation) => (
                     <TableRow key={reservation.id}>
                       <TableCell className="font-medium">
-                        {reservation.confirmation_code}
+                        {reservation.confirmation_code ? reservation.confirmation_code.split('-')[1] || reservation.confirmation_code : 'N/A'}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center">
@@ -357,6 +358,18 @@ const ReservationManager: React.FC = () => {
                               Falhado
                             </Badge>
                           )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <span className="capitalize text-sm font-medium">
+                            {reservation.payment_method === 'multibanco' ? 'Multibanco' : 
+                             reservation.payment_method === 'mbway' ? 'MB Way' :
+                             reservation.payment_method === 'card' ? 'Cartão' :
+                             reservation.payment_method === 'cash' ? 'Dinheiro' :
+                             reservation.payment_method === 'transfer' ? 'Transferência' :
+                             reservation.payment_method}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
