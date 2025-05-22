@@ -297,10 +297,11 @@ const ReservationManager: React.FC = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('Code')}</TableHead>
-                  <TableHead>{t('Guest')}</TableHead>
+                  <TableHead>{t('Name')}</TableHead>
+                  <TableHead>{t('Phone')}</TableHead>
                   <TableHead>{t('Table')}</TableHead>
                   <TableHead>{t('Date')}</TableHead>
-                  <TableHead>{t('PartySize')}</TableHead>
+                  <TableHead>{t('Time')}</TableHead>
                   <TableHead>{t('Status')}</TableHead>
                   <TableHead className="text-right">{t('Actions')}</TableHead>
                 </TableRow>
@@ -315,16 +316,28 @@ const ReservationManager: React.FC = () => {
                       <TableCell>
                         <div className="flex items-center">
                           <User className="mr-2 h-4 w-4 text-gray-400" />
-                          {reservation.user_name || getUserDetails(reservation.user_id)}
+                          <div>
+                            <p className="font-medium">{reservation.first_name} {reservation.last_name}</p>
+                            <p className="text-sm text-gray-500">@{reservation.user_name}</p>
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell>{getTableDetails(reservation.table_id)}</TableCell>
-                      <TableCell>{formatDateTime(reservation.date)}</TableCell>
                       <TableCell>
                         <div className="flex items-center">
-                          <Users className="mr-2 h-4 w-4 text-gray-400" />
-                          {reservation.party_size}
+                          <span className="text-sm">{reservation.phone}</span>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <span className="font-medium">Mesa {reservation.table_number}</span>
+                          <span className="text-sm text-gray-500 ml-2">({reservation.table_capacity} lugares)</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(reservation.date), 'dd/MM/yyyy')}
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(reservation.date), 'HH:mm')}
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={reservation.status} />
