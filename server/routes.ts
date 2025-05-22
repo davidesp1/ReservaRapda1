@@ -548,23 +548,30 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
     const startOfTodayStr = startOfToday.toISOString().split('T')[0];
     const endOfTodayStr = endOfToday.toISOString().split('T')[0] + ' 23:59:59';
     
-    // Buscar receita de hoje (temporariamente mostrando dados de ontem para demonstração)
-    // Ajustamos para mostrar os dados mais recentes disponíveis
+    // Buscar receita de hoje usando as datas atuais
     const todayRevenue = await queryClient`
       SELECT COALESCE(SUM(amount), 0) as revenue 
       FROM payments 
-      WHERE payment_date >= '2025-05-21' 
-      AND payment_date <= '2025-05-21 23:59:59'
+      WHERE payment_date >= ${startOfTodayStr}
+      AND payment_date <= ${endOfTodayStr}
       AND status = 'completed'
     `;
     
-    // Para fins de demonstração, estamos usando dados de dias anteriores
-    // Ajustamos para mostrar dados dos dias 20/05 para comparação
+    // Buscar receita de ontem
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const startOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0);
+    const endOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59);
+    
+    // Converter para formato ISO para ontem
+    const startOfYesterdayStr = startOfYesterday.toISOString().split('T')[0];
+    const endOfYesterdayStr = endOfYesterday.toISOString().split('T')[0] + ' 23:59:59';
+    
     const yesterdayRevenue = await queryClient`
       SELECT COALESCE(SUM(amount), 0) as revenue 
       FROM payments 
-      WHERE payment_date >= '2025-05-20' 
-      AND payment_date <= '2025-05-20 23:59:59'
+      WHERE payment_date >= ${startOfYesterdayStr}
+      AND payment_date <= ${endOfYesterdayStr}
       AND status = 'completed'
     `;
     
@@ -581,12 +588,12 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
       AND date <= ${endOfTodayStr}
     `;
     
-    // Reservas de ontem (usando as datas atuais para ter dados consistentes)
+    // Reservas de ontem
     const yesterdayReservations = await queryClient`
       SELECT COUNT(*) as count
       FROM reservations
-      WHERE date >= ${startOfTodayStr}
-      AND date <= ${endOfTodayStr}
+      WHERE date >= ${startOfYesterdayStr}
+      AND date <= ${endOfYesterdayStr}
     `;
     
     // Calcular mudança percentual nas reservas
@@ -611,12 +618,12 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
       AND created_at <= ${endOfTodayStr}
     `.catch(() => [{ count: 0 }]);
     
-    // Novos clientes ontem (usando as datas atuais para ter dados consistentes)
+    // Novos clientes ontem
     const yesterdayNewCustomers = await queryClient`
       SELECT COUNT(*) as count
       FROM users
-      WHERE created_at >= ${startOfTodayStr}
-      AND created_at <= ${endOfTodayStr}
+      WHERE created_at >= ${startOfYesterdayStr}
+      AND created_at <= ${endOfYesterdayStr}
     `.catch(() => [{ count: 0 }]);
     
     // Calcular mudança percentual em novos clientes
