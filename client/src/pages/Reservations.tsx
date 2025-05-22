@@ -2045,14 +2045,24 @@ const Reservations: React.FC = () => {
             {reservationData.paymentMethod === 'multibanco' && reservationData.paymentDetails && (
               <div className="space-y-4">
                 {/* Contador regressivo com verificação automática */}
-                <CountdownTimer 
-                  endDate={reservationData.paymentDetails?.expirationDate || new Date(Date.now() + 72 * 3600 * 1000).toISOString()}
-                  reference={reservationData.paymentDetails?.reference || reservationData.confirmationCode}
-                  onExpire={() => {
-                    // Recarregar a página para atualizar o status
-                    queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
-                  }}
-                />
+                <div className="flex flex-col items-center gap-4">
+                  <PaymentStatusMonitor 
+                    reference={reservationData.paymentDetails?.reference || reservationData.confirmationCode}
+                    initialStatus={reservationData.paymentStatus as any}
+                    onStatusChange={(newStatus) => {
+                      if (newStatus === 'paid') {
+                        // Atualizar o estado local
+                        setReservationData(prev => ({
+                          ...prev,
+                          paymentStatus: 'paid'
+                        }));
+                      }
+                    }}
+                  />
+                  <div className="text-sm text-gray-500">
+                    {t('PaymentVerification')}
+                  </div>
+                </div>
                 
                 {/* Status do pagamento */}
                 <div className="text-center mb-4">
