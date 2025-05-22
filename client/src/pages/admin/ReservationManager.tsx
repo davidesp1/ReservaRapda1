@@ -133,7 +133,7 @@ const ReservationManager: React.FC = () => {
         title: t('ReservationDeleted'),
         description: t('ReservationDeletedMessage'),
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reservations'] });
       setIsDeleteModalOpen(false);
       setReservationToDelete(null);
     },
@@ -166,8 +166,8 @@ const ReservationManager: React.FC = () => {
       
       // Include reservations that match the search text
       const matchesSearch = 
-        (reservation.confirmationCode && reservation.confirmationCode.toLowerCase().includes(searchLower)) ||
-        (reservation.userName && reservation.userName.toLowerCase().includes(searchLower));
+        (reservation.confirmation_code && reservation.confirmation_code.toLowerCase().includes(searchLower)) ||
+        (reservation.user_name && reservation.user_name.toLowerCase().includes(searchLower));
       
       return matchesSearch;
     });

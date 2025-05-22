@@ -489,10 +489,21 @@ router.get("/api/admin/reservations", isAuthenticated, async (req, res) => {
       return res.status(403).json({ error: "Acesso negado. Apenas administradores podem acessar esta rota." });
     }
 
-    // Buscar todas as reservas sem filtros por enquanto para simplificar
+    // Buscar todas as reservas com informações completas
     const reservations = await queryClient`
       SELECT 
-        r.*,
+        r.id,
+        r.user_id,
+        r.table_id,
+        r.date,
+        r.party_size,
+        r.status,
+        r.confirmation_code,
+        r.payment_method,
+        r.payment_status,
+        r.total,
+        r.notes,
+        r.duration,
         t.number as table_number,
         t.capacity as table_capacity,
         u.username as user_name,
