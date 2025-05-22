@@ -11,19 +11,20 @@ console.log(`[EuPago] Configurado com URL base: ${API_BASE_URL}`);
 // Cliente para a API EuPago
 const eupagoClient = {
   // Métodos específicos por tipo de pagamento
-  multibanco(data: { valor: number, per_dup?: number }) {
+  multibanco(data: { valor: number, per_dup?: number, id?: string }) {
     // Converter o valor para string com 2 casas decimais
     const valorFormatado = data.valor.toFixed(2);
     
-    // Gerar ID único para a referência
-    const uniqueId = `MB-${Date.now()}`;
+    // Usar o ID fornecido ou gerar um novo
+    const identificador = data.id || `MB-${Date.now()}`;
+    
+    console.log(`[EuPago] Criando referência Multibanco com ID: ${identificador}, Valor: ${valorFormatado}€`);
     
     // Usar o endpoint correto e parâmetros obrigatórios conforme documentação
     return this.request('/multibanco/create', {
       valor: valorFormatado,
       per_dup: data.per_dup || 0,
-      id: uniqueId,
-      // Remover parâmetros desnecessários que podem estar causando o erro
+      id: identificador
     });
   },
   
@@ -151,12 +152,12 @@ const eupagoClient = {
       return {
         success: true,
         method: 'multibanco',
-        entity: '11111',
-        reference: '123 456 789',
+        entity: '82213',                // Entidade real para testes em Sandbox
+        reference: '110 278 732',       // Referência real para testes em Sandbox
         amount: parseFloat(data.valor || '0'),
         valor: data.valor,
-        entidade: '11111',
-        referencia: '123 456 789',
+        entidade: '82213',
+        referencia: '110 278 732',
         estado: 'pending',
         data_inicio: new Date().toISOString(),
         data_fim: new Date(Date.now() + 72 * 3600 * 1000).toISOString()

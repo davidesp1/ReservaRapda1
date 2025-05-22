@@ -58,28 +58,41 @@ export async function processPayment(
   method: "multibanco" | "mbway" | "card",
   amount: number,
   phone?: string,
+  referenceId?: string,
 ): Promise<EupagoResponse> {
-  console.log(`Processando pagamento ${method} no valor de ${amount}€`);
+  // Ajuste importante: dividir o valor por 100 para converter de centavos para euros
+  // O valor está sendo armazenado em centavos (ex: 200 = 2€)
+  const amountInEuros = amount / 100;
+  
+  console.log(`Processando pagamento ${method} no valor de ${amountInEuros}€ (${amount} centavos)`);
   
   // Se estamos em modo de simulação, retornar dados simulados
   if (SIMULATION_MODE) {
     console.log(`[SIMULAÇÃO] Modo de simulação ativado para pagamento ${method}`);
-    return simulatePayment(method, amount, phone);
+    return simulatePayment(method, amountInEuros, phone);
   }
   
   // Se não estamos em simulação, chamar a API real do EuPago
   try {
     if (method === "multibanco") {
-      console.log(`[DEBUG] Tentando fazer pagamento Multibanco via EuPago API`);
-      return eupagoClient.multibanco({ valor: amount, per_dup: 0 });
+      console.log(`[DEBUG] Tentando fazer pagamento Multibanco via EuPago API para ID: ${referenceId || 'sem ID'}`);
+      
+      // Usar o código de reserva como ID se disponível
+      const idToUse = referenceId || `MB-${Date.now()}`;
+      
+      return eupagoClient.multibanco({ 
+        valor: amountInEuros, 
+        per_dup: 0,
+        id: idToUse  // Usar o ID da reserva como referência
+      });
     } 
     else if (method === "mbway") {
       if (!phone) throw new Error("Número de telefone é obrigatório para MBWay");
-      return eupagoClient.mbway({ valor: amount, telemovel: phone });
+      return eupagoClient.mbway({ valor: amountInEuros, telemovel: phone });
     } 
     else if (method === "card") {
-      const referencia = `CARD-${Date.now()}`;
-      return eupagoClient.card({ valor: amount, referencia });
+      const idToUse = referenceId || `CARD-${Date.now()}`;
+      return eupagoClient.card({ valor: amountInEuros, referencia: idToUse });
     }
     
     throw new Error(`Método de pagamento '${method}' não suportado`);
