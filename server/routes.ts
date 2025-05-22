@@ -476,9 +476,9 @@ router.get("/api/reservations", isAuthenticated, async (req, res) => {
 // Rota para processamento de pagamentos
 router.post("/api/payments/process", isAuthenticated, async (req, res) => {
   try {
-    const { method, amount, phone, cardholderName, cardNumber, expiryDate, cvv } = req.body;
+    const { method, amount, phone, cardholderName, cardNumber, expiryDate, cvv, referenceId } = req.body;
     
-    console.log(`Recebida solicitação de pagamento - Método: ${method}, Valor: ${amount}€`);
+    console.log(`Recebida solicitação de pagamento - Método: ${method}, Valor: ${amount/100}€ (${amount} centavos), ID Referência: ${referenceId || "não fornecido"}`);
     
     // Verificar se o método é suportado
     if (!['multibanco', 'mbway', 'card'].includes(method)) {
@@ -494,12 +494,13 @@ router.post("/api/payments/process", isAuthenticated, async (req, res) => {
     let result;
     try {
       if (method === 'multibanco') {
-        result = await processPayment('multibanco', amount);
+        // Enviar o código de confirmação como ID para o processamento
+        result = await processPayment('multibanco', amount, null, referenceId);
       } else if (method === 'mbway') {
-        result = await processPayment('mbway', amount, phone);
+        result = await processPayment('mbway', amount, phone, referenceId);
       } else if (method === 'card') {
-        // Para cartão, apenas geramos uma referência aqui, o redirecionamento acontece no front-end
-        result = await processPayment('card', amount);
+        // Para cartão, também enviamos o ID de referência
+        result = await processPayment('card', amount, null, referenceId);
       } else {
         throw new Error(`Método de pagamento '${method}' não implementado`);
       }

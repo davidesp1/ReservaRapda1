@@ -494,6 +494,7 @@ const Reservations: React.FC = () => {
         method: paymentMethod,
         amount: total,
         reference: `RES-${Date.now()}`, // Referência única para o pagamento
+        referenceId: confirmationCode, // Usar o código de confirmação como ID para a API
         description: `Reserva ${format(reservationData.date, 'dd/MM/yyyy')} - ${reservationData.time}`,
         email: user?.email,
         name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.username,
@@ -524,9 +525,10 @@ const Reservations: React.FC = () => {
       // Processar o resultado do pagamento conforme o método
       if (paymentMethod === 'multibanco') {
         // Para Multibanco, configuramos os detalhes do pagamento
+        // Usar os valores retornados da API ou os valores de teste do sandbox
         const multibancoDetails = {
-          entity: result.entity || '11111',
-          reference: result.reference || '999 999 999',
+          entity: result.entity || result.entidade || '82213',
+          reference: result.reference || result.referencia || '110 278 732',
           amount: total,
           expirationDate: result.expirationDate || new Date(Date.now() + 72*3600*1000).toISOString()
         };
