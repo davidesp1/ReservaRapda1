@@ -5,7 +5,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -27,16 +26,6 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, CreditCard, Banknote, Landmark, QrCode, ArrowRight } from 'lucide-react';
 
-// Interface para os dados de configuração de pagamento retornados pela API
-interface PaymentSettingsData {
-  acceptCard: string;
-  acceptMBWay: string;
-  acceptMultibanco: string;
-  acceptBankTransfer: string;
-  acceptCash: string;
-  eupagoApiKey?: string;
-}
-
 // Schema para as configurações de pagamento
 const paymentSettingsSchema = z.object({
   acceptCard: z.boolean().default(true),
@@ -49,11 +38,12 @@ const paymentSettingsSchema = z.object({
 
 type PaymentSettings = z.infer<typeof paymentSettingsSchema>;
 
-const PaymentSettings: React.FC = () => {
+const PaymentSettingsPage: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
+  const [apiKeyValue, setApiKeyValue] = useState('');
 
   // Formulário de configurações de pagamento
   const form = useForm<PaymentSettings>({
@@ -69,27 +59,30 @@ const PaymentSettings: React.FC = () => {
   });
 
   // Buscar as configurações atuais
-  const { data: settings, isLoading: settingsLoading } = useQuery<PaymentSettingsData>({
+  const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ['/api/settings/payments'],
     enabled: isAuthenticated && isAdmin
   });
-  
+
   // Atualizar o formulário quando os dados são carregados
   useEffect(() => {
     if (settings) {
-      console.log("Dados recebidos da API:", settings);
+      console.log("Recebendo settings da API:", settings);
       
-      const formData = {
-        acceptCard: typeof settings.acceptCard === 'boolean' ? settings.acceptCard : settings.acceptCard !== 'false',
-        acceptMBWay: typeof settings.acceptMBWay === 'boolean' ? settings.acceptMBWay : settings.acceptMBWay !== 'false',
-        acceptMultibanco: typeof settings.acceptMultibanco === 'boolean' ? settings.acceptMultibanco : settings.acceptMultibanco !== 'false',
-        acceptBankTransfer: typeof settings.acceptBankTransfer === 'boolean' ? settings.acceptBankTransfer : settings.acceptBankTransfer !== 'false',
-        acceptCash: typeof settings.acceptCash === 'boolean' ? settings.acceptCash : settings.acceptCash !== 'false',
+      // Atualizar campo de API key
+      if (settings.eupagoApiKey) {
+        setApiKeyValue(settings.eupagoApiKey);
+      }
+      
+      // Atualizar todos os campos do formulário
+      form.reset({
+        acceptCard: Boolean(settings.acceptCard),
+        acceptMBWay: Boolean(settings.acceptMBWay),
+        acceptMultibanco: Boolean(settings.acceptMultibanco),
+        acceptBankTransfer: Boolean(settings.acceptBankTransfer),
+        acceptCash: Boolean(settings.acceptCash),
         eupagoApiKey: settings.eupagoApiKey || '',
-      };
-      
-      console.log("Formulário será atualizado com:", formData);
-      form.reset(formData);
+      });
     }
   }, [settings, form]);
 
@@ -159,21 +152,10 @@ const PaymentSettings: React.FC = () => {
                     control={form.control}
                     name="eupagoApiKey"
                     render={({ field }) => {
-                      // Usando um estado local para manter o valor visível
-                      const [apiKey, setApiKey] = React.useState(field.value || '');
-                      
-                      // Efeito para atualizar o apiKey quando field.value mudar (quando carregar do banco)
-                      React.useEffect(() => {
-                        console.log("Campo eupagoApiKey carregado:", field.value);
-                        if (field.value) {
-                          setApiKey(field.value);
-                        }
-                      }, [field.value]);
-                      
                       // Quando o valor mudar, atualize o formulário e o estado local
                       const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                         const newValue = e.target.value;
-                        setApiKey(newValue);
+                        setApiKeyValue(newValue);
                         field.onChange(newValue);
                       };
                       
@@ -187,13 +169,13 @@ const PaymentSettings: React.FC = () => {
                             <div className="relative">
                               {/* Texto visível */}
                               <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base font-mono overflow-hidden">
-                                {apiKey || "Digite sua chave API do EuPago"}
+                                {apiKeyValue || "Digite sua chave API do EuPago"}
                               </div>
                               
                               {/* Input real (invisível mas funcional) */}
                               <input
                                 className="absolute inset-0 opacity-0 cursor-text"
-                                value={apiKey}
+                                value={field.value}
                                 onChange={handleChange}
                                 onBlur={field.onBlur}
                                 name={field.name}
@@ -360,4 +342,4 @@ const PaymentSettings: React.FC = () => {
   );
 };
 
-export default PaymentSettings;
+export default PaymentSettingsPage;
