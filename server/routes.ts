@@ -985,22 +985,25 @@ router.get("/api/settings/payments", async (req, res) => {
     // Mapear para o formato esperado pelo frontend
     const paymentSetting = result[0];
     
-    // Verificar se a API key existe para determinar quais métodos podem estar ativos
-    const hasApiKey = paymentSetting.eupago_api_key && paymentSetting.eupago_api_key.trim().length > 0;
+    // Debug logs para verificar o que está sendo retornado do banco
+    console.log("Dados brutos do banco para payment_settings:", JSON.stringify(paymentSetting));
     
+    // Sempre incluir a API key, independente se está preenchida ou não
     const settingsObject = {
-      // Se não tiver API key, os métodos de pagamento do EuPago devem estar desativados
-      acceptCard: hasApiKey ? paymentSetting.enable_card : false,
-      acceptMBWay: hasApiKey ? paymentSetting.enable_mbway : false,
-      acceptMultibanco: hasApiKey ? paymentSetting.enable_multibanco : false,
+      // Valores booleanos para métodos de pagamento
+      acceptCard: paymentSetting.enable_card,
+      acceptMBWay: paymentSetting.enable_mbway,
+      acceptMultibanco: paymentSetting.enable_multibanco,
       
       // Métodos independentes da API key
       acceptBankTransfer: paymentSetting.enable_bank_transfer,
       acceptCash: paymentSetting.enable_cash,
       acceptMultibancoTPA: paymentSetting.enable_multibanco_tpa,
       
-      // Outras configurações
+      // Chave API sempre incluída, mesmo que vazia
       eupagoApiKey: paymentSetting.eupago_api_key || '',
+      
+      // Outras configurações
       currency: paymentSetting.currency || 'EUR',
       taxRate: parseFloat(paymentSetting.tax_rate || '23'),
       requirePrepayment: paymentSetting.require_prepayment || false,
