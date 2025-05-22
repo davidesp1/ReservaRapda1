@@ -58,35 +58,28 @@ const Dashboard: React.FC = () => {
       const categoryCtx = categoryChartRef.current.getContext('2d');
       
       if (salesCtx && categoryCtx) {
-        // Sales Chart
+        // Sales Chart - Usando os dados diretamente sem transformação para garantir compatibilidade
+        console.log('Dados do gráfico de vendas:', dashboardStats?.salesData);
+        
         salesChartInstance = new Chart(salesCtx, {
           type: 'bar',
           data: {
-            labels: dashboardStats?.salesData?.labels 
-              ? dashboardStats.salesData.labels.map((dayIndex: string) => {
-                  const weekdayMap: {[key: string]: string} = {
-                    '0': t('Sunday_Short'),
-                    '1': t('Monday_Short'),
-                    '2': t('Tuesday_Short'),
-                    '3': t('Wednesday_Short'),
-                    '4': t('Thursday_Short'),
-                    '5': t('Friday_Short'),
-                    '6': t('Saturday_Short')
-                  };
-                  return weekdayMap[dayIndex] || dayIndex;
-                })
-              : [
-                  t('Monday_Short'), 
-                  t('Tuesday_Short'), 
-                  t('Wednesday_Short'), 
-                  t('Thursday_Short'), 
-                  t('Friday_Short'), 
-                  t('Saturday_Short'), 
-                  t('Sunday_Short')
-                ],
+            // Usar os nomes dos dias da semana diretamente
+            labels: [
+              t('Friday_Short'), 
+              t('Saturday_Short'), 
+              t('Sunday_Short'),
+              t('Monday_Short'), 
+              t('Tuesday_Short'), 
+              t('Wednesday_Short'), 
+              t('Thursday_Short')
+            ],
             datasets: [{
               label: t('Revenue_Currency'),
-              data: dashboardStats?.salesData?.values || [0, 0, 0, 0, 0, 0, 0],
+              // Garantir que os valores são números e não strings
+              data: dashboardStats?.salesData?.values 
+                ? dashboardStats.salesData.values.map((val: any) => parseFloat(val) || 0)
+                : [0, 0, 0, 0, 0, 0, 0],
               backgroundColor: '#002776', // Brazil Blue
               borderWidth: 0,
               borderRadius: 4
