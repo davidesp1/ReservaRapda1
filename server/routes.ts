@@ -548,19 +548,28 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
     const startOfTodayStr = startOfToday.toISOString().split('T')[0];
     const endOfTodayStr = endOfToday.toISOString().split('T')[0] + ' 23:59:59';
     
-    // Buscar receita de hoje usando consulta com data exata - exibir valores do dia de hoje
+    // Buscar receita de hoje - garantindo que a função now() retorne a data correta do sistema
+    console.log("Buscando receita com data atual:", new Date());
+    
+    // Query usando parâmetros claros para capturar pagamentos do dia atual
     const todayRevenue = await queryClient`
+      WITH current_date_capture AS (
+        SELECT CAST(NOW() AT TIME ZONE 'UTC' AS DATE) as today_date
+      )
       SELECT COALESCE(SUM(amount), 0) as revenue 
-      FROM payments 
-      WHERE date_trunc('day', payment_date) = date_trunc('day', now())
+      FROM payments, current_date_capture 
+      WHERE CAST(payment_date AS DATE) = today_date
       AND status = 'completed'
     `;
     
-    // Buscar receita de ontem usando função date_trunc para maior precisão
+    // Buscar receita de ontem - usando a mesma abordagem confiável para garantir consistência
     const yesterdayRevenue = await queryClient`
+      WITH current_date_capture AS (
+        SELECT (CAST(NOW() AT TIME ZONE 'UTC' AS DATE) - INTERVAL '1 day') as yesterday_date
+      )
       SELECT COALESCE(SUM(amount), 0) as revenue 
-      FROM payments 
-      WHERE date_trunc('day', payment_date) = date_trunc('day', now()) - interval '1 day'
+      FROM payments, current_date_capture 
+      WHERE CAST(payment_date AS DATE) = yesterday_date
       AND status = 'completed'
     `;
     
