@@ -437,13 +437,17 @@ const Reservations: React.FC = () => {
       reservationData.paymentStatus === 'pending' && 
       reservationData.paymentReference
     ) {
-      checkInterval = setInterval(async () => {
+      // Iniciar verificação imediatamente para melhor responsividade
+      const checkPaymentStatus = async () => {
         try {
+          console.log("Verificando status do pagamento:", reservationData.paymentReference);
+          
           // Chamar API para verificar o status do pagamento
           const response = await apiRequest('GET', `/api/payments/status/${reservationData.paymentReference}`);
           
           if (response.ok) {
             const result = await response.json();
+            console.log("Resultado da verificação do pagamento:", result);
             
             // Se o pagamento foi confirmado, atualizar o status
             if (result.status === 'paid') {
@@ -460,23 +464,21 @@ const Reservations: React.FC = () => {
                   const updateReservationData = {
                     id: reservationData.id,
                     paymentStatus: 'paid',
-                    status: 'confirmed'  // Atualizar status da reserva para confirmado
+                    status: 'confirmed'
                   };
                   
                   console.log("Atualizando reserva após confirmação de pagamento:", updateReservationData);
                   
                   // Chamar API para atualizar a reserva
-                  apiRequest('PATCH', `/api/reservations/${reservationData.id}`, updateReservationData)
-                    .then(response => {
-                      if (response.ok) {
-                        console.log("Reserva atualizada com sucesso após confirmação de pagamento");
-                        // Recarregar lista de reservas
-                        queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
-                      }
-                    })
-                    .catch(updateError => {
-                      console.error("Erro ao atualizar reserva:", updateError);
-                    });
+                  const updateResponse = await apiRequest('PATCH', `/api/reservations/${reservationData.id}`, updateReservationData);
+                  
+                  if (updateResponse.ok) {
+                    console.log("Reserva atualizada com sucesso após confirmação de pagamento");
+                    // Recarregar lista de reservas
+                    queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
+                  } else {
+                    console.error("Erro ao atualizar reserva:", await updateResponse.text());
+                  }
                 } catch (updateError) {
                   console.error("Erro ao atualizar reserva:", updateError);
                 }
@@ -491,12 +493,21 @@ const Reservations: React.FC = () => {
               
               // Desativar o contador regressivo
               setCountdownActive(false);
+              
+              // Limpar o intervalo após o pagamento ser confirmado
+              if (checkInterval) clearInterval(checkInterval);
             }
           }
         } catch (error) {
           console.error('Erro ao verificar status do pagamento:', error);
         }
-      }, 15000); // Verificar a cada 15 segundos
+      };
+      
+      // Verificar imediatamente
+      checkPaymentStatus();
+      
+      // Configurar o intervalo para verificar a cada 10 segundos (mais frequente)
+      checkInterval = setInterval(checkPaymentStatus, 10000);
     }
     
     return () => {
@@ -703,31 +714,44 @@ const Reservations: React.FC = () => {
         throw new Error("Número de pessoas não informado");
       }
       
-      // Conversão adequada para formato compatível com a API
+      // Conversão adequada para formato compatível com a API (simplificada)
+      // Removemos qualquer dado que possa conter HTML ou estruturas complexas
       const submitData = {
         userId: user?.id,
         date: dateTime.toISOString(),
         tableId: reservationData.tableId,
         partySize: reservationData.partySize,
         notes: reservationData.notes || '',
-        status: 'confirmed',
+        status: reservationData.paymentMethod === 'multibanco' ? 'pending' : 'confirmed', 
         confirmationCode: reservationData.confirmationCode || `RES-${Date.now()}`,
         paymentMethod: reservationData.paymentMethod || 'multibanco',
         paymentStatus: reservationData.paymentStatus || 'pending',
         total: reservationData.total || 0,
-        // Valores padrão
-        duration: 120,
-        // Remover informações que podem conter HTML (causa do erro de JSON)
-        // e armazenar apenas dados simples
+        duration: 120
       };
       
-      console.log("Dados da reserva a ser criada:", submitData);
+      // Remover campos complexos que podem causar problemas na serialização JSON
+      const cleanedSubmitData = {
+        userId: submitData.userId,
+        date: submitData.date,
+        tableId: submitData.tableId,
+        partySize: submitData.partySize,
+        notes: submitData.notes,
+        status: submitData.status,
+        confirmationCode: submitData.confirmationCode,
+        paymentMethod: submitData.paymentMethod,
+        paymentStatus: submitData.paymentStatus,
+        total: submitData.total,
+        duration: submitData.duration,
+      };
+      
+      console.log("Dados limpos da reserva a ser criada:", cleanedSubmitData);
       toast({
         title: "Salvando reserva...",
         description: "Aguarde enquanto processamos sua reserva",
       });
       
-      createReservationMutation.mutate(submitData);
+      createReservationMutation.mutate(cleanedSubmitData);
     } catch (error: any) {
       console.error("Erro ao finalizar reserva:", error);
       toast({
