@@ -678,9 +678,30 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
       values: categories.map((_, index) => Math.floor(Math.random() * 10) + 1) // Valores de exemplo entre 1-10
     };
     
+    // Fazer debug dos valores coletados do banco antes de enviar para o frontend
+    console.log('Valores do dia atual:', {
+      'todayRevenueValue': todayRevenueValue,
+      'data atual': new Date().toISOString(),
+      'total após conversão': (todayRevenueValue / 100).toFixed(2)
+    });
+    
+    // Buscar explicitamente o valor correto para hoje usando a data atual do sistema
+    const currentDate = new Date().toISOString().split('T')[0]; // formato YYYY-MM-DD
+    console.log('Data atual formatada:', currentDate);
+    
+    const todayRevenueExplicit = await queryClient`
+      SELECT COALESCE(SUM(amount), 0) as revenue 
+      FROM payments 
+      WHERE CAST(payment_date AS DATE) = ${currentDate}
+    `;
+    
+    // Usar este valor explícito para garantir precisão
+    const todayRevenueExplicitValue = parseFloat(todayRevenueExplicit[0]?.revenue) || 0;
+    console.log('Valor explícito da consulta:', todayRevenueExplicitValue);
+    
     // Retornar todos os dados para o dashboard
     res.json({
-      todayRevenue: (todayRevenueValue / 100).toFixed(2), // Dividir por 100 para converter centavos para euros
+      todayRevenue: (todayRevenueExplicitValue / 100).toFixed(2), // Usando o valor explícito
       revenueChange,
       todayReservations: todayReservationsValue,
       reservationsChange,
