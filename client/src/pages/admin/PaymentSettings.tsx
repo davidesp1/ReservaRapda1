@@ -77,14 +77,18 @@ const PaymentSettings: React.FC = () => {
   // Atualizar o formulário quando os dados são carregados
   useEffect(() => {
     if (settings) {
+      console.log("Dados recebidos da API:", settings);
+      
       const formData = {
-        acceptCard: settings.acceptCard !== 'false',
-        acceptMBWay: settings.acceptMBWay !== 'false',
-        acceptMultibanco: settings.acceptMultibanco !== 'false',
-        acceptBankTransfer: settings.acceptBankTransfer !== 'false',
-        acceptCash: settings.acceptCash !== 'false',
+        acceptCard: typeof settings.acceptCard === 'boolean' ? settings.acceptCard : settings.acceptCard !== 'false',
+        acceptMBWay: typeof settings.acceptMBWay === 'boolean' ? settings.acceptMBWay : settings.acceptMBWay !== 'false',
+        acceptMultibanco: typeof settings.acceptMultibanco === 'boolean' ? settings.acceptMultibanco : settings.acceptMultibanco !== 'false',
+        acceptBankTransfer: typeof settings.acceptBankTransfer === 'boolean' ? settings.acceptBankTransfer : settings.acceptBankTransfer !== 'false',
+        acceptCash: typeof settings.acceptCash === 'boolean' ? settings.acceptCash : settings.acceptCash !== 'false',
         eupagoApiKey: settings.eupagoApiKey || '',
       };
+      
+      console.log("Formulário será atualizado com:", formData);
       form.reset(formData);
     }
   }, [settings, form]);
