@@ -161,7 +161,7 @@ const PaymentSettings: React.FC = () => {
                           {t('EuPagoAPIKeyDescription')}
                         </FormDescription>
                         <FormControl>
-                          <Input {...field} type="password" className="font-mono" />
+                          <Input {...field} type="text" className="font-mono" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
