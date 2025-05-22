@@ -296,13 +296,13 @@ const ReservationManager: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('Code')}</TableHead>
-                  <TableHead>{t('Name')}</TableHead>
-                  <TableHead>{t('Phone')}</TableHead>
-                  <TableHead>{t('Table')}</TableHead>
-                  <TableHead>{t('Date')}</TableHead>
-                  <TableHead>{t('Time')}</TableHead>
-                  <TableHead>{t('Status')}</TableHead>
+                  <TableHead>Código da reserva</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Contato</TableHead>
+                  <TableHead>Mesa</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Hora</TableHead>
+                  <TableHead>Status do pagamento</TableHead>
                   <TableHead className="text-right">{t('Actions')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -340,7 +340,24 @@ const ReservationManager: React.FC = () => {
                         {format(new Date(reservation.date), 'HH:mm')}
                       </TableCell>
                       <TableCell>
-                        <StatusBadge status={reservation.status} />
+                        <div className="flex items-center">
+                          {reservation.payment_status === 'completed' ? (
+                            <Badge className="bg-green-100 text-green-800">
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              Pago
+                            </Badge>
+                          ) : reservation.payment_status === 'pending' ? (
+                            <Badge className="bg-yellow-100 text-yellow-800">
+                              <Clock className="w-3 h-3 mr-1" />
+                              Pendente
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-red-100 text-red-800">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Falhado
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
