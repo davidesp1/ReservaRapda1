@@ -447,10 +447,40 @@ const Reservations: React.FC = () => {
             
             // Se o pagamento foi confirmado, atualizar o status
             if (result.status === 'paid') {
+              // Atualizar o estado local
               setReservationData(prev => ({
                 ...prev,
-                paymentStatus: 'paid'
+                paymentStatus: 'paid',
+                status: 'confirmed'
               }));
+              
+              // Atualizar a reserva no banco de dados se tivermos um ID
+              if (reservationData.id) {
+                try {
+                  const updateReservationData = {
+                    id: reservationData.id,
+                    paymentStatus: 'paid',
+                    status: 'confirmed'  // Atualizar status da reserva para confirmado
+                  };
+                  
+                  console.log("Atualizando reserva após confirmação de pagamento:", updateReservationData);
+                  
+                  // Chamar API para atualizar a reserva
+                  apiRequest('PATCH', `/api/reservations/${reservationData.id}`, updateReservationData)
+                    .then(response => {
+                      if (response.ok) {
+                        console.log("Reserva atualizada com sucesso após confirmação de pagamento");
+                        // Recarregar lista de reservas
+                        queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
+                      }
+                    })
+                    .catch(updateError => {
+                      console.error("Erro ao atualizar reserva:", updateError);
+                    });
+                } catch (updateError) {
+                  console.error("Erro ao atualizar reserva:", updateError);
+                }
+              }
               
               // Mostrar notificação de pagamento confirmado
               toast({
@@ -472,7 +502,7 @@ const Reservations: React.FC = () => {
     return () => {
       if (checkInterval) clearInterval(checkInterval);
     };
-  }, [reservationData.paymentMethod, reservationData.paymentStatus, reservationData.paymentReference, t]);
+  }, [reservationData.paymentMethod, reservationData.paymentStatus, reservationData.paymentReference, reservationData.id, t]);
 
   // Submeter etapa 3 - Pagamento
   const submitStep3 = async (paymentMethod: string) => {
