@@ -526,8 +526,8 @@ const Reservations: React.FC = () => {
         reference: `RES-${Date.now()}`, // Referência única para o pagamento
         referenceId: confirmationCode, // Usar o código de confirmação como ID para a API
         description: `Reserva ${format(reservationData.date, 'dd/MM/yyyy')} - ${reservationData.time}`,
-        email: user?.email,
-        name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.username,
+        email: user?.email || '',
+        name: user?.username || 'Cliente',
         phone: mbwayPhone || user?.phone || '',
         reservationId: reservationData.id, // Adicionar ID da reserva para associar o pagamento
         
@@ -714,10 +714,11 @@ const Reservations: React.FC = () => {
         confirmationCode: reservationData.confirmationCode || `RES-${Date.now()}`,
         paymentMethod: reservationData.paymentMethod || 'multibanco',
         paymentStatus: reservationData.paymentStatus || 'pending',
-        items: reservationData.items || [],
         total: reservationData.total || 0,
         // Valores padrão
         duration: 120,
+        // Remover informações que podem conter HTML (causa do erro de JSON)
+        // e armazenar apenas dados simples
       };
       
       console.log("Dados da reserva a ser criada:", submitData);
