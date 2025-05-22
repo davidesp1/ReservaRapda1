@@ -489,9 +489,8 @@ router.get("/api/admin/reservations", isAuthenticated, async (req, res) => {
       return res.status(403).json({ error: "Acesso negado. Apenas administradores podem acessar esta rota." });
     }
 
-    const { date, status } = req.query;
-    
-    let query = `
+    // Buscar todas as reservas sem filtros por enquanto para simplificar
+    const reservations = await queryClient`
       SELECT 
         r.*,
         t.number as table_number,
@@ -504,32 +503,11 @@ router.get("/api/admin/reservations", isAuthenticated, async (req, res) => {
       FROM reservations r
       JOIN tables t ON r.table_id = t.id
       JOIN users u ON r.user_id = u.id
+      ORDER BY r.date DESC
     `;
     
-    const conditions = [];
-    const params = [];
-    
-    // Filtrar por data se fornecida
-    if (date) {
-      conditions.push(`DATE(r.date) = $${params.length + 1}`);
-      params.push(date);
-    }
-    
-    // Filtrar por status se fornecido
-    if (status && status !== 'all') {
-      conditions.push(`r.status = $${params.length + 1}`);
-      params.push(status);
-    }
-    
-    if (conditions.length > 0) {
-      query += ` WHERE ${conditions.join(' AND ')}`;
-    }
-    
-    query += ` ORDER BY r.date DESC`;
-    
-    const reservations = await queryClient.unsafe(query, params);
-    
     console.log(`Buscando reservas para admin - Total encontradas: ${reservations.length}`);
+    console.log('Reservas encontradas:', reservations.map(r => ({ id: r.id, user_name: r.user_name, total: r.total, status: r.status })));
     res.json(reservations);
   } catch (err: any) {
     console.error("Erro ao buscar reservas para admin:", err);

@@ -39,13 +39,22 @@ import { Badge } from '@/components/ui/badge';
 
 type Reservation = {
   id: number;
-  userId: number;
-  tableId: number;
-  userName: string;
-  confirmationCode: string;
+  user_id: number;
+  table_id: number;
+  user_name: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  confirmation_code: string;
   date: string;
-  partySize: number;
+  party_size: number;
   status: 'confirmed' | 'pending' | 'cancelled' | 'completed';
+  payment_method: string;
+  payment_status: string;
+  total: number;
+  table_number: number;
+  table_capacity: number;
 };
 
 const ReservationManager: React.FC = () => {
@@ -301,20 +310,20 @@ const ReservationManager: React.FC = () => {
                   filteredReservations.map((reservation: Reservation) => (
                     <TableRow key={reservation.id}>
                       <TableCell className="font-medium">
-                        {reservation.confirmationCode}
+                        {reservation.confirmation_code}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center">
                           <User className="mr-2 h-4 w-4 text-gray-400" />
-                          {reservation.userName || getUserDetails(reservation.userId)}
+                          {reservation.user_name || getUserDetails(reservation.user_id)}
                         </div>
                       </TableCell>
-                      <TableCell>{getTableDetails(reservation.tableId)}</TableCell>
+                      <TableCell>{getTableDetails(reservation.table_id)}</TableCell>
                       <TableCell>{formatDateTime(reservation.date)}</TableCell>
                       <TableCell>
                         <div className="flex items-center">
                           <Users className="mr-2 h-4 w-4 text-gray-400" />
-                          {reservation.partySize}
+                          {reservation.party_size}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -378,7 +387,7 @@ const ReservationManager: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-gray-500">{t('Code')}</p>
-                  <p className="font-medium">{selectedReservation.confirmationCode}</p>
+                  <p className="font-medium">{selectedReservation.confirmation_code}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">{t('Status')}</p>
@@ -388,7 +397,7 @@ const ReservationManager: React.FC = () => {
               
               <div>
                 <p className="text-sm font-medium text-gray-500">{t('Guest')}</p>
-                <p className="font-medium">{selectedReservation.userName || getUserDetails(selectedReservation.userId)}</p>
+                <p className="font-medium">{selectedReservation.user_name || getUserDetails(selectedReservation.user_id)}</p>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
@@ -398,13 +407,13 @@ const ReservationManager: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">{t('PartySize')}</p>
-                  <p className="font-medium">{selectedReservation.partySize} {t('People')}</p>
+                  <p className="font-medium">{selectedReservation.party_size} {t('People')}</p>
                 </div>
               </div>
               
               <div>
                 <p className="text-sm font-medium text-gray-500">{t('Table')}</p>
-                <p className="font-medium">{getTableDetails(selectedReservation.tableId)}</p>
+                <p className="font-medium">{getTableDetails(selectedReservation.table_id)}</p>
               </div>
               
               <div className="border-t pt-4">
