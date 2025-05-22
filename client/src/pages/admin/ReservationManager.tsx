@@ -70,7 +70,7 @@ const ReservationManager: React.FC = () => {
 
   // Fetch reservations - Com atualização automática a cada 10 segundos
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery<Reservation[]>({
-    queryKey: ['/api/reservations', { date: dateFilter, status: statusFilter !== 'all' ? statusFilter : undefined }],
+    queryKey: ['/api/admin/reservations', { date: dateFilter, status: statusFilter !== 'all' ? statusFilter : undefined }],
     enabled: isAuthenticated && isAdmin,
     refetchInterval: 10000, // Refetch a cada 10 segundos para ter dados em tempo real
     refetchIntervalInBackground: true, // Continua atualizando mesmo quando a aba não está em foco

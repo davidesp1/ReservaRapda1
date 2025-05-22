@@ -27,7 +27,7 @@ const Dashboard: React.FC = () => {
 
   // Fetch recent reservations - dados reais das reservações
   const { data: recentReservations = [], isLoading: reservationsLoading } = useQuery<any[]>({
-    queryKey: ['/api/reservations', { limit: 5 }],
+    queryKey: ['/api/admin/reservations', { limit: 5 }],
     enabled: isAuthenticated && isAdmin,
   });
   

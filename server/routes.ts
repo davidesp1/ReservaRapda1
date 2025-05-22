@@ -450,7 +450,7 @@ router.delete("/api/menu-items/:id", isAuthenticated, async (req, res) => {
   }
 });
 
-// Rota para buscar reservas
+// Rota para buscar reservas do usuário logado
 router.get("/api/reservations", isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -469,6 +469,70 @@ router.get("/api/reservations", isAuthenticated, async (req, res) => {
     res.json(reservations);
   } catch (err: any) {
     console.error("Erro ao buscar reservas:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Rota para buscar TODAS as reservas (área admin)
+router.get("/api/admin/reservations", isAuthenticated, async (req, res) => {
+  try {
+    // Verificar se o usuário é admin
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Usuário não autenticado" });
+    }
+    
+    const currentUser = await queryClient`
+      SELECT role FROM users WHERE id = ${Number(req.session.userId)}
+    `;
+    
+    if (currentUser.length === 0 || currentUser[0].role !== 'admin') {
+      return res.status(403).json({ error: "Acesso negado. Apenas administradores podem acessar esta rota." });
+    }
+
+    const { date, status } = req.query;
+    
+    let query = `
+      SELECT 
+        r.*,
+        t.number as table_number,
+        t.capacity as table_capacity,
+        u.username as user_name,
+        u.first_name,
+        u.last_name,
+        u.email,
+        u.phone
+      FROM reservations r
+      JOIN tables t ON r.table_id = t.id
+      JOIN users u ON r.user_id = u.id
+    `;
+    
+    const conditions = [];
+    const params = [];
+    
+    // Filtrar por data se fornecida
+    if (date) {
+      conditions.push(`DATE(r.date) = $${params.length + 1}`);
+      params.push(date);
+    }
+    
+    // Filtrar por status se fornecido
+    if (status && status !== 'all') {
+      conditions.push(`r.status = $${params.length + 1}`);
+      params.push(status);
+    }
+    
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(' AND ')}`;
+    }
+    
+    query += ` ORDER BY r.date DESC`;
+    
+    const reservations = await queryClient.unsafe(query, params);
+    
+    console.log(`Buscando reservas para admin - Total encontradas: ${reservations.length}`);
+    res.json(reservations);
+  } catch (err: any) {
+    console.error("Erro ao buscar reservas para admin:", err);
     res.status(500).json({ error: err.message });
   }
 });
