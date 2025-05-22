@@ -2046,7 +2046,7 @@ const Reservations: React.FC = () => {
               <div className="space-y-4">
                 {/* Contador regressivo com verificação automática */}
                 <CountdownTimer 
-                  expirationDate={reservationData.paymentDetails?.expirationDate || new Date(Date.now() + 72 * 3600 * 1000).toISOString()}
+                  endDate={reservationData.paymentDetails?.expirationDate || new Date(Date.now() + 72 * 3600 * 1000).toISOString()}
                   reference={reservationData.paymentDetails?.reference || reservationData.confirmationCode}
                   onExpire={() => {
                     // Recarregar a página para atualizar o status
@@ -2067,19 +2067,19 @@ const Reservations: React.FC = () => {
                 
                 {/* QR Code e Código de barras */}
                 <QRCodeDisplay 
-                  entity={reservationData.paymentDetails.entity || '12345'}
-                  reference={reservationData.paymentDetails.reference || '123 456 789'}
+                  entity={reservationData.paymentDetails?.entity || '12345'}
+                  reference={reservationData.paymentDetails?.reference || '123 456 789'}
                   amount={Number(reservationData.total || 0)}
                 />
                 
                 {/* Informações de pagamento */}
                 <div className="flex justify-between">
                   <span className="font-medium">{t('Entity')}:</span>
-                  <span className="font-bold">{reservationData.paymentDetails.entity || '12345'}</span>
+                  <span className="font-bold">{reservationData.paymentDetails?.entity || '12345'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">{t('Reference')}:</span>
-                  <span className="font-bold">{reservationData.paymentDetails.reference || '123 456 789'}</span>
+                  <span className="font-bold">{reservationData.paymentDetails?.reference || '123 456 789'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">{t('Amount')}:</span>
@@ -2093,7 +2093,7 @@ const Reservations: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="font-medium">{t('PhoneNumber')}:</span>
-                  <span className="font-bold">{reservationData.paymentDetails.phone || user?.phone}</span>
+                  <span className="font-bold">{reservationData.paymentDetails?.phone || user?.phone}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">{t('Amount')}:</span>

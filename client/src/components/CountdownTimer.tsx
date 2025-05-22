@@ -10,7 +10,7 @@ export interface CountdownTimerProps {
   endDate?: string;    // Data final no formato ISO
   reference?: string;  // Referência do pagamento para verificação
   onExpire?: () => void; // Função a ser chamada quando expirar
-  expirationDate?: string; // Alternativa para endDate
+  expirationDate?: string; // Data de expiração no formato ISO
 }
 
 const CountdownTimer: React.FC<CountdownTimerProps> = ({ 
@@ -46,7 +46,6 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
           toast({
             title: t('PaymentConfirmed'),
             description: t('YourPaymentHasBeenConfirmed'),
-            variant: 'success',
           });
           
           // Invalidar as consultas para atualizar os dados

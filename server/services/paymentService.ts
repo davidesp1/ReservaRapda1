@@ -88,16 +88,26 @@ export async function processPayment(
         id: idToUse  // Usar o ID da reserva como referência
       });
       
+      // Garantir que result é tratado corretamente
+      const safeResult = result as any;
+      
+      // Verificar se o resultado é válido
+      if (!safeResult || typeof safeResult !== 'object') {
+        throw new Error('Resposta inválida da API de pagamento');
+      }
+      
+      console.log("Pagamento multibanco processado com sucesso:", safeResult);
+      
       response = {
-        success: result.sucesso === true,
+        success: safeResult.sucesso === true,
         method: 'multibanco',
-        entity: result.entidade,
-        reference: result.referencia,
+        entity: safeResult.entidade,
+        reference: safeResult.referencia,
         amount: amountInEuros,
         value: amountInEuros,
-        entidade: result.entidade,
-        referencia: result.referencia,
-        estado: result.estado
+        entidade: safeResult.entidade,
+        referencia: safeResult.referencia,
+        estado: safeResult.estado
       };
       
       return response;
@@ -110,14 +120,17 @@ export async function processPayment(
         telemovel: phone 
       });
       
+      // Garantir que result é tratado corretamente
+      const safeResult = result as any;
+      
       response = {
-        success: result.sucesso === true,
+        success: safeResult.sucesso === true,
         method: 'mbway',
         phone: phone,
         amount: amountInEuros,
         value: amountInEuros,
-        referencia: result.referencia || '',
-        estado: result.estado
+        referencia: safeResult.referencia || '',
+        estado: safeResult.estado
       };
       
       return response;
@@ -130,13 +143,16 @@ export async function processPayment(
         referencia: idToUse 
       });
       
+      // Garantir que result é tratado corretamente
+      const safeResult = result as any;
+      
       response = {
         success: true,
         method: 'card',
         amount: amountInEuros,
         value: amountInEuros,
-        paymentUrl: result.url || '',
-        referencia: result.referencia || ''
+        paymentUrl: safeResult.url || '',
+        referencia: safeResult.referencia || ''
       };
       
       return response;
@@ -178,16 +194,20 @@ export async function getPaymentStatus(reference: string): Promise<EupagoRespons
   try {
     const result = await eupagoClient.request("/payments/status", { referencia: reference });
     
-    // Formatar a resposta para garantir que seja um EupagoResponse válido
+    // Tratar o resultado como objeto seguro
+    const safeResult = result as any;
+    
+    // Usar valores seguros para garantir que não haja erros
     const response: EupagoResponse = {
       success: true,
       method: 'unknown',
       reference: reference,
-      status: result.estado === 'pago' ? 'paid' : 'pending',
-      statusCode: result.estado === 'pago' ? 'C' : 'P',
-      estado: result.estado
+      status: safeResult?.estado === 'pago' ? 'paid' : 'pending',
+      statusCode: safeResult?.estado === 'pago' ? 'C' : 'P',
+      estado: safeResult?.estado || 'pending'
     };
     
+    console.log(`[Estado do pagamento ${reference}]:`, safeResult?.estado || 'desconhecido');
     return response;
   } catch (error) {
     console.error(`Erro ao verificar status do pagamento:`, error);
