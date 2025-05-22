@@ -20,7 +20,22 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
-  return res;
+  
+  // Validar se a resposta é JSON válido antes de retornar
+  const responseText = await res.text();
+  
+  // Verificar se o texto parece HTML
+  if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
+    console.error('Recebida resposta HTML quando esperava JSON:', responseText.substring(0, 100));
+    throw new Error('Servidor retornou HTML em vez de JSON. Verifique se a rota da API está configurada corretamente.');
+  }
+  
+  // Criar uma nova Response com o texto validado
+  return new Response(responseText, {
+    status: res.status,
+    statusText: res.statusText,
+    headers: res.headers
+  });
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

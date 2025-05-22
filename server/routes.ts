@@ -450,7 +450,7 @@ router.delete("/api/menu-items/:id", isAuthenticated, async (req, res) => {
   }
 });
 
-// Rota para reservas
+// Rota para buscar reservas
 router.get("/api/reservations", isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -469,6 +469,108 @@ router.get("/api/reservations", isAuthenticated, async (req, res) => {
     res.json(reservations);
   } catch (err: any) {
     console.error("Erro ao buscar reservas:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Rota para criar nova reserva
+router.post("/api/reservations", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const { 
+      date, 
+      tableId, 
+      partySize, 
+      notes, 
+      status = 'confirmed',
+      confirmationCode,
+      paymentMethod = 'multibanco',
+      paymentStatus = 'pending',
+      total = 0,
+      duration = 120
+    } = req.body;
+
+    console.log("Criando nova reserva:", {
+      userId,
+      date,
+      tableId,
+      partySize,
+      status,
+      confirmationCode,
+      paymentMethod,
+      paymentStatus,
+      total
+    });
+
+    // Validações obrigatórias
+    if (!date || !tableId || !partySize) {
+      return res.status(400).json({ 
+        error: "Data, mesa e número de pessoas são obrigatórios" 
+      });
+    }
+
+    // Verificar se a mesa existe e está disponível
+    const tableCheck = await queryClient`
+      SELECT * FROM tables WHERE id = ${parseInt(tableId)}
+    `;
+    
+    if (tableCheck.length === 0) {
+      return res.status(400).json({ error: "Mesa não encontrada" });
+    }
+
+    // Gerar código de confirmação se não fornecido
+    const finalConfirmationCode = confirmationCode || `RES-${Date.now()}`;
+
+    // Validar userId
+    if (!userId) {
+      return res.status(401).json({ error: "Usuário não autenticado" });
+    }
+
+    // Inserir a reserva
+    const result = await queryClient`
+      INSERT INTO reservations (
+        user_id, 
+        date, 
+        table_id, 
+        party_size, 
+        notes, 
+        status,
+        confirmation_code,
+        payment_method,
+        payment_status,
+        total,
+        duration
+      )
+      VALUES (
+        ${Number(userId)},
+        ${date},
+        ${parseInt(tableId)},
+        ${parseInt(partySize)},
+        ${notes || null},
+        ${status},
+        ${finalConfirmationCode},
+        ${paymentMethod},
+        ${paymentStatus},
+        ${parseFloat(total)},
+        ${parseInt(duration)}
+      )
+      RETURNING *
+    `;
+
+    const newReservation = result[0];
+    console.log("Reserva criada com sucesso:", newReservation);
+
+    // Retornar a reserva criada com dados da mesa
+    const reservationWithTable = await queryClient`
+      SELECT r.*, t.number as table_number, t.capacity as table_capacity
+      FROM reservations r
+      JOIN tables t ON r.table_id = t.id
+      WHERE r.id = ${newReservation.id}
+    `;
+
+    res.status(201).json(reservationWithTable[0]);
+  } catch (err: any) {
+    console.error("Erro ao criar reserva:", err);
     res.status(500).json({ error: err.message });
   }
 });

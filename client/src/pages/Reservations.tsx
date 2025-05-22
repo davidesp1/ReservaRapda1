@@ -676,10 +676,28 @@ const Reservations: React.FC = () => {
   // Criar reserva mutation
   const createReservationMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', '/api/reservations', data);
-      return response.json();
+      try {
+        console.log('Enviando dados para criação de reserva:', data);
+        const response = await apiRequest('POST', '/api/reservations', data);
+        
+        // Verificar se temos uma resposta válida
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Erro na resposta da API:', errorText);
+          throw new Error(`Erro ${response.status}: ${errorText}`);
+        }
+        
+        const result = await response.json();
+        console.log('Reserva criada com sucesso:', result);
+        return result;
+      } catch (error: any) {
+        console.error('Erro ao criar reserva:', error);
+        // Re-lançar o erro para que seja capturado pelo onError
+        throw new Error(error.message || 'Erro desconhecido ao criar reserva');
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Reserva criada com sucesso:', data);
       toast({
         title: t('ReservationSuccess'),
         description: t('ReservationSuccessMessage'),
@@ -689,6 +707,7 @@ const Reservations: React.FC = () => {
       finishReservationProcess();
     },
     onError: (error: any) => {
+      console.error('Erro na mutation de reserva:', error);
       toast({
         title: t('ReservationError'),
         description: error.message || t('ReservationErrorMessage'),
