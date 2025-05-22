@@ -651,9 +651,19 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
       dayLabels.push(date.getDay().toString());
     }
     
-    // Para fins de demonstração, vamos usar os dados existentes de 21/05
-    // e distribuí-los de forma simulada nos últimos 7 dias
-    const dailyRevenue = [0, 0, 0, 0, 0, 12910, 0]; // Valores em centavos
+    // Buscando dados reais dos últimos 7 dias
+    const dailyRevenue = [];
+    
+    for (const day of last7Days) {
+      const daySales = await queryClient`
+        SELECT COALESCE(SUM(amount), 0) as revenue 
+        FROM payments 
+        WHERE payment_date >= ${day.start}
+        AND payment_date <= ${day.end}
+        AND status = 'completed'
+      `;
+      dailyRevenue.push(parseFloat(daySales[0]?.revenue) || 0);
+    }
     
     // Converter para euros
     for (let i = 0; i < dailyRevenue.length; i++) {
