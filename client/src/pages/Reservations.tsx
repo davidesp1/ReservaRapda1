@@ -1396,13 +1396,13 @@ const Reservations: React.FC = () => {
                             {reservationData.items.map((item) => (
                               <div key={item.id} className="flex justify-between text-sm">
                                 <span>{item.name} x{item.quantity}</span>
-                                <span>€{Number(item.price * item.quantity).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                <span>€{((item.price / 100) * item.quantity).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                               </div>
                             ))}
                             
                             <div className="flex justify-between font-semibold pt-2 border-t">
                               <span>{t('Total')}</span>
-                              <span>€{Number(reservationData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                              <span>€{(reservationData.items.reduce((sum, item) => sum + ((item.price / 100) * item.quantity), 0)).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                             </div>
                           </div>
                         ) : (

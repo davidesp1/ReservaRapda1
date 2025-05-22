@@ -962,7 +962,7 @@ const Settings: React.FC = () => {
                         render={({ field }) => (
                           <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                             <div className="space-y-0.5">
-                              <FormLabel>Multibanco (TPA)</FormLabel>
+                              <FormLabel>Multibancoqq (TPA)</FormLabel>
                               <FormDescription>
                                 Terminal de pagamento automático físico
                               </FormDescription>
