@@ -1557,7 +1557,7 @@ const Reservations: React.FC = () => {
                       <div className="pt-3 border-t">
                         <div className="flex justify-between font-semibold">
                           <span>{t('Total')}</span>
-                          <span>€{Number(reservationData.total || 0).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                          <span>€{((reservationData.total || 0) / 100).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </div>
                       </div>
                     </div>
