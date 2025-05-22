@@ -158,6 +158,14 @@ const PaymentSettings: React.FC = () => {
                       // Usando um estado local para manter o valor visível
                       const [apiKey, setApiKey] = React.useState(field.value || '');
                       
+                      // Efeito para atualizar o apiKey quando field.value mudar (quando carregar do banco)
+                      React.useEffect(() => {
+                        console.log("Campo eupagoApiKey carregado:", field.value);
+                        if (field.value) {
+                          setApiKey(field.value);
+                        }
+                      }, [field.value]);
+                      
                       // Quando o valor mudar, atualize o formulário e o estado local
                       const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                         const newValue = e.target.value;
