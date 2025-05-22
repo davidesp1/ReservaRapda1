@@ -113,6 +113,9 @@ export const reservations = pgTable("reservations", {
   checkOutTime: timestamp("check_out_time"),
   dietaryRequirements: text("dietary_requirements"),
   occasion: text("occasion"), // Aniversário, aniversário de casamento, etc.
+  paymentMethod: paymentMethodEnum("payment_method").default("multibanco"),
+  paymentStatus: paymentStatusEnum("payment_status").default("pending"),
+  total: integer("total").default(0), // Total amount in cents
 });
 
 export const insertReservationSchema = createInsertSchema(reservations).omit({
