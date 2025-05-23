@@ -11,6 +11,7 @@ import {
 } from 'react-icons/fa';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import Chart from 'chart.js/auto';
+import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
 
 const Dashboard: React.FC = () => {
   const { t } = useTranslation();
@@ -19,15 +20,18 @@ const Dashboard: React.FC = () => {
   const salesChartRef = useRef<HTMLCanvasElement>(null);
   const categoryChartRef = useRef<HTMLCanvasElement>(null);
   
+  // Ativar atualizações em tempo real do Supabase
+  useSupabaseRealtime();
+
   // Fetch dashboard stats - usando dados reais do banco de dados
   const { data: dashboardStats, isLoading: statsLoading } = useQuery<any>({
     queryKey: ['/api/stats/dashboard'],
     enabled: isAuthenticated && isAdmin,
   });
 
-  // Fetch recent reservations - dados reais das reservações
+  // Fetch recent reservations - dados reais das reservações (5 últimas)
   const { data: recentReservations = [], isLoading: reservationsLoading } = useQuery<any[]>({
-    queryKey: ['/api/admin/reservations', { limit: 5 }],
+    queryKey: ['/api/reservations', { limit: 5, sort: 'created_at', order: 'desc' }],
     enabled: isAuthenticated && isAdmin,
   });
   

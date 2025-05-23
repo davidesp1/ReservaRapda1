@@ -156,6 +156,10 @@ const resources = {
       SalesByDay: "Vendas por Dia",
       TopCategories: "Categorias Principais",
       NoRecentReservations: "Nenhuma reserva recente",
+      Last5ReservationsFromDatabase: "Últimas 5 reservas do banco de dados",
+      Confirmed: "Confirmada",
+      Pending: "Pendente", 
+      Cancelled: "Cancelada",
       TotalRevenue: "Receita Total",
       TotalOrders: "Total de Pedidos",
       Day: "Dia",
@@ -643,8 +647,25 @@ const resources = {
       AlertsNotifications: "Alerts & Notifications",
       LowInventory: "Low Inventory",
       LowInventoryItems: "Some items are running low on inventory",
+      Last5ReservationsFromDatabase: "Last 5 reservations from database",
+      Confirmed: "Confirmed",
+      Pending: "Pending",
+      Cancelled: "Cancelled",
       VIPReservation: "VIP Reservation",
       VIPConfirmedTonight: "VIP customer confirmed for tonight",
+
+      // Admin Dashboard  
+      TodayRevenue: "Today's Revenue",
+      TodayReservations: "Today's Reservations", 
+      CurrentOccupancy: "Current Occupancy",
+      NewCustomers: "New Customers",
+      vs_last_week: "vs last week",
+      vs_yesterday: "vs yesterday", 
+      vs_weekly_average: "vs weekly average",
+      Category_MainDishes: "Main Dishes",
+      Category_Drinks: "Drinks",
+      Category_Desserts: "Desserts", 
+      Category_Appetizers: "Appetizers",
 
       // Admin
       AdminPanel: "Admin Panel",
@@ -656,9 +677,7 @@ const resources = {
       Settings: "Settings",
 
       // Stats
-      TodayReservations: "Today's Reservations",
       CancelledReservations: "Cancelled Reservations",
-      TotalCustomers: "Total Customers",
       DailyRevenue: "Daily Revenue",
       WeeklyReservations: "Weekly Reservations",
       PopularItems: "Popular Items",

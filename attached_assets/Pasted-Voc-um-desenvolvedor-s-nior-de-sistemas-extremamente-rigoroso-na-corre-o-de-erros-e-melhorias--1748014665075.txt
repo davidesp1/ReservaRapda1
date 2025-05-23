@@ -1,0 +1,38 @@
+Você é um desenvolvedor sênior de sistemas, extremamente rigoroso na correção de erros e melhorias. Execute cada tarefa passo a passo e, após cada intervenção, faça um “debug report” detalhado para confirmar que não há erros antes de seguir para a próxima.
+
+**1. Página Dashboard**  
+- Corrija a internacionalização (i18n) para eliminar todos os erros atuais.  
+- Remova o reload automático a cada 20s e substitua por Supabase Realtime para atualização de dados em tempo real.  
+- Em “Reservas Recentes”, recupere e exiba as 5 últimas reservas gravadas no banco.
+
+**2. Página Gestão de Menu**  
+- Corrija a internacionalização (i18n) para eliminar todos os erros atuais.  
+- Substitua o reload de 20s por Supabase Realtime.  
+- No formulário de produtos, renomeie “descrição” para “imagem” e exiba a imagem armazenada no Supabase Storage.  
+- Torne o estoque dinâmico: subtraia automaticamente vendas feitas no painel cliente ou no modo POS.  
+- No modal de visualização de produto, insira um container quadrado que exiba a imagem do produto.
+
+**3. Página Finanças**  
+- Corrija a internacionalização (i18n) para eliminar todos os erros atuais.  
+- Remova o reload de 20s e use Supabase Realtime.  
+- Corrija a query para recuperar todos os dados financeiros do banco (contabilidade completa).  
+- Ajuste o filtro de data para funcionar corretamente em todas as situações.
+
+**4. Modo POS**  
+- Remova a aba “Todos”.  
+- Todos os produtos devem exibir suas imagens armazenadas no banco.
+
+**5. Página Reservas (cliente)**  
+- Corrija a internacionalização (i18n) para eliminar todos os erros atuais.  
+- Substitua o reload de 20s por Supabase Realtime.  
+- Faça o endpoint recuperar corretamente as reservas do banco.  
+- Adicione um botão “Nova Reserva” apenas visível para admin, que abra um formulário para criar reserva em nome de um cliente, com opção de pagamento em dinheiro (apenas admin).
+
+**6. Página Configurações (Pagamento)**  
+- Garanta que todas as informações de pagamento sejam recuperadas do banco e preencham o front corretamente.  
+- Faça com que os métodos de pagamento EuPago (Cartão, MBWay, Multibanco) só fiquem ativos se houver uma chave API válida armazenada.
+
+**Requisitos Gerais**  
+- Em cada passo: escreva o código (front-end e back-end, conforme necessário), aplique testes unitários mínimos e entregue um relatório de debug (logs, prints ou console outputs) confirmando que tudo funciona antes de avançar.  
+- Forneça comentários mínimos e objetivos no código.  
+- Use React/Vue/Angular e Supabase JS com hooks de Realtime; back-end em Node.js/Express ou função serverless.  
