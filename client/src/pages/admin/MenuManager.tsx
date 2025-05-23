@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,6 +68,9 @@ const MenuManager: React.FC = () => {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
+  
+  // Ativar Supabase Realtime para atualizações em tempo real
+  useSupabaseRealtime();
   const [searchText, setSearchText] = useState('');
   const [currentCategoryId, setCurrentCategoryId] = useState<string | null>(null);
   const [editItem, setEditItem] = useState<any | null>(null);
@@ -77,21 +81,18 @@ const MenuManager: React.FC = () => {
   const [itemToDelete, setItemToDelete] = useState<{id: number, type: 'item' | 'category'} | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [viewImageModal, setViewImageModal] = useState<{isOpen: boolean, imageUrl: string, itemName: string} | null>(null);
 
-  // Fetch menu categories com atualização em tempo real
+  // Fetch menu categories - Supabase Realtime substitui refetchInterval
   const { data: categories, isLoading: categoriesLoading } = useQuery<any>({
     queryKey: ['/api/menu-categories'],
     enabled: isAuthenticated && isAdmin,
-    refetchInterval: 20000, // Atualiza a cada 20 segundos
-    refetchIntervalInBackground: true,
   });
 
-  // Fetch menu items com atualização em tempo real
+  // Fetch menu items - Supabase Realtime substitui refetchInterval  
   const { data: menuItemsData, isLoading: menuItemsLoading } = useQuery<any>({
     queryKey: ['/api/menu-items'],
     enabled: isAuthenticated && isAdmin,
-    refetchInterval: 15000, // Atualiza a cada 15 segundos
-    refetchIntervalInBackground: true,
   });
   
   // Transformar os dados agrupados por categoria em um array plano de itens
