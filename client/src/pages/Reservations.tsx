@@ -4,6 +4,7 @@ import { useLocation, Link } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -15,7 +16,7 @@ import PaymentStatusMonitor from '@/components/PaymentStatusMonitor';
 import FixedCountdownTimer from '@/components/FixedCountdownTimer';
 import QRCodeDisplay from '@/components/payments/QRCodeDisplay';
 import CardDetailsForm from '@/components/payments/CardDetailsForm';
-import MBWayForm from '@/components/payments/MBWayForm';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { 
   Table, 
@@ -124,7 +125,7 @@ const Reservations: React.FC = () => {
   // Estados para o novo fluxo de pagamento
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | 'mbway' | 'multibanco' | null>(null);
   const [showCardForm, setShowCardForm] = useState(false);
-  const [showMBWayForm, setShowMBWayForm] = useState(false);
+
   const [cardDetails, setCardDetails] = useState<{ cardholderName: string; cardNumber: string; expiryDate: string; cvv: string } | null>(null);
   const [mbwayPhone, setMbwayPhone] = useState<string | null>(null);
   
@@ -360,16 +361,7 @@ const Reservations: React.FC = () => {
     });
   };
 
-  // Função para lidar com a submissão do formulário MBWay
-  const handleMBWayFormSubmit = (data: { phone: string }) => {
-    setMbwayPhone(data.phone);
-    setShowMBWayForm(false);
-    
-    toast({
-      title: t('MBWayNumberAdded'),
-      description: t('MBWayNumberSaved'),
-    });
-  };
+
 
   // Função para fechar o modal de pagamento e prosseguir para a confirmação
   const handlePaymentCompleted = () => {
@@ -1392,8 +1384,8 @@ const Reservations: React.FC = () => {
                                 <Input
                                   type="tel"
                                   placeholder="9xxxxxxxx"
-                                  value={mbwayPhone}
-                                  onChange={(e) => setMbwayPhone(e.target.value)}
+                                  value={mbwayPhone || ''}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMbwayPhone(e.target.value)}
                                   className="w-full"
                                   maxLength={9}
                                 />
@@ -2011,13 +2003,7 @@ const Reservations: React.FC = () => {
         onSubmit={handleCardFormSubmit}
       />
       
-      {/* Modal de formulário MBWay */}
-      <MBWayForm
-        open={showMBWayForm}
-        onOpenChange={setShowMBWayForm}
-        onSubmit={handleMBWayFormSubmit}
-        defaultPhone={user?.phone || ''}
-      />
+
       
       {/* Modal de pagamento */}
       <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
