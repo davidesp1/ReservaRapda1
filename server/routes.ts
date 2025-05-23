@@ -961,18 +961,28 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
 router.get("/api/payments", isAuthenticated, async (req, res) => {
   try {
     const payments = await queryClient`
-      SELECT p.*, u.username, u.email,
+      SELECT p.*, u.username, u.email, r.date as reservation_date, r.time as reservation_time,
         CASE
           WHEN p.reservation_id IS NOT NULL THEN 'reservation'
           WHEN p.details->>'type' = 'pos' THEN 'pos'
           ELSE 'other'
-        END as payment_source
+        END as payment_source,
+        CASE
+          WHEN p.method = 'card' THEN 'Cartão de Crédito'
+          WHEN p.method = 'mbway' THEN 'MBWay'
+          WHEN p.method = 'multibanco' THEN 'Multibanco'
+          WHEN p.method = 'transfer' THEN 'Transferência Bancária'
+          WHEN p.method = 'cash' THEN 'Dinheiro'
+          WHEN p.method = 'multibanco_tpa' THEN 'Multibanco (TPA)'
+          ELSE p.method
+        END as method_display
       FROM payments p
       LEFT JOIN users u ON p.user_id = u.id
-      ORDER BY p.payment_date DESC
+      LEFT JOIN reservations r ON p.reservation_id = r.id
+      ORDER BY p.payment_date DESC, p.created_at DESC
     `;
     
-    console.log(`Retornando ${payments.length} pagamentos`);
+    console.log(`Retornando ${payments.length} pagamentos (cartão, MBWay, Multibanco, transferência bancária, dinheiro e TPA)`);
     res.json(payments);
   } catch (err: any) {
     console.error("Erro ao buscar pagamentos:", err);
