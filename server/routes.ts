@@ -1054,6 +1054,32 @@ router.post('/api/pos/orders', async (req, res) => {
       return sum + (item.price * item.quantity);
     }, 0);
     
+    // SUBTRAIR ESTOQUE AUTOMATICAMENTE ANTES DE CRIAR O PEDIDO
+    for (const item of validatedItems) {
+      const menuItemResult = await queryClient`
+        SELECT id, name, track_stock, stock_quantity FROM menu_items WHERE id = ${item.menuItemId}
+      `;
+      
+      if (menuItemResult.length > 0) {
+        const menuItem = menuItemResult[0];
+        
+        // Subtrair estoque apenas se track_stock estiver ativo
+        if (menuItem.track_stock) {
+          const newStockQuantity = menuItem.stock_quantity - item.quantity;
+          
+          await queryClient`
+            UPDATE menu_items 
+            SET stock_quantity = ${newStockQuantity}, updated_at = NOW()
+            WHERE id = ${menuItem.id}
+          `;
+          
+          console.log(`🔄 POS - Estoque atualizado para ${menuItem.name}: ${menuItem.stock_quantity} -> ${newStockQuantity} (vendidos: ${item.quantity})`);
+        } else {
+          console.log(`⚠️ POS - Item ${menuItem.name} não tem controle de estoque ativo`);
+        }
+      }
+    }
+
     // Criar o pedido
     const newOrder = await drizzleDb.insert(schema.orders).values({
       userId: orderData.userId || 1, // Default para o primeiro usuário se não especificado
