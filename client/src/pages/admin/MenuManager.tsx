@@ -99,27 +99,39 @@ const MenuManager: React.FC = () => {
   });
 
   // Queries usando dados reais do Supabase
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery<any>({
+  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useQuery<any>({
     queryKey: ['supabase-categories'],
     queryFn: async () => {
-      if (!supabase) throw new Error('Supabase não configurado');
+      console.log('🔍 Executando query de categorias no Supabase...');
+      if (!supabase) {
+        console.error('❌ Supabase não configurado');
+        throw new Error('Supabase não configurado');
+      }
       
       const { data, error } = await supabase
         .from('menu_categories')
         .select('*')
         .order('name');
       
-      if (error) throw error;
+      console.log('📊 Resultado categorias:', { data, error });
+      if (error) {
+        console.error('❌ Erro na query de categorias:', error);
+        throw error;
+      }
       return data || [];
     },
     enabled: isAuthenticated && isAdmin && !!supabase,
     refetchOnWindowFocus: false,
   });
 
-  const { data: menuItems = [], isLoading: menuItemsLoading } = useQuery<any>({
+  const { data: menuItems = [], isLoading: menuItemsLoading, error: menuItemsError } = useQuery<any>({
     queryKey: ['supabase-menu-items'],
     queryFn: async () => {
-      if (!supabase) throw new Error('Supabase não configurado');
+      console.log('🔍 Executando query de menu items no Supabase...');
+      if (!supabase) {
+        console.error('❌ Supabase não configurado');
+        throw new Error('Supabase não configurado');
+      }
       
       const { data, error } = await supabase
         .from('menu_items')
@@ -129,7 +141,11 @@ const MenuManager: React.FC = () => {
         `)
         .order('name');
       
-      if (error) throw error;
+      console.log('📊 Resultado menu items:', { data, error });
+      if (error) {
+        console.error('❌ Erro na query de menu items:', error);
+        throw error;
+      }
       return data || [];
     },
     enabled: isAuthenticated && isAdmin && !!supabase,
@@ -448,13 +464,44 @@ const MenuManager: React.FC = () => {
     setCurrentPage(1);
   };
 
+  // Debug logs
+  console.log('🐛 Debug MenuManager:', {
+    isAuthenticated,
+    isAdmin,
+    supabaseConfigured: !!supabase,
+    categoriesLoading,
+    menuItemsLoading,
+    categoriesError,
+    menuItemsError,
+    categoriesCount: categories.length,
+    menuItemsCount: menuItems.length
+  });
+
   if (categoriesLoading || menuItemsLoading) {
     return (
-      <div className="flex h-screen bg-gray-100">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      <AdminLayout title="Gestão do Menu">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando dados do Supabase...</p>
+          </div>
         </div>
-      </div>
+      </AdminLayout>
+    );
+  }
+
+  if (categoriesError || menuItemsError) {
+    return (
+      <AdminLayout title="Gestão do Menu">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Erro ao carregar dados:</p>
+            <p className="text-sm text-gray-600">
+              {categoriesError?.message || menuItemsError?.message}
+            </p>
+          </div>
+        </div>
+      </AdminLayout>
     );
   }
 
