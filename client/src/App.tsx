@@ -13,7 +13,6 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import Reservations from "@/pages/Reservations";
 import { ThemeProvider } from "next-themes";
 import { lazy, Suspense } from "react";
-import "./lib/i18n";
 
 // Lazy loaded components
 const PaymentDetails = lazy(() => import("@/pages/PaymentDetails"));

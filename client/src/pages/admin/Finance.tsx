@@ -44,10 +44,13 @@ const Finance: React.FC = () => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const { toast } = useToast();
 
-  // Fetch payments - usando Supabase Realtime em vez de polling
+  // Fetch payments com atualização em tempo real
   const { data: payments, isLoading: paymentsLoading } = useQuery<any>({
     queryKey: ['/api/payments'],
     enabled: isAuthenticated && isAdmin,
+    refetchInterval: 15000, // Atualiza a cada 15 segundos automaticamente
+    refetchIntervalInBackground: true, // Continua atualizando mesmo quando a aba não está em foco
+    staleTime: 5000, // Considera os dados obsoletos após 5 segundos
   });
 
   // Filter payments based on search, date range, status, and method

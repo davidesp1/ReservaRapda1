@@ -971,7 +971,7 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
 router.get("/api/payments", isAuthenticated, async (req, res) => {
   try {
     const payments = await queryClient`
-      SELECT p.*, u.username, u.email, r.date as reservation_date,
+      SELECT p.*, u.username, u.email, r.date as reservation_date, r.time as reservation_time,
         CASE
           WHEN p.reservation_id IS NOT NULL THEN 'reservation'
           WHEN p.details->>'type' = 'pos' THEN 'pos'

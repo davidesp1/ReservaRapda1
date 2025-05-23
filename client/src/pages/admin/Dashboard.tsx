@@ -25,14 +25,11 @@ const Dashboard: React.FC = () => {
     enabled: isAuthenticated && isAdmin,
   });
 
-  // Fetch recent reservations - 5 últimas reservas sem polling
-  const { data: allReservations = [], isLoading: reservationsLoading } = useQuery<any[]>({
-    queryKey: ['/api/admin/reservations'],
+  // Fetch recent reservations - dados reais das reservações
+  const { data: recentReservations = [], isLoading: reservationsLoading } = useQuery<any[]>({
+    queryKey: ['/api/admin/reservations', { limit: 5 }],
     enabled: isAuthenticated && isAdmin,
   });
-
-  // Pegar apenas as 5 reservas mais recentes
-  const recentReservations = allReservations.slice(0, 5);
   
   useEffect(() => {
     // Cleanup any existing charts first
@@ -222,7 +219,7 @@ const Dashboard: React.FC = () => {
       >
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-sm text-gray-500 font-medium">{t('TotalReservations')}</p>
+            <p className="text-sm text-gray-500 font-medium">{t('TodayReservations')}</p>
             <p className="text-2xl font-bold text-gray-800 mt-1">{dashboardStats?.todayReservations || 0}</p>
             <div className="flex items-center mt-2 text-sm">
               {dashboardStats?.reservationsChange > 0 ? (
