@@ -18,6 +18,7 @@ const resources = {
 
       // Menu Management
       "MenuManagement": "Gestão de Menu",
+      "ManageMenuItemsCategoriesAndStock": "Gerencie itens do menu, categorias e controle de estoque",
       "MenuItems": "Itens do Menu",
       "Categories": "Categorias",
       "ManageMenuItems": "Gerir Itens do Menu",
@@ -122,6 +123,7 @@ const resources = {
       "WelcomeToAdminPanel": "Bem-vindo ao painel administrativo do Opa que delicia",
       "TodayRevenue": "Receita de Hoje",
       "TotalReservations": "Total de Reservas",
+      "NewCustomers": "Novos Clientes",
       "PendingOrders": "Pedidos Pendentes",
       "RecentReservations": "Reservas Recentes",
       "RevenueChart": "Gráfico de Receitas",

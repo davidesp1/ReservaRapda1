@@ -25,11 +25,14 @@ const Dashboard: React.FC = () => {
     enabled: isAuthenticated && isAdmin,
   });
 
-  // Fetch recent reservations - dados reais das reservações
-  const { data: recentReservations = [], isLoading: reservationsLoading } = useQuery<any[]>({
-    queryKey: ['/api/admin/reservations', { limit: 5 }],
+  // Fetch recent reservations - 5 últimas reservas sem polling
+  const { data: allReservations = [], isLoading: reservationsLoading } = useQuery<any[]>({
+    queryKey: ['/api/admin/reservations'],
     enabled: isAuthenticated && isAdmin,
   });
+
+  // Pegar apenas as 5 reservas mais recentes
+  const recentReservations = allReservations.slice(0, 5);
   
   useEffect(() => {
     // Cleanup any existing charts first
