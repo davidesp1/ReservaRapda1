@@ -530,10 +530,11 @@ const MenuManager: React.FC = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>{t('Name')}</TableHead>
-                      <TableHead>{t('Description')}</TableHead>
+                      <TableHead className="hidden sm:table-cell">{t('Description')}</TableHead>
                       <TableHead>{t('Price')}</TableHead>
-                      <TableHead>{t('Category')}</TableHead>
-                      <TableHead>{t('Featured')}</TableHead>
+                      <TableHead className="hidden md:table-cell">{t('Category')}</TableHead>
+                      <TableHead className="hidden lg:table-cell">Stock</TableHead>
+                      <TableHead className="hidden sm:table-cell">{t('Featured')}</TableHead>
                       <TableHead className="text-right">{t('Actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -544,27 +545,66 @@ const MenuManager: React.FC = () => {
                         return (
                           <TableRow key={item.id}>
                             <TableCell className="font-medium">
-                              <div className="flex items-center">
-                                <span className="mr-2">
-                                  {getCategoryIcon(item.categoryId)}
-                                </span>
-                                {item.name}
+                              <div className="flex flex-col">
+                                <div className="flex items-center">
+                                  <span className="mr-2">
+                                    {getCategoryIcon(item.categoryId)}
+                                  </span>
+                                  {item.name}
+                                </div>
+                                <div className="text-xs text-gray-500 sm:hidden mt-1">
+                                  {item.description && item.description.length > 30 
+                                    ? `${item.description.substring(0, 30)}...` 
+                                    : item.description || '-'}
+                                </div>
+                                <div className="text-xs text-gray-500 md:hidden mt-1">
+                                  {category?.name || '-'}
+                                </div>
                               </div>
                             </TableCell>
-                            <TableCell className="max-w-xs truncate">
+                            <TableCell className="hidden sm:table-cell max-w-xs truncate">
                               {item.description || '-'}
                             </TableCell>
-                            <TableCell>{formatPrice(item.price)}</TableCell>
-                            <TableCell>{category?.name || '-'}</TableCell>
-                            <TableCell>
-                              {item.featured ? 
-                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
-                                  {t('Yes')}
-                                </span> : 
-                                <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">
-                                  {t('No')}
+                            <TableCell className="font-mono">{formatPrice(item.price)}</TableCell>
+                            <TableCell className="hidden md:table-cell">{category?.name || '-'}</TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              {item.track_stock ? (
+                                <div className="flex flex-col space-y-1">
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                    (item.stock_quantity || 0) <= (item.min_stock_level || 5) 
+                                      ? 'bg-red-100 text-red-800' 
+                                      : (item.stock_quantity || 0) > (item.max_stock_level || 100) * 0.8 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : 'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    {item.stock_quantity || 0}
+                                  </span>
+                                  <div className="text-xs text-gray-500">
+                                    {item.min_stock_level || 5}-{item.max_stock_level || 100}
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                  N/A
                                 </span>
-                              }
+                              )}
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              <div className="flex flex-col space-y-1">
+                                {item.featured && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    ⭐ {t('Featured')}
+                                  </span>
+                                )}
+                                {!item.is_available && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    Indisponível
+                                  </span>
+                                )}
+                                {!item.featured && item.is_available && (
+                                  <span className="text-gray-400">-</span>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end space-x-2">
@@ -692,7 +732,7 @@ const MenuManager: React.FC = () => {
 
       {/* Menu Item Modal */}
       <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editItem ? t('EditMenuItem') : t('AddMenuItem')}
@@ -703,7 +743,7 @@ const MenuManager: React.FC = () => {
           </DialogHeader>
           
           <Form {...itemForm}>
-            <form onSubmit={itemForm.handleSubmit(onItemSubmit)} className="space-y-4">
+            <form onSubmit={itemForm.handleSubmit(onItemSubmit)} className="space-y-6 py-4">
               <FormField
                 control={itemForm.control}
                 name="name"
@@ -732,7 +772,7 @@ const MenuManager: React.FC = () => {
                 )}
               />
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={itemForm.control}
                   name="price"
@@ -859,7 +899,7 @@ const MenuManager: React.FC = () => {
                 />
 
                 {itemForm.watch('trackStock') && (
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField
                       control={itemForm.control}
                       name="stockQuantity"
@@ -962,21 +1002,24 @@ const MenuManager: React.FC = () => {
                 )}
               />
               
-              <DialogFooter>
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-6">
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={() => setIsItemModalOpen(false)}
+                  className="w-full sm:w-auto"
                 >
                   {t('Cancel')}
                 </Button>
                 <Button 
                   type="submit"
                   disabled={createItemMutation.isPending || updateItemMutation.isPending}
+                  className="w-full sm:w-auto bg-brasil-green hover:bg-brasil-green/90"
                 >
                   {(createItemMutation.isPending || updateItemMutation.isPending) ? (
-                    <span className="flex items-center">
-                      <i className="fas fa-spinner fa-spin mr-2"></i> {t('Saving')}
+                    <span className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      {t('Saving')}
                     </span>
                   ) : (
                     editItem ? t('SaveChanges') : t('AddItem')
