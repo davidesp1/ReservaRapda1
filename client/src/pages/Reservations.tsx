@@ -456,10 +456,10 @@ const Reservations: React.FC = () => {
               // Atualizar APENAS o estado local - NÃO fazer mudanças automáticas
               setReservationData(prev => ({
                 ...prev,
-                paymentStatus: 'completed'  // Mudança apenas no estado local
+                paymentStatus: 'paid'  // Mudança apenas no estado local
               }));
               
-              console.log("Status do pagamento atualizado apenas localmente para 'completed'");
+              console.log("Status do pagamento atualizado apenas localmente para 'paid' - SEM atualização automática no banco");
               
               // Mostrar notificação de pagamento confirmado
               toast({
