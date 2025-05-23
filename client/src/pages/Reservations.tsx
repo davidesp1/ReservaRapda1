@@ -1375,35 +1375,30 @@ const Reservations: React.FC = () => {
                         
                         <Card 
                           className={`cursor-pointer hover:border-brasil-green border-2 transition-colors ${selectedPaymentMethod === 'mbway' ? 'border-brasil-green' : 'border-gray-200'}`}
-                          onClick={() => {
-                            handlePaymentMethodSelect('mbway');
-                            setShowMBWayForm(true); // Abrir o modal imediatamente ao selecionar MBWay
-                          }}
+                          onClick={() => handlePaymentMethodSelect('mbway')}
                         >
-                          <CardContent className="p-4 flex items-center">
-                            <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
-                              <Smartphone className="h-6 w-6 text-brasil-blue" />
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="font-medium">MBWay</h4>
-                              <p className="text-sm text-gray-500">{t('MBWayDescription')}</p>
-                              {mbwayPhone && (
-                                <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-100 text-sm">
-                                  <p>{mbwayPhone}</p>
-                                </div>
-                              )}
+                          <CardContent className="p-4">
+                            <div className="flex items-center mb-3">
+                              <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
+                                <Smartphone className="h-6 w-6 text-brasil-blue" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-medium">MBWay</h4>
+                                <p className="text-sm text-gray-500">{t('MBWayDescription')}</p>
+                              </div>
                             </div>
                             {selectedPaymentMethod === 'mbway' && (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setShowMBWayForm(true);
-                                }}
-                              >
-                                {mbwayPhone ? t('ChangePhone') : t('AddPhone')}
-                              </Button>
+                              <div className="mt-3">
+                                <Input
+                                  type="tel"
+                                  placeholder="9xxxxxxxx"
+                                  value={mbwayPhone}
+                                  onChange={(e) => setMbwayPhone(e.target.value)}
+                                  className="w-full"
+                                  maxLength={9}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">{t('EnterMBWayPhone')}</p>
+                              </div>
                             )}
                           </CardContent>
                         </Card>
