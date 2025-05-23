@@ -126,8 +126,14 @@ const resources = {
       "NewCustomers": "Novos Clientes",
       "PendingOrders": "Pedidos Pendentes",
       "RecentReservations": "Reservas Recentes",
+      "LatestReservationsInSystem": "Últimas reservas registradas no sistema",
       "RevenueChart": "Gráfico de Receitas",
       "SalesOverview": "Visão Geral das Vendas",
+      "Customer": "Cliente",
+      "Table": "Mesa",
+      "DateTime": "Data/Hora",
+      "Amount": "Valor",
+      "ViewAll": "Ver Todas",
       
       // Finance
       "Finance": "Finanças",
@@ -158,6 +164,7 @@ const resources = {
       "Confirmed": "Confirmada",
       "Pending": "Pendente",
       "Cancelled": "Cancelada",
+      "NoReservationsFound": "Nenhuma reserva encontrada",
     }
   },
   en: {

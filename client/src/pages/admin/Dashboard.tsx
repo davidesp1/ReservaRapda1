@@ -222,7 +222,7 @@ const Dashboard: React.FC = () => {
       >
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-sm text-gray-500 font-medium">{t('TodayReservations')}</p>
+            <p className="text-sm text-gray-500 font-medium">{t('TotalReservations')}</p>
             <p className="text-2xl font-bold text-gray-800 mt-1">{dashboardStats?.todayReservations || 0}</p>
             <div className="flex items-center mt-2 text-sm">
               {dashboardStats?.reservationsChange > 0 ? (
