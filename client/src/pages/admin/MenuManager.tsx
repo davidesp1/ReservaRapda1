@@ -354,24 +354,42 @@ const MenuManager: React.FC = () => {
     }
   });
 
-  // Upload de imagem
+  // Upload de imagem usando Supabase Storage
   const uploadImageMutation = useMutation({
     mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('image', file);
+      const supabase = (await import('@/lib/supabase')).supabase;
       
-      const response = await fetch('/api/upload/image', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
-        throw new Error(errorData.error || 'Erro ao fazer upload da imagem');
+      if (!supabase) {
+        throw new Error('Supabase não configurado - usando modo placeholder');
       }
       
-      return response.json();
+      // Gerar nome único para o arquivo
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `menu-items/${fileName}`;
+      
+      // Upload para o Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('restaurant-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (error) {
+        throw new Error(`Erro no upload: ${error.message}`);
+      }
+      
+      // Obter URL pública da imagem
+      const { data: urlData } = supabase.storage
+        .from('restaurant-images')
+        .getPublicUrl(filePath);
+      
+      return {
+        success: true,
+        url: urlData.publicUrl,
+        path: filePath
+      };
     },
     onSuccess: (data) => {
       if (data.url) {
@@ -390,6 +408,8 @@ const MenuManager: React.FC = () => {
         description: error.message || 'Erro ao fazer upload da imagem',
         variant: 'destructive',
       });
+      // Em caso de erro, limpar a seleção
+      setSelectedImage(null);
     }
   });
 
