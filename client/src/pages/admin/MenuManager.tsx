@@ -133,12 +133,10 @@ const MenuManager: React.FC = () => {
         throw new Error('Supabase não configurado');
       }
       
+      // Primeiro tentar query simples sem JOIN
       const { data, error } = await supabase
         .from('menu_items')
-        .select(`
-          *,
-          category:menu_categories(*)
-        `)
+        .select('*')
         .order('name');
       
       console.log('📊 Resultado menu items:', { data, error });
