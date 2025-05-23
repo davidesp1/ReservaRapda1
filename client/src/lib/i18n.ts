@@ -13,7 +13,7 @@ const resources = {
       "Login": "Entrar",
       "Logout": "Sair",
       "Admin": "Administração",
-      "Dashboard": "Painel",
+      "Dashboard": "Painel de Controlo",
       "Profile": "Perfil",
 
       // Menu Management
@@ -118,8 +118,7 @@ const resources = {
       "StockControl": "Controlo de Stock",
       "StockControlDescription": "Ativar controlo de stock para este item",
 
-      // Dashboard
-      "Dashboard": "Painel",
+      // Dashboard específico
       "WelcomeToAdminPanel": "Bem-vindo ao painel administrativo do Opa que delicia",
       "TodayRevenue": "Receita de Hoje",
       "TotalReservations": "Total de Reservas",
@@ -131,6 +130,7 @@ const resources = {
       // Finance
       "Finance": "Finanças",
       "FinanceManagement": "Gestão Financeira",
+      "TrackRevenueExpensesAndAnalysis": "Acompanhe receitas, despesas e análise financeira",
       "Revenue": "Receita",
       "Expenses": "Despesas",
       "Balance": "Saldo",
@@ -141,6 +141,8 @@ const resources = {
       "Clear": "Limpar",
       
       // Reservations
+      "ReservationManagement": "Gestão de Reservas",
+      "ViewAndManageReservations": "Visualize e gerencie todas as reservas do restaurante",
       "NewReservation": "Nova Reserva",
       "CreateReservation": "Criar Reserva",
       "CustomerName": "Nome do Cliente",
