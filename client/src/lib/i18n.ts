@@ -117,6 +117,43 @@ const resources = {
       "MaxStockLevel": "Stock Máximo",
       "StockControl": "Controlo de Stock",
       "StockControlDescription": "Ativar controlo de stock para este item",
+
+      // Dashboard
+      "Dashboard": "Painel",
+      "WelcomeToAdminPanel": "Bem-vindo ao painel administrativo do Opa que delicia",
+      "TodayRevenue": "Receita de Hoje",
+      "TotalReservations": "Total de Reservas",
+      "PendingOrders": "Pedidos Pendentes",
+      "RecentReservations": "Reservas Recentes",
+      "RevenueChart": "Gráfico de Receitas",
+      "SalesOverview": "Visão Geral das Vendas",
+      
+      // Finance
+      "Finance": "Finanças",
+      "FinanceManagement": "Gestão Financeira",
+      "Revenue": "Receita",
+      "Expenses": "Despesas",
+      "Balance": "Saldo",
+      "DateFilter": "Filtro de Data",
+      "From": "De",
+      "To": "Até",
+      "Apply": "Aplicar",
+      "Clear": "Limpar",
+      
+      // Reservations
+      "NewReservation": "Nova Reserva",
+      "CreateReservation": "Criar Reserva",
+      "CustomerName": "Nome do Cliente",
+      "TableNumber": "Número da Mesa",
+      "ReservationDate": "Data da Reserva",
+      "ReservationTime": "Hora da Reserva",
+      "NumberOfGuests": "Número de Convidados",
+      "PaymentMethod": "Método de Pagamento",
+      "Cash": "Dinheiro",
+      "Status": "Estado",
+      "Confirmed": "Confirmada",
+      "Pending": "Pendente",
+      "Cancelled": "Cancelada",
     }
   },
   en: {

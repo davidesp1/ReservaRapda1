@@ -1,0 +1,43 @@
+Revise e corrija as seguintes páginas da aplicação, garantindo internacionalização, uso de Supabase Realtime em vez de polling a cada 20 s, e integração correta com o banco:
+
+---
+
+## 1. Página Dashboard  
+- Internacionalização (i18n) funcionando sem erros em todos os textos.  
+- Remover polling de 20 s; implementar Supabase Realtime para atualizar métricas.  
+- “Reservas Recentes” deve exibir as 5 últimas reservas gravadas no banco, em tempo real.
+
+## 2. Página Gestão de Menu  
+- i18n 100% correto; corrija os textos que ainda falham.  
+- Substituir reload automático por Supabase Realtime para lista de produtos.  
+- No formulário de produto, renomear campo **“descrição”** para **“imagem”**; carregar e exibir a imagem armazenada no Supabase Storage.  
+- Estoque dinâmico: contabilizar vendas feitas pelo cliente e pelo POS em tempo real, refletir automaticamente.  
+- No modal de detalhe de produto, adicionar um container quadrado que mostre a imagem do produto.
+
+## 3. Página Finanças  
+- Corrigir i18n.  
+- Remover reload de 20 s; usar Supabase Realtime para atualizar dados financeiros.  
+- Garantir fetch correto dos dados do banco; exibir contabilidade completa (receitas, despesas, saldos).  
+- Consertar filtro de data para selecionar intervalos corretamente.
+
+## 4. Modo POS  
+- Remover aba “Todos”.  
+- Produtos devem exibir suas imagens vindas do banco (Supabase Storage).
+
+## 5. Página Reservas  
+- Corrigir i18n.  
+- Substituir reload de 20 s por Supabase Realtime.  
+- Garantir fetch correto das reservas do banco.  
+- Adicionar botão **“Nova Reserva”** para o admin:  
+  - Formulário para criar reserva de cliente.  
+  - Modo de pagamento em dinheiro disponível apenas para o admin.
+
+## 6. Página Configurações  
+- Na aba **Configurações de Pagamento**, recuperar todas as configurações do banco corretamente (incluindo `eupagoApiKey`, métodos habilitados, taxas, moeda).  
+- Métodos de pagamento EuPago (Cartão, MBWay, Multibanco) só ativos se houver `eupagoApiKey` válida.
+
+**Entregáveis**  
+- Código React (ou framework usado) com hooks Realtime do Supabase.  
+- Componentes e formulários corrigidos, com i18n via `react-i18next`.  
+- Exemplos de testes unitários/integrados para cada página (simples).  
+- UI responsiva e acessível (ARIA, contraste). 

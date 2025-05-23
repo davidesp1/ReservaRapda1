@@ -845,32 +845,49 @@ const MenuManager: React.FC = () => {
                 name="imageUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('ImageURL')}</FormLabel>
-                    <div className="flex gap-2">
-                      <FormControl>
-                        <Input 
-                          placeholder={t('EnterImageURL')} 
-                          {...field} 
-                          value={field.value || ''}
-                        />
-                      </FormControl>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => document.getElementById('image-upload')?.click()}
-                        disabled={uploadingImage}
-                      >
-                        <Upload className="h-4 w-4" />
-                      </Button>
+                    <FormLabel>Imagem</FormLabel>
+                    <div className="space-y-4">
+                      {/* Container quadrado para mostrar a imagem */}
+                      <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                        {field.value ? (
+                          <img 
+                            src={field.value} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                        ) : (
+                          <div className="text-center">
+                            <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-xs text-gray-500">Sem imagem</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <FormControl>
+                          <Input 
+                            placeholder="URL da imagem ou carregue um arquivo" 
+                            {...field} 
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => document.getElementById('image-upload')?.click()}
+                          disabled={uploadingImage}
+                        >
+                          <Upload className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <input
+                        id="image-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageUpload}
+                      />
                     </div>
-                    <input
-                      id="image-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                    />
                     <FormMessage />
                   </FormItem>
                 )}
