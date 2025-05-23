@@ -53,8 +53,8 @@ const MenuManager: React.FC = () => {
   
   // Estados
   const [searchText, setSearchText] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   
@@ -254,8 +254,8 @@ const MenuManager: React.FC = () => {
     const matchesSearch = !searchText || 
       item.name.toLowerCase().includes(searchText.toLowerCase()) ||
       item.category?.name.toLowerCase().includes(searchText.toLowerCase());
-    const matchesCategory = !categoryFilter || item.categoryId.toString() === categoryFilter;
-    const matchesStatus = !statusFilter || 
+    const matchesCategory = !categoryFilter || categoryFilter === 'all' || item.categoryId.toString() === categoryFilter;
+    const matchesStatus = !statusFilter || statusFilter === 'all' || 
       (statusFilter === 'disponivel' ? item.is_available : !item.is_available);
     return matchesSearch && matchesCategory && matchesStatus;
   });
@@ -290,8 +290,8 @@ const MenuManager: React.FC = () => {
 
   const clearFilters = () => {
     setSearchText('');
-    setCategoryFilter('');
-    setStatusFilter('');
+    setCategoryFilter('all');
+    setStatusFilter('all');
     setCurrentPage(1);
   };
 
@@ -351,7 +351,7 @@ const MenuManager: React.FC = () => {
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
+                  <SelectItem value="all">Todas</SelectItem>
                   {categories.map((cat: any) => (
                     <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
                   ))}
@@ -366,7 +366,7 @@ const MenuManager: React.FC = () => {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="disponivel">Disponível</SelectItem>
                   <SelectItem value="indisponivel">Indisponível</SelectItem>
                 </SelectContent>
