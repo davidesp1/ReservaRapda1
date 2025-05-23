@@ -19,5 +19,12 @@ export const db = drizzle(queryClient, { schema });
 // Expor o cliente Supabase para funcionalidades adicionais quando necessário
 export const supabase = createClient(
   'https://wtykoitqlndqyglpogux.supabase.co',
-  process.env.SUPABASE_KEY || '' // Isso é um placeholder, idealmente deveria ser configurado
+  process.env.SUPABASE_KEY || '',
+  {
+    realtime: {
+      params: {
+        eventsPerSecond: 10
+      }
+    }
+  }
 );

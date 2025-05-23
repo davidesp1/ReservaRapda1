@@ -76,6 +76,13 @@ export const menuItems = pgTable("menu_items", {
   price: integer("price").notNull(), // Price in cents
   imageUrl: text("image_url"),
   featured: boolean("featured").default(false),
+  stockQuantity: integer("stock_quantity").default(0),
+  minStockLevel: integer("min_stock_level").default(5),
+  maxStockLevel: integer("max_stock_level").default(100),
+  trackStock: boolean("track_stock").default(true),
+  isAvailable: boolean("is_available").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertMenuItemSchema = createInsertSchema(menuItems).omit({

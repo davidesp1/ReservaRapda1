@@ -334,7 +334,10 @@ router.get("/api/menu-items/:id", async (req, res) => {
 // Adicionar item do menu
 router.post("/api/menu-items", isAuthenticated, async (req, res) => {
   try {
-    const { name, description, price, categoryId, featured, imageUrl } = req.body;
+    const { 
+      name, description, price, categoryId, featured, imageUrl, 
+      stockQuantity, minStockLevel, maxStockLevel, trackStock, isAvailable 
+    } = req.body;
     
     if (!name || !categoryId || price === undefined) {
       return res.status(400).json({ error: "Nome, categoria e preço são obrigatórios" });
@@ -350,14 +353,22 @@ router.post("/api/menu-items", isAuthenticated, async (req, res) => {
     }
     
     const result = await queryClient`
-      INSERT INTO menu_items (name, description, price, category_id, featured, image_url)
+      INSERT INTO menu_items (
+        name, description, price, category_id, featured, image_url,
+        stock_quantity, min_stock_level, max_stock_level, track_stock, is_available
+      )
       VALUES (
         ${name}, 
         ${description || null}, 
         ${parseFloat(price)}, 
         ${parseInt(categoryId)}, 
         ${featured || false}, 
-        ${imageUrl || null}
+        ${imageUrl || null},
+        ${stockQuantity || 0},
+        ${minStockLevel || 5},
+        ${maxStockLevel || 100},
+        ${trackStock !== false},
+        ${isAvailable !== false}
       )
       RETURNING *
     `;
@@ -373,30 +384,29 @@ router.post("/api/menu-items", isAuthenticated, async (req, res) => {
 router.put("/api/menu-items/:id", isAuthenticated, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, categoryId, featured, imageUrl } = req.body;
+    const { 
+      name, description, price, categoryId, featured, imageUrl,
+      stockQuantity, minStockLevel, maxStockLevel, trackStock, isAvailable 
+    } = req.body;
     
     if (!name || !categoryId || price === undefined) {
       return res.status(400).json({ error: "Nome, categoria e preço são obrigatórios" });
     }
     
-    // Verificar se a categoria existe
-    const categoryCheck = await queryClient`
-      SELECT * FROM menu_categories WHERE id = ${parseInt(categoryId)}
-    `;
-    
-    if (categoryCheck.length === 0) {
-      return res.status(400).json({ error: "Categoria não encontrada" });
-    }
-    
     const result = await queryClient`
       UPDATE menu_items
-      SET 
-        name = ${name},
-        description = ${description || null},
-        price = ${parseFloat(price)},
-        category_id = ${parseInt(categoryId)},
-        featured = ${featured || false},
-        image_url = ${imageUrl || null}
+      SET name = ${name}, 
+          description = ${description || null}, 
+          price = ${parseFloat(price)}, 
+          category_id = ${parseInt(categoryId)}, 
+          featured = ${featured || false}, 
+          image_url = ${imageUrl || null},
+          stock_quantity = ${stockQuantity || 0},
+          min_stock_level = ${minStockLevel || 5},
+          max_stock_level = ${maxStockLevel || 100},
+          track_stock = ${trackStock !== false},
+          is_available = ${isAvailable !== false},
+          updated_at = NOW()
       WHERE id = ${parseInt(id)}
       RETURNING *
     `;

@@ -24,7 +24,12 @@ import {
   Coffee, 
   Utensils, 
   IceCream, 
-  Wine
+  Wine,
+  Upload,
+  Package,
+  AlertTriangle,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import {
   Table,
@@ -44,6 +49,11 @@ const menuItemSchema = z.object({
   categoryId: z.coerce.number().min(1, 'Category is required'),
   featured: z.boolean().default(false),
   imageUrl: z.string().optional(),
+  stockQuantity: z.coerce.number().min(0, 'Stock quantity must be positive').default(0),
+  minStockLevel: z.coerce.number().min(0, 'Min stock level must be positive').default(5),
+  maxStockLevel: z.coerce.number().min(1, 'Max stock level must be positive').default(100),
+  trackStock: z.boolean().default(true),
+  isAvailable: z.boolean().default(true),
 });
 
 // Category form schema
