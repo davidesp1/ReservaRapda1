@@ -30,7 +30,8 @@ import {
   Package,
   AlertTriangle,
   CheckCircle,
-  XCircle
+  XCircle,
+  X
 } from 'lucide-react';
 import {
   Table,
@@ -765,14 +766,66 @@ const MenuManager: React.FC = () => {
                 )}
               />
               
+              {/* Campo de Imagem - substituindo descrição */}
               <FormField
                 control={itemForm.control}
-                name="description"
+                name="imageUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('Description')}</FormLabel>
+                    <FormLabel>{t('Image')}</FormLabel>
                     <FormControl>
-                      <Input placeholder={t('ItemDescription')} {...field} />
+                      <div className="space-y-2">
+                        {/* Preview da imagem atual */}
+                        {field.value && (
+                          <div className="w-32 h-32 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200">
+                            <img 
+                              src={field.value} 
+                              alt="Preview"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Upload de nova imagem */}
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                          {selectedImage ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-600">{selectedImage.name}</span>
+                                <Button 
+                                  type="button" 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => setSelectedImage(null)}
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <img 
+                                src={URL.createObjectURL(selectedImage)} 
+                                alt="Preview" 
+                                className="w-full h-24 object-cover rounded"
+                              />
+                            </div>
+                          ) : (
+                            <label className="cursor-pointer block">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleImageUpload}
+                              />
+                              <div className="text-center">
+                                <Upload className="h-6 w-6 mx-auto text-gray-400 mb-2" />
+                                <p className="text-sm text-gray-600">{t('ClickToUploadImage')}</p>
+                              </div>
+                            </label>
+                          )}
+                        </div>
+                        
+                        {/* Campo oculto para URL da imagem */}
+                        <Input type="hidden" {...field} />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
