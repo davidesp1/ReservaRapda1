@@ -421,13 +421,13 @@ const Reservations: React.FC = () => {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
   
-  // Verificação periódica do status do pagamento Multibanco
+  // Verificação periódica do status do pagamento (Multibanco e MBWay)
   useEffect(() => {
     let checkInterval: NodeJS.Timeout;
     
-    // Se for um pagamento Multibanco pendente e tivermos uma referência, verificamos o status periodicamente
+    // Se for um pagamento pendente (Multibanco ou MBWay) e tivermos uma referência, verificamos o status periodicamente
     if (
-      reservationData.paymentMethod === 'multibanco' && 
+      ['multibanco', 'mbway'].includes(reservationData.paymentMethod || '') && 
       reservationData.paymentStatus === 'pending' && 
       reservationData.paymentReference
     ) {
@@ -585,8 +585,23 @@ const Reservations: React.FC = () => {
             phone: paymentData.phone
           }
         });
-        console.log("Abrindo modal de pagamento MBWay");
-        setPaymentModalOpen(true);
+        
+        // Iniciar contador regressivo para MBWay (5 minutos)
+        setCountdownTime(300); // 5 minutos
+        setCountdownActive(true);
+        
+        // Criar alerta de toast informando sobre o tempo limite
+        toast({
+          title: t('MBWayPaymentInitiated'),
+          description: t('CompletePaymentIn5Minutes'),
+          duration: 8000,
+        });
+        
+        // Avançar para a etapa final
+        setCurrentStep(4);
+        
+        // Salvar a reserva automaticamente no banco de dados
+        finalizeReservation();
       }
       else if (paymentMethod === 'card') {
         // Atualizar dados da reserva
@@ -1632,6 +1647,55 @@ const Reservations: React.FC = () => {
                           
                           <div className="text-sm text-center text-gray-600">
                             {t('MultibancoCTA')}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Detalhes específicos para MBWay */}
+                      {reservationData.paymentMethod === 'mbway' && reservationData.paymentStatus === 'pending' && (
+                        <div className="mb-3 p-3 bg-blue-50 rounded-md border border-blue-100">
+                          <div className="text-center mb-3">
+                            <div className="flex items-center justify-center mb-2">
+                              <Smartphone className="h-6 w-6 text-blue-600 mr-2" />
+                              <span className="font-medium text-blue-800">{t('MBWayPaymentPending')}</span>
+                            </div>
+                            <div className="text-sm text-gray-600 mb-3">
+                              {t('CheckYourMobilePhone')}: {reservationData.paymentDetails?.phone}
+                            </div>
+                          </div>
+                          
+                          {countdownActive && (
+                            <div className="text-center mb-3 p-3 bg-red-50 rounded border border-red-100">
+                              <div className="text-sm text-red-600 mb-1">{t('CompletePaymentWithin')}</div>
+                              <div className="text-2xl font-mono font-bold text-red-700">{formatCountdown()}</div>
+                              <div className="text-xs text-red-600 mt-1">{t('PaymentWillBeCancelledAfterTimeout')}</div>
+                            </div>
+                          )}
+                          
+                          <div className="bg-white p-3 rounded border border-gray-200 mb-3">
+                            <h4 className="font-medium text-gray-800 mb-2">{t('ReservationSummary')}</h4>
+                            <div className="space-y-1 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">{t('Date')}:</span>
+                                <span className="font-medium">{format(reservationData.date, 'PPP')}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">{t('Time')}:</span>
+                                <span className="font-medium">{reservationData.time}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">{t('PartySize')}:</span>
+                                <span className="font-medium">{reservationData.partySize} {reservationData.partySize === 1 ? t('Person') : t('People')}</span>
+                              </div>
+                              <div className="flex justify-between border-t pt-1 mt-2">
+                                <span className="text-gray-600 font-medium">{t('Total')}:</span>
+                                <span className="font-bold text-lg">€{((reservationData.total || 0) / 100).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="text-sm text-center text-blue-700 bg-blue-100 p-2 rounded">
+                            📱 {t('OpenMBWayAppToConfirmPayment')}
                           </div>
                         </div>
                       )}
