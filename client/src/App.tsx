@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import CustomError from "@/pages/CustomError";
@@ -43,6 +44,9 @@ const LoadingSpinner = () => (
 );
 
 function Router() {
+  // Ativar atualizações em tempo real do Supabase
+  useSupabaseRealtime();
+  
   return (
     <Switch>
       {/* Public routes */}

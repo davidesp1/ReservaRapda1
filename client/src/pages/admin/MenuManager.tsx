@@ -75,6 +75,8 @@ const MenuManager: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{id: number, type: 'item' | 'category'} | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   // Fetch menu categories com atualização em tempo real
   const { data: categories, isLoading: categoriesLoading } = useQuery<any>({
@@ -144,6 +146,11 @@ const MenuManager: React.FC = () => {
         categoryId: editItem.categoryId,
         featured: editItem.featured,
         imageUrl: editItem.imageUrl || '',
+        stockQuantity: editItem.stock_quantity || 0,
+        minStockLevel: editItem.min_stock_level || 5,
+        maxStockLevel: editItem.max_stock_level || 100,
+        trackStock: editItem.track_stock !== false,
+        isAvailable: editItem.is_available !== false,
       });
     } else if (isItemModalOpen && !editItem) {
       itemForm.reset({
@@ -153,6 +160,11 @@ const MenuManager: React.FC = () => {
         categoryId: currentCategoryId ? parseInt(currentCategoryId) : undefined,
         featured: false,
         imageUrl: '',
+        stockQuantity: 0,
+        minStockLevel: 5,
+        maxStockLevel: 100,
+        trackStock: true,
+        isAvailable: true,
       });
     }
   }, [isItemModalOpen, editItem, currentCategoryId, itemForm]);
@@ -339,6 +351,53 @@ const MenuManager: React.FC = () => {
       });
     }
   });
+
+  // Upload de imagem
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch('/api/upload/image', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erro ao fazer upload da imagem');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      itemForm.setValue('imageUrl', data.url);
+      setSelectedImage(null);
+      toast({
+        title: 'Upload realizado',
+        description: 'Imagem enviada com sucesso!',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erro no upload',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Handle image upload
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      setUploadingImage(true);
+      uploadImageMutation.mutate(file, {
+        onSettled: () => setUploadingImage(false)
+      });
+    }
+  };
 
   // Handle menu item form submission
   const onItemSubmit = (data: z.infer<typeof menuItemSchema>) => {
@@ -741,14 +800,143 @@ const MenuManager: React.FC = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('ImageURL')}</FormLabel>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input 
+                          placeholder={t('EnterImageURL')} 
+                          {...field} 
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => document.getElementById('image-upload')?.click()}
+                        disabled={uploadingImage}
+                      >
+                        <Upload className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Seção de Gestão de Stock */}
+              <div className="border rounded-lg p-4 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-blue-600" />
+                  <h3 className="font-semibold">Gestão de Stock</h3>
+                </div>
+                
+                <FormField
+                  control={itemForm.control}
+                  name="trackStock"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>Controlar Stock</FormLabel>
+                        <FormDescription>
+                          Ativar controlo de stock para este item
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                {itemForm.watch('trackStock') && (
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormField
+                      control={itemForm.control}
+                      name="stockQuantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quantidade em Stock</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              placeholder="0" 
+                              min="0"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={itemForm.control}
+                      name="minStockLevel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Stock Mínimo</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              placeholder="5" 
+                              min="0"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={itemForm.control}
+                      name="maxStockLevel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Stock Máximo</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              placeholder="100" 
+                              min="1"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <FormField
+                control={itemForm.control}
+                name="isAvailable"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel>Disponível</FormLabel>
+                      <FormDescription>
+                        Item disponível para venda
+                      </FormDescription>
+                    </div>
                     <FormControl>
-                      <Input 
-                        placeholder={t('EnterImageURL')} 
-                        {...field} 
-                        value={field.value || ''}
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />

@@ -1,6 +1,18 @@
 import { useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
+
+const supabase = createClient(
+  'https://wtykoitqlndqyglpogux.supabase.co',
+  import.meta.env.VITE_SUPABASE_KEY || 'PLACEHOLDER_KEY',
+  {
+    realtime: {
+      params: {
+        eventsPerSecond: 10
+      }
+    }
+  }
+);
 
 export function useSupabaseRealtime() {
   const queryClient = useQueryClient();
