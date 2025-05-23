@@ -365,23 +365,27 @@ const MenuManager: React.FC = () => {
       });
       
       if (!response.ok) {
-        throw new Error('Erro ao fazer upload da imagem');
+        const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+        throw new Error(errorData.error || 'Erro ao fazer upload da imagem');
       }
       
       return response.json();
     },
     onSuccess: (data) => {
-      itemForm.setValue('imageUrl', data.url);
+      if (data.url) {
+        itemForm.setValue('imageUrl', data.url);
+        toast({
+          title: 'Upload realizado',
+          description: 'Imagem enviada com sucesso!',
+        });
+      }
       setSelectedImage(null);
-      toast({
-        title: 'Upload realizado',
-        description: 'Imagem enviada com sucesso!',
-      });
     },
     onError: (error: any) => {
+      console.error('Erro no upload:', error);
       toast({
         title: 'Erro no upload',
-        description: error.message,
+        description: error.message || 'Erro ao fazer upload da imagem',
         variant: 'destructive',
       });
     }
