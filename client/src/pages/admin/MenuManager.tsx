@@ -98,22 +98,71 @@ const MenuManager: React.FC = () => {
     },
   });
 
-  // Queries
+  // Queries usando dados reais do Supabase
   const { data: categories = [], isLoading: categoriesLoading } = useQuery<any>({
-    queryKey: ['/api/menu-categories'],
-    enabled: isAuthenticated && isAdmin,
+    queryKey: ['supabase-categories'],
+    queryFn: async () => {
+      if (!supabase) throw new Error('Supabase não configurado');
+      
+      const { data, error } = await supabase
+        .from('menu_categories')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: isAuthenticated && isAdmin && !!supabase,
+    refetchOnWindowFocus: false,
   });
 
   const { data: menuItems = [], isLoading: menuItemsLoading } = useQuery<any>({
-    queryKey: ['/api/menu-items'],
-    enabled: isAuthenticated && isAdmin,
+    queryKey: ['supabase-menu-items'],
+    queryFn: async () => {
+      if (!supabase) throw new Error('Supabase não configurado');
+      
+      const { data, error } = await supabase
+        .from('menu_items')
+        .select(`
+          *,
+          category:menu_categories(*)
+        `)
+        .order('name');
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: isAuthenticated && isAdmin && !!supabase,
+    refetchOnWindowFocus: false,
   });
 
-  // Mutations
+  // Mutations usando Supabase direto
   const createItemMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/menu-items', data),
+    mutationFn: async (data: any) => {
+      if (!supabase) throw new Error('Supabase não configurado');
+      
+      const { data: result, error } = await supabase
+        .from('menu_items')
+        .insert([{
+          name: data.name,
+          description: data.description,
+          price: data.price,
+          category_id: data.categoryId,
+          featured: data.featured,
+          image_url: data.imageUrl,
+          stock_quantity: data.stockQuantity,
+          min_stock_level: data.minStockLevel,
+          max_stock_level: data.maxStockLevel,
+          track_stock: data.trackStock,
+          is_available: data.isAvailable,
+        }])
+        .select();
+      
+      if (error) throw error;
+      return result;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/menu-items'] });
+      queryClient.invalidateQueries({ queryKey: ['supabase-menu-items'] });
       setIsProductModalOpen(false);
       productForm.reset();
       toast({ title: 'Produto criado com sucesso!' });
@@ -128,10 +177,32 @@ const MenuManager: React.FC = () => {
   });
 
   const updateItemMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
-      apiRequest('PUT', `/api/menu-items/${id}`, data),
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      if (!supabase) throw new Error('Supabase não configurado');
+      
+      const { data: result, error } = await supabase
+        .from('menu_items')
+        .update({
+          name: data.name,
+          description: data.description,
+          price: data.price,
+          category_id: data.categoryId,
+          featured: data.featured,
+          image_url: data.imageUrl,
+          stock_quantity: data.stockQuantity,
+          min_stock_level: data.minStockLevel,
+          max_stock_level: data.maxStockLevel,
+          track_stock: data.trackStock,
+          is_available: data.isAvailable,
+        })
+        .eq('id', id)
+        .select();
+      
+      if (error) throw error;
+      return result;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/menu-items'] });
+      queryClient.invalidateQueries({ queryKey: ['supabase-menu-items'] });
       setIsProductModalOpen(false);
       setEditingProduct(null);
       productForm.reset();
@@ -147,9 +218,19 @@ const MenuManager: React.FC = () => {
   });
 
   const deleteItemMutation = useMutation({
-    mutationFn: (id: number) => apiRequest('DELETE', `/api/menu-items/${id}`),
+    mutationFn: async (id: number) => {
+      if (!supabase) throw new Error('Supabase não configurado');
+      
+      const { error } = await supabase
+        .from('menu_items')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return { success: true };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/menu-items'] });
+      queryClient.invalidateQueries({ queryKey: ['supabase-menu-items'] });
       toast({ title: 'Produto removido com sucesso!' });
     },
     onError: (error: any) => {
@@ -162,9 +243,22 @@ const MenuManager: React.FC = () => {
   });
 
   const createCategoryMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/menu-categories', data),
+    mutationFn: async (data: any) => {
+      if (!supabase) throw new Error('Supabase não configurado');
+      
+      const { data: result, error } = await supabase
+        .from('menu_categories')
+        .insert([{
+          name: data.name,
+          description: data.description,
+        }])
+        .select();
+      
+      if (error) throw error;
+      return result;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/menu-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['supabase-categories'] });
       categoryForm.reset();
       toast({ title: 'Categoria criada com sucesso!' });
     },
@@ -178,10 +272,23 @@ const MenuManager: React.FC = () => {
   });
 
   const updateCategoryMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
-      apiRequest('PUT', `/api/menu-categories/${id}`, data),
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      if (!supabase) throw new Error('Supabase não configurado');
+      
+      const { data: result, error } = await supabase
+        .from('menu_categories')
+        .update({
+          name: data.name,
+          description: data.description,
+        })
+        .eq('id', id)
+        .select();
+      
+      if (error) throw error;
+      return result;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/menu-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['supabase-categories'] });
       setEditingCategory(null);
       categoryForm.reset();
       toast({ title: 'Categoria atualizada com sucesso!' });
@@ -196,9 +303,19 @@ const MenuManager: React.FC = () => {
   });
 
   const deleteCategoryMutation = useMutation({
-    mutationFn: (id: number) => apiRequest('DELETE', `/api/menu-categories/${id}`),
+    mutationFn: async (id: number) => {
+      if (!supabase) throw new Error('Supabase não configurado');
+      
+      const { error } = await supabase
+        .from('menu_categories')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return { success: true };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/menu-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['supabase-categories'] });
       toast({ title: 'Categoria removida com sucesso!' });
     },
     onError: (error: any) => {
@@ -210,19 +327,55 @@ const MenuManager: React.FC = () => {
     },
   });
 
-  // Image upload handler
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload real de imagem para Supabase Storage
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (!file || !supabase) {
+      toast({
+        title: 'Erro no upload',
+        description: 'Supabase não configurado ou arquivo inválido',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
       setSelectedImage(file);
       
-      // Usar placeholder simples ou URL se Supabase não estiver configurado
-      const placeholderUrl = `https://via.placeholder.com/200x200/009c3b/ffffff?text=${encodeURIComponent(file.name.substring(0, 10))}`;
-      productForm.setValue('imageUrl', placeholderUrl);
+      // Gerar nome único para o arquivo
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `menu-items/${fileName}`;
+      
+      // Upload para o Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('restaurant-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (error) {
+        throw new Error(`Erro no upload: ${error.message}`);
+      }
+      
+      // Obter URL pública da imagem
+      const { data: urlData } = supabase.storage
+        .from('restaurant-images')
+        .getPublicUrl(filePath);
+      
+      productForm.setValue('imageUrl', urlData.publicUrl);
       
       toast({
-        title: 'Imagem selecionada',
-        description: 'Imagem será processada quando o produto for salvo',
+        title: 'Upload realizado',
+        description: 'Imagem enviada com sucesso para o Supabase!',
+      });
+    } catch (error: any) {
+      console.error('Erro no upload:', error);
+      toast({
+        title: 'Erro no upload',
+        description: error.message || 'Erro ao fazer upload da imagem',
+        variant: 'destructive',
       });
     }
   };
@@ -254,7 +407,7 @@ const MenuManager: React.FC = () => {
     const matchesSearch = !searchText || 
       item.name.toLowerCase().includes(searchText.toLowerCase()) ||
       item.category?.name.toLowerCase().includes(searchText.toLowerCase());
-    const matchesCategory = !categoryFilter || categoryFilter === 'all' || item.categoryId.toString() === categoryFilter;
+    const matchesCategory = !categoryFilter || categoryFilter === 'all' || item.category_id?.toString() === categoryFilter;
     const matchesStatus = !statusFilter || statusFilter === 'all' || 
       (statusFilter === 'disponivel' ? item.is_available : !item.is_available);
     return matchesSearch && matchesCategory && matchesStatus;
@@ -273,9 +426,9 @@ const MenuManager: React.FC = () => {
         name: product.name,
         description: product.description || '',
         price: product.price / 100,
-        categoryId: product.categoryId,
+        categoryId: product.category_id,
         featured: product.featured,
-        imageUrl: product.imageUrl || '',
+        imageUrl: product.image_url || '',
         stockQuantity: product.stock_quantity || 0,
         minStockLevel: product.min_stock_level || 5,
         maxStockLevel: product.max_stock_level || 100,
