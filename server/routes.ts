@@ -360,7 +360,7 @@ router.post("/api/menu-items", isAuthenticated, async (req, res) => {
       VALUES (
         ${name}, 
         ${description || null}, 
-        ${parseFloat(price)}, 
+        ${Math.round(parseFloat(price) * 100)}, 
         ${parseInt(categoryId)}, 
         ${featured || false}, 
         ${imageUrl || null},
@@ -397,7 +397,7 @@ router.put("/api/menu-items/:id", isAuthenticated, async (req, res) => {
       UPDATE menu_items
       SET name = ${name}, 
           description = ${description || null}, 
-          price = ${parseFloat(price)}, 
+          price = ${Math.round(parseFloat(price) * 100)}, 
           category_id = ${parseInt(categoryId)}, 
           featured = ${featured || false}, 
           image_url = ${imageUrl || null},

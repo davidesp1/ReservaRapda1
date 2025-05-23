@@ -405,12 +405,14 @@ const MenuManager: React.FC = () => {
 
   // Handle menu item form submission
   const onItemSubmit = (data: z.infer<typeof menuItemSchema>) => {
-    // Enviamos o preço diretamente como está, sem multiplicar por 100
-    // A conversão para centavos é feita apenas no backend
+    // Garantir que o preço não seja multiplicado por 100 aqui
+    // O backend já faz a conversão correta
     const formattedData = {
       ...data,
-      price: data.price // Enviamos o valor exato, sem multiplicar
+      price: Number(data.price) // Garantir que é um número, sem conversão adicional
     };
+    
+    console.log('Enviando dados do formulário:', formattedData);
     
     if (editItem) {
       updateItemMutation.mutate({ id: editItem.id, data: formattedData });
