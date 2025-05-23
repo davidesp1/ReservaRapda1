@@ -368,6 +368,24 @@ const MenuManager: React.FC = () => {
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `menu-items/${fileName}`;
       
+      // Verificar se o bucket existe, se não criar
+      let bucketExists = true
+      const { data: buckets } = await supabase.storage.listBuckets()
+      const restaurantBucket = buckets?.find(bucket => bucket.name === 'restaurant-images')
+      
+      if (!restaurantBucket) {
+        console.log('🪣 Criando bucket restaurant-images...')
+        const { error: bucketError } = await supabase.storage.createBucket('restaurant-images', {
+          public: true,
+          allowedMimeTypes: ['image/*']
+        })
+        
+        if (bucketError) {
+          console.error('Erro ao criar bucket:', bucketError)
+          throw new Error(`Erro ao criar bucket: ${bucketError.message}`)
+        }
+      }
+
       // Upload para o Supabase Storage
       const { data, error } = await supabase.storage
         .from('restaurant-images')
