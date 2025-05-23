@@ -1,0 +1,434 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>::-webkit-scrollbar { display: none;}</style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brazil-green': '#009c3b',
+                        'brazil-yellow': '#ffdf00',
+                        'brazil-blue': '#002776',
+                        'brazil-red': '#c8102e'
+                    },
+                    fontFamily: {
+                        'montserrat': ['Montserrat', 'sans-serif'],
+                        'opensans': ['Open Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" /><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap" /><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="bg-gray-100 font-opensans">
+
+<div id="admin-dashboard" class="flex h-[900px]">
+    <div id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-brazil-blue flex flex-col">
+        <div class="p-6">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-brazil-yellow rounded-full flex items-center justify-center mr-2">
+                    <i class="fa-solid fa-utensils text-brazil-blue"></i>
+                </div>
+                <span class="text-xl font-semibold text-white font-montserrat">
+                    Opa que delicia
+                </span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <ul>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-chart-line text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Dashboard</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-users text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão de Clientes</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white bg-brazil-blue bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-book-open text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão do Menu</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-chair text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão das Mesas</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-coins text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão Financeira</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-credit-card text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Pagamentos</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-calendar-check text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Reservas</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+        <div class="mt-auto border-t border-blue-400 p-4">
+            <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                <i class="fa-solid fa-gear text-brazil-yellow w-6"></i>
+                <span class="ml-2 font-medium">Configurações</span>
+            </span>
+            <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 mt-2 cursor-pointer">
+                <i class="fa-solid fa-right-from-bracket text-brazil-yellow w-6"></i>
+                <span class="ml-2 font-medium">Sair</span>
+            </span>
+        </div>
+    </div>
+
+    <div id="main-content" class="ml-64 flex-1 p-8 relative">
+        <div id="header-menu" class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-800 font-montserrat">Gestão do Menu</h1>
+            <div class="flex gap-3">
+                <button id="btn-categorias-modal" class="flex items-center bg-brazil-yellow text-brazil-blue font-bold rounded-lg px-4 py-2 shadow hover:bg-yellow-200 transition">
+                    <i class="fa-solid fa-layer-group mr-2"></i>
+                    Categorias
+                </button>
+                <button id="btn-add-produto" class="flex items-center bg-brazil-green text-white font-bold rounded-lg px-4 py-2 shadow hover:bg-green-600 transition">
+                    <i class="fa-solid fa-plus mr-2"></i>
+                    Novo Produto
+                </button>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="relative">
+                        <i class="fa-regular fa-bell text-xl text-gray-600"></i>
+                        <span class="absolute -top-1 -right-1 bg-brazil-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">2</span>
+                    </button>
+                </div>
+                <div class="flex items-center">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User Avatar" class="w-10 h-10 rounded-full border-2 border-brazil-yellow" />
+                    <div class="ml-2">
+                        <p class="text-sm font-medium text-gray-800">Carlos Silva</p>
+                        <p class="text-xs text-gray-500">Administrador</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="menu-section" class="flex flex-col h-[720px]">
+            <div id="filtros-menu" class="mb-4 flex flex-col md:flex-row md:items-end md:space-x-6 space-y-3 md:space-y-0">
+                <div class="flex-1">
+                    <label class="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">Buscar Produto</label>
+                    <div class="relative">
+                        <input id="search-produto" type="text" placeholder="Nome do produto ou categoria" class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brazil-blue bg-white text-gray-800 font-medium transition" />
+                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">Categoria</label>
+                    <select id="filtro-categoria" class="w-full md:w-44 border border-gray-200 rounded-lg py-2 px-3 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-brazil-blue">
+                        <option value="">Todas</option>
+                        <option value="Entradas">Entradas</option>
+                        <option value="Pratos Principais">Pratos Principais</option>
+                        <option value="Sobremesas">Sobremesas</option>
+                        <option value="Bebidas">Bebidas</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">Status</label>
+                    <select id="filtro-status-produto" class="w-full md:w-36 border border-gray-200 rounded-lg py-2 px-3 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-brazil-blue">
+                        <option value="">Todos</option>
+                        <option value="disponivel">Disponível</option>
+                        <option value="indisponivel">Indisponível</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">Itens por página</label>
+                    <select id="filtro-paginacao-produto" class="w-full md:w-40 border border-gray-200 rounded-lg py-2 px-3 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-brazil-blue">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="all">Todos</option>
+                    </select>
+                </div>
+                <button id="menu-clean-filters" class="bg-brazil-yellow text-brazil-blue font-semibold rounded-lg px-4 py-2 shadow hover:bg-yellow-200 transition ml-auto md:ml-0">
+                    Limpar
+                </button>
+            </div>
+            <div id="produtos-table-card" class="bg-white rounded-xl shadow-lg p-0 overflow-hidden flex-1 flex flex-col">
+                <div class="overflow-x-auto">
+                    <table id="produtos-table" class="min-w-full divide-y divide-gray-100">
+                        <thead class="bg-brazil-blue">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat w-32">Foto</th>
+                                <th class="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">Nome</th>
+                                <th class="px-4 py-4 text-right text-xs font-bold text-white tracking-wider font-montserrat">Preço</th>
+                                <th class="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">Categoria</th>
+                                <th class="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">Stock</th>
+                                <th class="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">Status</th>
+                                <th class="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="produtos-tbody" class="bg-white divide-y divide-gray-100 text-gray-800 font-medium">
+                            <!-- Produtos serão preenchidos via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-3 flex justify-between items-center bg-gray-50">
+                    <span class="text-xs text-gray-600" id="produtos-pagination-info">Exibindo 1-10 de 30 produtos</span>
+                    <div class="space-x-1" id="produtos-pagination">
+                        <!-- Paginação via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Categorias -->
+    <div id="modal-categorias-bg" class="fixed inset-0 bg-black bg-opacity-40 z-50 justify-center items-center hidden">
+        <div id="modal-categorias" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 relative flex flex-col" style="min-width:370px;">
+            <button class="absolute top-4 right-4 text-brazil-blue hover:text-brazil-green text-xl" onclick="closeCategoriasModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h2 class="text-2xl font-bold font-montserrat text-brazil-blue mb-6 text-center">Gerenciar Categorias</h2>
+            <div class="flex gap-2 mb-4">
+                <input id="input-nova-categoria" type="text" placeholder="Nova categoria" class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-gray-800 focus:ring-2 focus:ring-brazil-blue transition" />
+                <button class="bg-brazil-green text-white font-semibold rounded-lg px-4 py-2 hover:bg-green-700 transition" onclick="addCategoria()">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <ul id="lista-categorias" class="space-y-3 max-h-64 overflow-y-auto pr-2">
+                <!-- Categorias via JS -->
+            </ul>
+        </div>
+    </div>
+    <!-- Modal Produto CRUD (Exemplo visual) -->
+    <div id="modal-produto-bg" class="fixed inset-0 bg-black bg-opacity-40 z-50 justify-center items-center hidden">
+        <div id="modal-produto" class="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-8 relative flex flex-col" style="min-width:370px;">
+            <button class="absolute top-4 right-4 text-brazil-blue hover:text-brazil-green text-xl" onclick="closeProdutoModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h2 class="text-2xl font-bold font-montserrat text-brazil-blue mb-6 text-center" id="modal-produto-title">Adicionar Produto</h2>
+            <form id="form-produto" enctype="multipart/form-data" autocomplete="off" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1 font-montserrat">Nome do Produto</label>
+                    <input type="text" id="produto-nome" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brazil-blue text-gray-800 font-medium" required="" />
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1 font-montserrat">Preço <span class="text-xs font-normal">(R$)</span></label>
+                    <input type="number" min="0" step="0.01" id="produto-preco" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brazil-blue text-gray-800 font-medium" required="" />
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1 font-montserrat">Categoria</label>
+                    <select id="produto-categoria" class="w-full border border-gray-200 rounded-lg py-2 px-3 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-brazil-blue" required="">
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1 font-montserrat">Estoque</label>
+                    <input type="number" min="0" id="produto-stock" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brazil-blue text-gray-800 font-medium" required="" />
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1 font-montserrat">Status</label>
+                    <select id="produto-status" class="w-full border border-gray-200 rounded-lg py-2 px-3 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-brazil-blue" required="">
+                        <option value="disponivel">Disponível</option>
+                        <option value="indisponivel">Indisponível</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1 font-montserrat">Foto do Produto</label>
+                    <input type="file" accept="image/*" id="produto-foto" class="block w-full text-gray-700" />
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button type="submit" class="bg-brazil-green text-white font-semibold rounded-lg px-6 py-2 hover:bg-green-700 transition" id="btn-save-produto">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simulação de produtos e categorias
+    let categorias = ["Entradas", "Pratos Principais", "Sobremesas", "Bebidas"];
+    let produtos = [
+        {
+            id: 1, nome: "Coxinha", preco: 10.5, categoria: "Entradas", stock: 24, status: "disponivel", foto: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        },
+        {
+            id: 2, nome: "Feijoada", preco: 35.0, categoria: "Pratos Principais", stock: 8, status: "disponivel", foto: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        },
+        {
+            id: 3, nome: "Brigadeiro", preco: 4.0, categoria: "Sobremesas", stock: 60, status: "disponivel", foto: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        },
+        {
+            id: 4, nome: "Caipirinha", preco: 18.0, categoria: "Bebidas", stock: 15, status: "disponivel", foto: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        },
+        {
+            id: 5, nome: "Pão de Queijo", preco: 7.5, categoria: "Entradas", stock: 40, status: "disponivel", foto: "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        },
+        {
+            id: 6, nome: "Moqueca Baiana", preco: 45.0, categoria: "Pratos Principais", stock: 5, status: "indisponivel", foto: "https://images.unsplash.com/photo-1523983303491-2e7e60e18046?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        },
+        {
+            id: 7, nome: "Quindim", preco: 6.5, categoria: "Sobremesas", stock: 21, status: "disponivel", foto: "https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        },
+        {
+            id: 8, nome: "Guaraná", preco: 5.0, categoria: "Bebidas", stock: 78, status: "disponivel", foto: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        },
+        {
+            id: 9, nome: "Pastel de Feira", preco: 12.0, categoria: "Entradas", stock: 17, status: "disponivel", foto: "https://images.unsplash.com/photo-1429554429301-01bcd64c6eab?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        },
+        {
+            id: 10, nome: "Bife à Parmegiana", preco: 38.0, categoria: "Pratos Principais", stock: 11, status: "disponivel", foto: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        },
+        {
+            id: 11, nome: "Mousse de Maracujá", preco: 5.5, categoria: "Sobremesas", stock: 31, status: "disponivel", foto: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        },
+        {
+            id: 12, nome: "Suco de Laranja", preco: 6.0, categoria: "Bebidas", stock: 55, status: "disponivel", foto: "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        },
+        {
+            id: 13, nome: "Empada de Frango", preco: 8.0, categoria: "Entradas", stock: 13, status: "indisponivel", foto: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        },
+        {
+            id: 14, nome: "Bobó de Camarão", preco: 42.0, categoria: "Pratos Principais", stock: 7, status: "disponivel", foto: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        },
+        {
+            id: 15, nome: "Pudim de Leite", preco: 5.0, categoria: "Sobremesas", stock: 22, status: "disponivel", foto: "https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?auto=format&amp;fit=facearea&amp;w=128&amp;q=80"
+        }
+    ];
+
+    let currentPage = 1;
+    let itemsPerPage = 10;
+    let searchValue = '';
+    let categoriaValue = '';
+    let statusValue = '';
+    let filteredProdutos = [];
+
+    function renderCategorias() {
+        let ul = document.getElementById("lista-categorias");
+        ul.innerHTML = "";
+        categorias.forEach((cat, idx) =&gt; {
+            let li = document.createElement('li');
+            li.className = "flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg";
+            li.innerHTML = `
+                &lt;span class="font-medium text-gray-700"&gt;${cat}&lt;/span&gt;
+                &lt;div&gt;
+                    &lt;button class="text-brazil-blue hover:text-brazil-green mr-2" onclick="editarCategoria(${idx})"&gt;&lt;i class="fa-solid fa-pen"&gt;&lt;/i&gt;&lt;/button&gt;
+                    &lt;button class="text-brazil-red hover:text-red-700" onclick="removerCategoria(${idx})"&gt;&lt;i class="fa-solid fa-trash"&gt;&lt;/i&gt;&lt;/button&gt;
+                &lt;/div&gt;
+            `;
+            ul.appendChild(li);
+        });
+    }
+    function addCategoria() {
+        let input = document.getElementById('input-nova-categoria');
+        let valor = input.value.trim();
+        if(valor &amp;&amp; !categorias.includes(valor)) {
+            categorias.push(valor);
+            input.value = '';
+            renderCategorias();
+            renderCategoriasSelect();
+        }
+    }
+    function removerCategoria(idx) {
+        categorias.splice(idx, 1);
+        renderCategorias();
+        renderCategoriasSelect();
+    }
+    function editarCategoria(idx) {
+        let novoNome = prompt("Editar categoria:", categorias[idx]);
+        if(novoNome &amp;&amp; !categorias.includes(novoNome)) {
+            categorias[idx] = novoNome;
+            renderCategorias();
+            renderCategoriasSelect();
+        }
+    }
+    function renderCategoriasSelect() {
+        let select = document.getElementById('produto-categoria');
+        if(!select) return;
+        select.innerHTML = '';
+        categorias.forEach(cat =&gt; {
+            let opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            select.appendChild(opt);
+        });
+    }
+
+    function openCategoriasModal() {
+        document.getElementById('modal-categorias-bg').classList.remove('hidden');
+        renderCategorias();
+    }
+    function closeCategoriasModal() {
+        document.getElementById('modal-categorias-bg').classList.add('hidden');
+    }
+    document.getElementById('btn-categorias-modal').onclick = openCategoriasModal;
+
+    // Produto CRUD Modal
+    let editProdutoId = null;
+    function openProdutoModal(produto) {
+        document.getElementById('modal-produto-bg').classList.remove('hidden');
+        renderCategoriasSelect();
+        if(produto) {
+            document.getElementById('modal-produto-title').textContent = "Editar Produto";
+            document.getElementById('produto-nome').value = produto.nome;
+            document.getElementById('produto-preco').value = produto.preco;
+            document.getElementById('produto-categoria').value = produto.categoria;
+            document.getElementById('produto-stock').value = produto.stock;
+            document.getElementById('produto-status').value = produto.status;
+            editProdutoId = produto.id;
+        } else {
+            document.getElementById('modal-produto-title').textContent = "Adicionar Produto";
+            document.getElementById('form-produto').reset();
+            editProdutoId = null;
+        }
+    }
+    function closeProdutoModal() {
+        document.getElementById('modal-produto-bg').classList.add('hidden');
+        editProdutoId = null;
+    }
+    document.getElementById('btn-add</script></body></html>
