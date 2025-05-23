@@ -130,10 +130,12 @@ export default function MenuManager() {
 
       const matchesCategory = !categoryFilter || 
         categoryFilter === 'all' || 
+        categoryFilter === '' ||
         item.categoryId.toString() === categoryFilter;
 
       const matchesStatus = !statusFilter || 
         statusFilter === 'all' || 
+        statusFilter === '' ||
         (statusFilter === 'disponivel' && item.is_available) ||
         (statusFilter === 'indisponivel' && !item.is_available);
 
@@ -306,8 +308,8 @@ export default function MenuManager() {
 
   const clearFilters = () => {
     setSearchText('');
-    setCategoryFilter('');
-    setStatusFilter('');
+    setCategoryFilter('all');
+    setStatusFilter('all');
     setCurrentPage(1);
   };
 
@@ -413,7 +415,7 @@ export default function MenuManager() {
                 <SelectValue placeholder={t('AllCategories')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t('AllCategories')}</SelectItem>
+                <SelectItem value="all">{t('AllCategories')}</SelectItem>
                 {Array.isArray(categories) && categories.map((category: any) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
@@ -432,7 +434,7 @@ export default function MenuManager() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t('All')}</SelectItem>
+                <SelectItem value="all">{t('All')}</SelectItem>
                 <SelectItem value="disponivel">{t('Available')}</SelectItem>
                 <SelectItem value="indisponivel">{t('Unavailable')}</SelectItem>
               </SelectContent>
