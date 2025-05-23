@@ -70,7 +70,7 @@ const MenuManager: React.FC = () => {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   
-  // Ativar Supabase Realtime para atualizações em tempo real
+  // ✅ Ativar Supabase Realtime para atualizações automáticas de estoque em tempo real
   useSupabaseRealtime();
   const [searchText, setSearchText] = useState('');
   const [currentCategoryId, setCurrentCategoryId] = useState<string | null>(null);
