@@ -832,7 +832,18 @@ const MenuManager: React.FC = () => {
                           placeholder="0.00"
                           step="0.01"
                           min="0"
-                          {...field}
+                          value={field.value?.toString() || ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "") {
+                              field.onChange(0);
+                            } else {
+                              const numericValue = parseFloat(value);
+                              if (!isNaN(numericValue)) {
+                                field.onChange(numericValue);
+                              }
+                            }
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
