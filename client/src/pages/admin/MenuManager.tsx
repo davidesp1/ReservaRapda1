@@ -22,6 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import Swal from "sweetalert2";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -299,16 +300,49 @@ const MenuManager: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["supabase-menu-items"] });
-      toast({ title: "Produto removido com sucesso!" });
+      // Usar SweetAlert2 em vez de toast
+      Swal.fire({
+        title: 'Excluído!',
+        text: 'Produto removido com sucesso!',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        background: '#ffffff',
+        color: '#1f2937'
+      });
     },
     onError: (error: any) => {
-      toast({
-        title: "Erro ao remover produto",
-        description: error.message,
-        variant: "destructive",
+      // Usar SweetAlert2 em vez de toast
+      Swal.fire({
+        title: 'Erro!',
+        text: `Erro ao remover produto: ${error.message}`,
+        icon: 'error',
+        confirmButtonText: 'Ok',
+        background: '#ffffff',
+        color: '#1f2937'
       });
     },
   });
+
+  // Função para confirmação de exclusão com SweetAlert2
+  const handleDeleteItem = async (item: any) => {
+    const result = await Swal.fire({
+      title: 'Tem certeza?',
+      text: `Deseja realmente excluir o item "${item.name}"? Esta ação não pode ser desfeita.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sim, excluir!',
+      cancelButtonText: 'Cancelar',
+      background: '#ffffff',
+      color: '#1f2937'
+    });
+
+    if (result.isConfirmed) {
+      deleteItemMutation.mutate(item.id);
+    }
+  };
 
   const createCategoryMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -755,7 +789,7 @@ const MenuManager: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => deleteItemMutation.mutate(item.id)}
+                          onClick={() => handleDeleteItem(item)}
                         >
                           <i className="fas fa-trash text-red-500"></i>
                         </Button>
