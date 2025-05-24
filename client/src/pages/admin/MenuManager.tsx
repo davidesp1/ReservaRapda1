@@ -176,15 +176,13 @@ const MenuManager: React.FC = () => {
 
       // Teste de conectividade com Supabase primeiro
       console.log("🔍 Testando conectividade com Supabase...");
-      console.log("🔍 Supabase URL:", supabase.supabaseUrl);
-      console.log("🔍 Supabase Key:", supabase.supabaseKey?.substring(0, 20) + "...");
       
-      // Query com JOIN para categoria CORRETA
+      // Query com JOIN usando alias correto
       const { data, error, status, statusText } = await supabase
         .from("menu_items")
         .select(`
           *,
-          menu_categories (
+          category:menu_categories!category_id (
             id,
             name,
             description
@@ -715,7 +713,7 @@ const MenuManager: React.FC = () => {
                     </td>
                     <td className="px-4 py-4">
                       <Badge variant="outline">
-                        {item.menu_categories?.name || "Sem categoria"}
+                        {item.category?.name || "Sem categoria"}
                       </Badge>
                     </td>
                     <td className="px-4 py-4 text-center">
