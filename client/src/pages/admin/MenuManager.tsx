@@ -139,10 +139,16 @@ const MenuManager: React.FC = () => {
         throw new Error("Supabase não configurado");
       }
 
-      const { data, error } = await supabase
+      // Teste básico de conectividade
+      console.log("🔍 Testando query de categorias...");
+      const { data, error, status, statusText } = await supabase
         .from("menu_categories")
         .select("*")
         .order("name");
+        
+      console.log("🔍 Categorias - Status:", status, statusText);
+      console.log("🔍 Categorias - Error:", error);
+      console.log("🔍 Categorias - Data:", data);
 
       console.log("📊 Resultado categorias:", { data, error });
       if (error) {
@@ -168,11 +174,20 @@ const MenuManager: React.FC = () => {
         throw new Error("Supabase não configurado");
       }
 
-      // Primeiro tentar query simples sem JOIN
-      const { data, error } = await supabase
+      // Teste de conectividade com Supabase primeiro
+      console.log("🔍 Testando conectividade com Supabase...");
+      console.log("🔍 Supabase URL:", supabase.supabaseUrl);
+      console.log("🔍 Supabase Key:", supabase.supabaseKey?.substring(0, 20) + "...");
+      
+      // Query simples para testar primeiro
+      const { data, error, status, statusText } = await supabase
         .from("menu_items")
         .select("*")
         .order("name");
+        
+      console.log("🔍 Response status:", status, statusText);
+      console.log("🔍 Response error:", error);
+      console.log("🔍 Response data:", data);
 
       console.log("📊 Resultado menu items:", { data, error });
       if (error) {
