@@ -488,7 +488,7 @@ const MenuManager: React.FC = () => {
       productForm.reset({
         name: product.name,
         description: product.description || "",
-        price: product.price / 100,
+        price: (product.price / 100).toString(),
         categoryId: product.category_id?.toString() || '',
         featured: product.featured,
         imageUrl: product.image_url || "",
