@@ -9,28 +9,28 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CreditCard, Smartphone, Landmark, Key, Settings, Check } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { AlertCircle, CreditCard, Smartphone, Landmark, Key, Settings, Check, Wifi, WifiOff, Loader2 } from 'lucide-react';
+import { usePaymentSettings, type PaymentSettings as PaymentSettingsType } from '@/hooks/usePaymentSettings';
 import Swal from 'sweetalert2';
-
-interface PaymentSettings {
-  id?: number;
-  eupago_api_key: string;
-  enabled_methods: string[];
-}
 
 export default function PaymentSettings() {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   
-  // Estados do componente
-  const [settings, setSettings] = useState<PaymentSettings>({
-    eupago_api_key: '',
-    enabled_methods: []
-  });
-  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  // Hook personalizado com Realtime
+  const { 
+    settings, 
+    isLoading: isLoadingSettings, 
+    error, 
+    updateSettings, 
+    hasValidApiKey 
+  } = usePaymentSettings();
+  
+  // Estados locais do componente
+  const [localApiKey, setLocalApiKey] = useState('');
+  const [localEnabledMethods, setLocalEnabledMethods] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasValidApiKey, setHasValidApiKey] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Métodos de pagamento disponíveis
   const paymentMethods = [
@@ -64,83 +64,48 @@ export default function PaymentSettings() {
     }
   }, [isAuthenticated, isAdmin, isLoading, setLocation]);
 
-  // Carregar configurações do Supabase
+  // Sincronizar estados locais com configurações do hook
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        console.log('🔍 Carregando configurações de pagamento...');
-        
-        const { data, error } = await supabase
-          .from('payment_settings')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (error) {
-          console.error('❌ Erro ao carregar configurações:', error);
-          throw error;
-        }
-
-        if (data && data.length > 0) {
-          const currentSettings = data[0];
-          console.log('✅ Configurações carregadas:', currentSettings);
-          
-          setSettings({
-            id: currentSettings.id,
-            eupago_api_key: currentSettings.eupago_api_key || '',
-            enabled_methods: currentSettings.enabled_methods || []
-          });
-        } else {
-          console.log('ℹ️ Nenhuma configuração encontrada, usando valores padrão');
-        }
-      } catch (error) {
-        console.error('❌ Erro ao buscar configurações:', error);
-        Swal.fire({
-          title: 'Erro!',
-          text: 'Não foi possível carregar as configurações de pagamento.',
-          icon: 'error',
-          confirmButtonText: 'Ok'
-        });
-      } finally {
-        setIsLoadingSettings(false);
-      }
-    };
-
-    if (!isLoading && isAuthenticated && isAdmin) {
-      fetchSettings();
+    if (settings) {
+      console.log('🔄 [PaymentSettings] Sincronizando estado local com configurações:', settings);
+      setLocalApiKey(settings.eupago_api_key || '');
+      setLocalEnabledMethods(settings.enabled_methods || []);
+      setHasUnsavedChanges(false);
     }
-  }, [isAuthenticated, isAdmin, isLoading]);
+  }, [settings]);
 
-  // Validar API Key
+  // Detectar mudanças não salvas
   useEffect(() => {
-    const apiKey = settings.eupago_api_key.trim();
-    setHasValidApiKey(apiKey.length > 0);
-  }, [settings.eupago_api_key]);
+    if (!settings) return;
+    
+    const hasChanges = 
+      localApiKey !== (settings.eupago_api_key || '') ||
+      JSON.stringify(localEnabledMethods.sort()) !== JSON.stringify((settings.enabled_methods || []).sort());
+    
+    setHasUnsavedChanges(hasChanges);
+  }, [localApiKey, localEnabledMethods, settings]);
 
   // Handler para mudança da API Key
   const handleApiKeyChange = (value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      eupago_api_key: value
-    }));
+    setLocalApiKey(value);
   };
 
   // Handler para alternar método de pagamento
   const togglePaymentMethod = (methodId: string, enabled: boolean) => {
-    if (!hasValidApiKey) return;
+    const currentApiKey = localApiKey.trim();
+    if (!currentApiKey) return; // Só permite mudanças se há API Key
 
-    setSettings(prev => ({
-      ...prev,
-      enabled_methods: enabled 
-        ? [...prev.enabled_methods, methodId]
-        : prev.enabled_methods.filter(m => m !== methodId)
-    }));
+    setLocalEnabledMethods(prev => 
+      enabled 
+        ? [...prev, methodId]
+        : prev.filter(m => m !== methodId)
+    );
   };
 
   // Salvar configurações
   const handleSave = async () => {
     // Validação da API Key
-    if (!settings.eupago_api_key.trim()) {
+    if (!localApiKey.trim()) {
       Swal.fire({
         title: 'Atenção!',
         text: 'Por favor, insira a API Key da Eupago antes de salvar.',
@@ -153,50 +118,15 @@ export default function PaymentSettings() {
     setIsSaving(true);
 
     try {
-      console.log('💾 Salvando configurações:', settings);
+      console.log('💾 [PaymentSettings] Salvando configurações locais:', {
+        eupago_api_key: localApiKey,
+        enabled_methods: localEnabledMethods
+      });
 
-      const dataToSave = {
-        eupago_api_key: settings.eupago_api_key.trim(),
-        enabled_methods: settings.enabled_methods,
-        updated_at: new Date().toISOString()
-      };
-
-      let result;
-      
-      if (settings.id) {
-        // Update existente
-        result = await supabase
-          .from('payment_settings')
-          .update(dataToSave)
-          .eq('id', settings.id)
-          .select();
-      } else {
-        // Insert novo
-        result = await supabase
-          .from('payment_settings')
-          .insert([{
-            ...dataToSave,
-            created_at: new Date().toISOString()
-          }])
-          .select();
-      }
-
-      const { data, error } = result;
-
-      if (error) {
-        console.error('❌ Erro ao salvar:', error);
-        throw error;
-      }
-
-      console.log('✅ Configurações salvas com sucesso:', data);
-
-      // Atualizar estado local com o ID retornado
-      if (data && data.length > 0) {
-        setSettings(prev => ({
-          ...prev,
-          id: data[0].id
-        }));
-      }
+      await updateSettings({
+        eupago_api_key: localApiKey,
+        enabled_methods: localEnabledMethods
+      });
 
       Swal.fire({
         title: 'Sucesso!',
@@ -207,10 +137,10 @@ export default function PaymentSettings() {
       });
 
     } catch (error) {
-      console.error('❌ Erro ao salvar configurações:', error);
+      console.error('❌ [PaymentSettings] Erro ao salvar:', error);
       Swal.fire({
         title: 'Erro!',
-        text: 'Não foi possível salvar as configurações. Tente novamente.',
+        text: error instanceof Error ? error.message : 'Não foi possível salvar as configurações. Tente novamente.',
         icon: 'error',
         confirmButtonText: 'Ok'
       });
@@ -219,12 +149,33 @@ export default function PaymentSettings() {
     }
   };
 
+  // Validar se a API Key local é válida
+  const hasValidLocalApiKey = Boolean(localApiKey && localApiKey.trim().length > 0);
+
   // Loading state
   if (isLoading || isLoadingSettings) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            <p className="text-gray-600">Carregando configurações de pagamento...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Erro ao carregar configurações</h2>
+            <p className="text-gray-600">{error}</p>
+          </div>
         </div>
       </AdminLayout>
     );
@@ -233,9 +184,26 @@ export default function PaymentSettings() {
   return (
     <AdminLayout>
       <div className="container mx-auto p-6 max-w-4xl">
-        <div className="flex items-center gap-3 mb-6">
-          <Settings className="w-8 h-8 text-blue-600" />
-          <h1 className="text-3xl font-bold text-gray-900">Configurações de Pagamento</h1>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Settings className="w-8 h-8 text-blue-600" />
+            <h1 className="text-3xl font-bold text-gray-900">Configurações de Pagamento</h1>
+          </div>
+          
+          {/* Indicador de conexão Realtime */}
+          <div className="flex items-center gap-2">
+            {hasValidApiKey ? (
+              <div className="flex items-center gap-2 text-green-600">
+                <Wifi className="w-4 h-4" />
+                <span className="text-sm">Tempo Real Ativo</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-gray-400">
+                <WifiOff className="w-4 h-4" />
+                <span className="text-sm">Aguardando API Key</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -257,7 +225,7 @@ export default function PaymentSettings() {
                   id="api-key"
                   type="password"
                   placeholder="Insira sua API Key da Eupago"
-                  value={settings.eupago_api_key}
+                  value={localApiKey}
                   onChange={(e) => handleApiKeyChange(e.target.value)}
                   className="font-mono"
                 />
@@ -266,10 +234,17 @@ export default function PaymentSettings() {
                 </p>
               </div>
 
-              {hasValidApiKey && (
+              {hasValidLocalApiKey && (
                 <div className="flex items-center gap-2 text-green-600">
                   <Check className="w-4 h-4" />
                   <span className="text-sm">API Key configurada</span>
+                </div>
+              )}
+              
+              {hasUnsavedChanges && (
+                <div className="flex items-center gap-2 text-orange-600">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="text-sm">Alterações não salvas</span>
                 </div>
               )}
             </CardContent>
@@ -286,7 +261,7 @@ export default function PaymentSettings() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {!hasValidApiKey && (
+              {!hasValidLocalApiKey && (
                 <div className="flex items-center gap-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <AlertCircle className="w-5 h-5 text-yellow-600" />
                   <p className="text-sm text-yellow-800">
@@ -298,8 +273,8 @@ export default function PaymentSettings() {
               <div className="grid gap-4">
                 {paymentMethods.map((method) => {
                   const IconComponent = method.icon;
-                  const isEnabled = settings.enabled_methods.includes(method.id);
-                  const isDisabled = !hasValidApiKey;
+                  const isEnabled = localEnabledMethods.includes(method.id);
+                  const isDisabled = !hasValidLocalApiKey;
 
                   return (
                     <div
@@ -347,16 +322,18 @@ export default function PaymentSettings() {
           <div className="flex justify-end">
             <Button
               onClick={handleSave}
-              disabled={isSaving || !hasValidApiKey}
+              disabled={isSaving || !hasValidLocalApiKey || !hasUnsavedChanges}
               className="min-w-[120px]"
             >
               {isSaving ? (
                 <div className="flex items-center gap-2">
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   Salvando...
                 </div>
-              ) : (
+              ) : hasUnsavedChanges ? (
                 'Salvar Configurações'
+              ) : (
+                'Configurações Salvas'
               )}
             </Button>
           </div>
