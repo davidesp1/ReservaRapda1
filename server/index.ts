@@ -4,6 +4,7 @@ import PgSession from "connect-pg-simple";
 import { createServer } from "http";
 
 import router from "./routes";
+import { registerPaymentRoutes } from "./paymentRoutes";
 import { setupVite, serveStatic, log } from "./vite";
 import { db } from "./db";
 

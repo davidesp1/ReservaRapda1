@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
 
 export type PaymentSettings = {
   id?: number;
@@ -33,36 +33,41 @@ export function usePaymentSettings(): PaymentSettingsHook {
 
   // Função para buscar configurações do banco
   const fetchSettings = async () => {
+    setIsLoading(true);
     try {
-      console.log('🔍 [usePaymentSettings] Carregando configurações...');
+      console.log('🔍 [usePaymentSettings] Iniciando requisição...');
       
-      const response = await apiRequest('GET', '/api/payment-settings');
+      const response = await fetch('/api/payment-settings', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include' // Importante para incluir cookies de sessão
+      });
+      
       console.log('🔍 [usePaymentSettings] Response status:', response.status);
-      console.log('🔍 [usePaymentSettings] Response headers:', response.headers);
-      
-      // Verificar se a resposta é HTML (erro de rota)
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('text/html')) {
-        const htmlText = await response.text();
-        console.error('Recebida resposta HTML quando esperava JSON:', htmlText.substring(0, 200));
-        throw new Error('Servidor retornou HTML em vez de JSON. Verifique se a rota da API está configurada corretamente.');
-      }
+      console.log('🔍 [usePaymentSettings] Response ok:', response.ok);
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ [usePaymentSettings] Erro HTTP:', response.status, errorText);
-        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        if (response.status === 401) {
+          throw new Error('Não autenticado - Faça login como administrador');
+        }
+        if (response.status === 403) {
+          throw new Error('Acesso negado - Apenas administradores podem acessar');
+        }
+        throw new Error(`Erro HTTP ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('✅ [usePaymentSettings] Configurações carregadas:', data);
+      console.log('✅ [usePaymentSettings] Dados recebidos:', data);
       
       setSettings(data);
       setError(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
-      console.error('❌ [usePaymentSettings] Erro na busca:', errorMessage);
+      console.error('❌ [usePaymentSettings] Erro:', errorMessage);
       setError(errorMessage);
+      setSettings(null);
     } finally {
       setIsLoading(false);
     }
@@ -80,29 +85,36 @@ export function usePaymentSettings(): PaymentSettingsHook {
   // Função para atualizar configurações
   const updateSettings = async (newSettings: Partial<PaymentSettings>) => {
     try {
-      console.log('💾 [usePaymentSettings] Salvando configurações:', newSettings);
+      console.log('💾 [usePaymentSettings] Salvando:', newSettings);
 
       const dataToSave = {
         eupago_api_key: newSettings.eupago_api_key?.trim() || '',
         enabled_methods: newSettings.enabled_methods || []
       };
 
-      const response = await apiRequest('POST', '/api/payment-settings', dataToSave);
+      const response = await fetch('/api/payment-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(dataToSave)
+      });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao salvar configurações');
+        const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
+        throw new Error(errorData.message || `Erro HTTP ${response.status}`);
       }
       
       const updatedSettings = await response.json();
-      console.log('✅ [usePaymentSettings] Configurações salvas com sucesso:', updatedSettings);
+      console.log('✅ [usePaymentSettings] Salvo com sucesso:', updatedSettings);
       
-      // Atualizar estado local imediatamente
+      // Atualizar estado local
       setSettings(updatedSettings);
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao salvar configurações';
-      console.error('❌ [usePaymentSettings] Erro na atualização:', errorMessage);
+      console.error('❌ [usePaymentSettings] Erro ao salvar:', errorMessage);
       throw new Error(errorMessage);
     }
   };
@@ -113,34 +125,22 @@ export function usePaymentSettings(): PaymentSettingsHook {
     settings.eupago_api_key.trim().length > 0
   );
 
-  // Efeito para carregar configurações iniciais e configurar polling
+  // Carregar configurações na inicialização
   useEffect(() => {
-    let mounted = true;
-    let pollingInterval: NodeJS.Timeout | null = null;
-
-    const initialize = async () => {
-      if (!mounted) return;
-      
-      // Carregar configurações iniciais
-      await fetchSettings();
-      
-      if (!mounted) return;
-      
-      // Configurar polling para atualizações
-      pollingInterval = setupPolling();
-    };
-
-    initialize();
-
-    // Cleanup function
-    return () => {
-      mounted = false;
-      if (pollingInterval) {
-        console.log('🧹 [usePaymentSettings] Limpando polling');
-        clearInterval(pollingInterval);
-      }
-    };
+    console.log('🚀 [usePaymentSettings] Hook inicializando...');
+    fetchSettings();
   }, []);
+
+  // Polling simples para atualizações (opcional)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!isLoading) {
+        fetchSettings();
+      }
+    }, 30000); // Atualizar a cada 30 segundos
+
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   return {
     settings,
