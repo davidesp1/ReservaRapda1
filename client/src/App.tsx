@@ -115,7 +115,7 @@ function Router() {
       <Route path="/admin/finance" component={Finance} />
       <Route path="/admin/reports" component={ReportsManager} />
       <Route path="/admin/settings" component={Settings} />
-
+      <Route path="/admin/payment-settings" component={PaymentSettings} />
       <Route path="/admin/reservations" component={ReservationManager} />
       <Route path="/admin/pos" component={POSMode} />
       

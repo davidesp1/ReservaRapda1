@@ -209,6 +209,18 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
 
 // Types export
 export type User = typeof users.$inferSelect;
+
+// Payment Settings table for Eupago configuration
+export const paymentSettings = pgTable("payment_settings", {
+  id: serial("id").primaryKey(),
+  eupago_api_key: text("eupago_api_key"),
+  enabled_methods: text("enabled_methods").array().default(sql`'{}'::text[]`),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+export type PaymentSettings = typeof paymentSettings.$inferSelect;
+export type InsertPaymentSettings = typeof paymentSettings.$inferInsert;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type MenuCategory = typeof menuCategories.$inferSelect;
