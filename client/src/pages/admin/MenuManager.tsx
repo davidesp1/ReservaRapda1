@@ -883,7 +883,23 @@ const MenuManager: React.FC = () => {
                   <FormItem>
                     <FormLabel>Estoque</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="0" min="0" {...field} />
+                      <Input 
+                        type="number" 
+                        placeholder="0" 
+                        min="0" 
+                        value={field.value?.toString() || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "") {
+                            field.onChange(0);
+                          } else {
+                            const numericValue = parseInt(value);
+                            if (!isNaN(numericValue)) {
+                              field.onChange(numericValue);
+                            }
+                          }
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
