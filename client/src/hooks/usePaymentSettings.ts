@@ -37,8 +37,20 @@ export function usePaymentSettings(): PaymentSettingsHook {
       console.log('🔍 [usePaymentSettings] Carregando configurações...');
       
       const response = await apiRequest('GET', '/api/payment-settings');
+      console.log('🔍 [usePaymentSettings] Response status:', response.status);
+      console.log('🔍 [usePaymentSettings] Response headers:', response.headers);
+      
+      // Verificar se a resposta é HTML (erro de rota)
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('text/html')) {
+        const htmlText = await response.text();
+        console.error('Recebida resposta HTML quando esperava JSON:', htmlText.substring(0, 200));
+        throw new Error('Servidor retornou HTML em vez de JSON. Verifique se a rota da API está configurada corretamente.');
+      }
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [usePaymentSettings] Erro HTTP:', response.status, errorText);
         throw new Error(`Erro ${response.status}: ${response.statusText}`);
       }
       
