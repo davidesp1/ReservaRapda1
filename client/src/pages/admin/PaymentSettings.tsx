@@ -1,323 +1,367 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import AdminLayout from '@/components/layouts/AdminLayout';
+import { useLocation } from 'wouter';
+import { AdminLayout } from '@/components/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, CreditCard, Banknote, Landmark, QrCode, ArrowRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { AlertCircle, CreditCard, Smartphone, Landmark, Key, Settings, Check } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import Swal from 'sweetalert2';
 
-// Interface para os dados de configuração de pagamento retornados pela API
-interface PaymentSettingsData {
-  acceptCard: string;
-  acceptMBWay: string;
-  acceptMultibanco: string;
-  acceptBankTransfer: string;
-  acceptCash: string;
-  eupagoApiKey?: string;
+interface PaymentSettings {
+  id?: number;
+  eupago_api_key: string;
+  enabled_methods: string[];
 }
 
-// Schema para as configurações de pagamento
-const paymentSettingsSchema = z.object({
-  acceptCard: z.boolean().default(true),
-  acceptMBWay: z.boolean().default(true),
-  acceptMultibanco: z.boolean().default(true),
-  acceptBankTransfer: z.boolean().default(true),
-  acceptCash: z.boolean().default(true),
-  eupagoApiKey: z.string().optional(),
-});
-
-type PaymentSettings = z.infer<typeof paymentSettingsSchema>;
-
-const PaymentSettings: React.FC = () => {
-  const { t } = useTranslation();
+export default function PaymentSettings() {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
-  const [_, setLocation] = useLocation();
-  const { toast } = useToast();
-
-  // Formulário de configurações de pagamento
-  const form = useForm<PaymentSettings>({
-    resolver: zodResolver(paymentSettingsSchema),
-    defaultValues: {
-      acceptCard: true,
-      acceptMBWay: true,
-      acceptMultibanco: true,
-      acceptBankTransfer: true,
-      acceptCash: true,
-      eupagoApiKey: '',
-    },
-  });
-
-  // Buscar as configurações atuais
-  const { data: settings, isLoading: settingsLoading } = useQuery<PaymentSettingsData>({
-    queryKey: ['/api/settings/payments'],
-    enabled: isAuthenticated && isAdmin
-  });
+  const [, setLocation] = useLocation();
   
-  // Atualizar o formulário quando os dados são carregados
-  useEffect(() => {
-    if (settings) {
-      const formData = {
-        acceptCard: settings.acceptCard !== 'false',
-        acceptMBWay: settings.acceptMBWay !== 'false',
-        acceptMultibanco: settings.acceptMultibanco !== 'false',
-        acceptBankTransfer: settings.acceptBankTransfer !== 'false',
-        acceptCash: settings.acceptCash !== 'false',
-        eupagoApiKey: settings.eupagoApiKey || '',
-      };
-      form.reset(formData);
-    }
-  }, [settings, form]);
-
-  // Mutation para atualizar as configurações
-  const updateSettingsMutation = useMutation({
-    mutationFn: async (data: PaymentSettings) => {
-      return apiRequest('PUT', '/api/settings/payments', data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/settings/payments'] });
-      toast({
-        title: t('SettingsSaved'),
-        description: t('PaymentSettingsSavedDescription'),
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: t('SettingsSaveError'),
-        description: error.message || t('SettingsSaveErrorDescription'),
-        variant: 'destructive',
-      });
-    },
+  // Estados do componente
+  const [settings, setSettings] = useState<PaymentSettings>({
+    eupago_api_key: '',
+    enabled_methods: []
   });
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasValidApiKey, setHasValidApiKey] = useState(false);
+
+  // Métodos de pagamento disponíveis
+  const paymentMethods = [
+    {
+      id: 'card',
+      name: 'Cartão de Crédito/Débito',
+      description: 'Pagamentos com cartão via gateway Eupago',
+      icon: CreditCard,
+      color: 'text-blue-600'
+    },
+    {
+      id: 'mbway',
+      name: 'MB Way',
+      description: 'Pagamentos através do MB Way',
+      icon: Smartphone,
+      color: 'text-green-600'
+    },
+    {
+      id: 'multibanco',
+      name: 'Multibanco',
+      description: 'Referência Multibanco para pagamento',
+      icon: Landmark,
+      color: 'text-purple-600'
+    }
+  ];
 
   // Verificar autenticação
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || !isAdmin)) {
-      setLocation('/admin');
+      setLocation('/login');
     }
   }, [isAuthenticated, isAdmin, isLoading, setLocation]);
 
-  // Submit handler
-  const onSubmit = (data: PaymentSettings) => {
-    updateSettingsMutation.mutate(data);
+  // Carregar configurações do Supabase
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        console.log('🔍 Carregando configurações de pagamento...');
+        
+        const { data, error } = await supabase
+          .from('payment_settings')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (error) {
+          console.error('❌ Erro ao carregar configurações:', error);
+          throw error;
+        }
+
+        if (data && data.length > 0) {
+          const currentSettings = data[0];
+          console.log('✅ Configurações carregadas:', currentSettings);
+          
+          setSettings({
+            id: currentSettings.id,
+            eupago_api_key: currentSettings.eupago_api_key || '',
+            enabled_methods: currentSettings.enabled_methods || []
+          });
+        } else {
+          console.log('ℹ️ Nenhuma configuração encontrada, usando valores padrão');
+        }
+      } catch (error) {
+        console.error('❌ Erro ao buscar configurações:', error);
+        Swal.fire({
+          title: 'Erro!',
+          text: 'Não foi possível carregar as configurações de pagamento.',
+          icon: 'error',
+          confirmButtonText: 'Ok'
+        });
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+
+    if (!isLoading && isAuthenticated && isAdmin) {
+      fetchSettings();
+    }
+  }, [isAuthenticated, isAdmin, isLoading]);
+
+  // Validar API Key
+  useEffect(() => {
+    const apiKey = settings.eupago_api_key.trim();
+    setHasValidApiKey(apiKey.length > 0);
+  }, [settings.eupago_api_key]);
+
+  // Handler para mudança da API Key
+  const handleApiKeyChange = (value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      eupago_api_key: value
+    }));
   };
 
-  if (settingsLoading || isLoading) {
+  // Handler para alternar método de pagamento
+  const togglePaymentMethod = (methodId: string, enabled: boolean) => {
+    if (!hasValidApiKey) return;
+
+    setSettings(prev => ({
+      ...prev,
+      enabled_methods: enabled 
+        ? [...prev.enabled_methods, methodId]
+        : prev.enabled_methods.filter(m => m !== methodId)
+    }));
+  };
+
+  // Salvar configurações
+  const handleSave = async () => {
+    // Validação da API Key
+    if (!settings.eupago_api_key.trim()) {
+      Swal.fire({
+        title: 'Atenção!',
+        text: 'Por favor, insira a API Key da Eupago antes de salvar.',
+        icon: 'warning',
+        confirmButtonText: 'Ok'
+      });
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      console.log('💾 Salvando configurações:', settings);
+
+      const dataToSave = {
+        eupago_api_key: settings.eupago_api_key.trim(),
+        enabled_methods: settings.enabled_methods,
+        updated_at: new Date().toISOString()
+      };
+
+      let result;
+      
+      if (settings.id) {
+        // Update existente
+        result = await supabase
+          .from('payment_settings')
+          .update(dataToSave)
+          .eq('id', settings.id)
+          .select();
+      } else {
+        // Insert novo
+        result = await supabase
+          .from('payment_settings')
+          .insert([{
+            ...dataToSave,
+            created_at: new Date().toISOString()
+          }])
+          .select();
+      }
+
+      const { data, error } = result;
+
+      if (error) {
+        console.error('❌ Erro ao salvar:', error);
+        throw error;
+      }
+
+      console.log('✅ Configurações salvas com sucesso:', data);
+
+      // Atualizar estado local com o ID retornado
+      if (data && data.length > 0) {
+        setSettings(prev => ({
+          ...prev,
+          id: data[0].id
+        }));
+      }
+
+      Swal.fire({
+        title: 'Sucesso!',
+        text: 'Configurações de pagamento salvas com sucesso!',
+        icon: 'success',
+        timer: 3000,
+        showConfirmButton: false
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao salvar configurações:', error);
+      Swal.fire({
+        title: 'Erro!',
+        text: 'Não foi possível salvar as configurações. Tente novamente.',
+        icon: 'error',
+        confirmButtonText: 'Ok'
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Loading state
+  if (isLoading || isLoadingSettings) {
     return (
-      <AdminLayout title={t('PaymentSettings')}>
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-96 bg-gray-200 rounded"></div>
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
         </div>
       </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout title={t('PaymentSettings')}>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-montserrat font-bold">{t('PaymentSettings')}</h1>
-      </div>
+    <AdminLayout>
+      <div className="container mx-auto p-6 max-w-4xl">
+        <div className="flex items-center gap-3 mb-6">
+          <Settings className="w-8 h-8 text-blue-600" />
+          <h1 className="text-3xl font-bold text-gray-900">Configurações de Pagamento</h1>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('PaymentSettings')}</CardTitle>
-          <CardDescription>{t('PaymentSettingsDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Configurações de Gateway de Pagamento */}
+        <div className="space-y-6">
+          {/* Configuração da API Key */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="w-5 h-5 text-yellow-600" />
+                API Key da Eupago
+              </CardTitle>
+              <CardDescription>
+                Configure sua chave de API para habilitar os métodos de pagamento da Eupago.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="space-y-2">
-                <h3 className="text-lg font-medium">{t('PaymentGatewaySettings')}</h3>
-                <div className="p-6 border rounded-md bg-slate-50">
-                  <FormField
-                    control={form.control}
-                    name="eupagoApiKey"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-lg font-semibold">{t('EuPagoAPIKey')}</FormLabel>
-                        <FormDescription className="mb-2">
-                          {t('EuPagoAPIKeyDescription')}
-                        </FormDescription>
-                        <FormControl>
-                          <Input {...field} type="password" className="font-mono" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <Label htmlFor="api-key">Chave da API</Label>
+                <Input
+                  id="api-key"
+                  type="password"
+                  placeholder="Insira sua API Key da Eupago"
+                  value={settings.eupago_api_key}
+                  onChange={(e) => handleApiKeyChange(e.target.value)}
+                  className="font-mono"
+                />
+                <p className="text-sm text-gray-500">
+                  Esta chave será usada para processar pagamentos através da Eupago.
+                </p>
+              </div>
+
+              {hasValidApiKey && (
+                <div className="flex items-center gap-2 text-green-600">
+                  <Check className="w-4 h-4" />
+                  <span className="text-sm">API Key configurada</span>
                 </div>
-              </div>
+              )}
+            </CardContent>
+          </Card>
 
-              <Separator />
+          <Separator />
 
-              {/* Métodos de Pagamento */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">{t('PaymentMethods')}</h3>
-                
-                <Alert className="bg-yellow-50 border-yellow-200 text-yellow-800">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>{t('ImportantNote')}</AlertTitle>
-                  <AlertDescription>
-                    {t('CashPaymentVisibleOnlyToAdmin')}
-                  </AlertDescription>
-                </Alert>
-
-                <div className="space-y-3 mt-4">
-                  <FormField
-                    control={form.control}
-                    name="acceptCard"
-                    render={({ field }) => (
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <CreditCard className="h-5 w-5 text-gray-500" />
-                          <div>
-                            <Label htmlFor="card" className="font-medium">{t('AcceptCard')}</Label>
-                            <p className="text-sm text-gray-500">{t('ProcessedByEuPago')}</p>
-                          </div>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            id="card"
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </div>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="acceptMBWay"
-                    render={({ field }) => (
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <QrCode className="h-5 w-5 text-gray-500" />
-                          <div>
-                            <Label htmlFor="mbway" className="font-medium">{t('AcceptMBWay')}</Label>
-                            <p className="text-sm text-gray-500">{t('ProcessedByEuPago')}</p>
-                          </div>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            id="mbway"
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </div>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="acceptMultibanco"
-                    render={({ field }) => (
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <ArrowRight className="h-5 w-5 text-gray-500" />
-                          <div>
-                            <Label htmlFor="multibanco" className="font-medium">{t('AcceptMultibanco')}</Label>
-                            <p className="text-sm text-gray-500">{t('ProcessedByEuPago')}</p>
-                          </div>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            id="multibanco"
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </div>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="acceptBankTransfer"
-                    render={({ field }) => (
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <Landmark className="h-5 w-5 text-gray-500" />
-                          <div>
-                            <Label htmlFor="bankTransfer" className="font-medium">{t('AcceptBankTransfer')}</Label>
-                            <p className="text-sm text-gray-500">{t('ManualVerification')}</p>
-                          </div>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            id="bankTransfer"
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </div>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="acceptCash"
-                    render={({ field }) => (
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <Banknote className="h-5 w-5 text-gray-500" />
-                          <div>
-                            <Label htmlFor="cash" className="font-medium">{t('AcceptCash')}</Label>
-                            <p className="text-sm text-gray-500">{t('PaidAtRestaurant')}</p>
-                            <p className="text-xs text-amber-600">{t('OnlyVisibleToAdmin')}</p>
-                          </div>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            id="cash"
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </div>
-                    )}
-                  />
+          {/* Métodos de Pagamento */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Métodos de Pagamento</CardTitle>
+              <CardDescription>
+                Selecione quais métodos de pagamento estarão disponíveis para seus clientes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!hasValidApiKey && (
+                <div className="flex items-center gap-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <AlertCircle className="w-5 h-5 text-yellow-600" />
+                  <p className="text-sm text-yellow-800">
+                    Insira sua API Key da Eupago para ativar estas opções.
+                  </p>
                 </div>
-              </div>
+              )}
 
-              <div className="flex justify-end pt-4">
-                <Button 
-                  type="submit" 
-                  className="bg-brasil-green hover:bg-brasil-green/90"
-                  disabled={updateSettingsMutation.isPending}
-                >
-                  {updateSettingsMutation.isPending ? t('Saving') : t('SaveChanges')}
-                </Button>
+              <div className="grid gap-4">
+                {paymentMethods.map((method) => {
+                  const IconComponent = method.icon;
+                  const isEnabled = settings.enabled_methods.includes(method.id);
+                  const isDisabled = !hasValidApiKey;
+
+                  return (
+                    <div
+                      key={method.id}
+                      className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${
+                        isDisabled
+                          ? 'bg-gray-50 border-gray-200'
+                          : isEnabled
+                          ? 'bg-green-50 border-green-200'
+                          : 'bg-white border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <IconComponent className={`w-6 h-6 ${isDisabled ? 'text-gray-400' : method.color}`} />
+                        <div>
+                          <h3 className={`font-medium ${isDisabled ? 'text-gray-500' : 'text-gray-900'}`}>
+                            {method.name}
+                          </h3>
+                          <p className={`text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {method.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {isEnabled && !isDisabled && (
+                          <Badge variant="default" className="bg-green-100 text-green-800">
+                            Ativo
+                          </Badge>
+                        )}
+                        <Switch
+                          checked={isEnabled && !isDisabled}
+                          disabled={isDisabled}
+                          onCheckedChange={(checked) => togglePaymentMethod(method.id, checked)}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+
+          {/* Botão de Salvar */}
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSave}
+              disabled={isSaving || !hasValidApiKey}
+              className="min-w-[120px]"
+            >
+              {isSaving ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  Salvando...
+                </div>
+              ) : (
+                'Salvar Configurações'
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
     </AdminLayout>
   );
-};
-
-export default PaymentSettings;
+}
