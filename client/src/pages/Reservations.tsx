@@ -48,6 +48,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
+import Swal from "sweetalert2";
 import CustomerLayout from '@/components/layouts/CustomerLayout';
 
 // Status de reserva
@@ -807,9 +808,20 @@ const Reservations: React.FC = () => {
   });
   
   const handleDeleteReservation = (id: number) => {
-    if (window.confirm(t('ConfirmCancelReservation'))) {
-      deleteReservationMutation.mutate(id);
-    }
+    Swal.fire({
+      title: t('ConfirmCancelReservation'),
+      text: 'Esta ação não pode ser desfeita.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sim, cancelar',
+      cancelButtonText: 'Não cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteReservationMutation.mutate(id);
+      }
+    });
   };
   
   // Renderiza a etapa atual do processo de criação de reserva
@@ -1763,7 +1775,12 @@ const Reservations: React.FC = () => {
                       <Button 
                         variant="outline" 
                         className="w-full"
-                        onClick={() => alert(t('PrintFunctionality'))}
+                        onClick={() => Swal.fire({
+                          title: 'Funcionalidade de Impressão',
+                          text: t('PrintFunctionality'),
+                          icon: 'info',
+                          confirmButtonText: 'Ok'
+                        })}
                       >
                         <i className="fas fa-print mr-2"></i>
                         {t('PrintConfirmation')}
@@ -1772,7 +1789,12 @@ const Reservations: React.FC = () => {
                       <Button 
                         variant="outline" 
                         className="w-full"
-                        onClick={() => alert(t('EmailFunctionality'))}
+                        onClick={() => Swal.fire({
+                          title: 'Funcionalidade de Email',
+                          text: t('EmailFunctionality'),
+                          icon: 'info',
+                          confirmButtonText: 'Ok'
+                        })}
                       >
                         <i className="fas fa-envelope mr-2"></i>
                         {t('EmailConfirmation')}
