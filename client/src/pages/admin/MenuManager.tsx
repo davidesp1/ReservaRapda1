@@ -99,7 +99,7 @@ const MenuManager: React.FC = () => {
     }
   }, [isAuthenticated, isAdmin, isLoading, setLocation]);
 
-  // Forms
+  // Forms - CORRIGIDO para usar valores numéricos
   const productForm = useForm<FormData>({
     resolver: zodResolver(menuItemSchema),
     defaultValues: {
@@ -488,13 +488,13 @@ const MenuManager: React.FC = () => {
       productForm.reset({
         name: product.name,
         description: product.description || "",
-        price: (product.price / 100).toString(),
-        categoryId: product.category_id?.toString() || '',
+        price: product.price / 100, // Manter como número
+        categoryId: product.category_id || 0, // Manter como número
         featured: product.featured,
         imageUrl: product.image_url || "",
-        stockQuantity: (product.stock_quantity || 0).toString(),
-        minStockLevel: (product.min_stock_level || 5).toString(),
-        maxStockLevel: (product.max_stock_level || 100).toString(),
+        stockQuantity: product.stock_quantity || 0, // Manter como número
+        minStockLevel: product.min_stock_level || 5, // Manter como número
+        maxStockLevel: product.max_stock_level || 100, // Manter como número
         trackStock: product.track_stock !== false,
         isAvailable: product.is_available !== false,
       });
@@ -812,6 +812,12 @@ const MenuManager: React.FC = () => {
                           step="0.01"
                           min="0"
                           {...field}
+                          onChange={(e) => {
+                            console.log('🔍 Preço digitado (string):', e.target.value);
+                            const numericValue = parseFloat(e.target.value) || 0;
+                            console.log('🔍 Preço convertido (number):', numericValue);
+                            field.onChange(numericValue);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -826,9 +832,12 @@ const MenuManager: React.FC = () => {
                     <FormItem>
                       <FormLabel>Categoria</FormLabel>
                       <Select
-                        onValueChange={(value) =>
-                          field.onChange(parseInt(value))
-                        }
+                        onValueChange={(value) => {
+                          console.log('🔍 Categoria selecionada (string):', value);
+                          const numericValue = parseInt(value);
+                          console.log('🔍 Categoria convertida (number):', numericValue);
+                          field.onChange(numericValue);
+                        }}
                         value={field.value?.toString()}
                       >
                         <FormControl>
@@ -860,7 +869,16 @@ const MenuManager: React.FC = () => {
                   <FormItem>
                     <FormLabel>Estoque</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="0" min="0" {...field} />
+                      <Input 
+                        type="number" 
+                        placeholder="0" 
+                        min="0" 
+                        {...field}
+                        onChange={(e) => {
+                          const numericValue = parseInt(e.target.value) || 0;
+                          field.onChange(numericValue);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
