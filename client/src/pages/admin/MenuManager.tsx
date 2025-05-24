@@ -1,41 +1,68 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
-import { useLocation } from 'wouter';
-import { useToast } from '@/hooks/use-toast';
-import { AdminLayout } from '@/components/layouts/AdminLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { apiRequest } from '@/lib/queryClient';
-import { useSupabaseRealtime } from '../../hooks/useSupabaseRealtime';
-import { supabase } from '../../lib/supabase';
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { AdminLayout } from "@/components/layouts/AdminLayout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { apiRequest } from "@/lib/queryClient";
+import { useSupabaseRealtime } from "../../hooks/useSupabaseRealtime";
+import { supabase } from "../../lib/supabase";
 
 // Schemas
 const menuItemSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   description: z.string().optional(),
-  price: z.number().min(0, 'Preço deve ser positivo'),
-  categoryId: z.number().min(1, 'Categoria é obrigatória'),
+  price: z.number().min(0, "Preço deve ser positivo"),
+  categoryId: z.number().min(1, "Categoria é obrigatória"),
   featured: z.boolean().default(false),
   imageUrl: z.string().optional(),
-  stockQuantity: z.number().min(0, 'Quantidade em stock deve ser positiva').default(0),
-  minStockLevel: z.number().min(0, 'Nível mínimo de stock deve ser positivo').default(5),
-  maxStockLevel: z.number().min(1, 'Nível máximo de stock deve ser positivo').default(100),
+  stockQuantity: z
+    .number()
+    .min(0, "Quantidade em stock deve ser positiva")
+    .default(0),
+  minStockLevel: z
+    .number()
+    .min(0, "Nível mínimo de stock deve ser positivo")
+    .default(5),
+  maxStockLevel: z
+    .number()
+    .min(1, "Nível máximo de stock deve ser positivo")
+    .default(100),
   trackStock: z.boolean().default(true),
   isAvailable: z.boolean().default(true),
 });
 
 const categorySchema = z.object({
-  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   description: z.string().optional(),
 });
 
@@ -47,17 +74,17 @@ const MenuManager: React.FC = () => {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Ativar Supabase Realtime
   useSupabaseRealtime();
-  
+
   // Estados
-  const [searchText, setSearchText] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchText, setSearchText] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   // Modais
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -68,7 +95,7 @@ const MenuManager: React.FC = () => {
   // Check authentication
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || !isAdmin)) {
-      setLocation('/login');
+      setLocation("/login");
     }
   }, [isAuthenticated, isAdmin, isLoading, setLocation]);
 
@@ -76,12 +103,12 @@ const MenuManager: React.FC = () => {
   const productForm = useForm<FormData>({
     resolver: zodResolver(menuItemSchema),
     defaultValues: {
-      name: '',
-      description: '',
+      name: "",
+      description: "",
       price: 0,
       categoryId: 0,
       featured: false,
-      imageUrl: '',
+      imageUrl: "",
       stockQuantity: 0,
       minStockLevel: 5,
       maxStockLevel: 100,
@@ -93,29 +120,33 @@ const MenuManager: React.FC = () => {
   const categoryForm = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
-      name: '',
-      description: '',
+      name: "",
+      description: "",
     },
   });
 
   // Queries usando dados reais do Supabase
-  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useQuery<any>({
-    queryKey: ['supabase-categories'],
+  const {
+    data: categories = [],
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useQuery<any>({
+    queryKey: ["supabase-categories"],
     queryFn: async () => {
-      console.log('🔍 Executando query de categorias no Supabase...');
+      console.log("🔍 Executando query de categorias no Supabase...");
       if (!supabase) {
-        console.error('❌ Supabase não configurado');
-        throw new Error('Supabase não configurado');
+        console.error("❌ Supabase não configurado");
+        throw new Error("Supabase não configurado");
       }
-      
+
       const { data, error } = await supabase
-        .from('menu_categories')
-        .select('*')
-        .order('name');
-      
-      console.log('📊 Resultado categorias:', { data, error });
+        .from("menu_categories")
+        .select("*")
+        .order("name");
+
+      console.log("📊 Resultado categorias:", { data, error });
       if (error) {
-        console.error('❌ Erro na query de categorias:', error);
+        console.error("❌ Erro na query de categorias:", error);
         throw error;
       }
       return data || [];
@@ -124,24 +155,28 @@ const MenuManager: React.FC = () => {
     refetchOnWindowFocus: false,
   });
 
-  const { data: menuItems = [], isLoading: menuItemsLoading, error: menuItemsError } = useQuery<any>({
-    queryKey: ['supabase-menu-items'],
+  const {
+    data: menuItems = [],
+    isLoading: menuItemsLoading,
+    error: menuItemsError,
+  } = useQuery<any>({
+    queryKey: ["supabase-menu-items"],
     queryFn: async () => {
-      console.log('🔍 Executando query de menu items no Supabase...');
+      console.log("🔍 Executando query de menu items no Supabase...");
       if (!supabase) {
-        console.error('❌ Supabase não configurado');
-        throw new Error('Supabase não configurado');
+        console.error("❌ Supabase não configurado");
+        throw new Error("Supabase não configurado");
       }
-      
+
       // Primeiro tentar query simples sem JOIN
       const { data, error } = await supabase
-        .from('menu_items')
-        .select('*')
-        .order('name');
-      
-      console.log('📊 Resultado menu items:', { data, error });
+        .from("menu_items")
+        .select("*")
+        .order("name");
+
+      console.log("📊 Resultado menu items:", { data, error });
       if (error) {
-        console.error('❌ Erro na query de menu items:', error);
+        console.error("❌ Erro na query de menu items:", error);
         throw error;
       }
       return data || [];
@@ -153,49 +188,51 @@ const MenuManager: React.FC = () => {
   // Mutations usando Supabase direto
   const createItemMutation = useMutation({
     mutationFn: async (data: any) => {
-      if (!supabase) throw new Error('Supabase não configurado');
-      
+      if (!supabase) throw new Error("Supabase não configurado");
+
       const { data: result, error } = await supabase
-        .from('menu_items')
-        .insert([{
-          name: data.name,
-          description: data.description,
-          price: data.price,
-          category_id: data.categoryId,
-          featured: data.featured,
-          image_url: data.imageUrl,
-          stock_quantity: data.stockQuantity,
-          min_stock_level: data.minStockLevel,
-          max_stock_level: data.maxStockLevel,
-          track_stock: data.trackStock,
-          is_available: data.isAvailable,
-        }])
+        .from("menu_items")
+        .insert([
+          {
+            name: data.name,
+            description: data.description,
+            price: data.price,
+            category_id: data.categoryId,
+            featured: data.featured,
+            image_url: data.imageUrl,
+            stock_quantity: data.stockQuantity,
+            min_stock_level: data.minStockLevel,
+            max_stock_level: data.maxStockLevel,
+            track_stock: data.trackStock,
+            is_available: data.isAvailable,
+          },
+        ])
         .select();
-      
+
       if (error) throw error;
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['supabase-menu-items'] });
+      queryClient.invalidateQueries({ queryKey: ["supabase-menu-items"] });
       setIsProductModalOpen(false);
       productForm.reset();
-      toast({ title: 'Produto criado com sucesso!' });
+      toast({ title: "Produto criado com sucesso!" });
     },
     onError: (error: any) => {
       toast({
-        title: 'Erro ao criar produto',
+        title: "Erro ao criar produto",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     },
   });
 
   const updateItemMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      if (!supabase) throw new Error('Supabase não configurado');
-      
+      if (!supabase) throw new Error("Supabase não configurado");
+
       const { data: result, error } = await supabase
-        .from('menu_items')
+        .from("menu_items")
         .update({
           name: data.name,
           description: data.description,
@@ -209,187 +246,188 @@ const MenuManager: React.FC = () => {
           track_stock: data.trackStock,
           is_available: data.isAvailable,
         })
-        .eq('id', id)
+        .eq("id", id)
         .select();
-      
+
       if (error) throw error;
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['supabase-menu-items'] });
+      queryClient.invalidateQueries({ queryKey: ["supabase-menu-items"] });
       setIsProductModalOpen(false);
       setEditingProduct(null);
       productForm.reset();
-      toast({ title: 'Produto atualizado com sucesso!' });
+      toast({ title: "Produto atualizado com sucesso!" });
     },
     onError: (error: any) => {
       toast({
-        title: 'Erro ao atualizar produto',
+        title: "Erro ao atualizar produto",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     },
   });
 
   const deleteItemMutation = useMutation({
     mutationFn: async (id: number) => {
-      if (!supabase) throw new Error('Supabase não configurado');
-      
-      const { error } = await supabase
-        .from('menu_items')
-        .delete()
-        .eq('id', id);
-      
+      if (!supabase) throw new Error("Supabase não configurado");
+
+      const { error } = await supabase.from("menu_items").delete().eq("id", id);
+
       if (error) throw error;
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['supabase-menu-items'] });
-      toast({ title: 'Produto removido com sucesso!' });
+      queryClient.invalidateQueries({ queryKey: ["supabase-menu-items"] });
+      toast({ title: "Produto removido com sucesso!" });
     },
     onError: (error: any) => {
       toast({
-        title: 'Erro ao remover produto',
+        title: "Erro ao remover produto",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     },
   });
 
   const createCategoryMutation = useMutation({
     mutationFn: async (data: any) => {
-      if (!supabase) throw new Error('Supabase não configurado');
-      
+      if (!supabase) throw new Error("Supabase não configurado");
+
       const { data: result, error } = await supabase
-        .from('menu_categories')
-        .insert([{
-          name: data.name,
-          description: data.description,
-        }])
+        .from("menu_categories")
+        .insert([
+          {
+            name: data.name,
+            description: data.description,
+          },
+        ])
         .select();
-      
+
       if (error) throw error;
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['supabase-categories'] });
+      queryClient.invalidateQueries({ queryKey: ["supabase-categories"] });
       categoryForm.reset();
-      toast({ title: 'Categoria criada com sucesso!' });
+      toast({ title: "Categoria criada com sucesso!" });
     },
     onError: (error: any) => {
       toast({
-        title: 'Erro ao criar categoria',
+        title: "Erro ao criar categoria",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     },
   });
 
   const updateCategoryMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      if (!supabase) throw new Error('Supabase não configurado');
-      
+      if (!supabase) throw new Error("Supabase não configurado");
+
       const { data: result, error } = await supabase
-        .from('menu_categories')
+        .from("menu_categories")
         .update({
           name: data.name,
           description: data.description,
         })
-        .eq('id', id)
+        .eq("id", id)
         .select();
-      
+
       if (error) throw error;
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['supabase-categories'] });
+      queryClient.invalidateQueries({ queryKey: ["supabase-categories"] });
       setEditingCategory(null);
       categoryForm.reset();
-      toast({ title: 'Categoria atualizada com sucesso!' });
+      toast({ title: "Categoria atualizada com sucesso!" });
     },
     onError: (error: any) => {
       toast({
-        title: 'Erro ao atualizar categoria',
+        title: "Erro ao atualizar categoria",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     },
   });
 
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: number) => {
-      if (!supabase) throw new Error('Supabase não configurado');
-      
+      if (!supabase) throw new Error("Supabase não configurado");
+
       const { error } = await supabase
-        .from('menu_categories')
+        .from("menu_categories")
         .delete()
-        .eq('id', id);
-      
+        .eq("id", id);
+
       if (error) throw error;
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['supabase-categories'] });
-      toast({ title: 'Categoria removida com sucesso!' });
+      queryClient.invalidateQueries({ queryKey: ["supabase-categories"] });
+      toast({ title: "Categoria removida com sucesso!" });
     },
     onError: (error: any) => {
       toast({
-        title: 'Erro ao remover categoria',
+        title: "Erro ao remover categoria",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     },
   });
 
   // Upload real de imagem para Supabase Storage
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file || !supabase) {
       toast({
-        title: 'Erro no upload',
-        description: 'Supabase não configurado ou arquivo inválido',
-        variant: 'destructive',
+        title: "Erro no upload",
+        description: "Supabase não configurado ou arquivo inválido",
+        variant: "destructive",
       });
       return;
     }
 
     try {
       setSelectedImage(file);
-      
+
       // Gerar nome único para o arquivo
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `menu-items/${fileName}`;
-      
+
       // Upload para o Supabase Storage
       const { data, error } = await supabase.storage
-        .from('restaurant-images')
+        .from("restaurant-images")
         .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
+          cacheControl: "3600",
+          upsert: false,
         });
-      
+
       if (error) {
         throw new Error(`Erro no upload: ${error.message}`);
       }
-      
+
       // Obter URL pública da imagem
       const { data: urlData } = supabase.storage
-        .from('restaurant-images')
+        .from("restaurant-images")
         .getPublicUrl(filePath);
-      
-      productForm.setValue('imageUrl', urlData.publicUrl);
-      
+
+      productForm.setValue("imageUrl", urlData.publicUrl);
+
       toast({
-        title: 'Upload realizado',
-        description: 'Imagem enviada com sucesso para o Supabase!',
+        title: "Upload realizado",
+        description: "Imagem enviada com sucesso para o Supabase!",
       });
     } catch (error: any) {
-      console.error('Erro no upload:', error);
+      console.error("Erro no upload:", error);
       toast({
-        title: 'Erro no upload',
-        description: error.message || 'Erro ao fazer upload da imagem',
-        variant: 'destructive',
+        title: "Erro no upload",
+        description: error.message || "Erro ao fazer upload da imagem",
+        variant: "destructive",
       });
     }
   };
@@ -418,19 +456,30 @@ const MenuManager: React.FC = () => {
 
   // Filter products
   const filteredProducts = menuItems.filter((item: any) => {
-    const matchesSearch = !searchText || 
+    const matchesSearch =
+      !searchText ||
       item.name.toLowerCase().includes(searchText.toLowerCase()) ||
       item.category?.name.toLowerCase().includes(searchText.toLowerCase());
-    const matchesCategory = !categoryFilter || categoryFilter === 'all' || item.category_id?.toString() === categoryFilter;
-    const matchesStatus = !statusFilter || statusFilter === 'all' || 
-      (statusFilter === 'disponivel' ? item.is_available : !item.is_available);
+    const matchesCategory =
+      !categoryFilter ||
+      categoryFilter === "all" ||
+      item.category_id?.toString() === categoryFilter;
+    const matchesStatus =
+      !statusFilter ||
+      statusFilter === "all" ||
+      (statusFilter === "disponivel" ? item.is_available : !item.is_available);
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const paginatedProducts = itemsPerPage === -1 ? filteredProducts : 
-    filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedProducts =
+    itemsPerPage === -1
+      ? filteredProducts
+      : filteredProducts.slice(
+          (currentPage - 1) * itemsPerPage,
+          currentPage * itemsPerPage,
+        );
 
   // Modal handlers
   const openProductModal = (product: any = null) => {
@@ -438,14 +487,14 @@ const MenuManager: React.FC = () => {
     if (product) {
       productForm.reset({
         name: product.name,
-        description: product.description || '',
+        description: product.description || "",
         price: product.price / 100,
-        categoryId: product.category_id,
+        categoryId: product.category_id?.toString() || '',
         featured: product.featured,
-        imageUrl: product.image_url || '',
-        stockQuantity: product.stock_quantity || 0,
-        minStockLevel: product.min_stock_level || 5,
-        maxStockLevel: product.max_stock_level || 100,
+        imageUrl: product.image_url || "",
+        stockQuantity: (product.stock_quantity || 0).toString(),
+        minStockLevel: (product.min_stock_level || 5).toString(),
+        maxStockLevel: (product.max_stock_level || 100).toString(),
         trackStock: product.track_stock !== false,
         isAvailable: product.is_available !== false,
       });
@@ -456,14 +505,14 @@ const MenuManager: React.FC = () => {
   };
 
   const clearFilters = () => {
-    setSearchText('');
-    setCategoryFilter('all');
-    setStatusFilter('all');
+    setSearchText("");
+    setCategoryFilter("all");
+    setStatusFilter("all");
     setCurrentPage(1);
   };
 
   // Debug logs
-  console.log('🐛 Debug MenuManager:', {
+  console.log("🐛 Debug MenuManager:", {
     isAuthenticated,
     isAdmin,
     supabaseConfigured: !!supabase,
@@ -472,7 +521,7 @@ const MenuManager: React.FC = () => {
     categoriesError,
     menuItemsError,
     categoriesCount: categories.length,
-    menuItemsCount: menuItems.length
+    menuItemsCount: menuItems.length,
   });
 
   if (categoriesLoading || menuItemsLoading) {
@@ -508,7 +557,6 @@ const MenuManager: React.FC = () => {
       <div className="space-y-6">
         {/* Header with action buttons */}
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800">Gestão do Menu</h1>
           <div className="flex gap-3">
             <Button
               onClick={() => setIsCategoryModalOpen(true)}
@@ -530,7 +578,9 @@ const MenuManager: React.FC = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <Label className="block text-sm font-semibold mb-1 text-gray-700">Buscar Produto</Label>
+              <Label className="block text-sm font-semibold mb-1 text-gray-700">
+                Buscar Produto
+              </Label>
               <div className="relative">
                 <Input
                   placeholder="Nome do produto ou categoria"
@@ -541,9 +591,11 @@ const MenuManager: React.FC = () => {
                 <i className="fas fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
               </div>
             </div>
-            
+
             <div className="w-full md:w-48">
-              <Label className="block text-sm font-semibold mb-1 text-gray-700">Categoria</Label>
+              <Label className="block text-sm font-semibold mb-1 text-gray-700">
+                Categoria
+              </Label>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todas" />
@@ -551,14 +603,18 @@ const MenuManager: React.FC = () => {
                 <SelectContent>
                   <SelectItem value="all">Todas</SelectItem>
                   {categories.map((cat: any) => (
-                    <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+                    <SelectItem key={cat.id} value={cat.id.toString()}>
+                      {cat.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="w-full md:w-36">
-              <Label className="block text-sm font-semibold mb-1 text-gray-700">Status</Label>
+              <Label className="block text-sm font-semibold mb-1 text-gray-700">
+                Status
+              </Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todos" />
@@ -570,7 +626,7 @@ const MenuManager: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <Button
               onClick={clearFilters}
               className="bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-semibold md:mt-6"
@@ -582,103 +638,124 @@ const MenuManager: React.FC = () => {
 
         {/* Products Table */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden flex-1 flex flex-col">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-100">
-                <thead className="bg-blue-900">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-white tracking-wider w-32">Foto</th>
-                    <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider">Nome</th>
-                    <th className="px-4 py-4 text-right text-xs font-bold text-white tracking-wider">Preço</th>
-                    <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider">Categoria</th>
-                    <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider">Stock</th>
-                    <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider">Status</th>
-                    <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider">Ação</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-100 text-gray-800 font-medium">
-                  {paginatedProducts.map((item: any) => (
-                    <tr key={item.id}>
-                      <td className="px-6 py-4">
-                        <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border">
-                          {item.imageUrl ? (
-                            <img 
-                              src={item.imageUrl} 
-                              alt={item.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                              <i className="fas fa-image text-2xl"></i>
-                            </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-100">
+              <thead className="bg-blue-900">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white tracking-wider w-32">
+                    Foto
+                  </th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider">
+                    Nome
+                  </th>
+                  <th className="px-4 py-4 text-right text-xs font-bold text-white tracking-wider">
+                    Preço
+                  </th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider">
+                    Categoria
+                  </th>
+                  <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider">
+                    Stock
+                  </th>
+                  <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider">
+                    Ação
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100 text-gray-800 font-medium">
+                {paginatedProducts.map((item: any) => (
+                  <tr key={item.id}>
+                    <td className="px-6 py-4">
+                      <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border">
+                        {item.imageUrl ? (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <i className="fas fa-image text-2xl"></i>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 font-medium">{item.name}</td>
+                    <td className="px-4 py-4 text-right">
+                      {new Intl.NumberFormat("pt-PT", {
+                        style: "currency",
+                        currency: "EUR",
+                      }).format(item.price / 100)}
+                    </td>
+                    <td className="px-4 py-4">
+                      <Badge variant="outline">
+                        {item.category_id?.name || "Sem categoria"}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      {item.track_stock ? (
+                        <div className="flex items-center justify-center space-x-1">
+                          <span
+                            className={`font-medium ${
+                              item.stock_quantity <= item.min_stock_level
+                                ? "text-red-600"
+                                : "text-green-600"
+                            }`}
+                          >
+                            {item.stock_quantity}
+                          </span>
+                          {item.stock_quantity <= item.min_stock_level && (
+                            <i className="fas fa-exclamation-triangle text-red-500"></i>
                           )}
                         </div>
-                      </td>
-                      <td className="px-4 py-4 font-medium">{item.name}</td>
-                      <td className="px-4 py-4 text-right">
-                        {new Intl.NumberFormat('pt-PT', {
-                          style: 'currency',
-                          currency: 'EUR',
-                        }).format(item.price / 100)}
-                      </td>
-                      <td className="px-4 py-4">
-                        <Badge variant="outline">
-                          {item.category?.name || 'Sem categoria'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        {item.track_stock ? (
-                          <div className="flex items-center justify-center space-x-1">
-                            <span className={`font-medium ${
-                              item.stock_quantity <= item.min_stock_level 
-                                ? 'text-red-600' 
-                                : 'text-green-600'
-                            }`}>
-                              {item.stock_quantity}
-                            </span>
-                            {item.stock_quantity <= item.min_stock_level && (
-                              <i className="fas fa-exclamation-triangle text-red-500"></i>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">N/A</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        <Badge variant={item.is_available ? "default" : "destructive"}>
-                          {item.is_available ? "Disponível" : "Indisponível"}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        <div className="flex justify-center space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openProductModal(item)}
-                          >
-                            <i className="fas fa-edit text-blue-600"></i>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteItemMutation.mutate(item.id)}
-                          >
-                            <i className="fas fa-trash text-red-500"></i>
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            
-            {/* Pagination */}
-            <div className="px-6 py-3 flex justify-between items-center bg-gray-50">
-              <span className="text-xs text-gray-600">
-                Exibindo {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, filteredProducts.length)} de {filteredProducts.length} produtos
-              </span>
-              <div className="flex space-x-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      ) : (
+                        <span className="text-gray-400">N/A</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <Badge
+                        variant={item.is_available ? "default" : "destructive"}
+                      >
+                        {item.is_available ? "Disponível" : "Indisponível"}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <div className="flex justify-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openProductModal(item)}
+                        >
+                          <i className="fas fa-edit text-blue-600"></i>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteItemMutation.mutate(item.id)}
+                        >
+                          <i className="fas fa-trash text-red-500"></i>
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="px-6 py-3 flex justify-between items-center bg-gray-50">
+            <span className="text-xs text-gray-600">
+              Exibindo {(currentPage - 1) * itemsPerPage + 1}-
+              {Math.min(currentPage * itemsPerPage, filteredProducts.length)} de{" "}
+              {filteredProducts.length} produtos
+            </span>
+            <div className="flex space-x-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
                   <Button
                     key={page}
                     variant={page === currentPage ? "default" : "ghost"}
@@ -687,22 +764,26 @@ const MenuManager: React.FC = () => {
                   >
                     {page}
                   </Button>
-                ))}
-              </div>
+                ),
+              )}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Product Modal */}
+      {/* Product Modal */}
       <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingProduct ? 'Editar Produto' : 'Adicionar Produto'}
+              {editingProduct ? "Editar Produto" : "Adicionar Produto"}
             </DialogTitle>
           </DialogHeader>
           <Form {...productForm}>
-            <form onSubmit={productForm.handleSubmit(onProductSubmit)} className="space-y-6">
+            <form
+              onSubmit={productForm.handleSubmit(onProductSubmit)}
+              className="space-y-6"
+            >
               <FormField
                 control={productForm.control}
                 name="name"
@@ -716,7 +797,7 @@ const MenuManager: React.FC = () => {
                   </FormItem>
                 )}
               />
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={productForm.control}
@@ -725,26 +806,31 @@ const MenuManager: React.FC = () => {
                     <FormItem>
                       <FormLabel>Preço (€)</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="0.00" 
-                          step="0.01" 
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          step="0.01"
                           min="0"
-                          {...field} 
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={productForm.control}
                   name="categoryId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Categoria</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                      <Select
+                        onValueChange={(value) =>
+                          field.onChange(parseInt(value))
+                        }
+                        value={field.value?.toString()}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione uma categoria" />
@@ -752,7 +838,10 @@ const MenuManager: React.FC = () => {
                         </FormControl>
                         <SelectContent>
                           {categories?.map((category: any) => (
-                            <SelectItem key={category.id} value={category.id.toString()}>
+                            <SelectItem
+                              key={category.id}
+                              value={category.id.toString()}
+                            >
                               {category.name}
                             </SelectItem>
                           ))}
@@ -771,12 +860,7 @@ const MenuManager: React.FC = () => {
                   <FormItem>
                     <FormLabel>Estoque</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="0" 
-                        min="0"
-                        {...field} 
-                      />
+                      <Input type="number" placeholder="0" min="0" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -792,13 +876,20 @@ const MenuManager: React.FC = () => {
                       <FormLabel>Status</FormLabel>
                     </div>
                     <FormControl>
-                      <Select onValueChange={(value) => field.onChange(value === 'disponivel')} value={field.value ? 'disponivel' : 'indisponivel'}>
+                      <Select
+                        onValueChange={(value) =>
+                          field.onChange(value === "disponivel")
+                        }
+                        value={field.value ? "disponivel" : "indisponivel"}
+                      >
                         <SelectTrigger className="w-40">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="disponivel">Disponível</SelectItem>
-                          <SelectItem value="indisponivel">Indisponível</SelectItem>
+                          <SelectItem value="indisponivel">
+                            Indisponível
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -807,7 +898,9 @@ const MenuManager: React.FC = () => {
               />
 
               <div>
-                <Label className="block text-sm font-semibold text-gray-700 mb-1">Foto do Produto</Label>
+                <Label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Foto do Produto
+                </Label>
                 <input
                   type="file"
                   accept="image/*"
@@ -817,14 +910,14 @@ const MenuManager: React.FC = () => {
               </div>
 
               <div className="flex justify-end space-x-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setIsProductModalOpen(false)}
                 >
                   Cancelar
                 </Button>
-                <Button 
+                <Button
                   type="submit"
                   className="bg-green-600 hover:bg-green-700"
                 >
@@ -844,7 +937,10 @@ const MenuManager: React.FC = () => {
           </DialogHeader>
           <div className="space-y-4">
             <Form {...categoryForm}>
-              <form onSubmit={categoryForm.handleSubmit(onCategorySubmit)} className="flex gap-2 mb-4">
+              <form
+                onSubmit={categoryForm.handleSubmit(onCategorySubmit)}
+                className="flex gap-2 mb-4"
+              >
                 <FormField
                   control={categoryForm.control}
                   name="name"
@@ -856,7 +952,7 @@ const MenuManager: React.FC = () => {
                     </FormItem>
                   )}
                 />
-                <Button 
+                <Button
                   type="submit"
                   className="bg-green-600 hover:bg-green-700"
                 >
@@ -864,10 +960,13 @@ const MenuManager: React.FC = () => {
                 </Button>
               </form>
             </Form>
-            
+
             <ul className="space-y-3 max-h-64 overflow-y-auto">
               {categories.map((cat: any) => (
-                <li key={cat.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
+                <li
+                  key={cat.id}
+                  className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg"
+                >
                   <span className="font-medium text-gray-700">{cat.name}</span>
                   <div>
                     <Button
@@ -876,7 +975,10 @@ const MenuManager: React.FC = () => {
                       onClick={() => {
                         const newName = prompt("Editar categoria:", cat.name);
                         if (newName && newName !== cat.name) {
-                          updateCategoryMutation.mutate({ id: cat.id, data: { name: newName } });
+                          updateCategoryMutation.mutate({
+                            id: cat.id,
+                            data: { name: newName },
+                          });
                         }
                       }}
                     >
