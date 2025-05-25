@@ -40,6 +40,12 @@ const posSettingsSchema = z.object({
     marginLeft: z.number().min(0).max(50).default(10),
     marginRight: z.number().min(0).max(50).default(10),
   }),
+  paperSettings: z.object({
+    paperWidth: z.number().min(40).max(120).default(80), // largura em mm
+    paperHeight: z.number().min(100).max(500).default(297), // altura em mm (A4 padrão)
+    cutAfterPrint: z.boolean().default(true),
+    reduceFooterSpace: z.boolean().default(true),
+  }),
   autoOpenCashDrawer: z.boolean().default(false),
   printCopies: z.number().min(1).max(5).default(1),
 });
@@ -82,6 +88,12 @@ const POSSettingsContent: React.FC = () => {
         marginBottom: 10,
         marginLeft: 10,
         marginRight: 10,
+      },
+      paperSettings: {
+        paperWidth: 80,
+        paperHeight: 297,
+        cutAfterPrint: true,
+        reduceFooterSpace: true,
       },
       autoOpenCashDrawer: false,
       printCopies: 1,
@@ -131,10 +143,8 @@ const POSSettingsContent: React.FC = () => {
     refetchOnWindowFocus: false,
   });
 
-  // Realtime para impressoras
-  useSupabaseRealtime("printers", () => {
-    queryClient.invalidateQueries({ queryKey: ["pos-printers"] });
-  });
+  // Realtime para impressoras - comentado para evitar erro
+  // useSupabaseRealtime("printers");
 
   // Mutation para salvar configurações
   const saveSettingsMutation = useMutation({
@@ -148,6 +158,7 @@ const POSSettingsContent: React.FC = () => {
           printer_id: data.printerId,
           print_options: data.printOptions,
           font_settings: data.fontSettings,
+          paper_settings: data.paperSettings,
           auto_open_cash_drawer: data.autoOpenCashDrawer,
           print_copies: data.printCopies,
           updated_at: new Date().toISOString(),
@@ -208,6 +219,7 @@ const POSSettingsContent: React.FC = () => {
         printerId: currentSettings.printer_id || "",
         printOptions: currentSettings.print_options || form.getValues("printOptions"),
         fontSettings: currentSettings.font_settings || form.getValues("fontSettings"),
+        paperSettings: currentSettings.paper_settings || form.getValues("paperSettings"),
         autoOpenCashDrawer: currentSettings.auto_open_cash_drawer || false,
         printCopies: currentSettings.print_copies || 1,
       });
@@ -266,7 +278,10 @@ const POSSettingsContent: React.FC = () => {
 
   // Função para imprimir recibo
   const printReceipt = async (content: string, settings: POSSettingsFormData) => {
-    const { fontSettings } = settings;
+    const { fontSettings, paperSettings } = settings;
+    
+    // Calcular largura baseada na largura do papel em mm
+    const paperWidthPx = (paperSettings.paperWidth * 3.779527); // conversão mm para px (96dpi)
     
     // Criar elemento temporário para impressão
     const printContent = `
@@ -274,25 +289,45 @@ const POSSettingsContent: React.FC = () => {
         <head>
           <title>Recibo</title>
           <style>
+            @page {
+              size: ${paperSettings.paperWidth}mm ${paperSettings.paperHeight}mm;
+              margin: ${fontSettings.marginTop}px ${fontSettings.marginRight}px ${paperSettings.reduceFooterSpace ? '5px' : fontSettings.marginBottom + 'px'} ${fontSettings.marginLeft}px;
+            }
             body { 
               font-family: ${fontSettings.fontFamily === 'monospace' ? "'Courier New', monospace" : 
                            fontSettings.fontFamily === 'sans-serif' ? "'Arial', sans-serif" : 
                            "'Times New Roman', serif"}; 
               font-size: ${fontSettings.fontSize}px; 
               line-height: ${fontSettings.lineHeight};
-              margin: ${fontSettings.marginTop}px ${fontSettings.marginRight}px ${fontSettings.marginBottom}px ${fontSettings.marginLeft}px;
+              margin: 0;
               padding: 0;
+              width: ${paperWidthPx}px;
+              max-width: ${paperWidthPx}px;
               white-space: pre-line;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
             }
             @media print {
               body { 
-                margin: ${fontSettings.marginTop}px ${fontSettings.marginRight}px ${fontSettings.marginBottom}px ${fontSettings.marginLeft}px;
-                padding: 0; 
+                margin: 0;
+                padding: 0;
+                width: ${paperWidthPx}px;
+                max-width: ${paperWidthPx}px;
               }
+              ${paperSettings.cutAfterPrint ? `
+              .cut-here {
+                page-break-after: always;
+                border-bottom: 2px dashed #000;
+                padding-bottom: 5px;
+                margin-bottom: 0;
+              }` : ''}
             }
           </style>
         </head>
-        <body>${content}</body>
+        <body>
+          <div class="${paperSettings.cutAfterPrint ? 'cut-here' : ''}">${content}</div>
+          ${paperSettings.cutAfterPrint ? '<div style="height: 10px;"></div>' : ''}
+        </body>
       </html>
     `;
     
@@ -310,26 +345,71 @@ const POSSettingsContent: React.FC = () => {
     }
   };
 
+  // Função exportada para uso no POS Mode
+  useEffect(() => {
+    (window as any).printReceiptWithSettings = async (content: string) => {
+      if (!currentSettings) {
+        Swal.fire({
+          title: "Configurações não encontradas",
+          text: "Configure as opções de impressão primeiro",
+          icon: "warning",
+          confirmButtonText: "Ok"
+        });
+        return;
+      }
+
+      const settings: POSSettingsFormData = {
+        printerId: currentSettings.printer_id || "",
+        printOptions: currentSettings.print_options || form.getValues("printOptions"),
+        fontSettings: currentSettings.font_settings || form.getValues("fontSettings"),
+        paperSettings: currentSettings.paper_settings || form.getValues("paperSettings"),
+        autoOpenCashDrawer: currentSettings.auto_open_cash_drawer || false,
+        printCopies: currentSettings.print_copies || 1,
+      };
+
+      await printReceipt(content, settings);
+    };
+  }, [currentSettings, form]);
+
   // Função para renderizar preview em tempo real
   const renderPreview = () => {
     const currentValues = form.watch();
     const testReceipt = generateTestReceipt(currentValues);
-    const { fontSettings } = currentValues;
+    const { fontSettings, paperSettings } = currentValues;
+    
+    // Calcular largura baseada na largura do papel
+    const paperWidthPx = paperSettings.paperWidth * 3.779527; // conversão mm para px
     
     return (
       <div 
-        className="bg-white border rounded-lg p-4 max-h-96 overflow-y-auto"
+        className="bg-white border rounded-lg shadow-sm max-h-96 overflow-y-auto"
         style={{
           fontFamily: fontSettings.fontFamily === 'monospace' ? 'Courier New, monospace' : 
                      fontSettings.fontFamily === 'sans-serif' ? 'Arial, sans-serif' : 
                      'Times New Roman, serif',
           fontSize: `${fontSettings.fontSize}px`,
           lineHeight: fontSettings.lineHeight,
-          padding: `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${fontSettings.marginBottom}px ${fontSettings.marginLeft}px`,
+          padding: `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${paperSettings.reduceFooterSpace ? '5px' : fontSettings.marginBottom + 'px'} ${fontSettings.marginLeft}px`,
           whiteSpace: 'pre-line',
+          width: `${paperWidthPx}px`,
+          maxWidth: `${paperWidthPx}px`,
+          wordWrap: 'break-word',
+          overflowWrap: 'break-word',
         }}
       >
         {testReceipt}
+        {paperSettings.cutAfterPrint && (
+          <div style={{ 
+            borderBottom: '2px dashed #ccc', 
+            marginTop: '10px', 
+            paddingBottom: '5px',
+            textAlign: 'center',
+            fontSize: '10px',
+            color: '#666'
+          }}>
+            ✂️ CORTAR AQUI
+          </div>
+        )}
       </div>
     );
   };

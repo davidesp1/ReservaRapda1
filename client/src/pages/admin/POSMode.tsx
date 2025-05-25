@@ -141,6 +141,99 @@ const POSMode = () => {
   };
   
   // Processar o pedido após selecionar o método de pagamento
+  // Função para gerar recibo formatado
+  const generateReceipt = () => {
+    const now = new Date();
+    const receiptContent = `
+========================================
+           OPA QUE DELÍCIA
+        Restaurante Brasileiro
+========================================
+Data: ${now.toLocaleString("pt-PT")}
+Recibo #${Math.random().toString(36).substring(7).toUpperCase()}
+
+ITENS DO PEDIDO:
+----------------------------------------
+${orderItems.map(item => 
+  `${item.quantity}x ${item.menuItem.name.padEnd(20)} €${(item.menuItem.price * item.quantity / 100).toFixed(2)}`
+).join('\n')}
+----------------------------------------
+Subtotal:                   €${(totalPrice / 100).toFixed(2)}
+IVA (23%):                   €${(totalPrice * 0.23 / 100).toFixed(2)}
+TOTAL:                      €${(totalPrice * 1.23 / 100).toFixed(2)}
+
+Forma de Pagamento: ${selectedPaymentMethod}
+Status: Pago
+
+========================================
+         Obrigado pela visita!
+========================================
+    `;
+    return receiptContent.trim();
+  };
+
+  // Função para gravar e imprimir
+  const handleSaveAndPrint = () => {
+    Swal.fire({
+      title: t('Confirmar Pedido'),
+      text: t('Deseja gravar e imprimir este pedido?'),
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#16a34a',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: t('Sim, gravar e imprimir'),
+      cancelButtonText: t('Cancelar')
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Gerar o recibo
+        const receiptContent = generateReceipt();
+        
+        // Tentar imprimir usando as configurações salvas
+        if ((window as any).printReceiptWithSettings) {
+          (window as any).printReceiptWithSettings(receiptContent);
+        } else {
+          // Fallback para impressão básica
+          const printWindow = window.open('', '_blank');
+          if (printWindow) {
+            printWindow.document.write(`
+              <html>
+                <head>
+                  <title>Recibo</title>
+                  <style>
+                    body { 
+                      font-family: 'Courier New', monospace; 
+                      font-size: 12px; 
+                      margin: 20px;
+                      white-space: pre-line;
+                    }
+                  </style>
+                </head>
+                <body>${receiptContent}</body>
+              </html>
+            `);
+            printWindow.document.close();
+            setTimeout(() => {
+              printWindow.print();
+              setTimeout(() => printWindow.close(), 1000);
+            }, 500);
+          }
+        }
+        
+        // Mostrar mensagem de sucesso
+        Swal.fire({
+          title: t('Sucesso!'),
+          text: t('Pedido gravado e enviado para impressão!'),
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        
+        // Limpar o pedido atual
+        setOrderItems([]);
+      }
+    });
+  };
+
   const handleProcessOrder = () => {
     setIsPaymentModalOpen(false);
     
@@ -484,6 +577,15 @@ const POSMode = () => {
               >
                 <Check className="mr-2 h-5 w-5" />
                 {t('Finalizar Pedido')}
+              </button>
+              
+              <button 
+                className="py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={orderItems.length === 0}
+                onClick={handleSaveAndPrint}
+              >
+                <Check className="mr-2 h-5 w-5" />
+                {t('Gravar e Imprimir')}
               </button>
               
               <button 
