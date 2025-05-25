@@ -172,71 +172,65 @@ Status: Pago
     return receiptContent.trim();
   };
 
-  // Função para finalizar pedido com impressão automática
+  // Função para gravar e imprimir
   const handleSaveAndPrint = () => {
-    import('sweetalert2').then((Swal) => {
-      Swal.default.fire({
-        title: t('Finalizar Pedido'),
-        text: t('Confirmar finalização e impressão do pedido?'),
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#009c3b',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: t('Sim, finalizar'),
-        cancelButtonText: t('Cancelar')
-      }).then((result: any) => {
-        if (result.isConfirmed) {
-          // Gerar o recibo
-          const receiptContent = generateReceipt();
-          
-          // Sempre imprimir automaticamente ao finalizar
-          if ((window as any).printReceiptWithSettings) {
-            (window as any).printReceiptWithSettings(receiptContent);
-          } else {
-            // Fallback para impressão básica
-            const printWindow = window.open('', '_blank');
-            if (printWindow) {
-              printWindow.document.write(`
-                <html>
-                  <head>
-                    <title>Recibo - Opa que delícia</title>
-                    <style>
-                      body { 
-                        font-family: 'Courier New', monospace; 
-                        font-size: 12px; 
-                        margin: 10px;
-                        white-space: pre-line;
-                        line-height: 1.3;
-                      }
-                      @media print {
-                        body { margin: 5px; }
-                      }
-                    </style>
-                  </head>
-                  <body>${receiptContent}</body>
-                </html>
-              `);
-              printWindow.document.close();
-              setTimeout(() => {
-                printWindow.print();
-                setTimeout(() => printWindow.close(), 1000);
-              }, 500);
-            }
+    Swal.fire({
+      title: t('Confirmar Pedido'),
+      text: t('Deseja gravar e imprimir este pedido?'),
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#16a34a',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: t('Sim, gravar e imprimir'),
+      cancelButtonText: t('Cancelar')
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Gerar o recibo
+        const receiptContent = generateReceipt();
+        
+        // Tentar imprimir usando as configurações salvas
+        if ((window as any).printReceiptWithSettings) {
+          (window as any).printReceiptWithSettings(receiptContent);
+        } else {
+          // Fallback para impressão básica
+          const printWindow = window.open('', '_blank');
+          if (printWindow) {
+            printWindow.document.write(`
+              <html>
+                <head>
+                  <title>Recibo</title>
+                  <style>
+                    body { 
+                      font-family: 'Courier New', monospace; 
+                      font-size: 12px; 
+                      margin: 20px;
+                      white-space: pre-line;
+                    }
+                  </style>
+                </head>
+                <body>${receiptContent}</body>
+              </html>
+            `);
+            printWindow.document.close();
+            setTimeout(() => {
+              printWindow.print();
+              setTimeout(() => printWindow.close(), 1000);
+            }, 500);
           }
-          
-          // Mostrar mensagem de sucesso
-          Swal.default.fire({
-            title: t('Pedido Finalizado!'),
-            text: t('Pedido processado e recibo enviado para impressão.'),
-            icon: 'success',
-            timer: 2500,
-            showConfirmButton: false
-          });
-          
-          // Limpar o pedido atual
-          setOrderItems([]);
         }
-      });
+        
+        // Mostrar mensagem de sucesso
+        Swal.fire({
+          title: t('Sucesso!'),
+          text: t('Pedido gravado e enviado para impressão!'),
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        
+        // Limpar o pedido atual
+        setOrderItems([]);
+      }
     });
   };
 
@@ -579,10 +573,19 @@ Status: Pago
               <button 
                 className="py-3 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={orderItems.length === 0}
-                onClick={handleSaveAndPrint}
+                onClick={handleFinalizeOrder}
               >
                 <Check className="mr-2 h-5 w-5" />
                 {t('Finalizar Pedido')}
+              </button>
+              
+              <button 
+                className="py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={orderItems.length === 0}
+                onClick={handleSaveAndPrint}
+              >
+                <Check className="mr-2 h-5 w-5" />
+                {t('Gravar e Imprimir')}
               </button>
               
               <button 
