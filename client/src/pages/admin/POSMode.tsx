@@ -141,35 +141,42 @@ const POSMode = () => {
   };
   
   // Processar o pedido após selecionar o método de pagamento
-  // Função para gerar recibo formatado
+  // Função para gerar recibo formatado otimizado
   const generateReceipt = () => {
     const now = new Date();
-    const receiptContent = `
-========================================
+    const receiptNumber = Math.random().toString(36).substring(7).toUpperCase();
+    
+    // Formato mais compacto para economizar papel
+    const receiptContent = `========================================
            OPA QUE DELÍCIA
         Restaurante Brasileiro
 ========================================
 Data: ${now.toLocaleString("pt-PT")}
-Recibo #${Math.random().toString(36).substring(7).toUpperCase()}
+Recibo: #${receiptNumber}
 
 ITENS DO PEDIDO:
 ----------------------------------------
-${orderItems.map(item => 
-  `${item.quantity}x ${item.menuItem.name.padEnd(20)} €${(item.menuItem.price * item.quantity / 100).toFixed(2)}`
-).join('\n')}
+${orderItems.map(item => {
+  const itemTotal = (item.menuItem.price * item.quantity / 100).toFixed(2);
+  const itemName = item.menuItem.name.length > 18 ? 
+    item.menuItem.name.substring(0, 18) + '...' : 
+    item.menuItem.name;
+  return `${item.quantity}x ${itemName.padEnd(20)} €${itemTotal}`;
+}).join('\n')}
 ----------------------------------------
-Subtotal:                   €${(totalPrice / 100).toFixed(2)}
-IVA (23%):                   €${(totalPrice * 0.23 / 100).toFixed(2)}
-TOTAL:                      €${(totalPrice * 1.23 / 100).toFixed(2)}
+Subtotal:               €${(totalPrice / 100).toFixed(2)}
+IVA (23%):              €${(totalPrice * 0.23 / 100).toFixed(2)}
+TOTAL:                  €${(totalPrice * 1.23 / 100).toFixed(2)}
 
-Forma de Pagamento: ${selectedPaymentMethod}
-Status: Pago
+Pagamento: ${selectedPaymentMethod?.toUpperCase() || 'N/A'}
+Status: PAGO
 
 ========================================
-         Obrigado pela visita!
-========================================
-    `;
-    return receiptContent.trim();
+       Obrigado pela visita!
+       www.opaquedelicia.pt
+========================================`;
+    
+    return receiptContent;
   };
 
   // Função para gravar e imprimir
@@ -188,29 +195,53 @@ Status: Pago
         // Gerar o recibo
         const receiptContent = generateReceipt();
         
-        // Tentar imprimir usando as configurações salvas
+        // Imprimir usando as configurações POS salvas
         if ((window as any).printReceiptWithSettings) {
+          console.log("🖨️ Usando configurações POS para impressão");
           (window as any).printReceiptWithSettings(receiptContent);
         } else {
-          // Fallback para impressão básica
+          console.log("⚠️ Configurações POS não encontradas, usando impressão básica");
+          // Fallback com configurações básicas otimizadas
           const printWindow = window.open('', '_blank');
           if (printWindow) {
-            printWindow.document.write(`
+            const html = `
+              <!DOCTYPE html>
               <html>
                 <head>
-                  <title>Recibo</title>
+                  <meta charset="UTF-8">
+                  <title>Recibo - Opa que Delícia</title>
                   <style>
+                    @page {
+                      size: 58mm auto;
+                      margin: 0;
+                    }
+                    * {
+                      margin: 0;
+                      padding: 0;
+                      box-sizing: border-box;
+                    }
                     body { 
                       font-family: 'Courier New', monospace; 
-                      font-size: 12px; 
-                      margin: 20px;
+                      font-size: 10px; 
+                      line-height: 12px;
+                      width: 58mm;
+                      padding: 2mm;
                       white-space: pre-line;
+                      overflow: hidden;
+                      background: white;
+                    }
+                    @media print {
+                      body {
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                      }
                     }
                   </style>
                 </head>
                 <body>${receiptContent}</body>
               </html>
-            `);
+            `;
+            printWindow.document.write(html);
             printWindow.document.close();
             setTimeout(() => {
               printWindow.print();
