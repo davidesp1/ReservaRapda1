@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, pgEnum, varchar, sql } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, pgEnum, varchar } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -209,27 +209,6 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
 
 // Types export
 export type User = typeof users.$inferSelect;
-
-// Payment Settings table (usar estrutura existente do banco)
-export const paymentSettings = pgTable("payment_settings", {
-  id: serial("id").primaryKey(),
-  eupago_api_key: text("eupago_api_key").notNull(),
-  enable_card: boolean("enable_card").default(false),
-  enable_mbway: boolean("enable_mbway").default(false), 
-  enable_multibanco: boolean("enable_multibanco").default(false),
-  enable_bank_transfer: boolean("enable_bank_transfer").default(false),
-  enable_cash: boolean("enable_cash").default(false),
-  enable_multibanco_tpa: boolean("enable_multibanco_tpa").default(false),
-  currency: text("currency").default("EUR"),
-  tax_rate: integer("tax_rate").default(23),
-  require_prepayment: boolean("require_prepayment").default(false),
-  prepayment_amount: integer("prepayment_amount").default(0),
-  show_prices_with_tax: boolean("show_prices_with_tax").default(true),
-  updated_at: timestamp("updated_at")
-});
-
-export type PaymentSettings = typeof paymentSettings.$inferSelect;
-export type InsertPaymentSettings = typeof paymentSettings.$inferInsert;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type MenuCategory = typeof menuCategories.$inferSelect;

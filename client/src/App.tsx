@@ -31,8 +31,8 @@ import MenuManager from "@/pages/admin/MenuManager";
 import TableManager from "@/pages/admin/TableManager";
 import Finance from "@/pages/admin/Finance";
 import ReportsManager from "@/pages/admin/ReportsManager";
-// import Settings from "@/pages/admin/Settings";
-import PaymentSettingsFixed from "@/pages/admin/PaymentSettingsFixed";
+import Settings from "@/pages/admin/Settings";
+import PaymentSettings from "@/pages/admin/PaymentSettings";
 import ReservationManager from "@/pages/admin/ReservationManager";
 import POSMode from "@/pages/admin/POSMode";
 
@@ -114,8 +114,8 @@ function Router() {
       <Route path="/admin/tables" component={TableManager} />
       <Route path="/admin/finance" component={Finance} />
       <Route path="/admin/reports" component={ReportsManager} />
-      <Route path="/admin/settings" component={PaymentSettingsFixed} />
-      <Route path="/admin/payment-settings" component={PaymentSettingsFixed} />
+      <Route path="/admin/settings" component={Settings} />
+
       <Route path="/admin/reservations" component={ReservationManager} />
       <Route path="/admin/pos" component={POSMode} />
       

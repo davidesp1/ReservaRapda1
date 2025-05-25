@@ -26,24 +26,6 @@ const isAuthenticated = (req: express.Request, res: express.Response, next: expr
   }
 };
 
-// Middleware específico para admin
-const requireAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  if (!req.session.userId) {
-    return res.status(401).json({ message: "Não autenticado" });
-  }
-  
-  try {
-    const user = await queryClient`SELECT role FROM users WHERE id = ${req.session.userId}`;
-    if (user.length === 0 || user[0].role !== 'admin') {
-      return res.status(403).json({ message: "Acesso negado" });
-    }
-    next();
-  } catch (error) {
-    console.error('Erro ao verificar permissões:', error);
-    res.status(500).json({ message: "Erro interno do servidor" });
-  }
-};
-
 // Rotas de autenticação
 router.post("/api/auth/register", register);
 router.post("/api/auth/login", login);
