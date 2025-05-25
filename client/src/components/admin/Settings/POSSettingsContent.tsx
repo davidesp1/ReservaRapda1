@@ -1013,7 +1013,19 @@ const POSSettingsContent: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="font-medium">Margens (em pixels)</h4>
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-medium">Margens (em pixels)</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={resetMargins}
+                      className="text-xs"
+                    >
+                      <RotateCcw className="w-3 h-3 mr-1" />
+                      Reset Margens
+                    </Button>
+                  </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
