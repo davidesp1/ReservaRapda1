@@ -144,6 +144,15 @@ const POSMode = () => {
   // Função para gerar recibo formatado
   const generateReceipt = () => {
     const now = new Date();
+    const paymentMethodNames: { [key: string]: string } = {
+      'cash': 'Dinheiro',
+      'card': 'Cartão',
+      'mbway': 'MBWay', 
+      'multibanco': 'Multibanco',
+      'multibanco_tpa': 'Multibanco (TPA)',
+      'transfer': 'Transferência'
+    };
+    
     const receiptContent = `
 ========================================
            OPA QUE DELÍCIA
@@ -162,11 +171,12 @@ Subtotal:                   €${(totalPrice / 100).toFixed(2)}
 IVA (23%):                   €${(totalPrice * 0.23 / 100).toFixed(2)}
 TOTAL:                      €${(totalPrice * 1.23 / 100).toFixed(2)}
 
-Forma de Pagamento: ${selectedPaymentMethod}
+Forma de Pagamento: ${paymentMethodNames[selectedPaymentMethod] || selectedPaymentMethod}
 Status: Pago
 
 ========================================
          Obrigado pela visita!
+         Volte sempre!
 ========================================
     `;
     return receiptContent.trim();
@@ -234,7 +244,7 @@ Status: Pago
     });
   };
 
-  const handleProcessOrder = () => {
+  const handleProcessOrder = (shouldPrint: boolean = false) => {
     setIsPaymentModalOpen(false);
     
     // Usar SweetAlert2 para confirmar a finalização
@@ -287,12 +297,48 @@ Status: Pago
             return response.json();
           })
           .then(data => {
+            // Se deve imprimir, gerar e imprimir o recibo
+            if (shouldPrint) {
+              const receiptContent = generateReceipt();
+              
+              // Tentar imprimir usando as configurações salvas
+              if ((window as any).printReceiptWithSettings) {
+                (window as any).printReceiptWithSettings(receiptContent);
+              } else {
+                // Fallback para impressão básica
+                const printWindow = window.open('', '_blank');
+                if (printWindow) {
+                  printWindow.document.write(`
+                    <html>
+                      <head>
+                        <title>Recibo</title>
+                        <style>
+                          body { 
+                            font-family: 'Courier New', monospace; 
+                            font-size: 12px; 
+                            margin: 20px;
+                            white-space: pre-line;
+                          }
+                        </style>
+                      </head>
+                      <body>${receiptContent}</body>
+                    </html>
+                  `);
+                  printWindow.document.close();
+                  setTimeout(() => {
+                    printWindow.print();
+                    setTimeout(() => printWindow.close(), 1000);
+                  }, 500);
+                }
+              }
+            }
+            
             // Mostrar mensagem de sucesso
             Swal.default.fire({
               title: t('Sucesso!'),
-              text: printReceipt 
-                ? t('Pedido finalizado e enviado para impressão.') 
-                : t('Pedido finalizado com sucesso!'),
+              text: shouldPrint 
+                ? t('Pedido gravado e enviado para impressão!') 
+                : t('Pedido gravado com sucesso!'),
               icon: 'success',
               timer: 2000,
               showConfirmButton: false
@@ -746,10 +792,16 @@ Status: Pago
                 {t('Cancelar')}
               </button>
               <button 
-                className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90"
-                onClick={handleProcessOrder}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+                onClick={() => handleProcessOrder(false)}
               >
-                {t('Continuar')}
+                {t('Gravar')}
+              </button>
+              <button 
+                className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700"
+                onClick={() => handleProcessOrder(true)}
+              >
+                {t('Gravar e Imprimir')}
               </button>
             </div>
           </div>
