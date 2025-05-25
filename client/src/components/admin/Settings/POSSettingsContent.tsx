@@ -199,7 +199,7 @@ const POSSettingsContent: React.FC = () => {
   // Função para testar impressão
   const testPrintMutation = useMutation({
     mutationFn: async (settings: POSSettingsFormData) => {
-      const testReceipt = generateTestReceipt(settings);
+      const testReceipt = generateTestReceiptContent(settings);
       await printReceipt(testReceipt, settings);
     },
     onSuccess: () => {
@@ -235,7 +235,7 @@ const POSSettingsContent: React.FC = () => {
   }, [currentSettings, form]);
 
   // Função para gerar recibo de teste
-  const generateTestReceipt = (settings: POSSettingsFormData): string => {
+  const generateTestReceiptContent = (settings: POSSettingsFormData): string => {
     let receipt = "";
     
     if (settings.printOptions.restaurantInfo) {
@@ -496,8 +496,8 @@ const POSSettingsContent: React.FC = () => {
     const currentSettings = form.getValues();
     const { fontSettings, paperSettings } = currentSettings;
     
-    // Simular conteúdo de recibo
-    const sampleContent = generateSampleReceipt(currentSettings);
+    // Simular conteúdo de recibo usando a função correta
+    const sampleContent = generateTestReceiptContent(currentSettings);
     
     // DEBUG: Log das configurações atuais
     console.log("🎨 Preview DEBUG - Settings:", {
