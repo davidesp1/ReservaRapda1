@@ -318,9 +318,9 @@ const POSSettingsContent: React.FC = () => {
       const marginLeftPx = fontSettings.marginLeft;
       const marginRightPx = fontSettings.marginRight;
       
-      // Altura total em pixels ANTES de converter para mm
-      const totalHeightPx = contentHeightPx + marginTopPx + marginBottomPx + 20; // 20px extra de segurança
-      const totalHeightMm = Math.max(totalHeightPx / 3.779527, 30); // Mínimo 30mm
+      // Calcular altura mais precisa sem margem excessiva
+      const totalHeightPx = contentHeightPx + marginTopPx + marginBottomPx + 10; // Apenas 10px de segurança
+      const totalHeightMm = Math.max(totalHeightPx / 3.779527, 25); // Mínimo reduzido para 25mm
       
       console.log("📐 DEBUG - Margens e altura:", {
         marginTopPx,
@@ -337,7 +337,7 @@ const POSSettingsContent: React.FC = () => {
         throw new Error("Não foi possível abrir a janela de impressão");
       }
 
-      // CSS TOTALMENTE CORRIGIDO com margens em pixels aplicadas corretamente
+      // CSS OTIMIZADO para impressão completa e margens corretas
       const html = `
         <!DOCTYPE html>
         <html>
@@ -347,61 +347,64 @@ const POSSettingsContent: React.FC = () => {
           <style>
             @page {
               size: ${paperSettings.paperWidth}mm ${totalHeightMm.toFixed(1)}mm;
-              margin: 0 !important;
+              margin: 0;
             }
             * {
-              margin: 0 !important;
-              padding: 0 !important;
-              box-sizing: border-box !important;
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
             }
             html, body {
-              width: ${paperSettings.paperWidth}mm !important;
-              height: ${totalHeightMm.toFixed(1)}mm !important;
+              width: ${paperSettings.paperWidth}mm;
+              height: ${totalHeightMm.toFixed(1)}mm;
               font-family: ${fontSettings.fontFamily === 'monospace' ? "'Courier New', monospace" : 
                            fontSettings.fontFamily === 'sans-serif' ? "'Arial', sans-serif" : 
-                           "'Times New Roman', serif"} !important;
-              font-size: ${fontSettings.fontSize}px !important;
-              line-height: ${fontSettings.lineHeight} !important;
-              margin: 0 !important;
-              padding: ${marginTopPx}px ${marginRightPx}px ${marginBottomPx}px ${marginLeftPx}px !important;
-              overflow: hidden !important;
-              background: white !important;
-              white-space: pre-line !important;
+                           "'Times New Roman', serif"};
+              font-size: ${fontSettings.fontSize}px;
+              line-height: ${fontSettings.lineHeight};
+              margin: 0;
+              padding: 0;
+              overflow: visible;
+              background: white;
+              white-space: pre-line;
+            }
+            .receipt-container {
+              width: 100%;
+              height: 100%;
+              padding: ${marginTopPx}px ${marginRightPx}px ${marginBottomPx}px ${marginLeftPx}px;
+              box-sizing: border-box;
+              display: flex;
+              flex-direction: column;
             }
             .receipt-content {
-              width: 100% !important;
-              height: 100% !important;
-              display: block !important;
-              word-wrap: break-word !important;
-              overflow-wrap: break-word !important;
+              flex: 1;
+              width: 100%;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
+              white-space: pre-line;
             }
             @media print {
               @page {
-                size: ${paperSettings.paperWidth}mm ${totalHeightMm.toFixed(1)}mm !important;
-                margin: 0 !important;
+                size: ${paperSettings.paperWidth}mm ${totalHeightMm.toFixed(1)}mm;
+                margin: 0;
               }
               html, body {
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                font-family: ${fontSettings.fontFamily === 'monospace' ? "'Courier New', monospace" : 
-                             fontSettings.fontFamily === 'sans-serif' ? "'Arial', sans-serif" : 
-                             "'Times New Roman', serif"} !important;
-                font-size: ${fontSettings.fontSize}px !important;
-                line-height: ${fontSettings.lineHeight} !important;
-                padding: ${marginTopPx}px ${marginRightPx}px ${marginBottomPx}px ${marginLeftPx}px !important;
-                width: ${paperSettings.paperWidth}mm !important;
-                height: ${totalHeightMm.toFixed(1)}mm !important;
-                white-space: pre-line !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+                print-color-adjust: exact;
+                overflow: visible;
               }
-              .receipt-content {
-                page-break-inside: avoid !important;
+              .receipt-container {
+                page-break-inside: avoid;
+                break-inside: avoid;
               }
             }
           </style>
         </head>
         <body>
-          <div class="receipt-content">${content}</div>
+          <div class="receipt-container">
+            <div class="receipt-content">${content}</div>
+          </div>
         </body>
         </html>
       `;
@@ -521,10 +524,10 @@ const POSSettingsContent: React.FC = () => {
     const lineHeight = fontSettings.fontSize * fontSettings.lineHeight;
     const contentHeight = allLines.length * lineHeight; // Incluir linhas vazias
     
-    // SEMPRE usar altura adaptativa no preview (forçar)
+    // SEMPRE usar altura adaptativa no preview com cálculo mais preciso
     const totalHeight = Math.max(
-      contentHeight + fontSettings.marginTop + fontSettings.marginBottom + 20,
-      100
+      contentHeight + fontSettings.marginTop + fontSettings.marginBottom + 10,
+      80
     );
     const totalHeightMm = totalHeight / 3.779527;
 
