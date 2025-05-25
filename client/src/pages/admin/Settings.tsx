@@ -1,45 +1,78 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import AdminLayout from '@/components/layouts/AdminLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { Save, Globe, CreditCard, BellRing, Store, Calendar, Euro } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
+import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import AdminLayout from "@/components/layouts/AdminLayout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import {
+  Save,
+  Globe,
+  CreditCard,
+  BellRing,
+  Store,
+  Calendar,
+  Euro,
+} from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/lib/supabase";  // já existe em outro arquivo
+
 
 // Configure schema for general settings
 const generalSettingsSchema = z.object({
-  restaurantName: z.string().min(1, 'O nome do restaurante é obrigatório'),
-  address: z.string().min(1, 'O endereço é obrigatório'),
-  phone: z.string().min(1, 'O telefone é obrigatório'),
-  email: z.string().email('Email inválido'),
-  website: z.string().url('Website inválido').optional().or(z.literal('')),
-  openingTime: z.string().min(1, 'Horário de abertura obrigatório'),
-  closingTime: z.string().min(1, 'Horário de fechamento obrigatório'),
-  description: z.string().max(500, 'A descrição não pode ter mais de 500 caracteres').optional(),
+  restaurantName: z.string().min(1, "O nome do restaurante é obrigatório"),
+  address: z.string().min(1, "O endereço é obrigatório"),
+  phone: z.string().min(1, "O telefone é obrigatório"),
+  email: z.string().email("Email inválido"),
+  website: z.string().url("Website inválido").optional().or(z.literal("")),
+  openingTime: z.string().min(1, "Horário de abertura obrigatório"),
+  closingTime: z.string().min(1, "Horário de fechamento obrigatório"),
+  description: z
+    .string()
+    .max(500, "A descrição não pode ter mais de 500 caracteres")
+    .optional(),
 });
 
 // Configure schema for reservation settings
 const reservationSettingsSchema = z.object({
-  minReservationTime: z.coerce.number().min(30, 'Mínimo de 30 minutos'),
-  maxReservationTime: z.coerce.number().min(60, 'Mínimo de 60 minutos'),
-  reservationTimeInterval: z.coerce.number().min(15, 'Mínimo de 15 minutos'),
-  maxPartySize: z.coerce.number().min(1, 'Mínimo de 1 pessoa'),
-  reservationLeadHours: z.coerce.number().min(1, 'Mínimo de 1 hora'),
-  maxAdvanceReservationDays: z.coerce.number().min(1, 'Mínimo de 1 dia'),
+  minReservationTime: z.coerce.number().min(30, "Mínimo de 30 minutos"),
+  maxReservationTime: z.coerce.number().min(60, "Mínimo de 60 minutos"),
+  reservationTimeInterval: z.coerce.number().min(15, "Mínimo de 15 minutos"),
+  maxPartySize: z.coerce.number().min(1, "Mínimo de 1 pessoa"),
+  reservationLeadHours: z.coerce.number().min(1, "Mínimo de 1 hora"),
+  maxAdvanceReservationDays: z.coerce.number().min(1, "Mínimo de 1 dia"),
   allowCustomersToCancel: z.boolean(),
   requireConfirmation: z.boolean(),
   autoConfirmReservations: z.boolean(),
@@ -47,7 +80,7 @@ const reservationSettingsSchema = z.object({
 
 // Configure schema for payment settings
 const paymentSettingsSchema = z.object({
-  currency: z.string().min(1, 'Moeda obrigatória'),
+  currency: z.string().min(1, "Moeda obrigatória"),
   acceptCard: z.boolean(),
   acceptCash: z.boolean(),
   acceptMBWay: z.boolean(),
@@ -55,9 +88,11 @@ const paymentSettingsSchema = z.object({
   acceptBankTransfer: z.boolean(),
   acceptMultibancoTPA: z.boolean(),
   requirePrepayment: z.boolean(),
-  requirePrepaymentAmount: z.coerce.number().min(0, 'Valor não pode ser negativo'),
+  requirePrepaymentAmount: z.coerce
+    .number()
+    .min(0, "Valor não pode ser negativo"),
   showPricesWithTax: z.boolean(),
-  taxRate: z.coerce.number().min(0, 'Taxa não pode ser negativa'),
+  taxRate: z.coerce.number().min(0, "Taxa não pode ser negativa"),
   eupagoApiKey: z.string().optional(),
 });
 
@@ -67,7 +102,7 @@ const notificationSettingsSchema = z.object({
   sendSmsConfirmation: z.boolean(),
   sendEmailReminders: z.boolean(),
   sendSmsReminders: z.boolean(),
-  reminderHoursBeforeReservation: z.coerce.number().min(1, 'Mínimo de 1 hora'),
+  reminderHoursBeforeReservation: z.coerce.number().min(1, "Mínimo de 1 hora"),
   allowCustomerFeedback: z.boolean(),
   collectCustomerFeedback: z.boolean(),
 });
@@ -77,22 +112,23 @@ const Settings: React.FC = () => {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
-  
+
   // Tab handling
-  const [activeTab, setActiveTab] = useState('general');
+  const [eupagoApiKey, setEupagoApiKey] = useState<string>("");
 
   // General settings form
   const generalForm = useForm<z.infer<typeof generalSettingsSchema>>({
     resolver: zodResolver(generalSettingsSchema),
     defaultValues: {
-      restaurantName: 'Opa que delicia',
-      address: 'MSBN Europe Convention Center, Barcelona',
-      phone: '+34 612 345 678',
-      email: 'contact@opaquedelicia.com',
-      website: 'https://opaquedelicia.com',
-      openingTime: '11:00',
-      closingTime: '23:00',
-      description: 'Autêntica comida brasileira durante a convenção MSBN Europe',
+      restaurantName: "Opa que delicia",
+      address: "MSBN Europe Convention Center, Barcelona",
+      phone: "+34 612 345 678",
+      email: "contact@opaquedelicia.com",
+      website: "https://opaquedelicia.com",
+      openingTime: "11:00",
+      closingTime: "23:00",
+      description:
+        "Autêntica comida brasileira durante a convenção MSBN Europe",
     },
   });
 
@@ -116,7 +152,7 @@ const Settings: React.FC = () => {
   const paymentForm = useForm<z.infer<typeof paymentSettingsSchema>>({
     resolver: zodResolver(paymentSettingsSchema),
     defaultValues: {
-      currency: 'EUR',
+      currency: "EUR",
       acceptCard: true,
       acceptCash: true,
       acceptMBWay: true,
@@ -127,15 +163,15 @@ const Settings: React.FC = () => {
       requirePrepaymentAmount: 0,
       showPricesWithTax: true,
       taxRate: 23,
-      eupagoApiKey: '',
+      eupagoApiKey: "",
     },
   });
-  
+
   // Log para depuração
   const onPaymentFormChange = () => {
     console.log("Formulário de pagamento atualizado:", paymentForm.getValues());
   };
-  
+
   useEffect(() => {
     const subscription = paymentForm.watch(onPaymentFormChange);
     return () => subscription.unsubscribe();
@@ -157,10 +193,10 @@ const Settings: React.FC = () => {
 
   // Fetch settings data
   const { data: settings, isLoading: settingsLoading } = useQuery({
-    queryKey: ['/api/settings'],
-    enabled: isAuthenticated && isAdmin
+    queryKey: ["/api/settings"],
+    enabled: isAuthenticated && isAdmin,
   });
-  
+
   // Definir o tipo correto para o objeto de configurações
   interface SettingsType {
     payments?: Record<string, string>;
@@ -173,34 +209,41 @@ const Settings: React.FC = () => {
   useEffect(() => {
     if (settings) {
       console.log("Configurações carregadas do servidor:", settings);
-      
+
       const typedSettings = settings as SettingsType;
-      
+
       // Atualizar formulário de pagamentos
       if (typedSettings.payments) {
         // Converter strings "true"/"false" para boolean
-        const paymentSettings = Object.entries(typedSettings.payments).reduce((acc, [key, value]) => {
-          if (value === 'true') acc[key] = true;
-          else if (value === 'false') acc[key] = false;
-          else acc[key] = value;
-          return acc;
-        }, {} as Record<string, any>);
-        
+        const paymentSettings = Object.entries(typedSettings.payments).reduce(
+          (acc, [key, value]) => {
+            if (value === "true") acc[key] = true;
+            else if (value === "false") acc[key] = false;
+            else acc[key] = value;
+            return acc;
+          },
+          {} as Record<string, any>,
+        );
+
         console.log("Configurações de pagamento formatadas:", paymentSettings);
         paymentForm.reset(paymentSettings);
       }
-      
+
       // Atualizar outros formulários
       if (typedSettings.general) {
         generalForm.reset(typedSettings.general as Record<string, any>);
       }
-      
+
       if (typedSettings.reservations) {
-        reservationForm.reset(typedSettings.reservations as Record<string, any>);
+        reservationForm.reset(
+          typedSettings.reservations as Record<string, any>,
+        );
       }
-      
+
       if (typedSettings.notifications) {
-        notificationForm.reset(typedSettings.notifications as Record<string, any>);
+        notificationForm.reset(
+          typedSettings.notifications as Record<string, any>,
+        );
       }
     }
   }, [settings, generalForm, reservationForm, paymentForm, notificationForm]);
@@ -208,20 +251,20 @@ const Settings: React.FC = () => {
   // Update general settings mutation
   const updateGeneralSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof generalSettingsSchema>) => {
-      return apiRequest('PUT', '/api/settings/general', data);
+      return apiRequest("PUT", "/api/settings/general", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({
-        title: t('SettingsSaved'),
-        description: t('GeneralSettingsSavedDescription'),
+        title: t("SettingsSaved"),
+        description: t("GeneralSettingsSavedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: t('SettingsSaveError'),
-        description: error.message || t('SettingsSaveErrorDescription'),
-        variant: 'destructive',
+        title: t("SettingsSaveError"),
+        description: error.message || t("SettingsSaveErrorDescription"),
+        variant: "destructive",
       });
     },
   });
@@ -229,20 +272,20 @@ const Settings: React.FC = () => {
   // Update reservation settings mutation
   const updateReservationSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof reservationSettingsSchema>) => {
-      return apiRequest('PUT', '/api/settings/reservations', data);
+      return apiRequest("PUT", "/api/settings/reservations", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({
-        title: t('SettingsSaved'),
-        description: t('ReservationSettingsSavedDescription'),
+        title: t("SettingsSaved"),
+        description: t("ReservationSettingsSavedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: t('SettingsSaveError'),
-        description: error.message || t('SettingsSaveErrorDescription'),
-        variant: 'destructive',
+        title: t("SettingsSaveError"),
+        description: error.message || t("SettingsSaveErrorDescription"),
+        variant: "destructive",
       });
     },
   });
@@ -250,20 +293,20 @@ const Settings: React.FC = () => {
   // Update payment settings mutation
   const updatePaymentSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof paymentSettingsSchema>) => {
-      return apiRequest('PUT', '/api/settings/payments', data);
+      return apiRequest("PUT", "/api/settings/payments", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({
-        title: t('SettingsSaved'),
-        description: t('PaymentSettingsSavedDescription'),
+        title: t("SettingsSaved"),
+        description: t("PaymentSettingsSavedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: t('SettingsSaveError'),
-        description: error.message || t('SettingsSaveErrorDescription'),
-        variant: 'destructive',
+        title: t("SettingsSaveError"),
+        description: error.message || t("SettingsSaveErrorDescription"),
+        variant: "destructive",
       });
     },
   });
@@ -271,37 +314,59 @@ const Settings: React.FC = () => {
   // Update notification settings mutation
   const updateNotificationSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof notificationSettingsSchema>) => {
-      return apiRequest('PUT', '/api/settings/notifications', data);
+      return apiRequest("PUT", "/api/settings/notifications", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({
-        title: t('SettingsSaved'),
-        description: t('NotificationSettingsSavedDescription'),
+        title: t("SettingsSaved"),
+        description: t("NotificationSettingsSavedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: t('SettingsSaveError'),
-        description: error.message || t('SettingsSaveErrorDescription'),
-        variant: 'destructive',
+        title: t("SettingsSaveError"),
+        description: error.message || t("SettingsSaveErrorDescription"),
+        variant: "destructive",
       });
     },
   });
 
   // Redirect if not authenticated or not admin
+  // FETCH INICIAL + REALTIME para Eupago API key
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !isAdmin)) {
-      setLocation('/');
-    }
-  }, [isAuthenticated, isAdmin, isLoading, setLocation]);
+    // 1) buscar a chave Eupago
+    supabase
+      .from("settings")
+      .select("payments->>eupagoApiKey")
+      .single()
+      .then(({ data, error }) => {
+        if (error) console.error(error);
+        else setEupagoApiKey(data.payments?.eupagoApiKey || "");
+      });
+  
+    // 2) subscribe a updates em realtime
+    const channel = supabase
+      .channel("public:settings")
+      .on(
+        { event: "UPDATE", schema: "public", table: "settings" },
+        payload => {
+          setEupagoApiKey(payload.new.payments?.eupagoApiKey || "");
+        }
+      )
+      .subscribe();
+  
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   // Submit handlers
   const onGeneralSubmit = (data: z.infer<typeof generalSettingsSchema>) => {
     updateGeneralSettingsMutation.mutate(data);
   };
 
-  const onReservationSubmit = (data: z.infer<typeof reservationSettingsSchema>) => {
+  const onReservationSubmit = (
+    data: z.infer<typeof reservationSettingsSchema>,
+  ) => {
     updateReservationSettingsMutation.mutate(data);
   };
 
@@ -317,19 +382,24 @@ const Settings: React.FC = () => {
       acceptCash: Boolean(data.acceptCash),
       acceptMultibancoTPA: Boolean(data.acceptMultibancoTPA),
       requirePrepayment: Boolean(data.requirePrepayment),
-      showPricesWithTax: Boolean(data.showPricesWithTax)
+      showPricesWithTax: Boolean(data.showPricesWithTax),
     };
-    console.log("Configurações de pagamento formatadas para envio:", paymentSettings);
+    console.log(
+      "Configurações de pagamento formatadas para envio:",
+      paymentSettings,
+    );
     updatePaymentSettingsMutation.mutate(paymentSettings);
   };
 
-  const onNotificationSubmit = (data: z.infer<typeof notificationSettingsSchema>) => {
+  const onNotificationSubmit = (
+    data: z.infer<typeof notificationSettingsSchema>,
+  ) => {
     updateNotificationSettingsMutation.mutate(data);
   };
 
   if (settingsLoading || isLoading) {
     return (
-      <AdminLayout title={t('Settings')}>
+      <AdminLayout title={t("Settings")}>
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/3"></div>
           <div className="h-96 bg-gray-200 rounded"></div>
@@ -339,24 +409,28 @@ const Settings: React.FC = () => {
   }
 
   return (
-    <AdminLayout title={t('Settings')}>
+    <AdminLayout title={t("Settings")}>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-montserrat font-bold">{t('Settings')}</h1>
+        <h1 className="text-3xl font-montserrat font-bold">{t("Settings")}</h1>
       </div>
 
-      <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab}>
+      <Tabs
+        defaultValue="general"
+        value={activeTab}
+        onValueChange={setActiveTab}
+      >
         <TabsList className="grid grid-cols-4 w-full mb-8">
           <TabsTrigger value="general" className="flex items-center">
-            <Store className="w-4 h-4 mr-2" /> {t('GeneralSettings')}
+            <Store className="w-4 h-4 mr-2" /> {t("GeneralSettings")}
           </TabsTrigger>
           <TabsTrigger value="reservations" className="flex items-center">
-            <Calendar className="w-4 h-4 mr-2" /> {t('ReservationSettings')}
+            <Calendar className="w-4 h-4 mr-2" /> {t("ReservationSettings")}
           </TabsTrigger>
           <TabsTrigger value="payments" className="flex items-center">
-            <CreditCard className="w-4 h-4 mr-2" /> {t('PaymentSettings')}
+            <CreditCard className="w-4 h-4 mr-2" /> {t("PaymentSettings")}
           </TabsTrigger>
           <TabsTrigger value="notifications" className="flex items-center">
-            <BellRing className="w-4 h-4 mr-2" /> {t('NotificationSettings')}
+            <BellRing className="w-4 h-4 mr-2" /> {t("NotificationSettings")}
           </TabsTrigger>
         </TabsList>
 
@@ -364,19 +438,24 @@ const Settings: React.FC = () => {
         <TabsContent value="general">
           <Card>
             <CardHeader>
-              <CardTitle>{t('GeneralSettings')}</CardTitle>
-              <CardDescription>{t('GeneralSettingsDescription')}</CardDescription>
+              <CardTitle>{t("GeneralSettings")}</CardTitle>
+              <CardDescription>
+                {t("GeneralSettingsDescription")}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...generalForm}>
-                <form onSubmit={generalForm.handleSubmit(onGeneralSubmit)} className="space-y-6">
+                <form
+                  onSubmit={generalForm.handleSubmit(onGeneralSubmit)}
+                  className="space-y-6"
+                >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={generalForm.control}
                       name="restaurantName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('RestaurantName')}</FormLabel>
+                          <FormLabel>{t("RestaurantName")}</FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -390,7 +469,7 @@ const Settings: React.FC = () => {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('Email')}</FormLabel>
+                          <FormLabel>{t("Email")}</FormLabel>
                           <FormControl>
                             <Input {...field} type="email" />
                           </FormControl>
@@ -404,7 +483,7 @@ const Settings: React.FC = () => {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('Phone')}</FormLabel>
+                          <FormLabel>{t("Phone")}</FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -418,7 +497,7 @@ const Settings: React.FC = () => {
                       name="website"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('Website')}</FormLabel>
+                          <FormLabel>{t("Website")}</FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -432,7 +511,7 @@ const Settings: React.FC = () => {
                       name="address"
                       render={({ field }) => (
                         <FormItem className="col-span-1 md:col-span-2">
-                          <FormLabel>{t('Address')}</FormLabel>
+                          <FormLabel>{t("Address")}</FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -448,7 +527,7 @@ const Settings: React.FC = () => {
                       name="openingTime"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('OpeningTime')}</FormLabel>
+                          <FormLabel>{t("OpeningTime")}</FormLabel>
                           <FormControl>
                             <Input {...field} type="time" />
                           </FormControl>
@@ -462,7 +541,7 @@ const Settings: React.FC = () => {
                       name="closingTime"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('ClosingTime')}</FormLabel>
+                          <FormLabel>{t("ClosingTime")}</FormLabel>
                           <FormControl>
                             <Input {...field} type="time" />
                           </FormControl>
@@ -477,16 +556,16 @@ const Settings: React.FC = () => {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('Description')}</FormLabel>
+                        <FormLabel>{t("Description")}</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            {...field} 
+                          <Textarea
+                            {...field}
                             rows={4}
-                            placeholder={t('RestaurantDescriptionPlaceholder')} 
+                            placeholder={t("RestaurantDescriptionPlaceholder")}
                           />
                         </FormControl>
                         <FormDescription>
-                          {t('DescriptionHelp')}
+                          {t("DescriptionHelp")}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -494,11 +573,11 @@ const Settings: React.FC = () => {
                   />
 
                   <div className="flex justify-end">
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="bg-brasil-green text-white"
                     >
-                      <Save className="w-4 h-4 mr-2" /> {t('SaveSettings')}
+                      <Save className="w-4 h-4 mr-2" /> {t("SaveSettings")}
                     </Button>
                   </div>
                 </form>
@@ -511,25 +590,33 @@ const Settings: React.FC = () => {
         <TabsContent value="reservations">
           <Card>
             <CardHeader>
-              <CardTitle>{t('ReservationSettings')}</CardTitle>
-              <CardDescription>{t('ReservationSettingsDescription')}</CardDescription>
+              <CardTitle>{t("ReservationSettings")}</CardTitle>
+              <CardDescription>
+                {t("ReservationSettingsDescription")}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...reservationForm}>
-                <form onSubmit={reservationForm.handleSubmit(onReservationSubmit)} className="space-y-6">
+                <form
+                  onSubmit={reservationForm.handleSubmit(onReservationSubmit)}
+                  className="space-y-6"
+                >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={reservationForm.control}
                       name="minReservationTime"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('MinReservationTime')}</FormLabel>
+                          <FormLabel>{t("MinReservationTime")}</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" min="30" step="15" />
+                            <Input
+                              {...field}
+                              type="number"
+                              min="30"
+                              step="15"
+                            />
                           </FormControl>
-                          <FormDescription>
-                            {t('MinutesValue')}
-                          </FormDescription>
+                          <FormDescription>{t("MinutesValue")}</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -540,13 +627,16 @@ const Settings: React.FC = () => {
                       name="maxReservationTime"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('MaxReservationTime')}</FormLabel>
+                          <FormLabel>{t("MaxReservationTime")}</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" min="60" step="15" />
+                            <Input
+                              {...field}
+                              type="number"
+                              min="60"
+                              step="15"
+                            />
                           </FormControl>
-                          <FormDescription>
-                            {t('MinutesValue')}
-                          </FormDescription>
+                          <FormDescription>{t("MinutesValue")}</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -557,13 +647,16 @@ const Settings: React.FC = () => {
                       name="reservationTimeInterval"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('ReservationTimeInterval')}</FormLabel>
+                          <FormLabel>{t("ReservationTimeInterval")}</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" min="15" step="15" />
+                            <Input
+                              {...field}
+                              type="number"
+                              min="15"
+                              step="15"
+                            />
                           </FormControl>
-                          <FormDescription>
-                            {t('MinutesValue')}
-                          </FormDescription>
+                          <FormDescription>{t("MinutesValue")}</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -574,13 +667,11 @@ const Settings: React.FC = () => {
                       name="maxPartySize"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('MaxPartySize')}</FormLabel>
+                          <FormLabel>{t("MaxPartySize")}</FormLabel>
                           <FormControl>
                             <Input {...field} type="number" min="1" />
                           </FormControl>
-                          <FormDescription>
-                            {t('PeopleValue')}
-                          </FormDescription>
+                          <FormDescription>{t("PeopleValue")}</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -591,13 +682,11 @@ const Settings: React.FC = () => {
                       name="reservationLeadHours"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('ReservationLeadHours')}</FormLabel>
+                          <FormLabel>{t("ReservationLeadHours")}</FormLabel>
                           <FormControl>
                             <Input {...field} type="number" min="1" />
                           </FormControl>
-                          <FormDescription>
-                            {t('HoursValue')}
-                          </FormDescription>
+                          <FormDescription>{t("HoursValue")}</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -608,13 +697,13 @@ const Settings: React.FC = () => {
                       name="maxAdvanceReservationDays"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('MaxAdvanceReservationDays')}</FormLabel>
+                          <FormLabel>
+                            {t("MaxAdvanceReservationDays")}
+                          </FormLabel>
                           <FormControl>
                             <Input {...field} type="number" min="1" />
                           </FormControl>
-                          <FormDescription>
-                            {t('DaysValue')}
-                          </FormDescription>
+                          <FormDescription>{t("DaysValue")}</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -630,9 +719,9 @@ const Settings: React.FC = () => {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
-                            <FormLabel>{t('AllowCustomersToCancel')}</FormLabel>
+                            <FormLabel>{t("AllowCustomersToCancel")}</FormLabel>
                             <FormDescription>
-                              {t('AllowCustomersToCancelDescription')}
+                              {t("AllowCustomersToCancelDescription")}
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -651,9 +740,9 @@ const Settings: React.FC = () => {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
-                            <FormLabel>{t('RequireConfirmation')}</FormLabel>
+                            <FormLabel>{t("RequireConfirmation")}</FormLabel>
                             <FormDescription>
-                              {t('RequireConfirmationDescription')}
+                              {t("RequireConfirmationDescription")}
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -672,9 +761,11 @@ const Settings: React.FC = () => {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
-                            <FormLabel>{t('AutoConfirmReservations')}</FormLabel>
+                            <FormLabel>
+                              {t("AutoConfirmReservations")}
+                            </FormLabel>
                             <FormDescription>
-                              {t('AutoConfirmReservationsDescription')}
+                              {t("AutoConfirmReservationsDescription")}
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -689,11 +780,11 @@ const Settings: React.FC = () => {
                   </div>
 
                   <div className="flex justify-end">
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="bg-brasil-green text-white"
                     >
-                      <Save className="w-4 h-4 mr-2" /> {t('SaveSettings')}
+                      <Save className="w-4 h-4 mr-2" /> {t("SaveSettings")}
                     </Button>
                   </div>
                 </form>
@@ -706,30 +797,45 @@ const Settings: React.FC = () => {
         <TabsContent value="payments">
           <Card>
             <CardHeader>
-              <CardTitle>{t('PaymentSettings')}</CardTitle>
-              <CardDescription>{t('PaymentSettingsDescription')}</CardDescription>
+              <CardTitle>{t("PaymentSettings")}</CardTitle>
+              <CardDescription>
+                {t("PaymentSettingsDescription")}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...paymentForm}>
-                <form onSubmit={paymentForm.handleSubmit(onPaymentSubmit)} className="space-y-6">
+                <form
+                  onSubmit={paymentForm.handleSubmit(onPaymentSubmit)}
+                  className="space-y-6"
+                >
+                  <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={paymentForm.control}
                       name="currency"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('Currency')}</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormLabel>{t("Currency")}</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder={t('SelectCurrency')} />
+                                <SelectValue
+                                  placeholder={t("SelectCurrency")}
+                                />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="EUR">Euro (€)</SelectItem>
                               <SelectItem value="USD">US Dollar ($)</SelectItem>
-                              <SelectItem value="GBP">British Pound (£)</SelectItem>
-                              <SelectItem value="BRL">Real Brasileiro (R$)</SelectItem>
+                              <SelectItem value="GBP">
+                                British Pound (£)
+                              </SelectItem>
+                              <SelectItem value="BRL">
+                                Real Brasileiro (R$)
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -742,12 +848,17 @@ const Settings: React.FC = () => {
                       name="taxRate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('TaxRate')}</FormLabel>
+                          <FormLabel>{t("TaxRate")}</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" min="0" step="0.01" />
+                            <Input
+                              {...field}
+                              type="number"
+                              min="0"
+                              step="0.01"
+                            />
                           </FormControl>
                           <FormDescription>
-                            {t('PercentageValue')}
+                            {t("PercentageValue")}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -758,230 +869,83 @@ const Settings: React.FC = () => {
                   <Separator className="my-6" />
 
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium mt-6">{t('PaymentGatewaySettings')}</h3>
-                    
+                    <h3 className="text-lg font-medium mt-6">
+                      {t("PaymentGatewaySettings")}
+                    </h3>
+
                     <div className="p-6 border rounded-md bg-slate-50 mt-2 mb-6">
                       <FormField
                         control={paymentForm.control}
                         name="eupagoApiKey"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-lg font-semibold">{t('EuPagoAPIKey')}</FormLabel>
+                            <FormLabel className="text-lg font-semibold">
+                              {t("EuPagoAPIKey")}
+                            </FormLabel>
                             <FormDescription className="mb-2">
-                              {t('EuPagoAPIKeyDescription')}
+                              {t("EuPagoAPIKeyDescription")}
                             </FormDescription>
                             <FormControl>
-                              <Input 
-                                {...field} 
-                                type="password" 
-                                className="font-mono" 
+                              <Input
+                                {...field}
+                                type="text"
+                                className="font-mono"
                                 onChange={(e) => {
                                   // Atualizar o valor da chave API
                                   field.onChange(e);
-                                  
+
                                   // Se a chave API for removida, desabilite os métodos de pagamento
                                   const apiValue = e.target.value;
-                                  if (!apiValue || apiValue.trim() === '') {
+                                  if (!apiValue || apiValue.trim() === "") {
                                     // Desabilitar automaticamente os métodos que dependem da API
-                                    paymentForm.setValue('acceptCard', false);
-                                    paymentForm.setValue('acceptMBWay', false);
-                                    paymentForm.setValue('acceptMultibanco', false);
+                                    paymentForm.setValue("acceptCard", false);
+                                    paymentForm.setValue("acceptMBWay", false);
+                                    paymentForm.setValue(
+                                      "acceptMultibanco",
+                                      false,
+                                    );
                                   }
                                 }}
                               />
                             </FormControl>
                             <FormMessage />
-                            {!field.value || field.value.trim() === '' ? (
+                            {!field.value || field.value.trim() === "" ? (
                               <p className="text-sm mt-2 text-amber-600">
-                                {t('RequiresEuPagoAPIKey')} para métodos de pagamento online
+                                {t("RequiresEuPagoAPIKey")} para métodos de pagamento online
                               </p>
                             ) : null}
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <h3 className="text-lg font-medium">{t('PaymentMethods')}</h3>
-                    
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
-                      <div className="flex">
-                        <div className="flex-shrink-0">
-                          <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div className="ml-3">
-                          <h3 className="text-sm font-medium text-yellow-800">{t('ImportantNote')}</h3>
-                          <div className="mt-2 text-sm text-yellow-700">
-                            <p>{t('CashPaymentVisibleOnlyToAdmin')}</p>
-                          </div>
-                        </div>
+                            </FormItem>
+                            )} />
+                            </div>
+
+                    <h3 className="text-lg font-medium">{t("PaymentMethods")}</h3>
+                    {/* Métodos de pagamento */}
+                    {eupagoApiKey ? (
+                      <div className="space-y-4 grid gap-4">
+                        <FormField
+                          control={paymentForm.control}
+                          name="acceptCard"
+                          render={({ field }) => (
+                            <FormItem className="flex items-center justify-between p-3 border rounded-lg">
+                              <div>
+                                <FormLabel>{t("AcceptCard")}</FormLabel>
+                                <FormDescription>{t("ProcessedByEuPago")}</FormDescription>
+                              </div>
+                              <FormControl>
+                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        {/* Repita FormField para acceptMBWay, acceptMultibanco, etc. */}
                       </div>
-                    </div>
-                    
-                    <div className="space-y-4 grid gap-4">
-                      <FormField
-                        control={paymentForm.control}
-                        name="acceptCard"
-                        render={({ field }) => {
-                          // Verificar se tem uma API key
-                          const apiKey = paymentForm.watch('eupagoApiKey') || '';
-                          const hasApiKey = apiKey.trim().length > 0;
-                          
-                          return (
-                            <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                              <div className="space-y-0.5">
-                                <FormLabel>{t('AcceptCard')}</FormLabel>
-                                <FormDescription>
-                                  {t('ProcessedByEuPago')}
-                                </FormDescription>
-                                {!hasApiKey && (
-                                  <p className="text-xs text-red-600">{t('RequiresEuPagoAPIKey')}</p>
-                                )}
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={hasApiKey ? field.value : false}
-                                  onCheckedChange={field.onChange}
-                                  disabled={!hasApiKey}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          );
-                        }}
-                      />
+                    ) : (
+                      <p className="text-sm text-red-600">
+                        {t("RequiresEuPagoAPIKey")}
+                      </p>
+                    )}
+                    <Separator className="my-6" />
 
-                      <FormField
-                        control={paymentForm.control}
-                        name="acceptMBWay"
-                        render={({ field }) => {
-                          // Verificar se tem uma API key
-                          const apiKey = paymentForm.watch('eupagoApiKey') || '';
-                          const hasApiKey = apiKey.trim().length > 0;
-                          
-                          return (
-                            <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                              <div className="space-y-0.5">
-                                <FormLabel>{t('AcceptMBWay')}</FormLabel>
-                                <FormDescription>
-                                  {t('ProcessedByEuPago')}
-                                </FormDescription>
-                                {!hasApiKey && (
-                                  <p className="text-xs text-red-600">{t('RequiresEuPagoAPIKey')}</p>
-                                )}
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={hasApiKey ? field.value : false}
-                                  onCheckedChange={field.onChange}
-                                  disabled={!hasApiKey}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          );
-                        }}
-                      />
-                      
-                      <FormField
-                        control={paymentForm.control}
-                        name="acceptMultibanco"
-                        render={({ field }) => {
-                          // Verificar se tem uma API key
-                          const apiKey = paymentForm.watch('eupagoApiKey') || '';
-                          const hasApiKey = apiKey.trim().length > 0;
-                          
-                          return (
-                            <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                              <div className="space-y-0.5">
-                                <FormLabel>{t('AcceptMultibanco')}</FormLabel>
-                                <FormDescription>
-                                  {t('ProcessedByEuPago')}
-                                </FormDescription>
-                                {!hasApiKey && (
-                                  <p className="text-xs text-red-600">{t('RequiresEuPagoAPIKey')}</p>
-                                )}
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={hasApiKey ? field.value : false}
-                                  onCheckedChange={field.onChange}
-                                  disabled={!hasApiKey}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          );
-                        }}
-                      />
-                      
-                      <FormField
-                        control={paymentForm.control}
-                        name="acceptBankTransfer"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                            <div className="space-y-0.5">
-                              <FormLabel>{t('AcceptBankTransfer')}</FormLabel>
-                              <FormDescription>
-                                {t('ManualVerification')}
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={paymentForm.control}
-                        name="acceptCash"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                            <div className="space-y-0.5">
-                              <FormLabel>{t('AcceptCash')}</FormLabel>
-                              <FormDescription>
-                                {t('PaidAtRestaurant')}
-                              </FormDescription>
-                              <p className="text-xs text-amber-600">{t('OnlyVisibleToAdmin')}</p>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={paymentForm.control}
-                        name="acceptMultibancoTPA"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                            <div className="space-y-0.5">
-                              <FormLabel>Multibancoqq (TPA)</FormLabel>
-                              <FormDescription>
-                                Terminal de pagamento automático físico
-                              </FormDescription>
-                              <p className="text-xs text-amber-600">{t('OnlyVisibleToAdmin')}</p>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-
-                    </div>
-                  </div>
-
-                  <Separator className="my-6" />
 
                   <div className="space-y-4">
                     <FormField
@@ -990,9 +954,9 @@ const Settings: React.FC = () => {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
-                            <FormLabel>{t('RequirePrepayment')}</FormLabel>
+                            <FormLabel>{t("RequirePrepayment")}</FormLabel>
                             <FormDescription>
-                              {t('RequirePrepaymentDescription')}
+                              {t("RequirePrepaymentDescription")}
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -1005,18 +969,23 @@ const Settings: React.FC = () => {
                       )}
                     />
 
-                    {paymentForm.watch('requirePrepayment') && (
+                    {paymentForm.watch("requirePrepayment") && (
                       <FormField
                         control={paymentForm.control}
                         name="requirePrepaymentAmount"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('PrepaymentAmount')}</FormLabel>
+                            <FormLabel>{t("PrepaymentAmount")}</FormLabel>
                             <FormControl>
-                              <Input {...field} type="number" min="0" step="0.01" />
+                              <Input
+                                {...field}
+                                type="number"
+                                min="0"
+                                step="0.01"
+                              />
                             </FormControl>
                             <FormDescription>
-                              {t('AmountValue')}
+                              {t("AmountValue")}
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -1030,9 +999,9 @@ const Settings: React.FC = () => {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
-                            <FormLabel>{t('ShowPricesWithTax')}</FormLabel>
+                            <FormLabel>{t("ShowPricesWithTax")}</FormLabel>
                             <FormDescription>
-                              {t('ShowPricesWithTaxDescription')}
+                              {t("ShowPricesWithTaxDescription")}
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -1045,14 +1014,14 @@ const Settings: React.FC = () => {
                       )}
                     />
                   </div>
-
                   <div className="flex justify-end">
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="bg-brasil-green text-white"
                     >
-                      <Save className="w-4 h-4 mr-2" /> {t('SaveSettings')}
+                      <Save className="w-4 h-4 mr-2" /> {t("SaveSettings")}
                     </Button>
+                  </div>
                   </div>
                 </form>
               </Form>
@@ -1064,24 +1033,31 @@ const Settings: React.FC = () => {
         <TabsContent value="notifications">
           <Card>
             <CardHeader>
-              <CardTitle>{t('NotificationSettings')}</CardTitle>
-              <CardDescription>{t('NotificationSettingsDescription')}</CardDescription>
+              <CardTitle>{t("NotificationSettings")}</CardTitle>
+              <CardDescription>
+                {t("NotificationSettingsDescription")}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...notificationForm}>
-                <form onSubmit={notificationForm.handleSubmit(onNotificationSubmit)} className="space-y-6">
+                <form
+                  onSubmit={notificationForm.handleSubmit(onNotificationSubmit)}
+                  className="space-y-6"
+                >
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium">{t('Confirmations')}</h3>
-                    
+                    <h3 className="text-lg font-medium">
+                      {t("Confirmations")}
+                    </h3>
+
                     <FormField
                       control={notificationForm.control}
                       name="sendEmailConfirmation"
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
-                            <FormLabel>{t('SendEmailConfirmation')}</FormLabel>
+                            <FormLabel>{t("SendEmailConfirmation")}</FormLabel>
                             <FormDescription>
-                              {t('SendEmailConfirmationDescription')}
+                              {t("SendEmailConfirmationDescription")}
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -1100,9 +1076,9 @@ const Settings: React.FC = () => {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
-                            <FormLabel>{t('SendSmsConfirmation')}</FormLabel>
+                            <FormLabel>{t("SendSmsConfirmation")}</FormLabel>
                             <FormDescription>
-                              {t('SendSmsConfirmationDescription')}
+                              {t("SendSmsConfirmationDescription")}
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -1119,17 +1095,17 @@ const Settings: React.FC = () => {
                   <Separator className="my-6" />
 
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium">{t('Reminders')}</h3>
-                    
+                    <h3 className="text-lg font-medium">{t("Reminders")}</h3>
+
                     <FormField
                       control={notificationForm.control}
                       name="sendEmailReminders"
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
-                            <FormLabel>{t('SendEmailReminders')}</FormLabel>
+                            <FormLabel>{t("SendEmailReminders")}</FormLabel>
                             <FormDescription>
-                              {t('SendEmailRemindersDescription')}
+                              {t("SendEmailRemindersDescription")}
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -1148,9 +1124,9 @@ const Settings: React.FC = () => {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
-                            <FormLabel>{t('SendSmsReminders')}</FormLabel>
+                            <FormLabel>{t("SendSmsReminders")}</FormLabel>
                             <FormDescription>
-                              {t('SendSmsRemindersDescription')}
+                              {t("SendSmsRemindersDescription")}
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -1163,19 +1139,20 @@ const Settings: React.FC = () => {
                       )}
                     />
 
-                    {(notificationForm.watch('sendEmailReminders') || notificationForm.watch('sendSmsReminders')) && (
+                    {(notificationForm.watch("sendEmailReminders") ||
+                      notificationForm.watch("sendSmsReminders")) && (
                       <FormField
                         control={notificationForm.control}
                         name="reminderHoursBeforeReservation"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('ReminderHoursBeforeReservation')}</FormLabel>
+                            <FormLabel>
+                              {t("ReminderHoursBeforeReservation")}
+                            </FormLabel>
                             <FormControl>
                               <Input {...field} type="number" min="1" />
                             </FormControl>
-                            <FormDescription>
-                              {t('HoursValue')}
-                            </FormDescription>
+                            <FormDescription>{t("HoursValue")}</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -1186,17 +1163,17 @@ const Settings: React.FC = () => {
                   <Separator className="my-6" />
 
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium">{t('Feedback')}</h3>
-                    
+                    <h3 className="text-lg font-medium">{t("Feedback")}</h3>
+
                     <FormField
                       control={notificationForm.control}
                       name="allowCustomerFeedback"
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
-                            <FormLabel>{t('AllowCustomerFeedback')}</FormLabel>
+                            <FormLabel>{t("AllowCustomerFeedback")}</FormLabel>
                             <FormDescription>
-                              {t('AllowCustomerFeedbackDescription')}
+                              {t("AllowCustomerFeedbackDescription")}
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -1215,9 +1192,11 @@ const Settings: React.FC = () => {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
                           <div className="space-y-0.5">
-                            <FormLabel>{t('CollectCustomerFeedback')}</FormLabel>
+                            <FormLabel>
+                              {t("CollectCustomerFeedback")}
+                            </FormLabel>
                             <FormDescription>
-                              {t('CollectCustomerFeedbackDescription')}
+                              {t("CollectCustomerFeedbackDescription")}
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -1232,11 +1211,11 @@ const Settings: React.FC = () => {
                   </div>
 
                   <div className="flex justify-end">
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="bg-brasil-green text-white"
                     >
-                      <Save className="w-4 h-4 mr-2" /> {t('SaveSettings')}
+                      <Save className="w-4 h-4 mr-2" /> {t("SaveSettings")}
                     </Button>
                   </div>
                 </form>
