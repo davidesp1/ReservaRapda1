@@ -282,100 +282,162 @@ const POSSettingsContent: React.FC = () => {
     return receipt;
   };
 
-  // Função para imprimir recibo
+  // Função melhorada para imprimir recibo com margens corretas
   const printReceipt = async (content: string, settings: POSSettingsFormData) => {
-    const { fontSettings, paperSettings } = settings;
-    
-    // Calcular largura baseada na largura do papel em mm
-    const paperWidthPx = (paperSettings.paperWidth * 3.779527); // conversão mm para px (96dpi)
-    
-    // Calcular altura dinâmica baseada no conteúdo
-    const lineHeight = fontSettings.fontSize * fontSettings.lineHeight;
-    const contentLines = content.split('\n').length;
-    const estimatedHeight = (contentLines * lineHeight) + fontSettings.marginTop + (paperSettings.footerMargin || 5);
-    const dynamicHeight = paperSettings.exactHeight ? `${estimatedHeight}px` : `${paperSettings.paperHeight}mm`;
-    
-    // Criar elemento temporário para impressão
-    const printContent = `
-      <html>
+    try {
+      console.log("🖨️ Iniciando impressão com configurações:", settings);
+      
+      const { fontSettings, paperSettings } = settings;
+      
+      // Calcular altura exata do conteúdo
+      const lines = content.split('\n').filter(line => line.trim() !== '');
+      const lineHeight = Math.ceil(fontSettings.fontSize * fontSettings.lineHeight);
+      const contentHeight = lines.length * lineHeight;
+      
+      // Converter margens de pixels para mm (1mm = 3.779527px)
+      const marginTopMm = fontSettings.marginTop / 3.779527;
+      const marginBottomMm = fontSettings.marginBottom / 3.779527;
+      const marginLeftMm = fontSettings.marginLeft / 3.779527;
+      const marginRightMm = fontSettings.marginRight / 3.779527;
+      
+      // Altura total precisa (conteúdo + margens)
+      const totalHeight = Math.max(
+        (contentHeight / 3.779527) + marginTopMm + marginBottomMm + 1,
+        30 // Altura mínima de 30mm
+      );
+
+      const printWindow = window.open('', '_blank', 'width=400,height=600');
+      if (!printWindow) {
+        throw new Error("Não foi possível abrir a janela de impressão");
+      }
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
         <head>
-          <title>Recibo</title>
+          <meta charset="UTF-8">
+          <title>Recibo - Opa que Delícia</title>
           <style>
             @page {
-              size: ${paperSettings.paperWidth}mm ${dynamicHeight};
-              margin: ${paperSettings.removePageMargins ? '0' : `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${paperSettings.footerMargin}px ${fontSettings.marginLeft}px`};
+              size: ${paperSettings.paperWidth}mm ${totalHeight.toFixed(1)}mm;
+              margin: 0 !important;
+              padding: 0 !important;
             }
             * {
-              box-sizing: border-box;
-              margin: 0;
-              padding: 0;
+              margin: 0 !important;
+              padding: 0 !important;
+              box-sizing: border-box !important;
             }
-            html, body { 
-              height: ${paperSettings.exactHeight ? 'auto' : '100%'};
-              margin: 0;
-              padding: 0;
-              overflow: hidden;
+            html, body {
+              width: ${paperSettings.paperWidth}mm !important;
+              height: ${totalHeight.toFixed(1)}mm !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: hidden !important;
+              background: white !important;
             }
-            body { 
+            .receipt-container {
               font-family: ${fontSettings.fontFamily === 'monospace' ? "'Courier New', monospace" : 
                            fontSettings.fontFamily === 'sans-serif' ? "'Arial', sans-serif" : 
-                           "'Times New Roman', serif"}; 
-              font-size: ${fontSettings.fontSize}px; 
-              line-height: ${fontSettings.lineHeight};
-              width: ${paperWidthPx}px;
-              max-width: ${paperWidthPx}px;
-              white-space: pre-line;
-              word-wrap: break-word;
-              overflow-wrap: break-word;
-              padding: ${paperSettings.removePageMargins ? `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${paperSettings.footerMargin}px ${fontSettings.marginLeft}px` : '0'};
+                           "'Times New Roman', serif"} !important;
+              font-size: ${fontSettings.fontSize}px !important;
+              line-height: ${fontSettings.lineHeight} !important;
+              width: ${paperSettings.paperWidth}mm !important;
+              height: ${totalHeight.toFixed(1)}mm !important;
+              padding-top: ${fontSettings.marginTop}px !important;
+              padding-right: ${fontSettings.marginRight}px !important;
+              padding-bottom: ${fontSettings.marginBottom}px !important;
+              padding-left: ${fontSettings.marginLeft}px !important;
+              white-space: pre-line !important;
+              overflow: hidden !important;
+              background: white !important;
+              position: relative !important;
+              box-sizing: border-box !important;
             }
             .receipt-content {
-              display: block;
-              margin: 0;
-              padding: 0;
+              width: 100% !important;
+              height: calc(100% - ${fontSettings.marginTop + fontSettings.marginBottom}px) !important;
+              overflow: hidden !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              display: block !important;
             }
             @media print {
-              html, body { 
-                height: ${paperSettings.exactHeight ? 'auto' : '100%'};
+              @page {
+                size: ${paperSettings.paperWidth}mm ${totalHeight.toFixed(1)}mm;
+                margin: 0 !important;
+              }
+              html, body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                width: ${paperSettings.paperWidth}mm !important;
+                height: ${totalHeight.toFixed(1)}mm !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                overflow: hidden !important;
               }
-              body { 
-                width: ${paperWidthPx}px !important;
-                max-width: ${paperWidthPx}px !important;
-                padding: ${paperSettings.removePageMargins ? `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${paperSettings.footerMargin}px ${fontSettings.marginLeft}px` : '0'} !important;
-              }
-              ${paperSettings.cutAfterPrint ? `
-              .cut-here {
-                border-bottom: 2px dashed #000;
-                padding-bottom: 2px;
-                margin-bottom: 0;
-              }` : ''}
-              @page {
-                margin: 0 !important;
-                size: ${paperSettings.paperWidth}mm ${dynamicHeight} !important;
+              .receipt-container {
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
               }
             }
           </style>
         </head>
         <body>
-          <div class="receipt-content ${paperSettings.cutAfterPrint ? 'cut-here' : ''}">${content}</div>
+          <div class="receipt-container">
+            <div class="receipt-content">${content}</div>
+          </div>
         </body>
-      </html>
-    `;
-    
-    // Abrir nova janela para impressão
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(printContent);
+        </html>
+      `;
+
+      printWindow.document.write(html);
       printWindow.document.close();
-      
-      // Aguardar carregamento e imprimir
-      setTimeout(() => {
+
+      // Aguardar carregamento e imprimir com fechamento automático
+      const handlePrintAndClose = () => {
+        printWindow.focus();
         printWindow.print();
-        setTimeout(() => printWindow.close(), 1000);
-      }, 500);
+        
+        // Fechar automaticamente após impressão
+        setTimeout(() => {
+          if (!printWindow.closed) {
+            printWindow.close();
+          }
+        }, 2000); // 2 segundos para garantir que a impressão seja processada
+      };
+
+      // Aguardar carregamento completo
+      if (printWindow.document.readyState === 'complete') {
+        setTimeout(handlePrintAndClose, 500);
+      } else {
+        printWindow.addEventListener('load', () => {
+          setTimeout(handlePrintAndClose, 500);
+        });
+        
+        // Fallback caso o evento load não dispare
+        setTimeout(() => {
+          if (!printWindow.closed) {
+            handlePrintAndClose();
+          }
+        }, 2000);
+      }
+
+      console.log("✅ Impressão enviada com margens aplicadas:", {
+        marginTop: `${fontSettings.marginTop}px`,
+        marginBottom: `${fontSettings.marginBottom}px`,
+        marginLeft: `${fontSettings.marginLeft}px`,
+        marginRight: `${fontSettings.marginRight}px`,
+        totalHeight: `${totalHeight.toFixed(1)}mm`
+      });
+
+    } catch (error) {
+      console.error("❌ Erro na impressão:", error);
+      Swal.fire({
+        title: "Erro na Impressão",
+        text: `Falha ao imprimir: ${error.message}`,
+        icon: "error",
+        confirmButtonText: "Ok"
+      });
     }
   };
 
@@ -423,7 +485,7 @@ const POSSettingsContent: React.FC = () => {
                      'Times New Roman, serif',
           fontSize: `${fontSettings.fontSize}px`,
           lineHeight: fontSettings.lineHeight,
-          padding: `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${paperSettings.footerMargin}px ${fontSettings.marginLeft}px`,
+          padding: `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${fontSettings.marginBottom}px ${fontSettings.marginLeft}px`,
           whiteSpace: 'pre-line',
           width: `${paperWidthPx}px`,
           maxWidth: `${paperWidthPx}px`,
