@@ -174,67 +174,69 @@ Status: Pago
 
   // Função para finalizar pedido com impressão automática
   const handleSaveAndPrint = () => {
-    Swal.fire({
-      title: t('Finalizar Pedido'),
-      text: t('Confirmar finalização e impressão do pedido?'),
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#009c3b',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: t('Sim, finalizar'),
-      cancelButtonText: t('Cancelar')
-    }).then((result) => {
-      if (result.isConfirmed) {
-        // Gerar o recibo
-        const receiptContent = generateReceipt();
-        
-        // Sempre imprimir automaticamente ao finalizar
-        if ((window as any).printReceiptWithSettings) {
-          (window as any).printReceiptWithSettings(receiptContent);
-        } else {
-          // Fallback para impressão básica
-          const printWindow = window.open('', '_blank');
-          if (printWindow) {
-            printWindow.document.write(`
-              <html>
-                <head>
-                  <title>Recibo - Opa que delícia</title>
-                  <style>
-                    body { 
-                      font-family: 'Courier New', monospace; 
-                      font-size: 12px; 
-                      margin: 10px;
-                      white-space: pre-line;
-                      line-height: 1.3;
-                    }
-                    @media print {
-                      body { margin: 5px; }
-                    }
-                  </style>
-                </head>
-                <body>${receiptContent}</body>
-              </html>
-            `);
-            printWindow.document.close();
-            setTimeout(() => {
-              printWindow.print();
-              setTimeout(() => printWindow.close(), 1000);
-            }, 500);
+    import('sweetalert2').then((Swal) => {
+      Swal.default.fire({
+        title: t('Finalizar Pedido'),
+        text: t('Confirmar finalização e impressão do pedido?'),
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#009c3b',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: t('Sim, finalizar'),
+        cancelButtonText: t('Cancelar')
+      }).then((result: any) => {
+        if (result.isConfirmed) {
+          // Gerar o recibo
+          const receiptContent = generateReceipt();
+          
+          // Sempre imprimir automaticamente ao finalizar
+          if ((window as any).printReceiptWithSettings) {
+            (window as any).printReceiptWithSettings(receiptContent);
+          } else {
+            // Fallback para impressão básica
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+              printWindow.document.write(`
+                <html>
+                  <head>
+                    <title>Recibo - Opa que delícia</title>
+                    <style>
+                      body { 
+                        font-family: 'Courier New', monospace; 
+                        font-size: 12px; 
+                        margin: 10px;
+                        white-space: pre-line;
+                        line-height: 1.3;
+                      }
+                      @media print {
+                        body { margin: 5px; }
+                      }
+                    </style>
+                  </head>
+                  <body>${receiptContent}</body>
+                </html>
+              `);
+              printWindow.document.close();
+              setTimeout(() => {
+                printWindow.print();
+                setTimeout(() => printWindow.close(), 1000);
+              }, 500);
+            }
           }
+          
+          // Mostrar mensagem de sucesso
+          Swal.default.fire({
+            title: t('Pedido Finalizado!'),
+            text: t('Pedido processado e recibo enviado para impressão.'),
+            icon: 'success',
+            timer: 2500,
+            showConfirmButton: false
+          });
+          
+          // Limpar o pedido atual
+          setOrderItems([]);
         }
-        
-        // Mostrar mensagem de sucesso
-        Swal.fire({
-          title: t('Pedido Finalizado!'),
-          text: t('Pedido processado e recibo enviado para impressão.'),
-          icon: 'success',
-          timer: 2500,
-          showConfirmButton: false
-        });
-        
-        // Limpar o pedido atual
-        setOrderItems([]);
-      }
+      });
     });
   };
 
