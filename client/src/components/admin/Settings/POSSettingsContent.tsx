@@ -284,42 +284,60 @@ const POSSettingsContent: React.FC = () => {
     return receipt;
   };
 
-  // Função melhorada para imprimir recibo com margens corretas
+  // Função COMPLETAMENTE CORRIGIDA para impressão com debug detalhado
   const printReceipt = async (content: string, settings: POSSettingsFormData) => {
     try {
-      console.log("🖨️ Iniciando impressão com configurações:", settings);
+      console.log("🖨️ DEBUG - Iniciando impressão com configurações:", JSON.stringify(settings, null, 2));
       
       const { fontSettings, paperSettings } = settings;
       
-      // Calcular altura exata do conteúdo
-      const lines = content.split('\n').filter(line => line.trim() !== '');
-      const lineHeight = Math.ceil(fontSettings.fontSize * fontSettings.lineHeight);
-      const contentHeight = lines.length * lineHeight;
+      // DEBUG: Verificar se as configurações estão corretas
+      console.log("🔍 DEBUG - Font Settings:", fontSettings);
+      console.log("🔍 DEBUG - Paper Settings:", paperSettings);
       
-      // Converter margens de pixels para mm (1mm = 3.779527px)
-      const marginTopMm = fontSettings.marginTop / 3.779527;
-      const marginBottomMm = fontSettings.marginBottom / 3.779527;
-      const marginLeftMm = fontSettings.marginLeft / 3.779527;
-      const marginRightMm = fontSettings.marginRight / 3.779527;
+      // Calcular linhas e altura do conteúdo de forma mais precisa
+      const lines = content.split('\n');
+      const nonEmptyLines = lines.filter(line => line.trim() !== '');
+      const totalLines = lines.length; // Incluir linhas vazias para espaçamento correto
       
-      // Altura total baseada no modo selecionado
-      let totalHeight;
-      if (paperSettings.heightMode === 'adaptive') {
-        // Modo adaptativo: altura baseada no conteúdo
-        totalHeight = Math.max(
-          (contentHeight / 3.779527) + marginTopMm + marginBottomMm + 2,
-          30 // Altura mínima de 30mm
-        );
-      } else {
-        // Modo fixo: usar altura configurada
-        totalHeight = paperSettings.paperHeight;
-      }
+      // Calcular altura baseada na fonte e espaçamento
+      const baseLineHeight = fontSettings.fontSize * fontSettings.lineHeight;
+      const contentHeightPx = totalLines * baseLineHeight;
+      
+      console.log("📏 DEBUG - Cálculos:", {
+        totalLines,
+        fontSize: fontSettings.fontSize,
+        lineHeight: fontSettings.lineHeight,
+        baseLineHeight,
+        contentHeightPx
+      });
+      
+      // SEMPRE usar modo adaptativo para altura dinâmica
+      const marginTopPx = fontSettings.marginTop;
+      const marginBottomPx = fontSettings.marginBottom;
+      const marginLeftPx = fontSettings.marginLeft;
+      const marginRightPx = fontSettings.marginRight;
+      
+      // Altura total em pixels ANTES de converter para mm
+      const totalHeightPx = contentHeightPx + marginTopPx + marginBottomPx + 20; // 20px extra de segurança
+      const totalHeightMm = Math.max(totalHeightPx / 3.779527, 30); // Mínimo 30mm
+      
+      console.log("📐 DEBUG - Margens e altura:", {
+        marginTopPx,
+        marginBottomPx,
+        marginLeftPx,
+        marginRightPx,
+        contentHeightPx,
+        totalHeightPx,
+        totalHeightMm: totalHeightMm.toFixed(1)
+      });
 
       const printWindow = window.open('', '_blank', 'width=400,height=600');
       if (!printWindow) {
         throw new Error("Não foi possível abrir a janela de impressão");
       }
 
+      // CSS TOTALMENTE CORRIGIDO com margens em pixels aplicadas corretamente
       const html = `
         <!DOCTYPE html>
         <html>
@@ -328,9 +346,8 @@ const POSSettingsContent: React.FC = () => {
           <title>Recibo - Opa que Delícia</title>
           <style>
             @page {
-              size: ${paperSettings.paperWidth}mm ${totalHeight.toFixed(1)}mm;
+              size: ${paperSettings.paperWidth}mm ${totalHeightMm.toFixed(1)}mm;
               margin: 0 !important;
-              padding: 0 !important;
             }
             * {
               margin: 0 !important;
@@ -339,65 +356,57 @@ const POSSettingsContent: React.FC = () => {
             }
             html, body {
               width: ${paperSettings.paperWidth}mm !important;
-              height: ${totalHeight.toFixed(1)}mm !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              overflow: hidden !important;
-              background: white !important;
-            }
-            .receipt-container {
+              height: ${totalHeightMm.toFixed(1)}mm !important;
               font-family: ${fontSettings.fontFamily === 'monospace' ? "'Courier New', monospace" : 
                            fontSettings.fontFamily === 'sans-serif' ? "'Arial', sans-serif" : 
                            "'Times New Roman', serif"} !important;
               font-size: ${fontSettings.fontSize}px !important;
               line-height: ${fontSettings.lineHeight} !important;
-              width: ${paperSettings.paperWidth}mm !important;
-              height: ${totalHeight.toFixed(1)}mm !important;
-              padding-top: ${fontSettings.marginTop}px !important;
-              padding-right: ${fontSettings.marginRight}px !important;
-              padding-bottom: ${fontSettings.marginBottom}px !important;
-              padding-left: ${fontSettings.marginLeft}px !important;
-              white-space: pre-line !important;
+              margin: 0 !important;
+              padding: ${marginTopPx}px ${marginRightPx}px ${marginBottomPx}px ${marginLeftPx}px !important;
               overflow: hidden !important;
               background: white !important;
-              position: relative !important;
-              box-sizing: border-box !important;
+              white-space: pre-line !important;
             }
             .receipt-content {
               width: 100% !important;
-              height: calc(100% - ${fontSettings.marginTop + fontSettings.marginBottom}px) !important;
-              overflow: hidden !important;
-              margin: 0 !important;
-              padding: 0 !important;
+              height: 100% !important;
               display: block !important;
+              word-wrap: break-word !important;
+              overflow-wrap: break-word !important;
             }
             @media print {
               @page {
-                size: ${paperSettings.paperWidth}mm ${totalHeight.toFixed(1)}mm;
+                size: ${paperSettings.paperWidth}mm ${totalHeightMm.toFixed(1)}mm !important;
                 margin: 0 !important;
               }
               html, body {
                 -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
                 print-color-adjust: exact !important;
+                font-family: ${fontSettings.fontFamily === 'monospace' ? "'Courier New', monospace" : 
+                             fontSettings.fontFamily === 'sans-serif' ? "'Arial', sans-serif" : 
+                             "'Times New Roman', serif"} !important;
+                font-size: ${fontSettings.fontSize}px !important;
+                line-height: ${fontSettings.lineHeight} !important;
+                padding: ${marginTopPx}px ${marginRightPx}px ${marginBottomPx}px ${marginLeftPx}px !important;
                 width: ${paperSettings.paperWidth}mm !important;
-                height: ${totalHeight.toFixed(1)}mm !important;
-                margin: 0 !important;
-                padding: 0 !important;
+                height: ${totalHeightMm.toFixed(1)}mm !important;
+                white-space: pre-line !important;
               }
-              .receipt-container {
-                page-break-after: avoid !important;
+              .receipt-content {
                 page-break-inside: avoid !important;
               }
             }
           </style>
         </head>
         <body>
-          <div class="receipt-container">
-            <div class="receipt-content">${content}</div>
-          </div>
+          <div class="receipt-content">${content}</div>
         </body>
         </html>
       `;
+
+      console.log("🎨 DEBUG - HTML Gerado:", html.substring(0, 500) + "...");
 
       printWindow.document.write(html);
       printWindow.document.close();
@@ -412,7 +421,7 @@ const POSSettingsContent: React.FC = () => {
           if (!printWindow.closed) {
             printWindow.close();
           }
-        }, 2000); // 2 segundos para garantir que a impressão seja processada
+        }, 2000);
       };
 
       // Aguardar carregamento completo
@@ -423,7 +432,7 @@ const POSSettingsContent: React.FC = () => {
           setTimeout(handlePrintAndClose, 500);
         });
         
-        // Fallback caso o evento load não dispare
+        // Fallback
         setTimeout(() => {
           if (!printWindow.closed) {
             handlePrintAndClose();
@@ -431,21 +440,25 @@ const POSSettingsContent: React.FC = () => {
         }, 2000);
       }
 
-      console.log("✅ Impressão enviada com configurações aplicadas:", {
-        marginTop: `${fontSettings.marginTop}px`,
-        marginBottom: `${fontSettings.marginBottom}px`,
-        marginLeft: `${fontSettings.marginLeft}px`,
-        marginRight: `${fontSettings.marginRight}px`,
-        totalHeight: `${totalHeight.toFixed(1)}mm`,
-        heightMode: paperSettings.heightMode,
-        contentLines: lines.length
+      console.log("✅ DEBUG - Impressão enviada com sucesso:", {
+        fontFamily: fontSettings.fontFamily,
+        fontSize: `${fontSettings.fontSize}px`,
+        lineHeight: fontSettings.lineHeight,
+        marginTop: `${marginTopPx}px`,
+        marginBottom: `${marginBottomPx}px`,
+        marginLeft: `${marginLeftPx}px`,
+        marginRight: `${marginRightPx}px`,
+        paperWidth: `${paperSettings.paperWidth}mm`,
+        totalHeight: `${totalHeightMm.toFixed(1)}mm`,
+        totalLines,
+        contentLines: nonEmptyLines.length
       });
 
     } catch (error) {
-      console.error("❌ Erro na impressão:", error);
+      console.error("❌ DEBUG - Erro na impressão:", error);
       Swal.fire({
         title: "Erro na Impressão",
-        text: `Falha ao imprimir: ${error.message}`,
+        text: `Falha ao imprimir: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
         icon: "error",
         confirmButtonText: "Ok"
       });
