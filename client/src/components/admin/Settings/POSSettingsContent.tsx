@@ -431,12 +431,14 @@ const POSSettingsContent: React.FC = () => {
         }, 2000);
       }
 
-      console.log("✅ Impressão enviada com margens aplicadas:", {
+      console.log("✅ Impressão enviada com configurações aplicadas:", {
         marginTop: `${fontSettings.marginTop}px`,
         marginBottom: `${fontSettings.marginBottom}px`,
         marginLeft: `${fontSettings.marginLeft}px`,
         marginRight: `${fontSettings.marginRight}px`,
-        totalHeight: `${totalHeight.toFixed(1)}mm`
+        totalHeight: `${totalHeight.toFixed(1)}mm`,
+        heightMode: paperSettings.heightMode,
+        contentLines: lines.length
       });
 
     } catch (error) {
