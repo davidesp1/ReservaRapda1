@@ -255,17 +255,15 @@ const POSSettingsContent: React.FC = () => {
     }
   }, [currentSettings, form]);
 
-  // Função para gerar recibo de teste
+  // Função para gerar recibo de teste CORRIGIDA
   const generateTestReceiptContent = (settings: POSSettingsFormData): string => {
     let receipt = "";
     
     if (settings.printOptions.restaurantInfo) {
-      receipt += `
-========================================
-           OPA QUE DELÍCIA
-        Restaurante Brasileiro
-========================================
-`;
+      receipt += `========================================\n`;
+      receipt += `           OPA QUE DELÍCIA\n`;
+      receipt += `        Restaurante Brasileiro\n`;
+      receipt += `========================================\n`;
     }
     
     if (settings.printOptions.timestamp) {
