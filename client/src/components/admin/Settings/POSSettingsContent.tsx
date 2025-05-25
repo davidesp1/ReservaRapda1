@@ -353,6 +353,8 @@ const POSSettingsContent: React.FC = () => {
               margin: 0;
               padding: 0;
               box-sizing: border-box;
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
             html, body {
               width: ${paperSettings.paperWidth}mm;
@@ -364,24 +366,30 @@ const POSSettingsContent: React.FC = () => {
               line-height: ${fontSettings.lineHeight};
               margin: 0;
               padding: 0;
-              overflow: visible;
+              overflow: hidden;
               background: white;
               white-space: pre-line;
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
             .receipt-container {
               width: 100%;
               height: 100%;
               padding: ${marginTopPx}px ${marginRightPx}px ${marginBottomPx}px ${marginLeftPx}px;
               box-sizing: border-box;
-              display: flex;
-              flex-direction: column;
+              display: block;
+              page-break-inside: avoid;
+              break-inside: avoid;
+              page-break-before: avoid;
+              page-break-after: avoid;
             }
             .receipt-content {
-              flex: 1;
               width: 100%;
               word-wrap: break-word;
               overflow-wrap: break-word;
               white-space: pre-line;
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
             @media print {
               @page {
@@ -392,11 +400,15 @@ const POSSettingsContent: React.FC = () => {
                 -webkit-print-color-adjust: exact;
                 color-adjust: exact;
                 print-color-adjust: exact;
-                overflow: visible;
-              }
-              .receipt-container {
+                overflow: hidden;
                 page-break-inside: avoid;
                 break-inside: avoid;
+              }
+              .receipt-container, .receipt-content {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                page-break-before: avoid !important;
+                page-break-after: avoid !important;
               }
             }
           </style>
