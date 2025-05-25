@@ -808,7 +808,6 @@ const Settings: React.FC = () => {
                   onSubmit={paymentForm.handleSubmit(onPaymentSubmit)}
                   className="space-y-6"
                 >
-                  <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={paymentForm.control}
@@ -1021,7 +1020,6 @@ const Settings: React.FC = () => {
                     >
                       <Save className="w-4 h-4 mr-2" /> {t("SaveSettings")}
                     </Button>
-                  </div>
                   </div>
                 </form>
               </Form>
