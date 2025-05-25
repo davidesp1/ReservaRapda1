@@ -180,89 +180,91 @@ Status: PAGO
   };
 
   // Função para gravar e imprimir
-  const handleSaveAndPrint = () => {
-    Swal.fire({
-      title: t('Confirmar Pedido'),
-      text: t('Deseja gravar e imprimir este pedido?'),
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#16a34a',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: t('Sim, gravar e imprimir'),
-      cancelButtonText: t('Cancelar')
-    }).then((result) => {
-      if (result.isConfirmed) {
-        // Gerar o recibo
-        const receiptContent = generateReceipt();
-        
-        // Imprimir usando as configurações POS salvas
-        if ((window as any).printReceiptWithSettings) {
-          console.log("🖨️ Usando configurações POS para impressão");
-          (window as any).printReceiptWithSettings(receiptContent);
-        } else {
-          console.log("⚠️ Configurações POS não encontradas, usando impressão básica");
-          // Fallback com configurações básicas otimizadas
-          const printWindow = window.open('', '_blank');
-          if (printWindow) {
-            const html = `
-              <!DOCTYPE html>
-              <html>
-                <head>
-                  <meta charset="UTF-8">
-                  <title>Recibo - Opa que Delícia</title>
-                  <style>
-                    @page {
-                      size: 58mm auto;
-                      margin: 0;
+  const handleSaveAndPrint = async () => {
+    try {
+      // Gerar o recibo
+      const receiptContent = generateReceipt();
+      
+      // Imprimir usando as configurações POS salvas
+      if ((window as any).printReceiptWithSettings) {
+        console.log("🖨️ Usando configurações POS para impressão");
+        await (window as any).printReceiptWithSettings(receiptContent);
+      } else {
+        console.log("⚠️ Configurações POS não encontradas, usando impressão básica");
+        // Fallback com configurações básicas otimizadas
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          const html = `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="UTF-8">
+                <title>Recibo - Opa que Delícia</title>
+                <style>
+                  @page {
+                    size: 58mm auto;
+                    margin: 0;
+                  }
+                  * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                  }
+                  body { 
+                    font-family: 'Courier New', monospace; 
+                    font-size: 10px; 
+                    line-height: 12px;
+                    width: 58mm;
+                    padding: 2mm;
+                    white-space: pre-line;
+                    overflow: hidden;
+                    background: white;
+                  }
+                  @media print {
+                    body {
+                      -webkit-print-color-adjust: exact;
+                      print-color-adjust: exact;
                     }
-                    * {
-                      margin: 0;
-                      padding: 0;
-                      box-sizing: border-box;
-                    }
-                    body { 
-                      font-family: 'Courier New', monospace; 
-                      font-size: 10px; 
-                      line-height: 12px;
-                      width: 58mm;
-                      padding: 2mm;
-                      white-space: pre-line;
-                      overflow: hidden;
-                      background: white;
-                    }
-                    @media print {
-                      body {
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
-                      }
-                    }
-                  </style>
-                </head>
-                <body>${receiptContent}</body>
-              </html>
-            `;
-            printWindow.document.write(html);
-            printWindow.document.close();
-            setTimeout(() => {
-              printWindow.print();
-              setTimeout(() => printWindow.close(), 1000);
-            }, 500);
-          }
+                  }
+                </style>
+              </head>
+              <body>${receiptContent}</body>
+            </html>
+          `;
+          printWindow.document.write(html);
+          printWindow.document.close();
+          setTimeout(() => {
+            printWindow.print();
+            setTimeout(() => printWindow.close(), 1000);
+          }, 500);
         }
-        
-        // Mostrar mensagem de sucesso
-        Swal.fire({
+      }
+      
+      // Mostrar mensagem de sucesso
+      import('sweetalert2').then((Swal) => {
+        Swal.default.fire({
           title: t('Sucesso!'),
           text: t('Pedido gravado e enviado para impressão!'),
           icon: 'success',
           timer: 2000,
           showConfirmButton: false
         });
-        
-        // Limpar o pedido atual
-        setOrderItems([]);
-      }
-    });
+      });
+      
+      // Limpar o pedido atual
+      setOrderItems([]);
+      
+    } catch (error) {
+      console.error("Erro ao gravar e imprimir:", error);
+      import('sweetalert2').then((Swal) => {
+        Swal.default.fire({
+          title: t('Erro!'),
+          text: t('Falha ao gravar e imprimir o pedido'),
+          icon: 'error',
+          confirmButtonColor: '#009c3b'
+        });
+      });
+    }
   };
 
   const handleProcessOrder = () => {
@@ -318,11 +320,71 @@ Status: PAGO
             return response.json();
           })
           .then(data => {
+            // Se foi selecionado "Gravar e Imprimir", imprimir usando as configurações POS
+            if (printReceipt) {
+              const receiptContent = generateReceipt();
+              
+              // Tentar imprimir usando as configurações POS salvas
+              if ((window as any).printReceiptWithSettings) {
+                console.log("🖨️ Usando configurações POS para impressão automática");
+                (window as any).printReceiptWithSettings(receiptContent);
+              } else {
+                console.log("⚠️ Configurações POS não encontradas, usando impressão básica");
+                // Fallback para impressão básica
+                const printWindow = window.open('', '_blank');
+                if (printWindow) {
+                  const html = `
+                    <!DOCTYPE html>
+                    <html>
+                      <head>
+                        <meta charset="UTF-8">
+                        <title>Recibo - Opa que Delícia</title>
+                        <style>
+                          @page {
+                            size: 58mm auto;
+                            margin: 0;
+                          }
+                          * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                          }
+                          body { 
+                            font-family: 'Courier New', monospace; 
+                            font-size: 10px; 
+                            line-height: 12px;
+                            width: 58mm;
+                            padding: 2mm;
+                            white-space: pre-line;
+                            overflow: hidden;
+                            background: white;
+                          }
+                          @media print {
+                            body {
+                              -webkit-print-color-adjust: exact;
+                              print-color-adjust: exact;
+                            }
+                          }
+                        </style>
+                      </head>
+                      <body>${receiptContent}</body>
+                    </html>
+                  `;
+                  printWindow.document.write(html);
+                  printWindow.document.close();
+                  setTimeout(() => {
+                    printWindow.print();
+                    setTimeout(() => printWindow.close(), 1000);
+                  }, 500);
+                }
+              }
+            }
+            
             // Mostrar mensagem de sucesso
             Swal.default.fire({
               title: t('Sucesso!'),
               text: printReceipt 
-                ? t('Pedido finalizado e enviado para impressão.') 
+                ? t('Pedido finalizado e enviado para impressão!') 
                 : t('Pedido finalizado com sucesso!'),
               icon: 'success',
               timer: 2000,
