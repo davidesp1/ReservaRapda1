@@ -491,45 +491,114 @@ const POSSettingsContent: React.FC = () => {
     };
   }, [currentSettings, form]);
 
-  // Função para renderizar preview em tempo real
+  // Função CORRIGIDA para renderizar preview dinâmico com debug
   const renderPreview = () => {
-    const currentValues = form.watch();
-    const testReceipt = generateTestReceipt(currentValues);
-    const { fontSettings, paperSettings } = currentValues;
+    const currentSettings = form.getValues();
+    const { fontSettings, paperSettings } = currentSettings;
     
-    // Calcular largura baseada na largura do papel
-    const paperWidthPx = paperSettings.paperWidth * 3.779527; // conversão mm para px
+    // Simular conteúdo de recibo
+    const sampleContent = generateSampleReceipt(currentSettings);
     
+    // DEBUG: Log das configurações atuais
+    console.log("🎨 Preview DEBUG - Settings:", {
+      fontFamily: fontSettings.fontFamily,
+      fontSize: fontSettings.fontSize,
+      lineHeight: fontSettings.lineHeight,
+      margins: {
+        top: fontSettings.marginTop,
+        bottom: fontSettings.marginBottom,
+        left: fontSettings.marginLeft,
+        right: fontSettings.marginRight
+      },
+      paperWidth: paperSettings.paperWidth,
+      heightMode: paperSettings.heightMode
+    });
+    
+    // Calcular dimensões precisas
+    const paperWidthPx = paperSettings.paperWidth * 3.779527;
+    const allLines = sampleContent.split('\n');
+    const nonEmptyLines = allLines.filter(line => line.trim() !== '');
+    const lineHeight = fontSettings.fontSize * fontSettings.lineHeight;
+    const contentHeight = allLines.length * lineHeight; // Incluir linhas vazias
+    
+    // SEMPRE usar altura adaptativa no preview (forçar)
+    const totalHeight = Math.max(
+      contentHeight + fontSettings.marginTop + fontSettings.marginBottom + 20,
+      100
+    );
+    const totalHeightMm = totalHeight / 3.779527;
+
+    console.log("📏 Preview DEBUG - Cálculos:", {
+      allLines: allLines.length,
+      nonEmptyLines: nonEmptyLines.length,
+      lineHeight,
+      contentHeight,
+      totalHeight,
+      totalHeightMm: totalHeightMm.toFixed(1)
+    });
+
     return (
-      <div 
-        className="bg-white border rounded-lg shadow-sm max-h-96 overflow-y-auto"
-        style={{
-          fontFamily: fontSettings.fontFamily === 'monospace' ? 'Courier New, monospace' : 
-                     fontSettings.fontFamily === 'sans-serif' ? 'Arial, sans-serif' : 
-                     'Times New Roman, serif',
-          fontSize: `${fontSettings.fontSize}px`,
-          lineHeight: fontSettings.lineHeight,
-          padding: `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${fontSettings.marginBottom}px ${fontSettings.marginLeft}px`,
-          whiteSpace: 'pre-line',
-          width: `${paperWidthPx}px`,
-          maxWidth: `${paperWidthPx}px`,
-          wordWrap: 'break-word',
-          overflowWrap: 'break-word',
-        }}
-      >
-        {testReceipt}
-        {paperSettings.cutAfterPrint && (
-          <div style={{ 
-            borderBottom: '2px dashed #ccc', 
-            marginTop: '10px', 
-            paddingBottom: '5px',
-            textAlign: 'center',
-            fontSize: '10px',
-            color: '#666'
-          }}>
-            ✂️ CORTAR AQUI
+      <div className="space-y-2">
+        <div className="text-xs text-gray-500 mb-2 px-2 py-1 bg-gray-100 rounded">
+          📊 Preview: {paperSettings.paperWidth}mm x {totalHeightMm.toFixed(1)}mm 
+          | {allLines.length} linhas total ({nonEmptyLines.length} com conteúdo)
+          | Altura: SEMPRE Adaptativa
+        </div>
+        
+        <div 
+          className="border-2 border-blue-300 bg-white shadow-lg mx-auto relative"
+          style={{
+            width: `${paperWidthPx}px`,
+            height: `${totalHeight}px`,
+            fontFamily: fontSettings.fontFamily === 'monospace' ? 'Courier New, monospace' : 
+                       fontSettings.fontFamily === 'sans-serif' ? 'Arial, sans-serif' : 
+                       'Times New Roman, serif',
+            fontSize: `${fontSettings.fontSize}px`,
+            lineHeight: fontSettings.lineHeight,
+            padding: `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${fontSettings.marginBottom}px ${fontSettings.marginLeft}px`,
+            whiteSpace: 'pre-line',
+            maxWidth: `${paperWidthPx}px`,
+            wordWrap: 'break-word',
+            overflow: 'hidden',
+            boxSizing: 'border-box',
+          }}
+        >
+          {sampleContent}
+          
+          {/* Indicadores visuais das margens */}
+          <div 
+            className="absolute top-0 left-0 right-0 bg-red-200 opacity-50 pointer-events-none"
+            style={{ height: `${fontSettings.marginTop}px` }}
+            title={`Margem Superior: ${fontSettings.marginTop}px`}
+          />
+          <div 
+            className="absolute bottom-0 left-0 right-0 bg-red-200 opacity-50 pointer-events-none"
+            style={{ height: `${fontSettings.marginBottom}px` }}
+            title={`Margem Inferior: ${fontSettings.marginBottom}px`}
+          />
+          <div 
+            className="absolute top-0 bottom-0 left-0 bg-red-200 opacity-50 pointer-events-none"
+            style={{ width: `${fontSettings.marginLeft}px` }}
+            title={`Margem Esquerda: ${fontSettings.marginLeft}px`}
+          />
+          <div 
+            className="absolute top-0 bottom-0 right-0 bg-red-200 opacity-50 pointer-events-none"
+            style={{ width: `${fontSettings.marginRight}px` }}
+            title={`Margem Direita: ${fontSettings.marginRight}px`}
+          />
+        </div>
+        
+        <div className="text-xs space-y-1">
+          <div className="text-green-600 px-2 text-center font-medium">
+            ✅ Altura SEMPRE Adaptativa | Margens Aplicadas em Pixels
           </div>
-        )}
+          <div className="text-blue-600 px-2 text-center text-xs">
+            🔍 Margens: T{fontSettings.marginTop}px | B{fontSettings.marginBottom}px | L{fontSettings.marginLeft}px | R{fontSettings.marginRight}px
+          </div>
+          <div className="text-purple-600 px-2 text-center text-xs">
+            📝 Fonte: {fontSettings.fontFamily} | {fontSettings.fontSize}px | Linha: {fontSettings.lineHeight}
+          </div>
+        </div>
       </div>
     );
   };
