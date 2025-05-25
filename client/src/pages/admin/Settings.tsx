@@ -7,6 +7,7 @@ import AdminLayout from '@/components/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import POSSettingsContent from '@/components/admin/Settings/POSSettingsContent';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -17,7 +18,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Save, Globe, CreditCard, BellRing, Store, Calendar, Euro } from 'lucide-react';
+import { Save, Globe, CreditCard, BellRing, Store, Calendar, Euro, Printer } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 
 // Configure schema for general settings
@@ -345,7 +346,7 @@ const Settings: React.FC = () => {
       </div>
 
       <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 w-full mb-8">
+        <TabsList className="grid grid-cols-5 w-full mb-8">
           <TabsTrigger value="general" className="flex items-center">
             <Store className="w-4 h-4 mr-2" /> {t('GeneralSettings')}
           </TabsTrigger>
@@ -354,6 +355,9 @@ const Settings: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value="payments" className="flex items-center">
             <CreditCard className="w-4 h-4 mr-2" /> {t('PaymentSettings')}
+          </TabsTrigger>
+          <TabsTrigger value="pos" className="flex items-center">
+            <Printer className="w-4 h-4 mr-2" /> POS
           </TabsTrigger>
           <TabsTrigger value="notifications" className="flex items-center">
             <BellRing className="w-4 h-4 mr-2" /> {t('NotificationSettings')}
@@ -1058,6 +1062,11 @@ const Settings: React.FC = () => {
               </Form>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* POS Settings */}
+        <TabsContent value="pos">
+          <POSSettingsContent />
         </TabsContent>
 
         {/* Notification Settings */}
