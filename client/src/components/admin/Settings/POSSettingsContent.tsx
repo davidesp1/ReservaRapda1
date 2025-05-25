@@ -42,7 +42,8 @@ const posSettingsSchema = z.object({
   }),
   paperSettings: z.object({
     paperWidth: z.number().min(40).max(120).default(80), // largura em mm
-    paperHeight: z.number().min(100).max(500).default(297), // altura em mm (A4 padrão)
+    paperHeight: z.number().min(100).max(500).default(297), // altura em mm (apenas para modo fixo)
+    heightMode: z.enum(['adaptive', 'fixed']).default('adaptive'), // modo de altura
     cutAfterPrint: z.boolean().default(true),
     reduceFooterSpace: z.boolean().default(true),
     exactHeight: z.boolean().default(true), // altura exata do conteúdo
@@ -95,6 +96,7 @@ const POSSettingsContent: React.FC = () => {
       paperSettings: {
         paperWidth: 80,
         paperHeight: 297,
+        heightMode: 'adaptive',
         cutAfterPrint: true,
         reduceFooterSpace: true,
         exactHeight: true,
@@ -300,11 +302,18 @@ const POSSettingsContent: React.FC = () => {
       const marginLeftMm = fontSettings.marginLeft / 3.779527;
       const marginRightMm = fontSettings.marginRight / 3.779527;
       
-      // Altura total precisa (conteúdo + margens)
-      const totalHeight = Math.max(
-        (contentHeight / 3.779527) + marginTopMm + marginBottomMm + 1,
-        30 // Altura mínima de 30mm
-      );
+      // Altura total baseada no modo selecionado
+      let totalHeight;
+      if (paperSettings.heightMode === 'adaptive') {
+        // Modo adaptativo: altura baseada no conteúdo
+        totalHeight = Math.max(
+          (contentHeight / 3.779527) + marginTopMm + marginBottomMm + 2,
+          30 // Altura mínima de 30mm
+        );
+      } else {
+        // Modo fixo: usar altura configurada
+        totalHeight = paperSettings.paperHeight;
+      }
 
       const printWindow = window.open('', '_blank', 'width=400,height=600');
       if (!printWindow) {
