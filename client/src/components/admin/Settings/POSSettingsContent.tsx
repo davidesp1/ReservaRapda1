@@ -45,6 +45,9 @@ const posSettingsSchema = z.object({
     paperHeight: z.number().min(100).max(500).default(297), // altura em mm (A4 padrão)
     cutAfterPrint: z.boolean().default(true),
     reduceFooterSpace: z.boolean().default(true),
+    exactHeight: z.boolean().default(true), // altura exata do conteúdo
+    removePageMargins: z.boolean().default(true), // remover margens da página
+    footerMargin: z.number().min(0).max(20).default(0), // margem inferior específica
   }),
   autoOpenCashDrawer: z.boolean().default(false),
   printCopies: z.number().min(1).max(5).default(1),
@@ -94,6 +97,9 @@ const POSSettingsContent: React.FC = () => {
         paperHeight: 297,
         cutAfterPrint: true,
         reduceFooterSpace: true,
+        exactHeight: true,
+        removePageMargins: true,
+        footerMargin: 0,
       },
       autoOpenCashDrawer: false,
       printCopies: 1,
@@ -283,6 +289,12 @@ const POSSettingsContent: React.FC = () => {
     // Calcular largura baseada na largura do papel em mm
     const paperWidthPx = (paperSettings.paperWidth * 3.779527); // conversão mm para px (96dpi)
     
+    // Calcular altura dinâmica baseada no conteúdo
+    const lineHeight = fontSettings.fontSize * fontSettings.lineHeight;
+    const contentLines = content.split('\n').length;
+    const estimatedHeight = (contentLines * lineHeight) + fontSettings.marginTop + (paperSettings.footerMargin || 5);
+    const dynamicHeight = paperSettings.exactHeight ? `${estimatedHeight}px` : `${paperSettings.paperHeight}mm`;
+    
     // Criar elemento temporário para impressão
     const printContent = `
       <html>
@@ -290,8 +302,19 @@ const POSSettingsContent: React.FC = () => {
           <title>Recibo</title>
           <style>
             @page {
-              size: ${paperSettings.paperWidth}mm ${paperSettings.paperHeight}mm;
-              margin: ${fontSettings.marginTop}px ${fontSettings.marginRight}px ${paperSettings.reduceFooterSpace ? '5px' : fontSettings.marginBottom + 'px'} ${fontSettings.marginLeft}px;
+              size: ${paperSettings.paperWidth}mm ${dynamicHeight};
+              margin: ${paperSettings.removePageMargins ? '0' : `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${paperSettings.footerMargin}px ${fontSettings.marginLeft}px`};
+            }
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+            html, body { 
+              height: ${paperSettings.exactHeight ? 'auto' : '100%'};
+              margin: 0;
+              padding: 0;
+              overflow: hidden;
             }
             body { 
               font-family: ${fontSettings.fontFamily === 'monospace' ? "'Courier New', monospace" : 
@@ -299,34 +322,45 @@ const POSSettingsContent: React.FC = () => {
                            "'Times New Roman', serif"}; 
               font-size: ${fontSettings.fontSize}px; 
               line-height: ${fontSettings.lineHeight};
-              margin: 0;
-              padding: 0;
               width: ${paperWidthPx}px;
               max-width: ${paperWidthPx}px;
               white-space: pre-line;
               word-wrap: break-word;
               overflow-wrap: break-word;
+              padding: ${paperSettings.removePageMargins ? `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${paperSettings.footerMargin}px ${fontSettings.marginLeft}px` : '0'};
+            }
+            .receipt-content {
+              display: block;
+              margin: 0;
+              padding: 0;
             }
             @media print {
+              html, body { 
+                height: ${paperSettings.exactHeight ? 'auto' : '100%'};
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+              }
               body { 
-                margin: 0;
-                padding: 0;
-                width: ${paperWidthPx}px;
-                max-width: ${paperWidthPx}px;
+                width: ${paperWidthPx}px !important;
+                max-width: ${paperWidthPx}px !important;
+                padding: ${paperSettings.removePageMargins ? `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${paperSettings.footerMargin}px ${fontSettings.marginLeft}px` : '0'} !important;
               }
               ${paperSettings.cutAfterPrint ? `
               .cut-here {
-                page-break-after: always;
                 border-bottom: 2px dashed #000;
-                padding-bottom: 5px;
+                padding-bottom: 2px;
                 margin-bottom: 0;
               }` : ''}
+              @page {
+                margin: 0 !important;
+                size: ${paperSettings.paperWidth}mm ${dynamicHeight} !important;
+              }
             }
           </style>
         </head>
         <body>
-          <div class="${paperSettings.cutAfterPrint ? 'cut-here' : ''}">${content}</div>
-          ${paperSettings.cutAfterPrint ? '<div style="height: 10px;"></div>' : ''}
+          <div class="receipt-content ${paperSettings.cutAfterPrint ? 'cut-here' : ''}">${content}</div>
         </body>
       </html>
     `;
@@ -389,7 +423,7 @@ const POSSettingsContent: React.FC = () => {
                      'Times New Roman, serif',
           fontSize: `${fontSettings.fontSize}px`,
           lineHeight: fontSettings.lineHeight,
-          padding: `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${paperSettings.reduceFooterSpace ? '5px' : fontSettings.marginBottom + 'px'} ${fontSettings.marginLeft}px`,
+          padding: `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${paperSettings.footerMargin}px ${fontSettings.marginLeft}px`,
           whiteSpace: 'pre-line',
           width: `${paperWidthPx}px`,
           maxWidth: `${paperWidthPx}px`,
