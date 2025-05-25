@@ -15,7 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Printer, Settings, FileText, DollarSign, ShoppingCart, User } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Printer, Settings, FileText, DollarSign, ShoppingCart, User, Eye, Type } from "lucide-react";
 
 // Schema Zod para configurações POS
 const posSettingsSchema = z.object({
@@ -29,6 +30,15 @@ const posSettingsSchema = z.object({
     timestamp: z.boolean().default(true),
     qrCode: z.boolean().default(false),
     promotion: z.boolean().default(false),
+  }),
+  fontSettings: z.object({
+    fontFamily: z.string().default("monospace"),
+    fontSize: z.number().min(8).max(20).default(12),
+    lineHeight: z.number().min(1).max(3).default(1.2),
+    marginTop: z.number().min(0).max(50).default(10),
+    marginBottom: z.number().min(0).max(50).default(10),
+    marginLeft: z.number().min(0).max(50).default(10),
+    marginRight: z.number().min(0).max(50).default(10),
   }),
   autoOpenCashDrawer: z.boolean().default(false),
   printCopies: z.number().min(1).max(5).default(1),
@@ -63,6 +73,15 @@ const POSSettingsContent: React.FC = () => {
         timestamp: true,
         qrCode: false,
         promotion: false,
+      },
+      fontSettings: {
+        fontFamily: "monospace",
+        fontSize: 12,
+        lineHeight: 1.2,
+        marginTop: 10,
+        marginBottom: 10,
+        marginLeft: 10,
+        marginRight: 10,
       },
       autoOpenCashDrawer: false,
       printCopies: 1,
@@ -128,6 +147,7 @@ const POSSettingsContent: React.FC = () => {
           id: 1, // ID único para configurações
           printer_id: data.printerId,
           print_options: data.printOptions,
+          font_settings: data.fontSettings,
           auto_open_cash_drawer: data.autoOpenCashDrawer,
           print_copies: data.printCopies,
           updated_at: new Date().toISOString(),
@@ -187,6 +207,7 @@ const POSSettingsContent: React.FC = () => {
       form.reset({
         printerId: currentSettings.printer_id || "",
         printOptions: currentSettings.print_options || form.getValues("printOptions"),
+        fontSettings: currentSettings.font_settings || form.getValues("fontSettings"),
         autoOpenCashDrawer: currentSettings.auto_open_cash_drawer || false,
         printCopies: currentSettings.print_copies || 1,
       });
@@ -245,6 +266,8 @@ const POSSettingsContent: React.FC = () => {
 
   // Função para imprimir recibo
   const printReceipt = async (content: string, settings: POSSettingsFormData) => {
+    const { fontSettings } = settings;
+    
     // Criar elemento temporário para impressão
     const printContent = `
       <html>
@@ -252,14 +275,20 @@ const POSSettingsContent: React.FC = () => {
           <title>Recibo</title>
           <style>
             body { 
-              font-family: 'Courier New', monospace; 
-              font-size: 12px; 
-              margin: 0; 
-              padding: 20px;
+              font-family: ${fontSettings.fontFamily === 'monospace' ? "'Courier New', monospace" : 
+                           fontSettings.fontFamily === 'sans-serif' ? "'Arial', sans-serif" : 
+                           "'Times New Roman', serif"}; 
+              font-size: ${fontSettings.fontSize}px; 
+              line-height: ${fontSettings.lineHeight};
+              margin: ${fontSettings.marginTop}px ${fontSettings.marginRight}px ${fontSettings.marginBottom}px ${fontSettings.marginLeft}px;
+              padding: 0;
               white-space: pre-line;
             }
             @media print {
-              body { margin: 0; padding: 10px; }
+              body { 
+                margin: ${fontSettings.marginTop}px ${fontSettings.marginRight}px ${fontSettings.marginBottom}px ${fontSettings.marginLeft}px;
+                padding: 0; 
+              }
             }
           </style>
         </head>
@@ -279,6 +308,30 @@ const POSSettingsContent: React.FC = () => {
         setTimeout(() => printWindow.close(), 1000);
       }, 500);
     }
+  };
+
+  // Função para renderizar preview em tempo real
+  const renderPreview = () => {
+    const currentValues = form.watch();
+    const testReceipt = generateTestReceipt(currentValues);
+    const { fontSettings } = currentValues;
+    
+    return (
+      <div 
+        className="bg-white border rounded-lg p-4 max-h-96 overflow-y-auto"
+        style={{
+          fontFamily: fontSettings.fontFamily === 'monospace' ? 'Courier New, monospace' : 
+                     fontSettings.fontFamily === 'sans-serif' ? 'Arial, sans-serif' : 
+                     'Times New Roman, serif',
+          fontSize: `${fontSettings.fontSize}px`,
+          lineHeight: fontSettings.lineHeight,
+          padding: `${fontSettings.marginTop}px ${fontSettings.marginRight}px ${fontSettings.marginBottom}px ${fontSettings.marginLeft}px`,
+          whiteSpace: 'pre-line',
+        }}
+      >
+        {testReceipt}
+      </div>
+    );
   };
 
   // Handlers
@@ -570,6 +623,196 @@ const POSSettingsContent: React.FC = () => {
                     )}
                   />
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Seção de Configurações de Fonte e Layout */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Type className="w-5 h-5" />
+                <span>Configurações de Fonte e Layout</span>
+              </CardTitle>
+              <CardDescription>
+                Personalize a aparência do recibo impresso
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="fontSettings.fontFamily"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Família da Fonte</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="monospace">Monospace (Courier New)</SelectItem>
+                            <SelectItem value="sans-serif">Sans-serif (Arial)</SelectItem>
+                            <SelectItem value="serif">Serif (Times New Roman)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>Tipo de fonte para o recibo</FormDescription>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="fontSettings.fontSize"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tamanho da Fonte: {field.value}px</FormLabel>
+                        <FormControl>
+                          <Slider
+                            min={8}
+                            max={20}
+                            step={1}
+                            value={[field.value]}
+                            onValueChange={(value) => field.onChange(value[0])}
+                            className="w-full"
+                          />
+                        </FormControl>
+                        <FormDescription>Tamanho da fonte do recibo</FormDescription>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="fontSettings.lineHeight"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Espaçamento entre Linhas: {field.value}</FormLabel>
+                        <FormControl>
+                          <Slider
+                            min={1}
+                            max={3}
+                            step={0.1}
+                            value={[field.value]}
+                            onValueChange={(value) => field.onChange(value[0])}
+                            className="w-full"
+                          />
+                        </FormControl>
+                        <FormDescription>Espaçamento vertical entre as linhas</FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-medium">Margens (em pixels)</h4>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="fontSettings.marginTop"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Superior: {field.value}px</FormLabel>
+                          <FormControl>
+                            <Slider
+                              min={0}
+                              max={50}
+                              step={1}
+                              value={[field.value]}
+                              onValueChange={(value) => field.onChange(value[0])}
+                              className="w-full"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="fontSettings.marginBottom"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Inferior: {field.value}px</FormLabel>
+                          <FormControl>
+                            <Slider
+                              min={0}
+                              max={50}
+                              step={1}
+                              value={[field.value]}
+                              onValueChange={(value) => field.onChange(value[0])}
+                              className="w-full"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="fontSettings.marginLeft"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Esquerda: {field.value}px</FormLabel>
+                          <FormControl>
+                            <Slider
+                              min={0}
+                              max={50}
+                              step={1}
+                              value={[field.value]}
+                              onValueChange={(value) => field.onChange(value[0])}
+                              className="w-full"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="fontSettings.marginRight"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Direita: {field.value}px</FormLabel>
+                          <FormControl>
+                            <Slider
+                              min={0}
+                              max={50}
+                              step={1}
+                              value={[field.value]}
+                              onValueChange={(value) => field.onChange(value[0])}
+                              className="w-full"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Seção de Preview em Tempo Real */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Eye className="w-5 h-5" />
+                <span>Preview do Recibo</span>
+              </CardTitle>
+              <CardDescription>
+                Visualização em tempo real de como o recibo será impresso
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="border rounded-lg bg-gray-50 p-4">
+                <h4 className="text-sm font-medium mb-3 text-gray-700">
+                  Simulação da Impressão:
+                </h4>
+                {renderPreview()}
               </div>
             </CardContent>
           </Card>
