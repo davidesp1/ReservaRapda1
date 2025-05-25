@@ -16,7 +16,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { Printer, Settings, FileText, DollarSign, ShoppingCart, User, Eye, Type } from "lucide-react";
+import { Printer, Settings, FileText, DollarSign, ShoppingCart, User, Eye, Type, RotateCcw } from "lucide-react";
 
 // Schema Zod para configurações POS
 const posSettingsSchema = z.object({
@@ -70,6 +70,14 @@ const POSSettingsContent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Form setup
+  // Valores padrão das margens
+  const defaultMarginSettings = {
+    marginTop: 5,
+    marginBottom: 5,
+    marginLeft: 5,
+    marginRight: 5,
+  };
+
   const form = useForm<POSSettingsFormData>({
     resolver: zodResolver(posSettingsSchema),
     defaultValues: {
@@ -88,10 +96,7 @@ const POSSettingsContent: React.FC = () => {
         fontFamily: "monospace",
         fontSize: 12,
         lineHeight: 1.2,
-        marginTop: 10,
-        marginBottom: 10,
-        marginLeft: 10,
-        marginRight: 10,
+        ...defaultMarginSettings,
       },
       paperSettings: {
         paperWidth: 80,
@@ -219,6 +224,22 @@ const POSSettingsContent: React.FC = () => {
       });
     },
   });
+
+  // Função para resetar margens
+  const resetMargins = () => {
+    const currentValues = form.getValues();
+    form.setValue("fontSettings", {
+      ...currentValues.fontSettings,
+      ...defaultMarginSettings,
+    });
+    Swal.fire({
+      title: "Margens Resetadas!",
+      text: "As margens foram restauradas para os valores padrão (5px).",
+      icon: "success",
+      confirmButtonText: "Ok",
+      timer: 2000,
+    });
+  };
 
   // Carregar configurações atuais no form
   useEffect(() => {
