@@ -269,15 +269,15 @@ const POSSettingsContent: React.FC = () => {
     
     if (settings.printOptions.paymentMethod) {
       receipt += `Forma de Pagamento: Cartão\n`;
-      receipt += `Status: Pago\n\n`;
+      receipt += `Status: Pago\n`;
     }
     
     if (settings.printOptions.customerInfo) {
       receipt += `Cliente: João Silva\n`;
-      receipt += `Mesa: 12\n\n`;
+      receipt += `Mesa: 12\n`;
     }
     
-    receipt += `========================================\n`;
+    receipt += `\n========================================\n`;
     receipt += `         Obrigado pela visita!\n`;
     receipt += `========================================\n`;
     
