@@ -29,12 +29,7 @@ const CollaboratorDashboard: React.FC = () => {
     }
   }, [isAuthenticated, isCollaborator, isLoading, setLocation]);
   
-  // Redirect collaborators directly to POS
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && isCollaborator) {
-      setLocation('/collaborator/pos');
-    }
-  }, [isAuthenticated, isCollaborator, isLoading, setLocation]);
+  // Don't auto-redirect to POS, let them navigate normally
 
   const handleLogout = async () => {
     try {
@@ -242,13 +237,88 @@ const CollaboratorDashboard: React.FC = () => {
         
         {/* Page Content */}
         <main className="p-6">
-          <div className="flex items-center justify-center h-96">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold mb-4">Bem-vindo ao Sistema POS</h1>
-              <p className="text-gray-600 mb-6">Redirecionando para o sistema de vendas...</p>
-              <Button onClick={() => setLocation('/collaborator/pos')} className="bg-brasil-blue hover:bg-brasil-blue/90">
-                Ir para Sistema POS
-              </Button>
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Colaborador</h1>
+              <p className="text-gray-600">Bem-vindo ao sistema de gerenciamento do restaurante</p>
+            </div>
+
+            {/* Quick Actions Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              {/* POS Card */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-brasil-blue rounded-lg flex items-center justify-center mr-4">
+                    <CreditCard className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Sistema POS</h3>
+                    <p className="text-gray-600 text-sm">Processar vendas e pagamentos</p>
+                  </div>
+                </div>
+                <p className="text-gray-600 mb-4">
+                  Acesse o sistema de ponto de venda para processar pedidos, receber pagamentos e gerenciar vendas.
+                </p>
+                <Button 
+                  onClick={() => setLocation('/collaborator/pos')} 
+                  className="w-full bg-brasil-blue hover:bg-brasil-blue/90"
+                >
+                  Abrir Sistema POS
+                </Button>
+              </div>
+
+              {/* Profile Card */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center mr-4">
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Meu Perfil</h3>
+                    <p className="text-gray-600 text-sm">Visualizar informações pessoais</p>
+                  </div>
+                </div>
+                <p className="text-gray-600 mb-4">
+                  Visualize e atualize suas informações pessoais, dados de contato e configurações de conta.
+                </p>
+                <Button 
+                  onClick={() => setLocation('/collaborator/profile')} 
+                  variant="outline"
+                  className="w-full"
+                >
+                  Ver Perfil
+                </Button>
+              </div>
+            </div>
+
+            {/* User Info Section */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center mb-4">
+                <Avatar className="h-16 w-16 mr-4">
+                  <AvatarImage src={user?.profilePicture} />
+                  <AvatarFallback className="bg-brasil-yellow text-brasil-blue text-xl">
+                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    {user?.firstName} {user?.lastName}
+                  </h2>
+                  <p className="text-gray-600">{user?.email}</p>
+                  <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brasil-blue text-white mt-1">
+                    <ChefHat className="w-3 h-3 mr-1" />
+                    Colaborador
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="text-sm font-medium text-gray-900 mb-2">Suas Permissões:</h3>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• Acesso ao Sistema POS para processar vendas</li>
+                  <li>• Visualização e edição do perfil pessoal</li>
+                  <li>• Processamento de pagamentos diversos</li>
+                </ul>
+              </div>
             </div>
           </div>
         </main>
