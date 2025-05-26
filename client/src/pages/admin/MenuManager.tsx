@@ -454,7 +454,77 @@ const MenuManager: React.FC = () => {
     },
   });
 
-  // Upload de imagem com fallback para Base64
+  // Função de diagnóstico completo
+  const runImageDebug = async () => {
+    console.log("🔍 === DIAGNÓSTICO COMPLETO DO SISTEMA DE IMAGENS ===");
+    
+    // 1. Verificar configuração Supabase
+    console.log("\n1. VERIFICANDO SUPABASE:");
+    console.log("- Cliente Supabase:", supabase ? "✓ Conectado" : "❌ Não conectado");
+    
+    if (supabase) {
+      // 2. Listar buckets
+      try {
+        const { data: buckets, error } = await supabase.storage.listBuckets();
+        console.log("- Buckets disponíveis:", buckets?.length || 0);
+        buckets?.forEach(bucket => console.log(`  • ${bucket.name}`));
+        
+        if (error) {
+          console.log("❌ Erro ao listar buckets:", error);
+        }
+      } catch (err) {
+        console.log("❌ Erro na verificação de buckets:", err);
+      }
+      
+      // 3. Testar upload
+      try {
+        console.log("\n3. TESTANDO UPLOAD:");
+        const testFile = new Blob(['test'], { type: 'text/plain' });
+        const testPath = `debug/test-${Date.now()}.txt`;
+        
+        const { data, error } = await supabase.storage
+          .from("restaurant-images")
+          .upload(testPath, testFile);
+          
+        if (error) {
+          console.log("❌ Erro no teste de upload:", error);
+          if (error.message.includes('row-level security')) {
+            console.log("💡 SOLUÇÃO: Configurar políticas RLS no Supabase Storage");
+          }
+        } else {
+          console.log("✓ Teste de upload bem-sucedido!");
+        }
+      } catch (err) {
+        console.log("❌ Erro no teste de upload:", err);
+      }
+    }
+    
+    // 4. Testar banco de dados
+    console.log("\n4. TESTANDO BANCO DE DADOS:");
+    try {
+      const testData = {
+        name: 'Debug Test Product',
+        description: 'Produto de teste automático',
+        price: 100,
+        category_id: 1,
+        image_url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+      };
+      
+      console.log("- Dados de teste:", testData);
+      
+      createItemMutation.mutate(testData);
+      
+    } catch (err) {
+      console.log("❌ Erro no teste do banco:", err);
+    }
+    
+    toast({
+      title: "Diagnóstico executado",
+      description: "Verifique o console para resultados detalhados",
+    });
+  };
+
+  // Upload de imagem com diagnóstico completo
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -468,15 +538,21 @@ const MenuManager: React.FC = () => {
       return;
     }
 
+    console.log("📷 INICIANDO UPLOAD DE IMAGEM:");
+    console.log("- Arquivo:", file.name, file.size, "bytes");
+
     try {
       setSelectedImage(file);
 
-      // Primeiro tentar upload para Supabase
+      // Tentar upload para Supabase Storage primeiro
       if (supabase) {
+        console.log("🔄 Tentando upload para Supabase Storage...");
         try {
           const fileExt = file.name.split(".").pop();
           const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
           const filePath = `menu-items/${fileName}`;
+
+          console.log("- Caminho do arquivo:", filePath);
 
           const { data, error } = await supabase.storage
             .from("restaurant-images")
@@ -485,24 +561,37 @@ const MenuManager: React.FC = () => {
               upsert: true,
             });
 
-          if (!error && data) {
+          if (error) {
+            console.log("❌ Erro no Supabase Storage:", error);
+            console.log("- Código:", error.statusCode);
+            console.log("- Mensagem:", error.message);
+          } else {
+            console.log("✓ Upload para Supabase bem-sucedido!");
             const { data: urlData } = supabase.storage
               .from("restaurant-images")
               .getPublicUrl(filePath);
             
-            productForm.setValue("imageUrl", urlData.publicUrl);
+            productForm.setValue("imageUrl", urlData.publicUrl, { 
+              shouldValidate: true,
+              shouldDirty: true,
+              shouldTouch: true 
+            });
+            
+            console.log("- URL pública:", urlData.publicUrl);
+            
             toast({
               title: "Upload realizado",
-              description: "Imagem enviada com sucesso!",
+              description: "Imagem enviada para Supabase Storage!",
             });
             return;
           }
         } catch (supabaseError) {
-          console.log("Supabase upload falhou, usando alternativa local...");
+          console.log("❌ Exceção no Supabase:", supabaseError);
         }
       }
 
-      // Converter para Base64 e forçar atualização do formulário
+      // Fallback: Converter para Base64
+      console.log("🔄 Usando fallback Base64...");
       const reader = new FileReader();
       reader.onload = () => {
         const base64String = reader.result as string;
@@ -514,18 +603,19 @@ const MenuManager: React.FC = () => {
           shouldTouch: true 
         });
         
-        console.log("Imagem carregada e definida no formulário:", base64String.substring(0, 100) + "...");
-        console.log("Valor atual do campo imageUrl:", productForm.getValues("imageUrl"));
+        console.log("✓ Imagem convertida para Base64");
+        console.log("- Tamanho Base64:", base64String.length, "caracteres");
+        console.log("- Valor no formulário:", productForm.getValues("imageUrl") ? "✓ Definido" : "❌ Não definido");
         
         toast({
           title: "Upload realizado",
-          description: "Imagem carregada com sucesso!",
+          description: "Imagem carregada em Base64!",
         });
       };
       reader.readAsDataURL(file);
 
     } catch (error: any) {
-      console.error("Erro no upload:", error);
+      console.error("❌ ERRO GERAL no upload:", error);
       toast({
         title: "Erro no upload",
         description: error.message,
