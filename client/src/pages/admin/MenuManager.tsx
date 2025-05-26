@@ -1135,12 +1135,30 @@ const MenuManager: React.FC = () => {
                 <Label className="block text-sm font-semibold text-gray-700 mb-1">
                   Foto do Produto
                 </Label>
+                
+                {/* Prévia da imagem atual */}
+                {productForm.watch("imageUrl") && (
+                  <div className="mb-3">
+                    <p className="text-sm text-gray-600 mb-2">Imagem atual:</p>
+                    <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200">
+                      <img
+                        src={productForm.watch("imageUrl")}
+                        alt="Prévia do produto"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+                
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageUpload}
-                  className="block w-full text-gray-700"
+                  className="block w-full text-gray-700 border border-gray-300 rounded-md px-3 py-2 bg-white hover:border-gray-400 focus:border-blue-500 focus:outline-none"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Formatos aceitos: JPG, PNG, GIF (máx. 5MB)
+                </p>
               </div>
 
               <div className="flex justify-end space-x-4">
