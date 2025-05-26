@@ -114,7 +114,8 @@ function Router() {
       <Route path="/admin/tables" component={TableManager} />
       <Route path="/admin/finance" component={Finance} />
       <Route path="/admin/reports" component={ReportsManager} />
-      <Route path="/admin/settings" component={Settings} />
+      <Route path="/admin/settings" component={lazy(() => import('@/pages/admin/NewSettings'))} />
+      <Route path="/admin/settings-old" component={Settings} />
 
       <Route path="/admin/reservations" component={ReservationManager} />
       <Route path="/admin/pos" component={POSMode} />
