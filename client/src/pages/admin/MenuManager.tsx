@@ -431,15 +431,15 @@ const MenuManager: React.FC = () => {
     },
   });
 
-  // Upload real de imagem para Supabase Storage
+  // Upload de imagem com fallback para Base64
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
-    if (!file || !supabase) {
+    if (!file) {
       toast({
         title: "Erro no upload",
-        description: "Supabase não configurado ou arquivo inválido",
+        description: "Nenhum arquivo selecionado",
         variant: "destructive",
       });
       return;
@@ -448,39 +448,55 @@ const MenuManager: React.FC = () => {
     try {
       setSelectedImage(file);
 
-      // Gerar nome único para o arquivo
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `menu-items/${fileName}`;
+      // Primeiro tentar upload para Supabase
+      if (supabase) {
+        try {
+          const fileExt = file.name.split(".").pop();
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `menu-items/${fileName}`;
 
-      // Upload para o Supabase Storage
-      const { data, error } = await supabase.storage
-        .from("restaurant-images")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
+          const { data, error } = await supabase.storage
+            .from("restaurant-images")
+            .upload(filePath, file, {
+              cacheControl: "3600",
+              upsert: true,
+            });
 
-      if (error) {
-        throw new Error(`Erro no upload: ${error.message}`);
+          if (!error && data) {
+            const { data: urlData } = supabase.storage
+              .from("restaurant-images")
+              .getPublicUrl(filePath);
+            
+            productForm.setValue("imageUrl", urlData.publicUrl);
+            toast({
+              title: "Upload realizado",
+              description: "Imagem enviada com sucesso!",
+            });
+            return;
+          }
+        } catch (supabaseError) {
+          console.log("Supabase upload falhou, usando alternativa local...");
+        }
       }
 
-      // Obter URL pública da imagem
-      const { data: urlData } = supabase.storage
-        .from("restaurant-images")
-        .getPublicUrl(filePath);
+      // Fallback: Converter para Base64 para armazenamento local
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        productForm.setValue("imageUrl", base64String);
+        
+        toast({
+          title: "Upload realizado",
+          description: "Imagem carregada com sucesso!",
+        });
+      };
+      reader.readAsDataURL(file);
 
-      productForm.setValue("imageUrl", urlData.publicUrl);
-
-      toast({
-        title: "Upload realizado",
-        description: "Imagem enviada com sucesso para o Supabase!",
-      });
     } catch (error: any) {
       console.error("Erro no upload:", error);
       toast({
         title: "Erro no upload",
-        description: error.message || "Erro ao fazer upload da imagem",
+        description: error.message,
         variant: "destructive",
       });
     }
