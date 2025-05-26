@@ -877,9 +877,9 @@ const MenuManager: React.FC = () => {
                   <tr key={item.id}>
                     <td className="px-6 py-4">
                       <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border">
-                        {item.imageUrl ? (
+                        {item.image_url ? (
                           <img
-                            src={item.imageUrl}
+                            src={item.image_url}
                             alt={item.name}
                             className="w-full h-full object-cover"
                           />
