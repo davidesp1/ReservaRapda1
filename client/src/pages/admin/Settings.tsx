@@ -204,10 +204,13 @@ const Settings = () => {
   });
 
   const savePaymentSettings = useMutation({
-    mutationFn: (data: PaymentSettings) => apiRequest('/api/settings/payments', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    }),
+    mutationFn: (data: PaymentSettings) => 
+      fetch('/api/settings/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      }).then(res => res.json()),
     onSuccess: () => {
       toast({
         title: 'Sucesso',
@@ -236,19 +239,19 @@ const Settings = () => {
 
   // Update forms when settings are loaded
   useEffect(() => {
-    if (settings) {
+    if (settings && typeof settings === 'object') {
       // Update forms with existing settings
-      if (settings.general) {
-        generalForm.reset(settings.general);
+      if ((settings as any).general) {
+        generalForm.reset((settings as any).general);
       }
-      if (settings.page) {
-        pageForm.reset(settings.page);
+      if ((settings as any).page) {
+        pageForm.reset((settings as any).page);
       }
-      if (settings.reservations) {
-        reservationForm.reset(settings.reservations);
+      if ((settings as any).reservations) {
+        reservationForm.reset((settings as any).reservations);
       }
-      if (settings.payments) {
-        paymentForm.reset(settings.payments);
+      if ((settings as any).payments) {
+        paymentForm.reset((settings as any).payments);
       }
     }
   }, [settings, generalForm, pageForm, reservationForm, paymentForm]);
