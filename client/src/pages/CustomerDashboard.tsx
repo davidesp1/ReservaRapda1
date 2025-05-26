@@ -14,8 +14,15 @@ import { CalendarCheck, ChevronRight } from 'lucide-react';
 
 const CustomerDashboard: React.FC = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, isAuthenticated, isCollaborator, isLoading } = useAuth();
   const [_, setLocation] = useLocation();
+
+  // Redirect collaborators to their own dashboard
+  React.useEffect(() => {
+    if (!isLoading && isAuthenticated && isCollaborator) {
+      setLocation('/collaborator');
+    }
+  }, [isAuthenticated, isCollaborator, isLoading, setLocation]);
   
   // Fetch user reservations
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({

@@ -8,7 +8,7 @@ import Dashboard from '@/pages/admin/Dashboard';
 
 const AdminDashboard: React.FC = () => {
   const { t } = useTranslation();
-  const { isAuthenticated, isAdmin, isLoading } = useAuth();
+  const { isAuthenticated, isAdmin, isCollaborator, isLoading } = useAuth();
   const [_, setLocation] = useLocation();
   
   // Redirect to home if not authenticated or not admin
@@ -17,6 +17,13 @@ const AdminDashboard: React.FC = () => {
       setLocation('/');
     }
   }, [isAuthenticated, isAdmin, isLoading, setLocation]);
+
+  // Redirect collaborators to their own dashboard
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && isCollaborator) {
+      setLocation('/collaborator');
+    }
+  }, [isAuthenticated, isCollaborator, isLoading, setLocation]);
   
   if (isLoading) {
     return (
