@@ -1,576 +1,929 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { 
+  Building, 
+  Globe, 
+  CalendarCheck, 
+  CreditCard, 
+  Bell, 
+  DollarSign,
+  Save,
+  Lock
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+
+// Schemas for different settings sections
+const generalSettingsSchema = z.object({
+  restaurantName: z.string().min(1, 'Nome do restaurante é obrigatório'),
+  email: z.string().email('Email inválido'),
+  phone: z.string().min(1, 'Telefone é obrigatório'),
+  website: z.string().url('URL inválida').optional().or(z.literal('')),
+  address: z.string().min(1, 'Endereço é obrigatório'),
+  openingTime: z.string().min(1, 'Horário de abertura é obrigatório'),
+  closingTime: z.string().min(1, 'Horário de fechamento é obrigatório'),
+  description: z.string().optional()
+});
+
+const pageSettingsSchema = z.object({
+  pageTitle: z.string().min(1, 'Título da página é obrigatório'),
+  navBar: z.string().optional(),
+  aboutSection: z.string().optional(),
+  locationContact: z.string().optional(),
+  testimonials: z.string().optional(),
+  footer: z.string().optional()
+});
+
+const reservationSettingsSchema = z.object({
+  minReservationTime: z.number().min(0, 'Tempo mínimo deve ser positivo'),
+  maxDaysInAdvance: z.number().min(1, 'Deve permitir pelo menos 1 dia de antecedência'),
+  allowCancellation: z.boolean(),
+  requireConfirmation: z.boolean(),
+  autoConfirmation: z.boolean()
+});
+
+const paymentSettingsSchema = z.object({
+  currency: z.string().min(1, 'Moeda é obrigatória'),
+  taxRate: z.number().min(0, 'Taxa de imposto deve ser positiva'),
+  eupagoApiKey: z.string().optional(),
+  acceptCard: z.boolean(),
+  acceptMBWay: z.boolean(),
+  acceptMultibanco: z.boolean(),
+  acceptBankTransfer: z.boolean(),
+  acceptCash: z.boolean()
+});
+
+type GeneralSettings = z.infer<typeof generalSettingsSchema>;
+type PageSettings = z.infer<typeof pageSettingsSchema>;
+type ReservationSettings = z.infer<typeof reservationSettingsSchema>;
+type PaymentSettings = z.infer<typeof paymentSettingsSchema>;
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState(1);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const switchTab = (tabNumber: number) => {
-    setActiveTab(tabNumber);
+  // Forms for different tabs
+  const generalForm = useForm<GeneralSettings>({
+    resolver: zodResolver(generalSettingsSchema),
+    defaultValues: {
+      restaurantName: '',
+      email: '',
+      phone: '',
+      website: '',
+      address: '',
+      openingTime: '',
+      closingTime: '',
+      description: ''
+    }
+  });
+
+  const pageForm = useForm<PageSettings>({
+    resolver: zodResolver(pageSettingsSchema),
+    defaultValues: {
+      pageTitle: '',
+      navBar: '',
+      aboutSection: '',
+      locationContact: '',
+      testimonials: '',
+      footer: ''
+    }
+  });
+
+  const reservationForm = useForm<ReservationSettings>({
+    resolver: zodResolver(reservationSettingsSchema),
+    defaultValues: {
+      minReservationTime: 30,
+      maxDaysInAdvance: 30,
+      allowCancellation: true,
+      requireConfirmation: false,
+      autoConfirmation: true
+    }
+  });
+
+  const paymentForm = useForm<PaymentSettings>({
+    resolver: zodResolver(paymentSettingsSchema),
+    defaultValues: {
+      currency: 'EUR',
+      taxRate: 23,
+      eupagoApiKey: '',
+      acceptCard: true,
+      acceptMBWay: true,
+      acceptMultibanco: true,
+      acceptBankTransfer: true,
+      acceptCash: true
+    }
+  });
+
+  // Query to fetch current settings
+  const { data: settings } = useQuery({
+    queryKey: ['/api/settings'],
+    staleTime: 5 * 60 * 1000
+  });
+
+  // Mutations for saving settings
+  const saveGeneralSettings = useMutation({
+    mutationFn: (data: GeneralSettings) => 
+      fetch('/api/settings/general', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      }).then(res => res.json()),
+    onSuccess: () => {
+      toast({
+        title: 'Sucesso',
+        description: 'Configurações gerais salvas com sucesso!'
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+    },
+    onError: () => {
+      toast({
+        title: 'Erro',
+        description: 'Erro ao salvar configurações gerais',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  const savePageSettings = useMutation({
+    mutationFn: (data: PageSettings) => 
+      fetch('/api/settings/page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      }).then(res => res.json()),
+    onSuccess: () => {
+      toast({
+        title: 'Sucesso',
+        description: 'Configurações de página salvas com sucesso!'
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+    },
+    onError: () => {
+      toast({
+        title: 'Erro',
+        description: 'Erro ao salvar configurações de página',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  const saveReservationSettings = useMutation({
+    mutationFn: (data: ReservationSettings) => 
+      fetch('/api/settings/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      }).then(res => res.json()),
+    onSuccess: () => {
+      toast({
+        title: 'Sucesso',
+        description: 'Configurações de reservas salvas com sucesso!'
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+    },
+    onError: () => {
+      toast({
+        title: 'Erro',
+        description: 'Erro ao salvar configurações de reservas',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  const savePaymentSettings = useMutation({
+    mutationFn: (data: PaymentSettings) => 
+      fetch('/api/settings/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      }).then(res => res.json()),
+    onSuccess: () => {
+      toast({
+        title: 'Sucesso',
+        description: 'Configurações de pagamento salvas com sucesso!'
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+    },
+    onError: () => {
+      toast({
+        title: 'Erro',
+        description: 'Erro ao salvar configurações de pagamento',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Tab configuration
+  const tabs = [
+    { id: 1, label: 'Configurações Gerais', icon: Building, color: 'text-brasil-green' },
+    { id: 2, label: 'Configurações de Página', icon: Globe, color: 'text-brasil-yellow' },
+    { id: 3, label: 'Configurações de Reservas', icon: CalendarCheck, color: 'text-brasil-blue' },
+    { id: 4, label: 'Configurações de Pagamento', icon: CreditCard, color: 'text-brasil-green' },
+    { id: 5, label: 'Configuração de Notificações', icon: Bell, color: 'text-brasil-yellow' },
+    { id: 6, label: 'Configurações POS', icon: DollarSign, color: 'text-brasil-blue' }
+  ];
+
+  // Update forms when settings are loaded
+  useEffect(() => {
+    if (settings && typeof settings === 'object') {
+      // Update forms with existing settings
+      if ((settings as any).general) {
+        generalForm.reset((settings as any).general);
+      }
+      if ((settings as any).page) {
+        pageForm.reset((settings as any).page);
+      }
+      if ((settings as any).reservations) {
+        reservationForm.reset((settings as any).reservations);
+      }
+      if ((settings as any).payments) {
+        paymentForm.reset((settings as any).payments);
+      }
+    }
+  }, [settings, generalForm, pageForm, reservationForm, paymentForm]);
+
+  const onSubmitGeneral = (data: GeneralSettings) => {
+    saveGeneralSettings.mutate(data);
   };
 
-  const handleSubmit = async (formType: string, event: React.FormEvent) => {
-    event.preventDefault();
-    
-    // Simulate form submission
-    toast({
-      title: 'Sucesso',
-      description: `Configurações de ${formType} salvas com sucesso!`
-    });
+  const onSubmitPage = (data: PageSettings) => {
+    savePageSettings.mutate(data);
+  };
+
+  const onSubmitReservation = (data: ReservationSettings) => {
+    saveReservationSettings.mutate(data);
+  };
+
+  const onSubmitPayment = (data: PaymentSettings) => {
+    savePaymentSettings.mutate(data);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+      <div>
         <h1 className="text-2xl font-bold text-gray-800 font-montserrat">Configurações</h1>
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <button className="relative">
-              <i className="fa-regular fa-bell text-xl text-gray-600"></i>
-              <span className="absolute -top-1 -right-1 bg-brasil-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
-            </button>
-          </div>
-          <div className="flex items-center">
-            <img 
-              src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" 
-              alt="User Avatar" 
-              className="w-10 h-10 rounded-full border-2 border-brasil-yellow" 
-            />
-            <div className="ml-2">
-              <p className="text-sm font-medium text-gray-800">Carlos Silva</p>
-              <p className="text-xs text-gray-500">Administrador</p>
-            </div>
-          </div>
-        </div>
+        <p className="text-gray-600 mt-1">Gerencie as configurações do seu restaurante</p>
       </div>
 
-      {/* Settings Tabs Section */}
-      <div className="bg-white rounded-xl shadow-md p-8">
+      <div className="bg-white rounded-xl shadow-md p-6 sm:p-8">
         {/* Tabs Navigation */}
         <div className="flex flex-wrap gap-2 mb-8 border-b border-gray-200 overflow-x-auto">
-          <button
-            onClick={() => switchTab(1)}
-            className={`flex items-center px-5 py-3 font-semibold border-b-4 -mb-px rounded-t-md font-montserrat transition-all ${
-              activeTab === 1
-                ? 'text-brasil-blue border-brasil-blue bg-gray-50'
-                : 'text-gray-600 hover:text-brasil-blue border-transparent bg-gray-50'
-            }`}
-          >
-            <i className="fa-solid fa-building text-brasil-green mr-2"></i>
-            Configurações Gerais
-          </button>
-          <button
-            onClick={() => switchTab(2)}
-            className={`flex items-center px-5 py-3 font-medium border-b-4 -mb-px rounded-t-md font-montserrat transition-all ${
-              activeTab === 2
-                ? 'text-brasil-blue border-brasil-blue bg-gray-50'
-                : 'text-gray-600 hover:text-brasil-blue border-transparent bg-gray-50'
-            }`}
-          >
-            <i className="fa-solid fa-globe text-brasil-yellow mr-2"></i>
-            Configurações de Página
-          </button>
-          <button
-            onClick={() => switchTab(3)}
-            className={`flex items-center px-5 py-3 font-medium border-b-4 -mb-px rounded-t-md font-montserrat transition-all ${
-              activeTab === 3
-                ? 'text-brasil-blue border-brasil-blue bg-gray-50'
-                : 'text-gray-600 hover:text-brasil-blue border-transparent bg-gray-50'
-            }`}
-          >
-            <i className="fa-solid fa-calendar-check text-brasil-blue mr-2"></i>
-            Configurações de Reservas
-          </button>
-          <button
-            onClick={() => switchTab(4)}
-            className={`flex items-center px-5 py-3 font-medium border-b-4 -mb-px rounded-t-md font-montserrat transition-all ${
-              activeTab === 4
-                ? 'text-brasil-blue border-brasil-blue bg-gray-50'
-                : 'text-gray-600 hover:text-brasil-blue border-transparent bg-gray-50'
-            }`}
-          >
-            <i className="fa-solid fa-credit-card text-brasil-green mr-2"></i>
-            Configurações de Pagamento
-          </button>
-          <button
-            onClick={() => switchTab(5)}
-            className={`flex items-center px-5 py-3 font-medium border-b-4 -mb-px rounded-t-md font-montserrat transition-all ${
-              activeTab === 5
-                ? 'text-brasil-blue border-brasil-blue bg-gray-50'
-                : 'text-gray-600 hover:text-brasil-blue border-transparent bg-gray-50'
-            }`}
-          >
-            <i className="fa-solid fa-bell text-brasil-yellow mr-2"></i>
-            Configuração de Notificações
-          </button>
-          <button
-            onClick={() => switchTab(6)}
-            className={`flex items-center px-5 py-3 font-medium border-b-4 -mb-px rounded-t-md font-montserrat transition-all ${
-              activeTab === 6
-                ? 'text-brasil-blue border-brasil-blue bg-gray-50'
-                : 'text-gray-600 hover:text-brasil-blue border-transparent bg-gray-50'
-            }`}
-          >
-            <i className="fa-solid fa-cash-register text-brasil-blue mr-2"></i>
-            Configurações POS
-          </button>
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center px-4 py-3 font-semibold text-sm whitespace-nowrap rounded-t-md border-b-4 transition-all ${
+                  activeTab === tab.id
+                    ? 'text-brasil-blue border-brasil-blue bg-gray-50'
+                    : 'text-gray-600 border-transparent hover:text-brasil-blue hover:bg-gray-50'
+                }`}
+              >
+                <Icon className={`w-4 h-4 mr-2 ${tab.color}`} />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Tab Content 1 - Configurações Gerais */}
+        {/* Tab Content */}
         {activeTab === 1 && (
-          <div className="tab-content">
-            <form onSubmit={(e) => handleSubmit('gerais', e)} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label htmlFor="restaurante-nome" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Nome do Restaurante
-                  </label>
-                  <input
-                    id="restaurante-nome"
-                    type="text"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="Opa que delicia"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="restaurante-email" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Email
-                  </label>
-                  <input
-                    id="restaurante-email"
-                    type="email"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="contato@opaquedelicia.com"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="restaurante-telefone" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Telefone
-                  </label>
-                  <input
-                    id="restaurante-telefone"
-                    type="tel"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="(11) 98765-4321"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="restaurante-website" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Website
-                  </label>
-                  <input
-                    id="restaurante-website"
-                    type="url"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="https://opaquedelicia.com"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label htmlFor="restaurante-endereco" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Endereço
-                  </label>
-                  <input
-                    id="restaurante-endereco"
-                    type="text"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="Rua da Gastronomia, 123 - São Paulo, SP"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Horário de Funcionamento
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs font-medium text-gray-500">Abertura</span>
-                    <input
-                      id="restaurante-abertura"
-                      type="time"
-                      className="px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none bg-gray-50 font-semibold w-24"
-                    />
-                    <span className="text-xs font-medium text-gray-500">Fechamento</span>
-                    <input
-                      id="restaurante-fechamento"
-                      type="time"
-                      className="px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none bg-gray-50 font-semibold w-24"
-                    />
-                  </div>
-                </div>
-                <div className="md:col-span-2">
-                  <label htmlFor="restaurante-descricao" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Descrição
-                  </label>
-                  <textarea
-                    id="restaurante-descricao"
-                    rows={3}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50 resize-none"
-                    placeholder="Conte um pouco sobre o restaurante, especialidades, história, etc."
-                  />
-                </div>
-              </div>
-              
-              <div className="flex justify-end pt-4">
-                <button
-                  type="submit"
-                  className="flex items-center px-6 py-3 bg-brasil-green text-white font-bold rounded-lg shadow hover:bg-green-700 transition-colors text-base font-montserrat"
-                >
-                  <i className="fa-solid fa-floppy-disk mr-2"></i>
-                  Salvar Configurações
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
+          <Form {...generalForm}>
+            <form onSubmit={generalForm.handleSubmit(onSubmitGeneral)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={generalForm.control}
+                  name="restaurantName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Nome do Restaurante</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Opa que delicia"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-        {/* Tab Content 2 - Configurações de Página */}
-        {activeTab === 2 && (
-          <div className="tab-content">
-            <form onSubmit={(e) => handleSubmit('página', e)} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label htmlFor="page-title" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Título da Página
-                  </label>
-                  <input
-                    id="page-title"
-                    type="text"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="Opa que delicia - Restaurante Brasileiro"
-                  />
-                </div>
-                <div className="flex flex-col space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                      Insira a Logo
-                    </label>
-                    <div className="flex items-center space-x-4">
-                      <input
-                        id="page-logo"
-                        type="file"
-                        accept="image/*"
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brasil-blue file:text-white hover:file:bg-brasil-green"
-                      />
-                      <img
-                        id="logo-preview"
-                        className="w-12 h-12 object-contain bg-gray-100 rounded-md border hidden"
-                        src=""
-                        alt=""
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                      Insira o Favicon
-                    </label>
-                    <div className="flex items-center space-x-4">
-                      <input
-                        id="page-favicon"
-                        type="file"
-                        accept="image/*"
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brasil-yellow file:text-brasil-blue hover:file:bg-brasil-green"
-                      />
-                      <img
-                        id="favicon-preview"
-                        className="w-8 h-8 object-contain bg-gray-100 rounded-md border hidden"
-                        src=""
-                        alt=""
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+                <FormField
+                  control={generalForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Email</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="email"
+                          placeholder="contato@opaquedelicia.com"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label htmlFor="nav-bar" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Barra de Navegação
-                  </label>
-                  <textarea
-                    id="nav-bar"
-                    rows={2}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50 resize-none"
-                    placeholder="Ex: Home, Cardápio, Reservas, Sobre, Contato"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="about-section" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Sobre
-                  </label>
-                  <textarea
-                    id="about-section"
-                    rows={2}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50 resize-none"
-                    placeholder="Descrição da história, missão, valores, equipe"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="location-contact" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Localização e Contato
-                  </label>
-                  <textarea
-                    id="location-contact"
-                    rows={2}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50 resize-none"
-                    placeholder="Endereço, telefone, email"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="testimonials" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Testemunhos
-                  </label>
-                  <textarea
-                    id="testimonials"
-                    rows={2}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50 resize-none"
-                    placeholder="Comentários de clientes, avaliações"
-                  />
-                </div>
-              </div>
-              
-              <div className="col-span-2">
-                <label htmlFor="footer" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                  Footer
-                </label>
-                <textarea
-                  id="footer"
-                  rows={2}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50 resize-none"
-                  placeholder="Informações de copyright, links, redes sociais"
+                <FormField
+                  control={generalForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Telefone</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="(11) 98765-4321"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={generalForm.control}
+                  name="website"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Website</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="url"
+                          placeholder="https://opaquedelicia.com"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={generalForm.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="font-semibold text-gray-700">Endereço</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Rua da Gastronomia, 123 - São Paulo, SP"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={generalForm.control}
+                  name="openingTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Horário de Abertura</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="time"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={generalForm.control}
+                  name="closingTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Horário de Fechamento</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="time"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={generalForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="font-semibold text-gray-700">Descrição</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          rows={3}
+                          placeholder="Conte um pouco sobre o restaurante, especialidades, história, etc."
+                          className="bg-gray-50 font-semibold resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-              
+
               <div className="flex justify-end pt-4">
-                <button
-                  type="submit"
-                  className="flex items-center px-6 py-3 bg-brasil-green text-white font-bold rounded-lg shadow hover:bg-green-700 transition-colors text-base font-montserrat"
+                <Button 
+                  type="submit" 
+                  className="bg-brasil-green hover:bg-green-700 text-white font-bold"
+                  disabled={saveGeneralSettings.isPending}
                 >
-                  <i className="fa-solid fa-floppy-disk mr-2"></i>
-                  Salvar Configurações
-                </button>
+                  <Save className="w-4 h-4 mr-2" />
+                  {saveGeneralSettings.isPending ? 'Salvando...' : 'Salvar Configurações'}
+                </Button>
               </div>
             </form>
-          </div>
+          </Form>
         )}
 
-        {/* Tab Content 3 - Configurações de Reservas */}
+        {activeTab === 2 && (
+          <Form {...pageForm}>
+            <form onSubmit={pageForm.handleSubmit(onSubmitPage)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={pageForm.control}
+                  name="pageTitle"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Título da Página</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Opa que delicia - Restaurante Brasileiro"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={pageForm.control}
+                  name="navBar"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Barra de Navegação</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          rows={2}
+                          placeholder="Ex: Home, Cardápio, Reservas, Sobre, Contato"
+                          className="bg-gray-50 font-semibold resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={pageForm.control}
+                  name="aboutSection"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Sobre</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          rows={2}
+                          placeholder="Descrição da história, missão, valores, equipe"
+                          className="bg-gray-50 font-semibold resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={pageForm.control}
+                  name="locationContact"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Localização e Contato</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          rows={2}
+                          placeholder="Endereço, telefone, email"
+                          className="bg-gray-50 font-semibold resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={pageForm.control}
+                  name="testimonials"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Testemunhos</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          rows={2}
+                          placeholder="Comentários de clientes, avaliações"
+                          className="bg-gray-50 font-semibold resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={pageForm.control}
+                  name="footer"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="font-semibold text-gray-700">Footer</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          rows={2}
+                          placeholder="Informações de copyright, links, redes sociais"
+                          className="bg-gray-50 font-semibold resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button 
+                  type="submit" 
+                  className="bg-brasil-green hover:bg-green-700 text-white font-bold"
+                  disabled={savePageSettings.isPending}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {savePageSettings.isPending ? 'Salvando...' : 'Salvar Configurações'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
+
         {activeTab === 3 && (
-          <div className="tab-content">
-            <form onSubmit={(e) => handleSubmit('reservas', e)} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label htmlFor="tempo-minimo" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Tempo mínimo para reserva (min)
-                  </label>
-                  <input
-                    id="tempo-minimo"
-                    type="number"
-                    min="0"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="30"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="dias-antecedencia" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Dias de reserva máxima antecipada
-                  </label>
-                  <input
-                    id="dias-antecedencia"
-                    type="number"
-                    min="1"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="30"
-                  />
-                </div>
+          <Form {...reservationForm}>
+            <form onSubmit={reservationForm.handleSubmit(onSubmitReservation)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={reservationForm.control}
+                  name="minReservationTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Tempo mínimo para reserva (min)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="number"
+                          min="0"
+                          placeholder="30"
+                          className="bg-gray-50 font-semibold"
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={reservationForm.control}
+                  name="maxDaysInAdvance"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Dias de reserva máxima antecipada</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="number"
+                          min="1"
+                          placeholder="30"
+                          className="bg-gray-50 font-semibold"
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    id="permite-cancelamento"
-                    className="accent-brasil-green w-5 h-5 rounded-md border border-gray-300"
-                  />
-                  <label htmlFor="permite-cancelamento" className="text-sm font-semibold text-gray-700 font-montserrat">
-                    Permitir que os clientes cancelem
-                  </label>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    id="requer-confirmacao"
-                    className="accent-brasil-yellow w-5 h-5 rounded-md border border-gray-300"
-                  />
-                  <label htmlFor="requer-confirmacao" className="text-sm font-semibold text-gray-700 font-montserrat">
-                    Requer confirmação
-                  </label>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    id="confirmacao-automatica"
-                    className="accent-brasil-blue w-5 h-5 rounded-md border border-gray-300"
-                  />
-                  <label htmlFor="confirmacao-automatica" className="text-sm font-semibold text-gray-700 font-montserrat">
-                    Confirmação automática da reserva
-                  </label>
-                </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField
+                  control={reservationForm.control}
+                  name="allowCancellation"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="data-[state=checked]:bg-brasil-green"
+                        />
+                      </FormControl>
+                      <FormLabel className="font-semibold text-gray-700">
+                        Permitir que os clientes cancelem
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={reservationForm.control}
+                  name="requireConfirmation"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="data-[state=checked]:bg-brasil-yellow"
+                        />
+                      </FormControl>
+                      <FormLabel className="font-semibold text-gray-700">
+                        Requer confirmação
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={reservationForm.control}
+                  name="autoConfirmation"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="data-[state=checked]:bg-brasil-blue"
+                        />
+                      </FormControl>
+                      <FormLabel className="font-semibold text-gray-700">
+                        Confirmação automática da reserva
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
               </div>
-              
+
               <div className="flex justify-end pt-4">
-                <button
-                  type="submit"
-                  className="flex items-center px-6 py-3 bg-brasil-green text-white font-bold rounded-lg shadow hover:bg-green-700 transition-colors text-base font-montserrat"
+                <Button 
+                  type="submit" 
+                  className="bg-brasil-green hover:bg-green-700 text-white font-bold"
+                  disabled={saveReservationSettings.isPending}
                 >
-                  <i className="fa-solid fa-floppy-disk mr-2"></i>
-                  Salvar Configurações
-                </button>
+                  <Save className="w-4 h-4 mr-2" />
+                  {saveReservationSettings.isPending ? 'Salvando...' : 'Salvar Configurações'}
+                </Button>
               </div>
             </form>
-          </div>
+          </Form>
         )}
 
-        {/* Tab Content 4 - Configurações de Pagamento */}
         {activeTab === 4 && (
-          <div className="tab-content">
-            <form onSubmit={(e) => handleSubmit('pagamento', e)} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label htmlFor="moeda-sistema" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Moeda do Sistema
-                  </label>
-                  <select
-                    id="moeda-sistema"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                  >
-                    <option value="BRL">Real Brasileiro (BRL)</option>
-                    <option value="EUR">Euro (EUR)</option>
-                    <option value="USD">Dólar Americano (USD)</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="taxa-impostos" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Taxa de Impostos (%)
-                  </label>
-                  <input
-                    id="taxa-impostos"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="10.0"
-                  />
-                </div>
+          <Form {...paymentForm}>
+            <form onSubmit={paymentForm.handleSubmit(onSubmitPayment)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={paymentForm.control}
+                  name="currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Moeda do Sistema</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="bg-gray-50 font-semibold">
+                            <SelectValue placeholder="Selecione a moeda" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="BRL">Real Brasileiro (BRL)</SelectItem>
+                          <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                          <SelectItem value="USD">Dólar Americano (USD)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={paymentForm.control}
+                  name="taxRate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Taxa de Impostos (%)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="23.0"
+                          className="bg-gray-50 font-semibold"
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              
-              <div className="bg-brasil-yellow/20 border-l-4 border-brasil-yellow px-4 py-3 rounded-lg flex items-center mb-2">
-                <i className="fa-solid fa-lock text-brasil-yellow mr-3 text-lg"></i>
+
+              <div className="bg-brasil-yellow/20 border-l-4 border-brasil-yellow px-4 py-3 rounded-lg flex items-center">
+                <Lock className="text-brasil-yellow mr-3 text-lg w-5 h-5" />
                 <span className="text-sm font-semibold text-brasil-yellow">
                   Chave de API para o serviço de pagamento EuPago. Esta informação é sensível e deve ser mantida segura.
                 </span>
               </div>
-              
-              <div className="mb-2">
-                <label htmlFor="eupago-api-key" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                  Chave API do EuPago
-                </label>
-                <input
-                  id="eupago-api-key"
-                  type="password"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                  placeholder="Insira sua chave API"
-                />
-                <span className="block text-xs text-gray-400 mt-2">
-                  Requer chave API do EuPago para ativação para métodos de pagamento online
-                </span>
-              </div>
-              
-              <div className="mb-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                  Métodos de Pagamento
-                </label>
+
+              <FormField
+                control={paymentForm.control}
+                name="eupagoApiKey"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-semibold text-gray-700">Chave API do EuPago</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        type="password"
+                        placeholder="Insira sua chave API"
+                        className="bg-gray-50 font-semibold"
+                      />
+                    </FormControl>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Requer chave API do EuPago para ativação para métodos de pagamento online
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div>
+                <FormLabel className="font-semibold text-gray-700 mb-4 block">Métodos de Pagamento</FormLabel>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="metodo-cc"
-                      className="accent-brasil-green w-5 h-5 rounded-md border border-gray-300"
-                    />
-                    <label htmlFor="metodo-cc" className="text-sm text-gray-700 font-montserrat">
-                      Cartão de Crédito/Débito
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="metodo-mbway"
-                      className="accent-brasil-yellow w-5 h-5 rounded-md border border-gray-300"
-                    />
-                    <label htmlFor="metodo-mbway" className="text-sm text-gray-700 font-montserrat">
-                      MBWay
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="metodo-multibanco"
-                      className="accent-brasil-blue w-5 h-5 rounded-md border border-gray-300"
-                    />
-                    <label htmlFor="metodo-multibanco" className="text-sm text-gray-700 font-montserrat">
-                      Multibanco
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="metodo-transferencia"
-                      className="accent-brasil-green w-5 h-5 rounded-md border border-gray-300"
-                    />
-                    <label htmlFor="metodo-transferencia" className="text-sm text-gray-700 font-montserrat">
-                      Transferência Bancária
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="metodo-dinheiro"
-                      className="accent-brasil-yellow w-5 h-5 rounded-md border border-gray-300"
-                    />
-                    <label htmlFor="metodo-dinheiro" className="text-sm text-gray-700 font-montserrat">
-                      Dinheiro
-                    </label>
-                  </div>
+                  <FormField
+                    control={paymentForm.control}
+                    name="acceptCard"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-brasil-green"
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm text-gray-700">
+                          Cartão de Crédito/Débito
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={paymentForm.control}
+                    name="acceptMBWay"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-brasil-yellow"
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm text-gray-700">
+                          MBWay
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={paymentForm.control}
+                    name="acceptMultibanco"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-brasil-blue"
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm text-gray-700">
+                          Multibanco
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={paymentForm.control}
+                    name="acceptBankTransfer"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-brasil-green"
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm text-gray-700">
+                          Transferência Bancária
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={paymentForm.control}
+                    name="acceptCash"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-brasil-yellow"
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm text-gray-700">
+                          Dinheiro
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
-              
+
               <div className="flex justify-end pt-4">
-                <button
-                  type="submit"
-                  className="flex items-center px-6 py-3 bg-brasil-green text-white font-bold rounded-lg shadow hover:bg-green-700 transition-colors text-base font-montserrat"
+                <Button 
+                  type="submit" 
+                  className="bg-brasil-green hover:bg-green-700 text-white font-bold"
+                  disabled={savePaymentSettings.isPending}
                 >
-                  <i className="fa-solid fa-floppy-disk mr-2"></i>
-                  Salvar Configurações
-                </button>
+                  <Save className="w-4 h-4 mr-2" />
+                  {savePaymentSettings.isPending ? 'Salvando...' : 'Salvar Configurações'}
+                </Button>
               </div>
             </form>
-          </div>
+          </Form>
         )}
 
-        {/* Tab Content 5 - Configurações de Notificações */}
         {activeTab === 5 && (
           <div className="text-center py-16">
-            <i className="fa-solid fa-bell text-6xl text-gray-400 mb-4"></i>
+            <Bell className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-700 mb-2">Configurações de Notificações</h3>
             <p className="text-gray-500">Esta seção estará disponível em breve.</p>
           </div>
         )}
 
-        {/* Tab Content 6 - Configurações POS */}
         {activeTab === 6 && (
           <div className="text-center py-16">
-            <i className="fa-solid fa-cash-register text-6xl text-gray-400 mb-4"></i>
+            <DollarSign className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-700 mb-2">Configurações POS</h3>
             <p className="text-gray-500">Esta seção estará disponível em breve.</p>
           </div>
