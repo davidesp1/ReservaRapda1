@@ -1,582 +1,1260 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLocation } from 'wouter';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import AdminLayout from '@/components/layouts/AdminLayout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { POSSettingsContent } from '@/components/admin/Settings/POSSettingsSimple';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { Save, Globe, CreditCard, BellRing, Store, Calendar, Euro, Printer } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
-const Settings = () => {
-  const [activeTab, setActiveTab] = useState(1);
+// Configure schema for general settings
+const generalSettingsSchema = z.object({
+  restaurantName: z.string().min(1, 'O nome do restaurante é obrigatório'),
+  address: z.string().min(1, 'O endereço é obrigatório'),
+  phone: z.string().min(1, 'O telefone é obrigatório'),
+  email: z.string().email('Email inválido'),
+  website: z.string().url('Website inválido').optional().or(z.literal('')),
+  openingTime: z.string().min(1, 'Horário de abertura obrigatório'),
+  closingTime: z.string().min(1, 'Horário de fechamento obrigatório'),
+  description: z.string().max(500, 'A descrição não pode ter mais de 500 caracteres').optional(),
+});
+
+// Configure schema for reservation settings
+const reservationSettingsSchema = z.object({
+  minReservationTime: z.coerce.number().min(30, 'Mínimo de 30 minutos'),
+  maxReservationTime: z.coerce.number().min(60, 'Mínimo de 60 minutos'),
+  reservationTimeInterval: z.coerce.number().min(15, 'Mínimo de 15 minutos'),
+  maxPartySize: z.coerce.number().min(1, 'Mínimo de 1 pessoa'),
+  reservationLeadHours: z.coerce.number().min(1, 'Mínimo de 1 hora'),
+  maxAdvanceReservationDays: z.coerce.number().min(1, 'Mínimo de 1 dia'),
+  allowCustomersToCancel: z.boolean(),
+  requireConfirmation: z.boolean(),
+  autoConfirmReservations: z.boolean(),
+});
+
+// Configure schema for payment settings
+const paymentSettingsSchema = z.object({
+  currency: z.string().min(1, 'Moeda obrigatória'),
+  acceptCard: z.boolean(),
+  acceptCash: z.boolean(),
+  acceptMBWay: z.boolean(),
+  acceptMultibanco: z.boolean(),
+  acceptBankTransfer: z.boolean(),
+  acceptMultibancoTPA: z.boolean(),
+  requirePrepayment: z.boolean(),
+  requirePrepaymentAmount: z.coerce.number().min(0, 'Valor não pode ser negativo'),
+  showPricesWithTax: z.boolean(),
+  taxRate: z.coerce.number().min(0, 'Taxa não pode ser negativa'),
+  eupagoApiKey: z.string().optional(),
+});
+
+// Configure schema for notification settings
+const notificationSettingsSchema = z.object({
+  sendEmailConfirmation: z.boolean(),
+  sendSmsConfirmation: z.boolean(),
+  sendEmailReminders: z.boolean(),
+  sendSmsReminders: z.boolean(),
+  reminderHoursBeforeReservation: z.coerce.number().min(1, 'Mínimo de 1 hora'),
+  allowCustomerFeedback: z.boolean(),
+  collectCustomerFeedback: z.boolean(),
+});
+
+const Settings: React.FC = () => {
+  const { t } = useTranslation();
+  const { isAuthenticated, isAdmin, isLoading } = useAuth();
+  const [_, setLocation] = useLocation();
   const { toast } = useToast();
+  
+  // Tab handling
+  const [activeTab, setActiveTab] = useState('general');
 
-  const switchTab = (tabNumber: number) => {
-    setActiveTab(tabNumber);
+  // General settings form
+  const generalForm = useForm<z.infer<typeof generalSettingsSchema>>({
+    resolver: zodResolver(generalSettingsSchema),
+    defaultValues: {
+      restaurantName: 'Opa que delicia',
+      address: 'MSBN Europe Convention Center, Barcelona',
+      phone: '+34 612 345 678',
+      email: 'contact@opaquedelicia.com',
+      website: 'https://opaquedelicia.com',
+      openingTime: '11:00',
+      closingTime: '23:00',
+      description: 'Autêntica comida brasileira durante a convenção MSBN Europe',
+    },
+  });
+
+  // Reservation settings form
+  const reservationForm = useForm<z.infer<typeof reservationSettingsSchema>>({
+    resolver: zodResolver(reservationSettingsSchema),
+    defaultValues: {
+      minReservationTime: 60,
+      maxReservationTime: 180,
+      reservationTimeInterval: 30,
+      maxPartySize: 12,
+      reservationLeadHours: 2,
+      maxAdvanceReservationDays: 30,
+      allowCustomersToCancel: true,
+      requireConfirmation: true,
+      autoConfirmReservations: false,
+    },
+  });
+
+  // Payment settings form
+  const paymentForm = useForm<z.infer<typeof paymentSettingsSchema>>({
+    resolver: zodResolver(paymentSettingsSchema),
+    defaultValues: {
+      currency: 'EUR',
+      acceptCard: true,
+      acceptCash: true,
+      acceptMBWay: true,
+      acceptMultibanco: true,
+      acceptBankTransfer: true,
+      acceptMultibancoTPA: true,
+      requirePrepayment: false,
+      requirePrepaymentAmount: 0,
+      showPricesWithTax: true,
+      taxRate: 23,
+      eupagoApiKey: '',
+    },
+  });
+  
+  // Log para depuração
+  const onPaymentFormChange = () => {
+    console.log("Formulário de pagamento atualizado:", paymentForm.getValues());
+  };
+  
+  useEffect(() => {
+    const subscription = paymentForm.watch(onPaymentFormChange);
+    return () => subscription.unsubscribe();
+  }, [paymentForm]);
+
+  // Notification settings form
+  const notificationForm = useForm<z.infer<typeof notificationSettingsSchema>>({
+    resolver: zodResolver(notificationSettingsSchema),
+    defaultValues: {
+      sendEmailConfirmation: true,
+      sendSmsConfirmation: false,
+      sendEmailReminders: true,
+      sendSmsReminders: false,
+      reminderHoursBeforeReservation: 24,
+      allowCustomerFeedback: true,
+      collectCustomerFeedback: true,
+    },
+  });
+
+  // Fetch settings data
+  const { data: settings, isLoading: settingsLoading } = useQuery({
+    queryKey: ['/api/settings'],
+    enabled: isAuthenticated && isAdmin
+  });
+  
+  // Definir o tipo correto para o objeto de configurações
+  interface SettingsType {
+    payments?: Record<string, string>;
+    general?: Record<string, string>;
+    reservations?: Record<string, string>;
+    notifications?: Record<string, string>;
+  }
+
+  // Atualizar formulários quando os dados são carregados
+  useEffect(() => {
+    if (settings) {
+      console.log("Configurações carregadas do servidor:", settings);
+      
+      const typedSettings = settings as SettingsType;
+      
+      // Atualizar formulário de pagamentos
+      if (typedSettings.payments) {
+        // Converter strings "true"/"false" para boolean
+        const paymentSettings = Object.entries(typedSettings.payments).reduce((acc, [key, value]) => {
+          if (value === 'true') acc[key] = true;
+          else if (value === 'false') acc[key] = false;
+          else acc[key] = value;
+          return acc;
+        }, {} as Record<string, any>);
+        
+        console.log("Configurações de pagamento formatadas:", paymentSettings);
+        paymentForm.reset(paymentSettings);
+      }
+      
+      // Atualizar outros formulários
+      if (typedSettings.general) {
+        generalForm.reset(typedSettings.general as Record<string, any>);
+      }
+      
+      if (typedSettings.reservations) {
+        reservationForm.reset(typedSettings.reservations as Record<string, any>);
+      }
+      
+      if (typedSettings.notifications) {
+        notificationForm.reset(typedSettings.notifications as Record<string, any>);
+      }
+    }
+  }, [settings, generalForm, reservationForm, paymentForm, notificationForm]);
+
+  // Update general settings mutation
+  const updateGeneralSettingsMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof generalSettingsSchema>) => {
+      return apiRequest('PUT', '/api/settings/general', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      toast({
+        title: t('SettingsSaved'),
+        description: t('GeneralSettingsSavedDescription'),
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t('SettingsSaveError'),
+        description: error.message || t('SettingsSaveErrorDescription'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Update reservation settings mutation
+  const updateReservationSettingsMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof reservationSettingsSchema>) => {
+      return apiRequest('PUT', '/api/settings/reservations', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      toast({
+        title: t('SettingsSaved'),
+        description: t('ReservationSettingsSavedDescription'),
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t('SettingsSaveError'),
+        description: error.message || t('SettingsSaveErrorDescription'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Update payment settings mutation
+  const updatePaymentSettingsMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof paymentSettingsSchema>) => {
+      return apiRequest('PUT', '/api/settings/payments', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      toast({
+        title: t('SettingsSaved'),
+        description: t('PaymentSettingsSavedDescription'),
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t('SettingsSaveError'),
+        description: error.message || t('SettingsSaveErrorDescription'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Update notification settings mutation
+  const updateNotificationSettingsMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof notificationSettingsSchema>) => {
+      return apiRequest('PUT', '/api/settings/notifications', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      toast({
+        title: t('SettingsSaved'),
+        description: t('NotificationSettingsSavedDescription'),
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t('SettingsSaveError'),
+        description: error.message || t('SettingsSaveErrorDescription'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Redirect if not authenticated or not admin
+  useEffect(() => {
+    if (!isLoading && (!isAuthenticated || !isAdmin)) {
+      setLocation('/');
+    }
+  }, [isAuthenticated, isAdmin, isLoading, setLocation]);
+
+  // Submit handlers
+  const onGeneralSubmit = (data: z.infer<typeof generalSettingsSchema>) => {
+    updateGeneralSettingsMutation.mutate(data);
   };
 
-  const handleSubmit = async (formType: string, event: React.FormEvent) => {
-    event.preventDefault();
-    
-    // Simulate form submission
-    toast({
-      title: 'Sucesso',
-      description: `Configurações de ${formType} salvas com sucesso!`
-    });
+  const onReservationSubmit = (data: z.infer<typeof reservationSettingsSchema>) => {
+    updateReservationSettingsMutation.mutate(data);
   };
+
+  const onPaymentSubmit = (data: z.infer<typeof paymentSettingsSchema>) => {
+    console.log("Enviando configurações de pagamento:", data);
+    // Garantir que os valores booleanos sejam enviados corretamente
+    const paymentSettings = {
+      ...data,
+      acceptCard: Boolean(data.acceptCard),
+      acceptMBWay: Boolean(data.acceptMBWay),
+      acceptMultibanco: Boolean(data.acceptMultibanco),
+      acceptBankTransfer: Boolean(data.acceptBankTransfer),
+      acceptCash: Boolean(data.acceptCash),
+      acceptMultibancoTPA: Boolean(data.acceptMultibancoTPA),
+      requirePrepayment: Boolean(data.requirePrepayment),
+      showPricesWithTax: Boolean(data.showPricesWithTax)
+    };
+    console.log("Configurações de pagamento formatadas para envio:", paymentSettings);
+    updatePaymentSettingsMutation.mutate(paymentSettings);
+  };
+
+  const onNotificationSubmit = (data: z.infer<typeof notificationSettingsSchema>) => {
+    updateNotificationSettingsMutation.mutate(data);
+  };
+
+  if (settingsLoading || isLoading) {
+    return (
+      <AdminLayout title={t('Settings')}>
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-96 bg-gray-200 rounded"></div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800 font-montserrat">Configurações</h1>
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <button className="relative">
-              <i className="fa-regular fa-bell text-xl text-gray-600"></i>
-              <span className="absolute -top-1 -right-1 bg-brasil-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
-            </button>
-          </div>
-          <div className="flex items-center">
-            <img 
-              src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" 
-              alt="User Avatar" 
-              className="w-10 h-10 rounded-full border-2 border-brasil-yellow" 
-            />
-            <div className="ml-2">
-              <p className="text-sm font-medium text-gray-800">Carlos Silva</p>
-              <p className="text-xs text-gray-500">Administrador</p>
-            </div>
-          </div>
-        </div>
+    <AdminLayout title={t('Settings')}>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-montserrat font-bold">{t('Settings')}</h1>
       </div>
 
-      {/* Settings Tabs Section */}
-      <div className="bg-white rounded-xl shadow-md p-8">
-        {/* Tabs Navigation */}
-        <div className="flex flex-wrap gap-2 mb-8 border-b border-gray-200 overflow-x-auto">
-          <button
-            onClick={() => switchTab(1)}
-            className={`flex items-center px-5 py-3 font-semibold border-b-4 -mb-px rounded-t-md font-montserrat transition-all ${
-              activeTab === 1
-                ? 'text-brasil-blue border-brasil-blue bg-gray-50'
-                : 'text-gray-600 hover:text-brasil-blue border-transparent bg-gray-50'
-            }`}
-          >
-            <i className="fa-solid fa-building text-brasil-green mr-2"></i>
-            Configurações Gerais
-          </button>
-          <button
-            onClick={() => switchTab(2)}
-            className={`flex items-center px-5 py-3 font-medium border-b-4 -mb-px rounded-t-md font-montserrat transition-all ${
-              activeTab === 2
-                ? 'text-brasil-blue border-brasil-blue bg-gray-50'
-                : 'text-gray-600 hover:text-brasil-blue border-transparent bg-gray-50'
-            }`}
-          >
-            <i className="fa-solid fa-globe text-brasil-yellow mr-2"></i>
-            Configurações de Página
-          </button>
-          <button
-            onClick={() => switchTab(3)}
-            className={`flex items-center px-5 py-3 font-medium border-b-4 -mb-px rounded-t-md font-montserrat transition-all ${
-              activeTab === 3
-                ? 'text-brasil-blue border-brasil-blue bg-gray-50'
-                : 'text-gray-600 hover:text-brasil-blue border-transparent bg-gray-50'
-            }`}
-          >
-            <i className="fa-solid fa-calendar-check text-brasil-blue mr-2"></i>
-            Configurações de Reservas
-          </button>
-          <button
-            onClick={() => switchTab(4)}
-            className={`flex items-center px-5 py-3 font-medium border-b-4 -mb-px rounded-t-md font-montserrat transition-all ${
-              activeTab === 4
-                ? 'text-brasil-blue border-brasil-blue bg-gray-50'
-                : 'text-gray-600 hover:text-brasil-blue border-transparent bg-gray-50'
-            }`}
-          >
-            <i className="fa-solid fa-credit-card text-brasil-green mr-2"></i>
-            Configurações de Pagamento
-          </button>
-          <button
-            onClick={() => switchTab(5)}
-            className={`flex items-center px-5 py-3 font-medium border-b-4 -mb-px rounded-t-md font-montserrat transition-all ${
-              activeTab === 5
-                ? 'text-brasil-blue border-brasil-blue bg-gray-50'
-                : 'text-gray-600 hover:text-brasil-blue border-transparent bg-gray-50'
-            }`}
-          >
-            <i className="fa-solid fa-bell text-brasil-yellow mr-2"></i>
-            Configuração de Notificações
-          </button>
-          <button
-            onClick={() => switchTab(6)}
-            className={`flex items-center px-5 py-3 font-medium border-b-4 -mb-px rounded-t-md font-montserrat transition-all ${
-              activeTab === 6
-                ? 'text-brasil-blue border-brasil-blue bg-gray-50'
-                : 'text-gray-600 hover:text-brasil-blue border-transparent bg-gray-50'
-            }`}
-          >
-            <i className="fa-solid fa-cash-register text-brasil-blue mr-2"></i>
-            Configurações POS
-          </button>
-        </div>
+      <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid grid-cols-5 w-full mb-8">
+          <TabsTrigger value="general" className="flex items-center">
+            <Store className="w-4 h-4 mr-2" /> {t('GeneralSettings')}
+          </TabsTrigger>
+          <TabsTrigger value="reservations" className="flex items-center">
+            <Calendar className="w-4 h-4 mr-2" /> {t('ReservationSettings')}
+          </TabsTrigger>
+          <TabsTrigger value="payments" className="flex items-center">
+            <CreditCard className="w-4 h-4 mr-2" /> {t('PaymentSettings')}
+          </TabsTrigger>
+          <TabsTrigger value="pos" className="flex items-center">
+            <Printer className="w-4 h-4 mr-2" /> POS
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center">
+            <BellRing className="w-4 h-4 mr-2" /> {t('NotificationSettings')}
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Tab Content 1 - Configurações Gerais */}
-        {activeTab === 1 && (
-          <div className="tab-content">
-            <form onSubmit={(e) => handleSubmit('gerais', e)} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label htmlFor="restaurante-nome" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Nome do Restaurante
-                  </label>
-                  <input
-                    id="restaurante-nome"
-                    type="text"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="Opa que delicia"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="restaurante-email" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Email
-                  </label>
-                  <input
-                    id="restaurante-email"
-                    type="email"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="contato@opaquedelicia.com"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="restaurante-telefone" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Telefone
-                  </label>
-                  <input
-                    id="restaurante-telefone"
-                    type="tel"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="(11) 98765-4321"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="restaurante-website" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Website
-                  </label>
-                  <input
-                    id="restaurante-website"
-                    type="url"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="https://opaquedelicia.com"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label htmlFor="restaurante-endereco" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Endereço
-                  </label>
-                  <input
-                    id="restaurante-endereco"
-                    type="text"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="Rua da Gastronomia, 123 - São Paulo, SP"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Horário de Funcionamento
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs font-medium text-gray-500">Abertura</span>
-                    <input
-                      id="restaurante-abertura"
-                      type="time"
-                      className="px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none bg-gray-50 font-semibold w-24"
+        {/* General Settings */}
+        <TabsContent value="general">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('GeneralSettings')}</CardTitle>
+              <CardDescription>{t('GeneralSettingsDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...generalForm}>
+                <form onSubmit={generalForm.handleSubmit(onGeneralSubmit)} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={generalForm.control}
+                      name="restaurantName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('RestaurantName')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                    <span className="text-xs font-medium text-gray-500">Fechamento</span>
-                    <input
-                      id="restaurante-fechamento"
-                      type="time"
-                      className="px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none bg-gray-50 font-semibold w-24"
+
+                    <FormField
+                      control={generalForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('Email')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="email" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={generalForm.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('Phone')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={generalForm.control}
+                      name="website"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('Website')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={generalForm.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem className="col-span-1 md:col-span-2">
+                          <FormLabel>{t('Address')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
-                </div>
-                <div className="md:col-span-2">
-                  <label htmlFor="restaurante-descricao" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Descrição
-                  </label>
-                  <textarea
-                    id="restaurante-descricao"
-                    rows={3}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50 resize-none"
-                    placeholder="Conte um pouco sobre o restaurante, especialidades, história, etc."
-                  />
-                </div>
-              </div>
-              
-              <div className="flex justify-end pt-4">
-                <button
-                  type="submit"
-                  className="flex items-center px-6 py-3 bg-brasil-green text-white font-bold rounded-lg shadow hover:bg-green-700 transition-colors text-base font-montserrat"
-                >
-                  <i className="fa-solid fa-floppy-disk mr-2"></i>
-                  Salvar Configurações
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
 
-        {/* Tab Content 2 - Configurações de Página */}
-        {activeTab === 2 && (
-          <div className="tab-content">
-            <form onSubmit={(e) => handleSubmit('página', e)} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label htmlFor="page-title" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Título da Página
-                  </label>
-                  <input
-                    id="page-title"
-                    type="text"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="Opa que delicia - Restaurante Brasileiro"
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={generalForm.control}
+                      name="openingTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('OpeningTime')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="time" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={generalForm.control}
+                      name="closingTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('ClosingTime')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="time" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={generalForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('Description')}</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            rows={4}
+                            placeholder={t('RestaurantDescriptionPlaceholder')} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t('DescriptionHelp')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="flex flex-col space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                      Insira a Logo
-                    </label>
-                    <div className="flex items-center space-x-4">
-                      <input
-                        id="page-logo"
-                        type="file"
-                        accept="image/*"
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brasil-blue file:text-white hover:file:bg-brasil-green"
-                      />
-                      <img
-                        id="logo-preview"
-                        className="w-12 h-12 object-contain bg-gray-100 rounded-md border hidden"
-                        src=""
-                        alt=""
+
+                  <div className="flex justify-end">
+                    <Button 
+                      type="submit" 
+                      className="bg-brasil-green text-white"
+                    >
+                      <Save className="w-4 h-4 mr-2" /> {t('SaveSettings')}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Reservation Settings */}
+        <TabsContent value="reservations">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('ReservationSettings')}</CardTitle>
+              <CardDescription>{t('ReservationSettingsDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...reservationForm}>
+                <form onSubmit={reservationForm.handleSubmit(onReservationSubmit)} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={reservationForm.control}
+                      name="minReservationTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('MinReservationTime')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" min="30" step="15" />
+                          </FormControl>
+                          <FormDescription>
+                            {t('MinutesValue')}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={reservationForm.control}
+                      name="maxReservationTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('MaxReservationTime')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" min="60" step="15" />
+                          </FormControl>
+                          <FormDescription>
+                            {t('MinutesValue')}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={reservationForm.control}
+                      name="reservationTimeInterval"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('ReservationTimeInterval')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" min="15" step="15" />
+                          </FormControl>
+                          <FormDescription>
+                            {t('MinutesValue')}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={reservationForm.control}
+                      name="maxPartySize"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('MaxPartySize')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" min="1" />
+                          </FormControl>
+                          <FormDescription>
+                            {t('PeopleValue')}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={reservationForm.control}
+                      name="reservationLeadHours"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('ReservationLeadHours')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" min="1" />
+                          </FormControl>
+                          <FormDescription>
+                            {t('HoursValue')}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={reservationForm.control}
+                      name="maxAdvanceReservationDays"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('MaxAdvanceReservationDays')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" min="1" />
+                          </FormControl>
+                          <FormDescription>
+                            {t('DaysValue')}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <Separator className="my-6" />
+
+                  <div className="space-y-4">
+                    <FormField
+                      control={reservationForm.control}
+                      name="allowCustomersToCancel"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-0.5">
+                            <FormLabel>{t('AllowCustomersToCancel')}</FormLabel>
+                            <FormDescription>
+                              {t('AllowCustomersToCancelDescription')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={reservationForm.control}
+                      name="requireConfirmation"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-0.5">
+                            <FormLabel>{t('RequireConfirmation')}</FormLabel>
+                            <FormDescription>
+                              {t('RequireConfirmationDescription')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={reservationForm.control}
+                      name="autoConfirmReservations"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-0.5">
+                            <FormLabel>{t('AutoConfirmReservations')}</FormLabel>
+                            <FormDescription>
+                              {t('AutoConfirmReservationsDescription')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button 
+                      type="submit" 
+                      className="bg-brasil-green text-white"
+                    >
+                      <Save className="w-4 h-4 mr-2" /> {t('SaveSettings')}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Payment Settings */}
+        <TabsContent value="payments">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('PaymentSettings')}</CardTitle>
+              <CardDescription>{t('PaymentSettingsDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...paymentForm}>
+                <form onSubmit={paymentForm.handleSubmit(onPaymentSubmit)} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={paymentForm.control}
+                      name="currency"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('Currency')}</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={t('SelectCurrency')} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="EUR">Euro (€)</SelectItem>
+                              <SelectItem value="USD">US Dollar ($)</SelectItem>
+                              <SelectItem value="GBP">British Pound (£)</SelectItem>
+                              <SelectItem value="BRL">Real Brasileiro (R$)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={paymentForm.control}
+                      name="taxRate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('TaxRate')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" min="0" step="0.01" />
+                          </FormControl>
+                          <FormDescription>
+                            {t('PercentageValue')}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <Separator className="my-6" />
+
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium mt-6">{t('PaymentGatewaySettings')}</h3>
+                    
+                    <div className="p-6 border rounded-md bg-slate-50 mt-2 mb-6">
+                      <FormField
+                        control={paymentForm.control}
+                        name="eupagoApiKey"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-lg font-semibold">{t('EuPagoAPIKey')}</FormLabel>
+                            <FormDescription className="mb-2">
+                              {t('EuPagoAPIKeyDescription')}
+                            </FormDescription>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                type="password" 
+                                className="font-mono" 
+                                onChange={(e) => {
+                                  // Atualizar o valor da chave API
+                                  field.onChange(e);
+                                  
+                                  // Se a chave API for removida, desabilite os métodos de pagamento
+                                  const apiValue = e.target.value;
+                                  if (!apiValue || apiValue.trim() === '') {
+                                    // Desabilitar automaticamente os métodos que dependem da API
+                                    paymentForm.setValue('acceptCard', false);
+                                    paymentForm.setValue('acceptMBWay', false);
+                                    paymentForm.setValue('acceptMultibanco', false);
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                            {!field.value || field.value.trim() === '' ? (
+                              <p className="text-sm mt-2 text-amber-600">
+                                {t('RequiresEuPagoAPIKey')} para métodos de pagamento online
+                              </p>
+                            ) : null}
+                          </FormItem>
+                        )}
                       />
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                      Insira o Favicon
-                    </label>
-                    <div className="flex items-center space-x-4">
-                      <input
-                        id="page-favicon"
-                        type="file"
-                        accept="image/*"
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brasil-yellow file:text-brasil-blue hover:file:bg-brasil-green"
+                    
+                    <h3 className="text-lg font-medium">{t('PaymentMethods')}</h3>
+                    
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-yellow-800">{t('ImportantNote')}</h3>
+                          <div className="mt-2 text-sm text-yellow-700">
+                            <p>{t('CashPaymentVisibleOnlyToAdmin')}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4 grid gap-4">
+                      <FormField
+                        control={paymentForm.control}
+                        name="acceptCard"
+                        render={({ field }) => {
+                          // Verificar se tem uma API key
+                          const apiKey = paymentForm.watch('eupagoApiKey') || '';
+                          const hasApiKey = apiKey.trim().length > 0;
+                          
+                          return (
+                            <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                              <div className="space-y-0.5">
+                                <FormLabel>{t('AcceptCard')}</FormLabel>
+                                <FormDescription>
+                                  {t('ProcessedByEuPago')}
+                                </FormDescription>
+                                {!hasApiKey && (
+                                  <p className="text-xs text-red-600">{t('RequiresEuPagoAPIKey')}</p>
+                                )}
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={hasApiKey ? field.value : false}
+                                  onCheckedChange={field.onChange}
+                                  disabled={!hasApiKey}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          );
+                        }}
                       />
-                      <img
-                        id="favicon-preview"
-                        className="w-8 h-8 object-contain bg-gray-100 rounded-md border hidden"
-                        src=""
-                        alt=""
+
+                      <FormField
+                        control={paymentForm.control}
+                        name="acceptMBWay"
+                        render={({ field }) => {
+                          // Verificar se tem uma API key
+                          const apiKey = paymentForm.watch('eupagoApiKey') || '';
+                          const hasApiKey = apiKey.trim().length > 0;
+                          
+                          return (
+                            <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                              <div className="space-y-0.5">
+                                <FormLabel>{t('AcceptMBWay')}</FormLabel>
+                                <FormDescription>
+                                  {t('ProcessedByEuPago')}
+                                </FormDescription>
+                                {!hasApiKey && (
+                                  <p className="text-xs text-red-600">{t('RequiresEuPagoAPIKey')}</p>
+                                )}
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={hasApiKey ? field.value : false}
+                                  onCheckedChange={field.onChange}
+                                  disabled={!hasApiKey}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          );
+                        }}
                       />
+                      
+                      <FormField
+                        control={paymentForm.control}
+                        name="acceptMultibanco"
+                        render={({ field }) => {
+                          // Verificar se tem uma API key
+                          const apiKey = paymentForm.watch('eupagoApiKey') || '';
+                          const hasApiKey = apiKey.trim().length > 0;
+                          
+                          return (
+                            <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                              <div className="space-y-0.5">
+                                <FormLabel>{t('AcceptMultibanco')}</FormLabel>
+                                <FormDescription>
+                                  {t('ProcessedByEuPago')}
+                                </FormDescription>
+                                {!hasApiKey && (
+                                  <p className="text-xs text-red-600">{t('RequiresEuPagoAPIKey')}</p>
+                                )}
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={hasApiKey ? field.value : false}
+                                  onCheckedChange={field.onChange}
+                                  disabled={!hasApiKey}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                      
+                      <FormField
+                        control={paymentForm.control}
+                        name="acceptBankTransfer"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                            <div className="space-y-0.5">
+                              <FormLabel>{t('AcceptBankTransfer')}</FormLabel>
+                              <FormDescription>
+                                {t('ManualVerification')}
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={paymentForm.control}
+                        name="acceptCash"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                            <div className="space-y-0.5">
+                              <FormLabel>{t('AcceptCash')}</FormLabel>
+                              <FormDescription>
+                                {t('PaidAtRestaurant')}
+                              </FormDescription>
+                              <p className="text-xs text-amber-600">{t('OnlyVisibleToAdmin')}</p>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={paymentForm.control}
+                        name="acceptMultibancoTPA"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                            <div className="space-y-0.5">
+                              <FormLabel>Multibancoqq (TPA)</FormLabel>
+                              <FormDescription>
+                                Terminal de pagamento automático físico
+                              </FormDescription>
+                              <p className="text-xs text-amber-600">{t('OnlyVisibleToAdmin')}</p>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
                     </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label htmlFor="nav-bar" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Barra de Navegação
-                  </label>
-                  <textarea
-                    id="nav-bar"
-                    rows={2}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50 resize-none"
-                    placeholder="Ex: Home, Cardápio, Reservas, Sobre, Contato"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="about-section" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Sobre
-                  </label>
-                  <textarea
-                    id="about-section"
-                    rows={2}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50 resize-none"
-                    placeholder="Descrição da história, missão, valores, equipe"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="location-contact" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Localização e Contato
-                  </label>
-                  <textarea
-                    id="location-contact"
-                    rows={2}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50 resize-none"
-                    placeholder="Endereço, telefone, email"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="testimonials" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Testemunhos
-                  </label>
-                  <textarea
-                    id="testimonials"
-                    rows={2}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50 resize-none"
-                    placeholder="Comentários de clientes, avaliações"
-                  />
-                </div>
-              </div>
-              
-              <div className="col-span-2">
-                <label htmlFor="footer" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                  Footer
-                </label>
-                <textarea
-                  id="footer"
-                  rows={2}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50 resize-none"
-                  placeholder="Informações de copyright, links, redes sociais"
-                />
-              </div>
-              
-              <div className="flex justify-end pt-4">
-                <button
-                  type="submit"
-                  className="flex items-center px-6 py-3 bg-brasil-green text-white font-bold rounded-lg shadow hover:bg-green-700 transition-colors text-base font-montserrat"
-                >
-                  <i className="fa-solid fa-floppy-disk mr-2"></i>
-                  Salvar Configurações
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
+                  <Separator className="my-6" />
 
-        {/* Tab Content 3 - Configurações de Reservas */}
-        {activeTab === 3 && (
-          <div className="tab-content">
-            <form onSubmit={(e) => handleSubmit('reservas', e)} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label htmlFor="tempo-minimo" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Tempo mínimo para reserva (min)
-                  </label>
-                  <input
-                    id="tempo-minimo"
-                    type="number"
-                    min="0"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="30"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="dias-antecedencia" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Dias de reserva máxima antecipada
-                  </label>
-                  <input
-                    id="dias-antecedencia"
-                    type="number"
-                    min="1"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="30"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    id="permite-cancelamento"
-                    className="accent-brasil-green w-5 h-5 rounded-md border border-gray-300"
-                  />
-                  <label htmlFor="permite-cancelamento" className="text-sm font-semibold text-gray-700 font-montserrat">
-                    Permitir que os clientes cancelem
-                  </label>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    id="requer-confirmacao"
-                    className="accent-brasil-yellow w-5 h-5 rounded-md border border-gray-300"
-                  />
-                  <label htmlFor="requer-confirmacao" className="text-sm font-semibold text-gray-700 font-montserrat">
-                    Requer confirmação
-                  </label>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    id="confirmacao-automatica"
-                    className="accent-brasil-blue w-5 h-5 rounded-md border border-gray-300"
-                  />
-                  <label htmlFor="confirmacao-automatica" className="text-sm font-semibold text-gray-700 font-montserrat">
-                    Confirmação automática da reserva
-                  </label>
-                </div>
-              </div>
-              
-              <div className="flex justify-end pt-4">
-                <button
-                  type="submit"
-                  className="flex items-center px-6 py-3 bg-brasil-green text-white font-bold rounded-lg shadow hover:bg-green-700 transition-colors text-base font-montserrat"
-                >
-                  <i className="fa-solid fa-floppy-disk mr-2"></i>
-                  Salvar Configurações
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
+                  <div className="space-y-4">
+                    <FormField
+                      control={paymentForm.control}
+                      name="requirePrepayment"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-0.5">
+                            <FormLabel>{t('RequirePrepayment')}</FormLabel>
+                            <FormDescription>
+                              {t('RequirePrepaymentDescription')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-        {/* Tab Content 4 - Configurações de Pagamento */}
-        {activeTab === 4 && (
-          <div className="tab-content">
-            <form onSubmit={(e) => handleSubmit('pagamento', e)} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label htmlFor="moeda-sistema" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Moeda do Sistema
-                  </label>
-                  <select
-                    id="moeda-sistema"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                  >
-                    <option value="BRL">Real Brasileiro (BRL)</option>
-                    <option value="EUR">Euro (EUR)</option>
-                    <option value="USD">Dólar Americano (USD)</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="taxa-impostos" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                    Taxa de Impostos (%)
-                  </label>
-                  <input
-                    id="taxa-impostos"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                    placeholder="10.0"
-                  />
-                </div>
-              </div>
-              
-              <div className="bg-brasil-yellow/20 border-l-4 border-brasil-yellow px-4 py-3 rounded-lg flex items-center mb-2">
-                <i className="fa-solid fa-lock text-brasil-yellow mr-3 text-lg"></i>
-                <span className="text-sm font-semibold text-brasil-yellow">
-                  Chave de API para o serviço de pagamento EuPago. Esta informação é sensível e deve ser mantida segura.
-                </span>
-              </div>
-              
-              <div className="mb-2">
-                <label htmlFor="eupago-api-key" className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                  Chave API do EuPago
-                </label>
-                <input
-                  id="eupago-api-key"
-                  type="password"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brasil-blue focus:outline-none font-semibold bg-gray-50"
-                  placeholder="Insira sua chave API"
-                />
-                <span className="block text-xs text-gray-400 mt-2">
-                  Requer chave API do EuPago para ativação para métodos de pagamento online
-                </span>
-              </div>
-              
-              <div className="mb-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">
-                  Métodos de Pagamento
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="metodo-cc"
-                      className="accent-brasil-green w-5 h-5 rounded-md border border-gray-300"
-                    />
-                    <label htmlFor="metodo-cc" className="text-sm text-gray-700 font-montserrat">
-                      Cartão de Crédito/Débito
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="metodo-mbway"
-                      className="accent-brasil-yellow w-5 h-5 rounded-md border border-gray-300"
-                    />
-                    <label htmlFor="metodo-mbway" className="text-sm text-gray-700 font-montserrat">
-                      MBWay
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="metodo-multibanco"
-                      className="accent-brasil-blue w-5 h-5 rounded-md border border-gray-300"
-                    />
-                    <label htmlFor="metodo-multibanco" className="text-sm text-gray-700 font-montserrat">
-                      Multibanco
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="metodo-transferencia"
-                      className="accent-brasil-green w-5 h-5 rounded-md border border-gray-300"
-                    />
-                    <label htmlFor="metodo-transferencia" className="text-sm text-gray-700 font-montserrat">
-                      Transferência Bancária
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="metodo-dinheiro"
-                      className="accent-brasil-yellow w-5 h-5 rounded-md border border-gray-300"
-                    />
-                    <label htmlFor="metodo-dinheiro" className="text-sm text-gray-700 font-montserrat">
-                      Dinheiro
-                    </label>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex justify-end pt-4">
-                <button
-                  type="submit"
-                  className="flex items-center px-6 py-3 bg-brasil-green text-white font-bold rounded-lg shadow hover:bg-green-700 transition-colors text-base font-montserrat"
-                >
-                  <i className="fa-solid fa-floppy-disk mr-2"></i>
-                  Salvar Configurações
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
+                    {paymentForm.watch('requirePrepayment') && (
+                      <FormField
+                        control={paymentForm.control}
+                        name="requirePrepaymentAmount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('PrepaymentAmount')}</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="number" min="0" step="0.01" />
+                            </FormControl>
+                            <FormDescription>
+                              {t('AmountValue')}
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
-        {/* Tab Content 5 - Configurações de Notificações */}
-        {activeTab === 5 && (
-          <div className="text-center py-16">
-            <i className="fa-solid fa-bell text-6xl text-gray-400 mb-4"></i>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">Configurações de Notificações</h3>
-            <p className="text-gray-500">Esta seção estará disponível em breve.</p>
-          </div>
-        )}
+                    <FormField
+                      control={paymentForm.control}
+                      name="showPricesWithTax"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-0.5">
+                            <FormLabel>{t('ShowPricesWithTax')}</FormLabel>
+                            <FormDescription>
+                              {t('ShowPricesWithTaxDescription')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-        {/* Tab Content 6 - Configurações POS */}
-        {activeTab === 6 && (
-          <div className="text-center py-16">
-            <i className="fa-solid fa-cash-register text-6xl text-gray-400 mb-4"></i>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">Configurações POS</h3>
-            <p className="text-gray-500">Esta seção estará disponível em breve.</p>
-          </div>
-        )}
-      </div>
-    </div>
+                  <div className="flex justify-end">
+                    <Button 
+                      type="submit" 
+                      className="bg-brasil-green text-white"
+                    >
+                      <Save className="w-4 h-4 mr-2" /> {t('SaveSettings')}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* POS Settings */}
+        <TabsContent value="pos">
+          <POSSettingsContent />
+        </TabsContent>
+
+        {/* Notification Settings */}
+        <TabsContent value="notifications">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('NotificationSettings')}</CardTitle>
+              <CardDescription>{t('NotificationSettingsDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...notificationForm}>
+                <form onSubmit={notificationForm.handleSubmit(onNotificationSubmit)} className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">{t('Confirmations')}</h3>
+                    
+                    <FormField
+                      control={notificationForm.control}
+                      name="sendEmailConfirmation"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-0.5">
+                            <FormLabel>{t('SendEmailConfirmation')}</FormLabel>
+                            <FormDescription>
+                              {t('SendEmailConfirmationDescription')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={notificationForm.control}
+                      name="sendSmsConfirmation"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-0.5">
+                            <FormLabel>{t('SendSmsConfirmation')}</FormLabel>
+                            <FormDescription>
+                              {t('SendSmsConfirmationDescription')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <Separator className="my-6" />
+
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">{t('Reminders')}</h3>
+                    
+                    <FormField
+                      control={notificationForm.control}
+                      name="sendEmailReminders"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-0.5">
+                            <FormLabel>{t('SendEmailReminders')}</FormLabel>
+                            <FormDescription>
+                              {t('SendEmailRemindersDescription')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={notificationForm.control}
+                      name="sendSmsReminders"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-0.5">
+                            <FormLabel>{t('SendSmsReminders')}</FormLabel>
+                            <FormDescription>
+                              {t('SendSmsRemindersDescription')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {(notificationForm.watch('sendEmailReminders') || notificationForm.watch('sendSmsReminders')) && (
+                      <FormField
+                        control={notificationForm.control}
+                        name="reminderHoursBeforeReservation"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('ReminderHoursBeforeReservation')}</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="number" min="1" />
+                            </FormControl>
+                            <FormDescription>
+                              {t('HoursValue')}
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+
+                  <Separator className="my-6" />
+
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">{t('Feedback')}</h3>
+                    
+                    <FormField
+                      control={notificationForm.control}
+                      name="allowCustomerFeedback"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-0.5">
+                            <FormLabel>{t('AllowCustomerFeedback')}</FormLabel>
+                            <FormDescription>
+                              {t('AllowCustomerFeedbackDescription')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={notificationForm.control}
+                      name="collectCustomerFeedback"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
+                          <div className="space-y-0.5">
+                            <FormLabel>{t('CollectCustomerFeedback')}</FormLabel>
+                            <FormDescription>
+                              {t('CollectCustomerFeedbackDescription')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button 
+                      type="submit" 
+                      className="bg-brasil-green text-white"
+                    >
+                      <Save className="w-4 h-4 mr-2" /> {t('SaveSettings')}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </AdminLayout>
   );
 };
 
