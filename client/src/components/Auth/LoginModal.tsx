@@ -126,52 +126,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
             {/* User ID Input */}
             <div className="mb-4">
               <Label htmlFor="userId">ID do Usuário</Label>
-              <div className="mb-3 p-3 bg-gray-50 border border-gray-300 rounded-lg flex justify-center">
-                <div className="text-2xl font-mono font-bold text-gray-700 min-h-[32px] flex items-center">
-                  {userId || "Digite seu ID"}
-                </div>
-              </div>
-              
-              {/* Numeric Keypad for User ID */}
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => (
-                  <button
-                    key={number}
-                    type="button"
-                    onClick={() => setUserId(prev => prev + number.toString())}
-                    className="h-12 bg-white border border-gray-300 rounded-lg font-medium text-lg hover:bg-gray-50 transition-colors"
-                  >
-                    {number}
-                  </button>
-                ))}
-                
-                {/* Clear button */}
-                <button
-                  type="button"
-                  onClick={() => setUserId('')}
-                  className="h-12 bg-white border border-gray-300 rounded-lg font-medium text-lg hover:bg-gray-50 transition-colors"
-                >
-                  <i className="fas fa-times"></i>
-                </button>
-                
-                {/* Zero */}
-                <button
-                  type="button"
-                  onClick={() => setUserId(prev => prev + '0')}
-                  className="h-12 bg-white border border-gray-300 rounded-lg font-medium text-lg hover:bg-gray-50 transition-colors"
-                >
-                  0
-                </button>
-                
-                {/* Backspace button */}
-                <button
-                  type="button"
-                  onClick={() => setUserId(prev => prev.slice(0, -1))}
-                  className="h-12 bg-white border border-gray-300 rounded-lg font-medium text-lg hover:bg-gray-50 transition-colors"
-                >
-                  <i className="fas fa-backspace"></i>
-                </button>
-              </div>
+              <Input
+                id="userId"
+                type="number"
+                placeholder="Digite seu ID"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg border"
+              />
             </div>
             
             {/* PIN Display */}
