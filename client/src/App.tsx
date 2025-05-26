@@ -32,7 +32,7 @@ import Customers from "@/pages/admin/Customers";
 import CustomersAdd from "@/pages/admin/CustomersAdd";
 import MenuManager from "@/pages/admin/MenuManager";
 import TableManager from "@/pages/admin/TableManager";
-import Finance from "@/pages/admin/Finance";
+import Finances from "@/pages/admin/Finances";
 import ReportsManager from "@/pages/admin/ReportsManager";
 import Settings from "@/pages/admin/Settings";
 import PaymentSettings from "@/pages/admin/PaymentSettings";
@@ -120,7 +120,7 @@ function Router() {
       <Route path="/admin/customers/add" component={CustomersAdd} />
       <Route path="/admin/menu" component={MenuManager} />
       <Route path="/admin/tables" component={TableManager} />
-      <Route path="/admin/finance" component={Finance} />
+      <Route path="/admin/finance" component={Finances} />
       <Route path="/admin/reports" component={ReportsManager} />
       <Route path="/admin/settings" component={Settings} />
 
