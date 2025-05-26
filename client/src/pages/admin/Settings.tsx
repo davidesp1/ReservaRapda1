@@ -715,9 +715,92 @@ const Settings: React.FC = () => {
             )}
 
             {activeTab === 5 && (
-              <div className="flex flex-col items-center justify-center h-56 text-gray-400">
-                <i className="mb-3 text-3xl fa-solid fa-bell"></i>
-                <span className="font-semibold">Configuração de Notificações<br /><span className="text-sm font-normal text-gray-400">(Em breve)</span></span>
+              <div>
+                <form id="notificacoes-settings-form" className="space-y-8" onSubmit={handleSaveSettings}>
+                  <div className="px-6 py-4 mb-4 border-l-4 rounded-lg" style={{ backgroundColor: 'rgba(0, 39, 118, 0.05)', borderColor: '#002776' }}>
+                    <div className="flex items-center mb-2">
+                      <i className="mr-3 text-lg fa-solid fa-sms" style={{ color: '#002776' }}></i>
+                      <span className="text-lg font-semibold font-montserrat" style={{ color: '#002776' }}>Mensagens por SMS</span>
+                    </div>
+                    <div className="grid grid-cols-1 gap-8 mt-4 md:grid-cols-3">
+                      <div>
+                        <label htmlFor="sms-confirmacao" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Mensagem de Confirmação</label>
+                        <textarea 
+                          id="sms-confirmacao" 
+                          rows={2} 
+                          className="w-full px-4 py-3 font-semibold border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                          placeholder="Ex: Sua reserva foi confirmada!"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="sms-cancelamento" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Mensagem de Cancelamento</label>
+                        <textarea 
+                          id="sms-cancelamento" 
+                          rows={2} 
+                          className="w-full px-4 py-3 font-semibold border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                          placeholder="Ex: Sua reserva foi cancelada."
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="sms-alteracao" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Mensagem de Alteração</label>
+                        <textarea 
+                          id="sms-alteracao" 
+                          rows={2} 
+                          className="w-full px-4 py-3 font-semibold border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                          placeholder="Ex: Sua reserva foi alterada."
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="px-6 py-4 mb-4 border-l-4 rounded-lg" style={{ backgroundColor: 'rgba(255, 223, 0, 0.1)', borderColor: '#ffdf00' }}>
+                    <div className="flex items-center mb-2">
+                      <i className="mr-3 text-lg fa-solid fa-envelope" style={{ color: '#ffdf00' }}></i>
+                      <span className="text-lg font-semibold font-montserrat" style={{ color: '#ffdf00' }}>Mensagens por Email</span>
+                    </div>
+                    <div className="grid grid-cols-1 gap-8 mt-4 md:grid-cols-3">
+                      <div>
+                        <label htmlFor="email-confirmacao" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Mensagem de Confirmação</label>
+                        <textarea 
+                          id="email-confirmacao" 
+                          rows={2} 
+                          className="w-full px-4 py-3 font-semibold border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                          placeholder="Ex: Sua reserva foi confirmada por email!"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="email-cancelamento" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Mensagem de Cancelamento</label>
+                        <textarea 
+                          id="email-cancelamento" 
+                          rows={2} 
+                          className="w-full px-4 py-3 font-semibold border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                          placeholder="Ex: Sua reserva foi cancelada por email."
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="email-alteracao" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Mensagem de Alteração</label>
+                        <textarea 
+                          id="email-alteracao" 
+                          rows={2} 
+                          className="w-full px-4 py-3 font-semibold border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                          placeholder="Ex: Sua reserva foi alterada por email."
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end pt-4">
+                    <button 
+                      type="submit" 
+                      className="flex items-center px-6 py-3 text-base font-bold text-white transition-colors rounded-lg shadow hover:bg-green-700 font-montserrat"
+                      style={{ backgroundColor: '#009c3b' }}
+                      disabled={isSubmitting}
+                    >
+                      <i className="mr-2 fa-solid fa-floppy-disk"></i>
+                      {isSubmitting ? 'Salvando...' : 'Salvar Configurações'}
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
 
