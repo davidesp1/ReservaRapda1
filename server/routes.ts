@@ -1135,12 +1135,13 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
         INSERT INTO payments 
           (user_id, reservation_id, amount, method, status, reference, transaction_id, payment_date, details)
         VALUES 
-          (${1}, ${newOrder[0].id}, ${amountForPayment}, ${normalizedMethod}, ${'completed'}, 
+          (${Number(userId)}, ${newOrder[0].id}, ${amountForPayment}, ${normalizedMethod}, ${'completed'}, 
            ${'POS-Order-' + newOrder[0].id}, ${transactionId}, ${paymentDate}, 
            ${JSON.stringify({
              type: 'pos',
              orderId: newOrder[0].id,
-             items: validatedItems.length
+             items: validatedItems.length,
+             userId: Number(userId)
            })})
         RETURNING *
       `;
@@ -1167,13 +1168,21 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
   }
 });
 
-// Rota para buscar todos os pedidos POS
-router.get('/api/pos/orders', async (req, res) => {
+// Rota para buscar todos os pedidos POS com informações do usuário
+router.get('/api/pos/orders', isAuthenticated, async (req, res) => {
   try {
-    const orders = await drizzleDb.select()
-      .from(schema.orders)
-      .where(eq(schema.orders.type, 'pos'))
-      .orderBy(desc(schema.orders.createdAt));
+    const orders = await queryClient`
+      SELECT 
+        o.*,
+        u.username,
+        u.first_name,
+        u.last_name,
+        u.role
+      FROM orders o
+      JOIN users u ON o.user_id = u.id
+      WHERE o.type = 'pos'
+      ORDER BY o.created_at DESC
+    `;
     
     res.json(orders);
   } catch (error: any) {
@@ -1466,6 +1475,131 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
       stack: err.stack,
       message: "Falha ao atualizar configurações de pagamento. Por favor, contate o suporte."
     });
+  }
+});
+
+// Rota para relatórios de vendas por usuário (apenas para admins)
+router.get('/api/reports/sales-by-user', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    
+    // Verificar se o usuário é admin
+    const currentUser = await queryClient`
+      SELECT role FROM users WHERE id = ${Number(userId)}
+    `;
+    
+    if (currentUser.length === 0 || currentUser[0].role !== 'admin') {
+      return res.status(403).json({ error: "Acesso negado. Apenas administradores podem acessar relatórios." });
+    }
+    
+    const { startDate, endDate, userId: filterUserId } = req.query;
+    
+    let dateFilter = '';
+    let userFilter = '';
+    
+    if (startDate && endDate) {
+      dateFilter = `AND o.created_at BETWEEN '${startDate}' AND '${endDate}'`;
+    }
+    
+    if (filterUserId) {
+      userFilter = `AND o.user_id = ${Number(filterUserId)}`;
+    }
+    
+    const salesReport = await queryClient`
+      SELECT 
+        u.id as user_id,
+        u.username,
+        u.first_name,
+        u.last_name,
+        u.role,
+        COUNT(o.id) as total_orders,
+        COALESCE(SUM(o.total_amount), 0) as total_sales,
+        COALESCE(AVG(o.total_amount), 0) as average_order_value,
+        MIN(o.created_at) as first_sale,
+        MAX(o.created_at) as last_sale
+      FROM users u
+      LEFT JOIN orders o ON u.id = o.user_id AND o.type = 'pos' ${dateFilter} ${userFilter}
+      WHERE u.role IN ('admin', 'collaborator')
+      GROUP BY u.id, u.username, u.first_name, u.last_name, u.role
+      ORDER BY total_sales DESC
+    `;
+    
+    res.json(salesReport);
+  } catch (error: any) {
+    console.error('Erro ao gerar relatório de vendas por usuário:', error);
+    res.status(500).json({ error: error.message || 'Erro ao gerar relatório' });
+  }
+});
+
+// Rota para estatísticas detalhadas de um usuário específico
+router.get('/api/reports/user-stats/:userId', isAuthenticated, async (req, res) => {
+  try {
+    const currentUserId = req.session.userId;
+    const targetUserId = req.params.userId;
+    
+    // Verificar se o usuário é admin ou está consultando seus próprios dados
+    const currentUser = await queryClient`
+      SELECT role FROM users WHERE id = ${Number(currentUserId)}
+    `;
+    
+    if (currentUser.length === 0) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+    
+    const isAdmin = currentUser[0].role === 'admin';
+    const isOwnData = Number(currentUserId) === Number(targetUserId);
+    
+    if (!isAdmin && !isOwnData) {
+      return res.status(403).json({ error: "Acesso negado. Você só pode visualizar seus próprios dados." });
+    }
+    
+    // Buscar estatísticas detalhadas do usuário
+    const userStats = await queryClient`
+      SELECT 
+        u.id,
+        u.username,
+        u.first_name,
+        u.last_name,
+        u.role,
+        u.created_at as user_since,
+        COUNT(o.id) as total_orders,
+        COALESCE(SUM(o.total_amount), 0) as total_sales,
+        COALESCE(AVG(o.total_amount), 0) as average_order_value,
+        MIN(o.created_at) as first_sale,
+        MAX(o.created_at) as last_sale,
+        COUNT(CASE WHEN DATE(o.created_at) = CURRENT_DATE THEN 1 END) as orders_today,
+        COALESCE(SUM(CASE WHEN DATE(o.created_at) = CURRENT_DATE THEN o.total_amount ELSE 0 END), 0) as sales_today
+      FROM users u
+      LEFT JOIN orders o ON u.id = o.user_id AND o.type = 'pos'
+      WHERE u.id = ${Number(targetUserId)}
+      GROUP BY u.id, u.username, u.first_name, u.last_name, u.role, u.created_at
+    `;
+    
+    if (userStats.length === 0) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+    
+    // Buscar vendas dos últimos 7 dias para gráfico
+    const weeklyStats = await queryClient`
+      SELECT 
+        DATE(o.created_at) as sale_date,
+        COUNT(o.id) as orders_count,
+        COALESCE(SUM(o.total_amount), 0) as daily_sales
+      FROM orders o
+      WHERE o.user_id = ${Number(targetUserId)} 
+        AND o.type = 'pos'
+        AND o.created_at >= CURRENT_DATE - INTERVAL '7 days'
+      GROUP BY DATE(o.created_at)
+      ORDER BY sale_date DESC
+    `;
+    
+    res.json({
+      user: userStats[0],
+      weeklyStats
+    });
+  } catch (error: any) {
+    console.error('Erro ao buscar estatísticas do usuário:', error);
+    res.status(500).json({ error: error.message || 'Erro ao buscar estatísticas' });
   }
 });
 
