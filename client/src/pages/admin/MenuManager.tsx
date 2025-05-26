@@ -626,17 +626,25 @@ const MenuManager: React.FC = () => {
 
   // Form handlers
   const onProductSubmit = (data: FormData) => {
+    console.log("🚀 === ENVIANDO PRODUTO ===");
+    console.log("1. Dados originais do formulário:", data);
+    console.log("2. URL da imagem atual:", data.imageUrl);
+    console.log("3. Tamanho da imagem:", data.imageUrl?.length || 0, "caracteres");
+    console.log("4. Tipo da imagem:", data.imageUrl?.startsWith('data:') ? 'Base64' : 'URL');
+    
     const formattedData = {
       ...data,
       price: Math.round(data.price * 100), // Convert to cents
     };
 
-    console.log("Dados do formulário enviados:", formattedData);
-    console.log("URL da imagem no submit:", formattedData.imageUrl);
+    console.log("5. Dados formatados finais:", formattedData);
+    console.log("6. Imagem será enviada:", formattedData.imageUrl ? "✓ SIM" : "❌ NÃO");
 
     if (editingProduct) {
+      console.log("7. Atualizando produto existente ID:", editingProduct.id);
       updateItemMutation.mutate({ id: editingProduct.id, data: formattedData });
     } else {
+      console.log("7. Criando novo produto");
       createItemMutation.mutate(formattedData);
     }
   };
