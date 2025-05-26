@@ -50,8 +50,8 @@ interface FinanceMetrics {
 const Finances = () => {
   const [activeTab, setActiveTab] = useState('pagamentos');
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [methodFilter, setMethodFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [methodFilter, setMethodFilter] = useState('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   
@@ -104,8 +104,8 @@ const Finances = () => {
       `${payment.first_name} ${payment.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
       payment.username.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesStatus = !statusFilter || payment.status === statusFilter;
-    const matchesMethod = !methodFilter || payment.method === methodFilter;
+    const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
+    const matchesMethod = methodFilter === 'all' || payment.method === methodFilter;
     
     let matchesDateRange = true;
     if (startDate && endDate) {
@@ -358,7 +358,7 @@ const Finances = () => {
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="completed">Concluído</SelectItem>
                     <SelectItem value="pending">Pendente</SelectItem>
                     <SelectItem value="failed">Falha</SelectItem>
@@ -375,7 +375,7 @@ const Finances = () => {
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="card">Cartão</SelectItem>
                     <SelectItem value="cash">Dinheiro</SelectItem>
                     <SelectItem value="mbway">MBWay</SelectItem>
