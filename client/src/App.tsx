@@ -10,6 +10,7 @@ import Home from "@/pages/Home";
 import CustomError from "@/pages/CustomError";
 import CustomerDashboard from "@/pages/CustomerDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
+import CollaboratorDashboard from "@/pages/CollaboratorDashboard";
 import Reservations from "@/pages/Reservations";
 import { ThemeProvider } from "next-themes";
 import { lazy, Suspense } from "react";

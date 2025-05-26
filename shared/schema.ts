@@ -4,7 +4,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Enums
-export const userRoleEnum = pgEnum('user_role', ['customer', 'admin']);
+export const userRoleEnum = pgEnum('user_role', ['customer', 'admin', 'collaborator']);
 export const reservationStatusEnum = pgEnum('reservation_status', ['pending', 'confirmed', 'cancelled', 'completed', 'no-show']);
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'completed', 'failed', 'refunded']);
 export const paymentMethodEnum = pgEnum('payment_method', ['card', 'mbway', 'multibanco', 'transfer', 'cash']);

@@ -8,6 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isCollaborator: boolean;
   login: (username: string, password: string) => Promise<User>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
@@ -180,6 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAuthenticated = !!user;
   const isAdmin = isAuthenticated && user?.role === 'admin';
+  const isCollaborator = isAuthenticated && user?.role === 'collaborator';
 
   return (
     <AuthContext.Provider
@@ -188,6 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated,
         isAdmin,
+        isCollaborator,
         login,
         register,
         logout,
