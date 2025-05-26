@@ -563,8 +563,11 @@ const MenuManager: React.FC = () => {
 
           if (error) {
             console.log("❌ Erro no Supabase Storage:", error);
-            console.log("- Código:", error.statusCode);
             console.log("- Mensagem:", error.message);
+            
+            if (error.message.includes('row-level security')) {
+              console.log("💡 SOLUÇÃO: Políticas RLS bloqueando upload - usando fallback Base64");
+            }
           } else {
             console.log("✓ Upload para Supabase bem-sucedido!");
             const { data: urlData } = supabase.storage
