@@ -211,26 +211,36 @@ const MenuManager: React.FC = () => {
     mutationFn: async (data: any) => {
       if (!supabase) throw new Error("Supabase não configurado");
 
+      console.log("Dados recebidos na mutation:", data);
+      console.log("URL da imagem para inserir:", data.imageUrl);
+
+      const insertData = {
+        name: data.name,
+        description: data.description || '',
+        price: data.price,
+        category_id: data.categoryId,
+        featured: data.featured || false,
+        image_url: data.imageUrl || null,
+        stock_quantity: data.stockQuantity || 0,
+        min_stock_level: data.minStockLevel || 0,
+        max_stock_level: data.maxStockLevel || 100,
+        track_stock: data.trackStock || false,
+        is_available: data.isAvailable !== false,
+      };
+
+      console.log("Dados formatados para inserção:", insertData);
+
       const { data: result, error } = await supabase
         .from("menu_items")
-        .insert([
-          {
-            name: data.name,
-            description: data.description,
-            price: data.price,
-            category_id: data.categoryId,
-            featured: data.featured,
-            image_url: data.imageUrl,
-            stock_quantity: data.stockQuantity,
-            min_stock_level: data.minStockLevel,
-            max_stock_level: data.maxStockLevel,
-            track_stock: data.trackStock,
-            is_available: data.isAvailable,
-          },
-        ])
+        .insert([insertData])
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro na inserção:", error);
+        throw error;
+      }
+      
+      console.log("Produto criado com sucesso:", result);
       return result;
     },
     onSuccess: () => {
@@ -252,25 +262,38 @@ const MenuManager: React.FC = () => {
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       if (!supabase) throw new Error("Supabase não configurado");
 
+      console.log("Atualizando produto ID:", id);
+      console.log("Dados recebidos na update mutation:", data);
+      console.log("URL da imagem para atualizar:", data.imageUrl);
+
+      const updateData = {
+        name: data.name,
+        description: data.description || '',
+        price: data.price,
+        category_id: data.categoryId,
+        featured: data.featured || false,
+        image_url: data.imageUrl || null,
+        stock_quantity: data.stockQuantity || 0,
+        min_stock_level: data.minStockLevel || 0,
+        max_stock_level: data.maxStockLevel || 100,
+        track_stock: data.trackStock || false,
+        is_available: data.isAvailable !== false,
+      };
+
+      console.log("Dados formatados para atualização:", updateData);
+
       const { data: result, error } = await supabase
         .from("menu_items")
-        .update({
-          name: data.name,
-          description: data.description,
-          price: data.price,
-          category_id: data.categoryId,
-          featured: data.featured,
-          image_url: data.imageUrl,
-          stock_quantity: data.stockQuantity,
-          min_stock_level: data.minStockLevel,
-          max_stock_level: data.maxStockLevel,
-          track_stock: data.trackStock,
-          is_available: data.isAvailable,
-        })
+        .update(updateData)
         .eq("id", id)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro na atualização:", error);
+        throw error;
+      }
+      
+      console.log("Produto atualizado com sucesso:", result);
       return result;
     },
     onSuccess: () => {
