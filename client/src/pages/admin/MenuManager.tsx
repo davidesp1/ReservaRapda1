@@ -257,10 +257,11 @@ const MenuManager: React.FC = () => {
       });
     },
     onError: (error: any) => {
-      toast({
-        title: "Erro ao criar produto",
-        description: error.message,
-        variant: "destructive",
+      Swal.fire({
+        icon: 'error',
+        title: 'Erro ao Criar Produto',
+        text: 'Não foi possível criar o produto. Tente novamente.',
+        confirmButtonColor: '#ef4444'
       });
     },
   });
@@ -308,13 +309,21 @@ const MenuManager: React.FC = () => {
       setIsProductModalOpen(false);
       setEditingProduct(null);
       productForm.reset();
-      toast({ title: "Produto atualizado com sucesso!" });
+      Swal.fire({
+        icon: 'success',
+        title: 'Produto Atualizado!',
+        text: 'As alterações foram salvas com sucesso.',
+        confirmButtonColor: '#10b981',
+        timer: 2500,
+        showConfirmButton: false
+      });
     },
     onError: (error: any) => {
-      toast({
-        title: "Erro ao atualizar produto",
-        description: error.message,
-        variant: "destructive",
+      Swal.fire({
+        icon: 'error',
+        title: 'Erro ao Atualizar Produto',
+        text: 'Não foi possível salvar as alterações. Tente novamente.',
+        confirmButtonColor: '#ef4444'
       });
     },
   });
@@ -998,18 +1007,26 @@ const MenuManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Product Modal */}
+      {/* Product Modal - Design Elegante */}
       <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingProduct ? "Editar Produto" : "Adicionar Produto"}
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 shadow-2xl">
+          <DialogHeader className="pb-6 border-b border-gray-200">
+            <DialogTitle className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <i className={`fas ${editingProduct ? 'fa-edit' : 'fa-plus'} text-green-600 text-lg`}></i>
+              </div>
+              {editingProduct ? "Editar Produto" : "Criar Novo Produto"}
             </DialogTitle>
+            <p className="text-gray-600 mt-2">
+              {editingProduct 
+                ? "Modifique as informações do produto abaixo" 
+                : "Preencha os dados para adicionar um novo produto ao menu"}
+            </p>
           </DialogHeader>
           <Form {...productForm}>
             <form
               onSubmit={productForm.handleSubmit(onProductSubmit)}
-              className="space-y-6"
+              className="space-y-8 pt-6"
             >
               <FormField
                 control={productForm.control}
@@ -1181,19 +1198,25 @@ const MenuManager: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex justify-end space-x-4">
+              <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsProductModalOpen(false)}
+                  className="px-6 py-2 text-gray-600 hover:text-gray-800"
                 >
+                  <i className="fas fa-times mr-2"></i>
                   Cancelar
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-green-600 hover:bg-green-700"
+                  disabled={createItemMutation.isPending || updateItemMutation.isPending}
+                  className="px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg"
                 >
-                  Salvar
+                  <i className={`fas ${editingProduct ? 'fa-save' : 'fa-plus'} mr-2`}></i>
+                  {createItemMutation.isPending || updateItemMutation.isPending
+                    ? "Salvando..." 
+                    : editingProduct ? "Salvar Alterações" : "Criar Produto"}
                 </Button>
               </div>
             </form>
