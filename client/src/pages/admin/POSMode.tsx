@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthContext";
 import { Check, Search, ShoppingCart, X, Plus, Minus, ArrowRightFromLine } from "lucide-react";
 import { Loader2 } from "lucide-react";
 
