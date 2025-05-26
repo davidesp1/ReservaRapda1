@@ -571,9 +571,146 @@ const Settings: React.FC = () => {
             )}
 
             {activeTab === 4 && (
-              <div className="flex flex-col items-center justify-center h-56 text-gray-400">
-                <i className="mb-3 text-3xl fa-solid fa-credit-card"></i>
-                <span className="font-semibold">Configurações de Pagamento<br /><span className="text-sm font-normal text-gray-400">(Em breve)</span></span>
+              <div>
+                <form id="pagamento-settings-form" className="space-y-8" onSubmit={handleSaveSettings}>
+                  <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                    <div>
+                      <label htmlFor="moeda-sistema" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Moeda do Sistema</label>
+                      <select 
+                        id="moeda-sistema" 
+                        className="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50"
+                      >
+                        <option value="BRL">Real Brasileiro (BRL)</option>
+                        <option value="EUR">Euro (EUR)</option>
+                        <option value="USD">Dólar Americano (USD)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="taxa-impostos" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Taxa de Impostos (%)</label>
+                      <input 
+                        id="taxa-impostos" 
+                        type="number" 
+                        step="0.01" 
+                        min="0" 
+                        className="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                        placeholder="10.0" 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center px-4 py-3 mb-2 border-l-4 rounded-lg" style={{ backgroundColor: 'rgba(255, 223, 0, 0.2)', borderColor: '#ffdf00' }}>
+                    <i className="mr-3 text-lg fa-solid fa-lock" style={{ color: '#ffdf00' }}></i>
+                    <span className="text-sm font-semibold" style={{ color: '#ffdf00' }}>
+                      Chave de API para o serviço de pagamento EuPago. Esta informação é sensível e deve ser mantida segura.
+                    </span>
+                  </div>
+                  
+                  <div className="mb-2">
+                    <label htmlFor="eupago-api-key" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Chave API do EuPago</label>
+                    <input 
+                      id="eupago-api-key" 
+                      type="password" 
+                      className="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                      placeholder="Insira sua chave API" 
+                    />
+                    <span className="block mt-2 text-xs text-gray-400">
+                      Requer chave API do EuPago para ativação para métodos de pagamento online
+                    </span>
+                  </div>
+                  
+                  <div className="mb-2">
+                    <label className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Métodos de Pagamento</label>
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox" 
+                          id="metodo-cc" 
+                          className="w-5 h-5 border border-gray-300 rounded-md"
+                          style={{ accentColor: '#009c3b' }}
+                        />
+                        <label htmlFor="metodo-cc" className="text-sm text-gray-700 font-montserrat">Cartão de Crédito/Débito</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox" 
+                          id="metodo-mbway" 
+                          className="w-5 h-5 border border-gray-300 rounded-md"
+                          style={{ accentColor: '#ffdf00' }}
+                        />
+                        <label htmlFor="metodo-mbway" className="text-sm text-gray-700 font-montserrat">MBWay</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox" 
+                          id="metodo-multibanco" 
+                          className="w-5 h-5 border border-gray-300 rounded-md"
+                          style={{ accentColor: '#002776' }}
+                        />
+                        <label htmlFor="metodo-multibanco" className="text-sm text-gray-700 font-montserrat">Multibanco</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox" 
+                          id="metodo-transferencia" 
+                          className="w-5 h-5 border border-gray-300 rounded-md"
+                          style={{ accentColor: '#009c3b' }}
+                        />
+                        <label htmlFor="metodo-transferencia" className="text-sm text-gray-700 font-montserrat">Transferência Bancária</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox" 
+                          id="metodo-dinheiro" 
+                          className="w-5 h-5 border border-gray-300 rounded-md"
+                          style={{ accentColor: '#ffdf00' }}
+                        />
+                        <label htmlFor="metodo-dinheiro" className="text-sm text-gray-700 font-montserrat">Dinheiro</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox" 
+                          id="metodo-tpa" 
+                          className="w-5 h-5 border border-gray-300 rounded-md"
+                          style={{ accentColor: '#002776' }}
+                        />
+                        <label htmlFor="metodo-tpa" className="text-sm text-gray-700 font-montserrat">Multibanco (TPA)</label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                    <div className="flex items-center mt-2 space-x-3">
+                      <input 
+                        type="checkbox" 
+                        id="exigir-prepagamento" 
+                        className="w-5 h-5 border border-gray-300 rounded-md"
+                        style={{ accentColor: '#009c3b' }}
+                      />
+                      <label htmlFor="exigir-prepagamento" className="text-sm font-semibold text-gray-700 font-montserrat">Exigir Pré-pagamento</label>
+                    </div>
+                    <div className="flex items-center mt-2 space-x-3">
+                      <input 
+                        type="checkbox" 
+                        id="mostrar-precos-impostos" 
+                        className="w-5 h-5 border border-gray-300 rounded-md"
+                        style={{ accentColor: '#ffdf00' }}
+                      />
+                      <label htmlFor="mostrar-precos-impostos" className="text-sm font-semibold text-gray-700 font-montserrat">Mostrar preços com impostos</label>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end pt-4">
+                    <button 
+                      type="submit" 
+                      className="flex items-center px-6 py-3 text-base font-bold text-white transition-colors rounded-lg shadow hover:bg-green-700 font-montserrat"
+                      style={{ backgroundColor: '#009c3b' }}
+                      disabled={isSubmitting}
+                    >
+                      <i className="mr-2 fa-solid fa-floppy-disk"></i>
+                      {isSubmitting ? 'Salvando...' : 'Salvar Configurações'}
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
 
