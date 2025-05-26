@@ -967,6 +967,35 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
 });
 
 // Rota para cancelar pagamento
+// Rota de teste para debug do upload de imagens
+router.post("/api/test-image-upload", isAuthenticated, async (req, res) => {
+  try {
+    console.log("=== TESTE UPLOAD IMAGEM ===");
+    console.log("Dados recebidos:", req.body);
+    
+    const { name, description, price, category_id, image_url } = req.body;
+    
+    console.log("Nome:", name);
+    console.log("Descrição:", description);
+    console.log("Preço:", price);
+    console.log("Categoria ID:", category_id);
+    console.log("URL da imagem (primeiros 100 chars):", image_url ? image_url.substring(0, 100) + "..." : "NENHUMA");
+    
+    // Testar inserção direta no banco
+    const result = await queryClient`
+      INSERT INTO menu_items (name, description, price, category_id, image_url, is_available)
+      VALUES (${name}, ${description}, ${price}, ${category_id}, ${image_url}, true)
+      RETURNING *
+    `;
+    
+    console.log("Produto inserido com sucesso:", result[0]);
+    res.json({ success: true, product: result[0] });
+  } catch (err: any) {
+    console.error("Erro no teste de upload:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Nova rota para listar todos os pagamentos - especialmente para a página de Finanças
 router.get("/api/payments", isAuthenticated, async (req, res) => {
   try {

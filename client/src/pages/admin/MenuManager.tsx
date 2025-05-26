@@ -502,12 +502,20 @@ const MenuManager: React.FC = () => {
         }
       }
 
-      // Fallback: Converter para Base64 para armazenamento local
+      // Converter para Base64 e forçar atualização do formulário
       const reader = new FileReader();
       reader.onload = () => {
         const base64String = reader.result as string;
-        productForm.setValue("imageUrl", base64String);
-        console.log("Imagem carregada:", base64String.substring(0, 100) + "...");
+        
+        // Forçar atualização do campo imageUrl
+        productForm.setValue("imageUrl", base64String, { 
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true 
+        });
+        
+        console.log("Imagem carregada e definida no formulário:", base64String.substring(0, 100) + "...");
+        console.log("Valor atual do campo imageUrl:", productForm.getValues("imageUrl"));
         
         toast({
           title: "Upload realizado",

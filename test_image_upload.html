@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Upload Imagem</title>
+</head>
+<body>
+    <h1>Teste de Upload de Imagem</h1>
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="testUpload()">Testar Upload</button>
+    <div id="result"></div>
+
+    <script>
+        async function testUpload() {
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Selecione uma imagem primeiro');
+                return;
+            }
+
+            console.log('Arquivo selecionado:', file);
+            
+            // Converter para Base64
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64 = e.target.result;
+                console.log('Base64 gerado:', base64.substring(0, 100) + '...');
+                
+                // Testar inserção direta no banco
+                try {
+                    const response = await fetch('/api/test-image-upload', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            name: 'Teste Produto Imagem',
+                            description: 'Produto teste com imagem',
+                            price: 1000,
+                            category_id: 1,
+                            image_url: base64
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    console.log('Resultado do teste:', result);
+                    document.getElementById('result').innerHTML = JSON.stringify(result, null, 2);
+                } catch (error) {
+                    console.error('Erro no teste:', error);
+                    document.getElementById('result').innerHTML = 'Erro: ' + error.message;
+                }
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>
