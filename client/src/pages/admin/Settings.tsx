@@ -500,9 +500,73 @@ const Settings: React.FC = () => {
             )}
 
             {activeTab === 3 && (
-              <div className="flex flex-col items-center justify-center h-56 text-gray-400">
-                <i className="mb-3 text-3xl fa-solid fa-calendar-days"></i>
-                <span className="font-semibold">Configurações de Reservas<br /><span className="text-sm font-normal text-gray-400">(Em breve)</span></span>
+              <div>
+                <form id="reserva-settings-form" className="space-y-8" onSubmit={handleSaveSettings}>
+                  <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                    <div>
+                      <label htmlFor="tempo-minimo" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Tempo mínimo para reserva (min)</label>
+                      <input 
+                        id="tempo-minimo" 
+                        type="number" 
+                        min="0" 
+                        className="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                        placeholder="30" 
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="dias-antecedencia" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Dias de reserva máxima antecipada</label>
+                      <input 
+                        id="dias-antecedencia" 
+                        type="number" 
+                        min="1" 
+                        className="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                        placeholder="30" 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                    <div className="flex items-center space-x-3">
+                      <input 
+                        type="checkbox" 
+                        id="permite-cancelamento" 
+                        className="w-5 h-5 border border-gray-300 rounded-md"
+                        style={{ accentColor: '#009c3b' }}
+                      />
+                      <label htmlFor="permite-cancelamento" className="text-sm font-semibold text-gray-700 font-montserrat">Permitir que os clientes cancelem</label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <input 
+                        type="checkbox" 
+                        id="requer-confirmacao" 
+                        className="w-5 h-5 border border-gray-300 rounded-md"
+                        style={{ accentColor: '#ffdf00' }}
+                      />
+                      <label htmlFor="requer-confirmacao" className="text-sm font-semibold text-gray-700 font-montserrat">Requer confirmação</label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <input 
+                        type="checkbox" 
+                        id="confirmacao-automatica" 
+                        className="w-5 h-5 border border-gray-300 rounded-md"
+                        style={{ accentColor: '#002776' }}
+                      />
+                      <label htmlFor="confirmacao-automatica" className="text-sm font-semibold text-gray-700 font-montserrat">Confirmação automática da reserva</label>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end pt-4">
+                    <button 
+                      type="submit" 
+                      className="flex items-center px-6 py-3 text-base font-bold text-white transition-colors rounded-lg shadow hover:bg-green-700 font-montserrat"
+                      style={{ backgroundColor: '#009c3b' }}
+                      disabled={isSubmitting}
+                    >
+                      <i className="mr-2 fa-solid fa-floppy-disk"></i>
+                      {isSubmitting ? 'Salvando...' : 'Salvar Configurações'}
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
 
