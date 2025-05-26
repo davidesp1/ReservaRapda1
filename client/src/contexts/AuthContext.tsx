@@ -124,7 +124,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isLoading, isError]);
 
-  // Adicionar listeners de atividade para resetar o timer
+  // Sistema de logout automático temporariamente desabilitado para evitar conflitos
+  // TODO: Reimplementar de forma que não interfira com a navegação
+  /*
   useEffect(() => {
     if (!user) return;
 
@@ -134,12 +136,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resetSessionTimer();
     };
 
-    // Adicionar listeners
     events.forEach(event => {
       document.addEventListener(event, resetTimer, true);
     });
 
-    // Cleanup
     return () => {
       events.forEach(event => {
         document.removeEventListener(event, resetTimer, true);
@@ -149,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
   }, [user, sessionTimer]);
+  */
 
   // Login mutation
   const loginMutation = useMutation<User, Error, { email?: string; username?: string; password: string }>({
