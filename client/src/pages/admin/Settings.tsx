@@ -805,9 +805,122 @@ const Settings: React.FC = () => {
             )}
 
             {activeTab === 6 && (
-              <div className="flex flex-col items-center justify-center h-56 text-gray-400">
-                <i className="mb-3 text-3xl fa-solid fa-cash-register"></i>
-                <span className="font-semibold">Configurações POS<br /><span className="text-sm font-normal text-gray-400">(Em breve)</span></span>
+              <div>
+                <form id="pos-settings-form" className="space-y-8" onSubmit={handleSaveSettings}>
+                  <div className="px-6 py-4 mb-4 border-l-4 rounded-lg" style={{ backgroundColor: 'rgba(0, 39, 118, 0.05)', borderColor: '#002776' }}>
+                    <div className="flex items-center mb-4">
+                      <i className="mr-3 text-lg fa-solid fa-print" style={{ color: '#002776' }}></i>
+                      <span className="text-lg font-semibold font-montserrat" style={{ color: '#002776' }}>Configurações de Impressora</span>
+                    </div>
+                    <div className="grid items-end grid-cols-1 gap-8 md:grid-cols-3">
+                      <div>
+                        <label htmlFor="printer-select" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Selecionar Impressora</label>
+                        <select 
+                          id="printer-select" 
+                          className="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50"
+                        >
+                          <option value="">Selecione...</option>
+                          <option value="printer1">Impressora 1</option>
+                          <option value="printer2">Impressora 2</option>
+                          <option value="printer3">Impressora 3</option>
+                        </select>
+                      </div>
+                      <div className="flex gap-4 mt-6 md:mt-0">
+                        <button 
+                          type="button" 
+                          className="flex items-center px-4 py-2 text-base font-bold text-white transition-colors rounded-lg shadow hover:bg-green-700 font-montserrat"
+                          style={{ backgroundColor: '#009c3b' }}
+                        >
+                          <i className="mr-2 fa-solid fa-print"></i>
+                          Testar Impressão
+                        </button>
+                        <button 
+                          type="button" 
+                          className="flex items-center px-4 py-2 text-base font-bold transition-colors rounded-lg shadow hover:bg-yellow-400 font-montserrat"
+                          style={{ backgroundColor: '#ffdf00', color: '#002776' }}
+                        >
+                          <i className="mr-2 fa-solid fa-floppy-disk"></i>
+                          Salvar Impressora
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="px-6 py-4 mb-4 border-l-4 rounded-lg" style={{ backgroundColor: 'rgba(255, 223, 0, 0.1)', borderColor: '#ffdf00' }}>
+                    <div className="flex items-center mb-4">
+                      <i className="mr-3 text-lg fa-solid fa-receipt" style={{ color: '#ffdf00' }}></i>
+                      <span className="text-lg font-semibold font-montserrat" style={{ color: '#ffdf00' }}>Conteúdo do Recibo</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox" 
+                          id="recibo-itens" 
+                          className="w-5 h-5 border border-gray-300 rounded-md"
+                          style={{ accentColor: '#009c3b' }}
+                        />
+                        <label htmlFor="recibo-itens" className="text-sm font-semibold text-gray-700 font-montserrat">Itens do pedido</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox" 
+                          id="recibo-totais" 
+                          className="w-5 h-5 border border-gray-300 rounded-md"
+                          style={{ accentColor: '#ffdf00' }}
+                        />
+                        <label htmlFor="recibo-totais" className="text-sm font-semibold text-gray-700 font-montserrat">Totais</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox" 
+                          id="recibo-forma" 
+                          className="w-5 h-5 border border-gray-300 rounded-md"
+                          style={{ accentColor: '#002776' }}
+                        />
+                        <label htmlFor="recibo-forma" className="text-sm font-semibold text-gray-700 font-montserrat">Forma de pagamento</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox" 
+                          id="recibo-cliente" 
+                          className="w-5 h-5 border border-gray-300 rounded-md"
+                          style={{ accentColor: '#009c3b' }}
+                        />
+                        <label htmlFor="recibo-cliente" className="text-sm font-semibold text-gray-700 font-montserrat">Dados do cliente</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox" 
+                          id="recibo-restaurante" 
+                          className="w-5 h-5 border border-gray-300 rounded-md"
+                          style={{ accentColor: '#ffdf00' }}
+                        />
+                        <label htmlFor="recibo-restaurante" className="text-sm font-semibold text-gray-700 font-montserrat">Dados do restaurante</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox" 
+                          id="recibo-datahora" 
+                          className="w-5 h-5 border border-gray-300 rounded-md"
+                          style={{ accentColor: '#002776' }}
+                        />
+                        <label htmlFor="recibo-datahora" className="text-sm font-semibold text-gray-700 font-montserrat">Data e hora</label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end pt-4">
+                    <button 
+                      type="submit" 
+                      className="flex items-center px-6 py-3 text-base font-bold text-white transition-colors rounded-lg shadow hover:bg-green-700 font-montserrat"
+                      style={{ backgroundColor: '#009c3b' }}
+                      disabled={isSubmitting}
+                    >
+                      <i className="mr-2 fa-solid fa-floppy-disk"></i>
+                      {isSubmitting ? 'Salvando...' : 'Salvar Configurações'}
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
           </div>
