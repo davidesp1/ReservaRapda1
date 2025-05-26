@@ -46,37 +46,20 @@ const Finance: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Configurar Supabase Realtime para dados em tempo real
+  // Buscar dados em tempo real do banco via API
   useEffect(() => {
     const fetchPayments = async () => {
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
-          .from('payments')
-          .select(`
-            *,
-            users:user_id (username, email, first_name, last_name),
-            reservations:reservation_id (date)
-          `)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Erro Supabase:', error);
-          return;
+        const response = await fetch('/api/payments');
+        
+        if (!response.ok) {
+          throw new Error('Erro ao buscar pagamentos');
         }
         
-        const processedPayments = data?.map(payment => ({
-          ...payment,
-          username: payment.users?.username,
-          email: payment.users?.email,
-          first_name: payment.users?.first_name,
-          last_name: payment.users?.last_name,
-          reservation_date: payment.reservations?.date,
-          payment_source: payment.reservation_id ? 'reservation' : 
-                         payment.details?.type === 'pos' ? 'pos' : 'other'
-        })) || [];
-        
-        setPayments(processedPayments);
+        const data = await response.json();
+        console.log('Dados de pagamentos carregados:', data.length, 'registros');
+        setPayments(data || []);
       } catch (error) {
         console.error('Erro ao buscar pagamentos:', error);
         toast({
@@ -89,26 +72,14 @@ const Finance: React.FC = () => {
       }
     };
 
+    // Carregar dados iniciais
     fetchPayments();
 
-    // Configurar subscription para tempo real
-    const subscription = supabase
-      .channel('payments-realtime')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'payments' 
-        }, 
-        (payload) => {
-          console.log('Mudança detectada nos pagamentos:', payload);
-          fetchPayments(); // Recarregar dados quando houver mudanças
-        }
-      )
-      .subscribe();
+    // Configurar atualização automática a cada 5 segundos para dados em tempo real
+    const interval = setInterval(fetchPayments, 5000);
 
     return () => {
-      subscription.unsubscribe();
+      clearInterval(interval);
     };
   }, [toast]);
 
