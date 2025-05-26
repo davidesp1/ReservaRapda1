@@ -119,29 +119,85 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
         
         {showPinLogin ? (
           <div className="space-y-6">
-            <form onSubmit={onPinSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="pin">PIN de 4 dígitos</Label>
-                <Input
-                  id="pin"
-                  type="number"
-                  placeholder="0000"
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                  maxLength={4}
-                  className="w-full px-4 py-3 rounded-lg border text-center text-2xl font-mono"
-                />
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Acessar Conta</h1>
+            <p className="text-gray-500 mb-6">Digite seu PIN de 4 dígitos</p>
+            
+            {/* PIN Display */}
+            <div className="mb-6">
+              <label className="block text-gray-700 font-medium mb-2">PIN</label>
+              <div className="mb-3 p-3 bg-gray-50 border border-gray-300 rounded-lg flex justify-center">
+                <div className="flex space-x-2">
+                  {[1, 2, 3, 4].map((index) => (
+                    <div
+                      key={index}
+                      className={`w-3 h-3 rounded-full ${
+                        pin.length >= index ? 'bg-brasil-green' : 'bg-gray-300'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
               
-              <Button 
-                type="submit" 
-                className="w-full bg-brasil-green hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg"
-                disabled={isPinSubmitting || pin.length !== 4}
-              >
-                {isPinSubmitting ? <i className="fas fa-spinner fa-spin mr-2"></i> : null}
-                Entrar com PIN
-              </Button>
-            </form>
+              {/* Numeric Keypad */}
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => (
+                  <button
+                    key={number}
+                    type="button"
+                    onClick={() => {
+                      if (pin.length < 4) {
+                        setPin(prev => prev + number.toString());
+                      }
+                    }}
+                    className="h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors"
+                  >
+                    {number}
+                  </button>
+                ))}
+                
+                {/* Clear button */}
+                <button
+                  type="button"
+                  onClick={() => setPin(prev => prev.slice(0, -1))}
+                  className="h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors"
+                >
+                  <i className="fas fa-backspace"></i>
+                </button>
+                
+                {/* Zero */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (pin.length < 4) {
+                      setPin(prev => prev + '0');
+                    }
+                  }}
+                  className="h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors"
+                >
+                  0
+                </button>
+                
+                {/* Enter button */}
+                <button
+                  type="button"
+                  onClick={onPinSubmit}
+                  disabled={pin.length !== 4 || isPinSubmitting}
+                  className="h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  <i className="fas fa-check"></i>
+                </button>
+              </div>
+            </div>
+            
+            {/* Login Button */}
+            <Button 
+              onClick={onPinSubmit}
+              className="w-full bg-brasil-green hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+              disabled={isPinSubmitting || pin.length !== 4}
+            >
+              {isPinSubmitting ? <i className="fas fa-spinner fa-spin mr-2"></i> : null}
+              Entrar
+            </Button>
             
             <div className="text-center">
               <Button

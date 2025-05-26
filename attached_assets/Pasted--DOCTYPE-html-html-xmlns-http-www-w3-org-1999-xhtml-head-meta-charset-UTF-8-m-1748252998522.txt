@@ -1,0 +1,236 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>::-webkit-scrollbar { display: none;}</style>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-green': '#009c3b',
+                        'brand-yellow': '#ffdf00',
+                        'brand-blue': '#002776',
+                        'brand-red': '#c8102e'
+                    },
+                    fontFamily: {
+                        'montserrat': ['Montserrat', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif;
+        }
+    </style>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" /><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap" /><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="font-montserrat bg-gray-100">
+    <div id="login-container" class="min-h-screen flex items-center justify-center bg-cover bg-center p-4" style="background-image: url('https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?ixlib=rb-4.0.3&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&amp;auto=format&amp;fit=crop&amp;w=1920&amp;q=80'); background-color: rgba(0,0,0,0.6); background-blend-mode: overlay;">
+        
+        <div id="login-modal" class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 md:p-8 relative">
+            <!-- Close button -->
+            <button id="close-button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            
+            <!-- Logo -->
+            <div id="logo" class="flex justify-center mb-8">
+                <div class="text-center">
+                    <span class="text-4xl font-bold text-brand-green">Opa</span>
+                    <span class="text-2xl font-bold text-brand-yellow italic">que delicia!</span>
+                </div>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="login-form">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Acessar Conta</h1>
+                <p class="text-gray-500 mb-6">Selecione seu usuário e digite seu PIN</p>
+                
+                <!-- User Selection -->
+                <div class="mb-6">
+                    <label for="user-select" class="block text-gray-700 font-medium mb-2">Usuário</label>
+                    <div id="user-grid" class="grid grid-cols-3 gap-3">
+                        <div class="user-avatar cursor-pointer bg-white border-2 border-gray-200 hover:border-brand-green rounded-lg p-2 flex flex-col items-center transition-all">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="User 1" class="w-16 h-16 rounded-full mb-2" />
+                            <span class="text-sm font-medium">Ana</span>
+                        </div>
+                        <div class="user-avatar cursor-pointer bg-white border-2 border-gray-200 hover:border-brand-green rounded-lg p-2 flex flex-col items-center transition-all">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="User 2" class="w-16 h-16 rounded-full mb-2" />
+                            <span class="text-sm font-medium">Pedro</span>
+                        </div>
+                        <div class="user-avatar cursor-pointer bg-white border-2 border-gray-200 hover:border-brand-green rounded-lg p-2 flex flex-col items-center transition-all">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User 3" class="w-16 h-16 rounded-full mb-2" />
+                            <span class="text-sm font-medium">Carlos</span>
+                        </div>
+                        <div class="user-avatar cursor-pointer bg-white border-2 border-gray-200 hover:border-brand-green rounded-lg p-2 flex flex-col items-center transition-all">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="User 4" class="w-16 h-16 rounded-full mb-2" />
+                            <span class="text-sm font-medium">Maria</span>
+                        </div>
+                        <div class="user-avatar cursor-pointer bg-white border-2 border-gray-200 hover:border-brand-green rounded-lg p-2 flex flex-col items-center transition-all">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User 5" class="w-16 h-16 rounded-full mb-2" />
+                            <span class="text-sm font-medium">João</span>
+                        </div>
+                        <div class="user-avatar cursor-pointer bg-white border-2 border-gray-200 hover:border-brand-green rounded-lg p-2 flex flex-col items-center transition-all">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" alt="User 6" class="w-16 h-16 rounded-full mb-2" />
+                            <span class="text-sm font-medium">Paula</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PIN Input -->
+                <div class="mb-6">
+                    <label for="pin" class="block text-gray-700 font-medium mb-2">PIN</label>
+                    <div id="pin-display" class="mb-3 p-3 bg-gray-50 border border-gray-300 rounded-lg flex justify-center">
+                        <div class="flex space-x-2">
+                            <div class="w-3 h-3 rounded-full bg-gray-300" id="pin-dot-1"></div>
+                            <div class="w-3 h-3 rounded-full bg-gray-300" id="pin-dot-2"></div>
+                            <div class="w-3 h-3 rounded-full bg-gray-300" id="pin-dot-3"></div>
+                            <div class="w-3 h-3 rounded-full bg-gray-300" id="pin-dot-4"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Numeric Keypad -->
+                    <div id="keypad" class="grid grid-cols-3 gap-2">
+                        <button class="keypad-button h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors">1</button>
+                        <button class="keypad-button h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors">2</button>
+                        <button class="keypad-button h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors">3</button>
+                        <button class="keypad-button h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors">4</button>
+                        <button class="keypad-button h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors">5</button>
+                        <button class="keypad-button h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors">6</button>
+                        <button class="keypad-button h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors">7</button>
+                        <button class="keypad-button h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors">8</button>
+                        <button class="keypad-button h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors">9</button>
+                        <button class="keypad-button h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors" id="clear-button">
+                            <i class="fa-solid fa-delete-left"></i>
+                        </button>
+                        <button class="keypad-button h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors">0</button>
+                        <button class="keypad-button h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors" id="enter-button">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Forgot PIN link -->
+                <div class="text-right mb-6">
+                    <span class="text-brand-green hover:underline font-medium cursor-pointer">Esqueceu seu PIN?</span>
+                </div>
+                
+                <!-- Login Button -->
+                <button id="login-button" class="w-full bg-brand-green hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors mb-6">
+                    Entrar
+                </button>
+                
+                <!-- Register Link -->
+                <div class="text-center text-gray-600">
+                    Não tem uma conta? <span class="text-brand-green font-medium hover:underline cursor-pointer">Cadastrar</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Variables to store PIN and selected user
+        let currentPin = '';
+        let selectedUser = null;
+        
+        // User selection
+        const userAvatars = document.querySelectorAll('.user-avatar');
+        userAvatars.forEach(avatar =&gt; {
+            avatar.addEventListener('click', function() {
+                // Remove active class from all avatars
+                userAvatars.forEach(av =&gt; av.classList.remove('border-brand-green', 'bg-green-50'));
+                // Add active class to selected avatar
+                this.classList.add('border-brand-green', 'bg-green-50');
+                selectedUser = this;
+            });
+        });
+        
+        // PIN input handling
+        const keypadButtons = document.querySelectorAll('.keypad-button');
+        const pinDots = [
+            document.getElementById('pin-dot-1'),
+            document.getElementById('pin-dot-2'),
+            document.getElementById('pin-dot-3'),
+            document.getElementById('pin-dot-4')
+        ];
+        
+        keypadButtons.forEach(button =&gt; {
+            button.addEventListener('click', function() {
+                const value = this.textContent.trim();
+                
+                // Handle numeric input
+                if (!isNaN(value) &amp;&amp; value !== '' &amp;&amp; currentPin.length &lt; 4) {
+                    currentPin += value;
+                    updatePinDisplay();
+                }
+                
+                // Handle clear button
+                if (this.id === 'clear-button' &amp;&amp; currentPin.length &gt; 0) {
+                    currentPin = currentPin.slice(0, -1);
+                    updatePinDisplay();
+                }
+                
+                // Handle enter button
+                if (this.id === 'enter-button') {
+                    attemptLogin();
+                }
+            });
+        });
+        
+        // Update PIN display dots
+        function updatePinDisplay() {
+            for (let i = 0; i &lt; 4; i++) {
+                if (i &lt; currentPin.length) {
+                    pinDots[i].classList.remove('bg-gray-300');
+                    pinDots[i].classList.add('bg-brand-green');
+                } else {
+                    pinDots[i].classList.remove('bg-brand-green');
+                    pinDots[i].classList.add('bg-gray-300');
+                }
+            }
+        }
+        
+        // Login button handling
+        document.getElementById('login-button').addEventListener('click', attemptLogin);
+        
+        function attemptLogin() {
+            if (selectedUser &amp;&amp; currentPin.length === 4) {
+                // In a real application, you would validate the PIN here
+                alert('Login attempt with PIN: ' + currentPin);
+                // Reset PIN after login attempt
+                currentPin = '';
+                updatePinDisplay();
+            } else {
+                if (!selectedUser) {
+                    alert('Por favor, selecione um usuário');
+                } else if (currentPin.length !== 4) {
+                    alert('Por favor, digite um PIN de 4 dígitos');
+                }
+            }
+        }
+    </script>
+
+</body></html>
