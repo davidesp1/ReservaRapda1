@@ -376,9 +376,126 @@ const Settings: React.FC = () => {
             )}
 
             {activeTab === 2 && (
-              <div className="flex flex-col items-center justify-center h-56 text-gray-400">
-                <i className="mb-3 text-3xl fa-solid fa-gears"></i>
-                <span className="font-semibold">Configurações de Página<br /><span className="text-sm font-normal text-gray-400">(Em breve)</span></span>
+              <div>
+                <form id="page-settings-form" className="space-y-8" onSubmit={handleSaveSettings}>
+                  <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                    <div>
+                      <label htmlFor="page-title" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Título da Página</label>
+                      <input 
+                        id="page-title" 
+                        type="text" 
+                        className="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                        placeholder="Opa que delicia - Restaurante Brasileiro" 
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-4">
+                      <div>
+                        <label className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Insira a Logo</label>
+                        <div className="flex items-center space-x-4">
+                          <input 
+                            id="page-logo" 
+                            type="file" 
+                            accept="image/*" 
+                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:text-white hover:file:bg-green-700"
+                            style={{ 
+                              '--file-bg': '#002776'
+                            } as React.CSSProperties}
+                          />
+                          <img 
+                            id="logo-preview" 
+                            className="object-contain w-12 h-12 bg-gray-100 border rounded-md" 
+                            src="" 
+                            alt="" 
+                            style={{display: 'none'}} 
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Insira o Favicon</label>
+                        <div className="flex items-center space-x-4">
+                          <input 
+                            id="page-favicon" 
+                            type="file" 
+                            accept="image/*" 
+                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:text-white hover:file:bg-green-700"
+                            style={{ 
+                              '--file-bg': '#ffdf00',
+                              '--file-text': '#002776'
+                            } as React.CSSProperties}
+                          />
+                          <img 
+                            id="favicon-preview" 
+                            className="object-contain w-8 h-8 bg-gray-100 border rounded-md" 
+                            src="" 
+                            alt="" 
+                            style={{display: 'none'}} 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                    <div>
+                      <label htmlFor="nav-bar" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Barra de Navegação</label>
+                      <textarea 
+                        id="nav-bar" 
+                        rows={2} 
+                        className="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                        placeholder="Ex: Home, Cardápio, Reservas, Sobre, Contato"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="about-section" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Sobre</label>
+                      <textarea 
+                        id="about-section" 
+                        rows={2} 
+                        className="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                        placeholder="Descrição da história, missão, valores, equipe"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="location-contact" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Localização e Contato</label>
+                      <textarea 
+                        id="location-contact" 
+                        rows={2} 
+                        className="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                        placeholder="Endereço, telefone, email"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="testimonials" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Testemunhos</label>
+                      <textarea 
+                        id="testimonials" 
+                        rows={2} 
+                        className="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                        placeholder="Comentários de clientes, avaliações"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="col-span-2">
+                    <label htmlFor="footer" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Footer</label>
+                    <textarea 
+                      id="footer" 
+                      rows={2} 
+                      className="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50" 
+                      placeholder="Informações de copyright, links, redes sociais"
+                    />
+                  </div>
+                  
+                  <div className="flex justify-end pt-4">
+                    <button 
+                      type="submit" 
+                      className="flex items-center px-6 py-3 text-base font-bold text-white transition-colors rounded-lg shadow hover:bg-green-700 font-montserrat"
+                      style={{ backgroundColor: '#009c3b' }}
+                      disabled={isSubmitting}
+                    >
+                      <i className="mr-2 fa-solid fa-floppy-disk"></i>
+                      {isSubmitting ? 'Salvando...' : 'Salvar Configurações'}
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
 

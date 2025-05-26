@@ -1,0 +1,55 @@
+            <div id="tab-content-2" class="hidden tab-content">
+                <form id="page-settings-form" class="space-y-8">
+                    <div id="block-page-title-logo" class="grid grid-cols-1 gap-8 md:grid-cols-2">
+                        <div>
+                            <label for="page-title" class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Título da Página</label>
+                            <input id="page-title" type="text" class="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50" placeholder="Opa que delicia - Restaurante Brasileiro" />
+                        </div>
+                        <div class="flex flex-col space-y-4">
+                            <div>
+                                <label class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Insira a Logo</label>
+                                <div class="flex items-center space-x-4">
+                                    <input id="page-logo" type="file" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brazil-blue file:text-white hover:file:bg-brazil-green" />
+                                    <img id="logo-preview" class="object-contain w-12 h-12 bg-gray-100 border rounded-md" src="" alt="" style="display:none;" />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Insira o Favicon</label>
+                                <div class="flex items-center space-x-4">
+                                    <input id="page-favicon" type="file" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brazil-yellow file:text-brazil-blue hover:file:bg-brazil-green" />
+                                    <img id="favicon-preview" class="object-contain w-8 h-8 bg-gray-100 border rounded-md" src="" alt="" style="display:none;" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="block-nav-about" class="grid grid-cols-1 gap-8 md:grid-cols-2">
+                        <div>
+                            <label for="nav-bar" class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Barra de Navegação</label>
+                            <textarea id="nav-bar" rows="2" class="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50" placeholder="Ex: Home, Cardápio, Reservas, Sobre, Contato"></textarea>
+                        </div>
+                        <div>
+                            <label for="about-section" class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Sobre</label>
+                            <textarea id="about-section" rows="2" class="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50" placeholder="Descrição da história, missão, valores, equipe"></textarea>
+                        </div>
+                        <div>
+                            <label for="location-contact" class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Localização e Contato</label>
+                            <textarea id="location-contact" rows="2" class="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50" placeholder="Endereço, telefone, email"></textarea>
+                        </div>
+                        <div>
+                            <label for="testimonials" class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Testemunhos</label>
+                            <textarea id="testimonials" rows="2" class="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50" placeholder="Comentários de clientes, avaliações"></textarea>
+                        </div>
+                    </div>
+                    <div id="block-footer" class="col-span-2">
+                        <label for="footer" class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Footer</label>
+                        <textarea id="footer" rows="2" class="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50" placeholder="Informações de copyright, links, redes sociais"></textarea>
+                    </div>
+                    <div class="flex justify-end pt-4">
+                        <button type="submit" class="flex items-center px-6 py-3 text-base font-bold text-white transition-colors rounded-lg shadow bg-brazil-green hover:bg-green-700 font-montserrat">
+                            <i class="mr-2 fa-solid fa-floppy-disk"></i>
+                            Salvar Configurações
+                        </button>
+                    </div>
+                </form>
+            </div>
