@@ -1,1260 +1,932 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import AdminLayout from '@/components/layouts/AdminLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { POSSettingsContent } from '@/components/admin/Settings/POSSettingsSimple';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { z } from 'zod';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { Save, Globe, CreditCard, BellRing, Store, Calendar, Euro, Printer } from 'lucide-react';
+import { z } from 'zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { 
+  Building, 
+  Globe, 
+  CalendarCheck, 
+  CreditCard, 
+  Bell, 
+  DollarSign,
+  Save,
+  Lock
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
-// Configure schema for general settings
+// Schemas for different settings sections
 const generalSettingsSchema = z.object({
-  restaurantName: z.string().min(1, 'O nome do restaurante é obrigatório'),
-  address: z.string().min(1, 'O endereço é obrigatório'),
-  phone: z.string().min(1, 'O telefone é obrigatório'),
+  restaurantName: z.string().min(1, 'Nome do restaurante é obrigatório'),
   email: z.string().email('Email inválido'),
-  website: z.string().url('Website inválido').optional().or(z.literal('')),
-  openingTime: z.string().min(1, 'Horário de abertura obrigatório'),
-  closingTime: z.string().min(1, 'Horário de fechamento obrigatório'),
-  description: z.string().max(500, 'A descrição não pode ter mais de 500 caracteres').optional(),
+  phone: z.string().min(1, 'Telefone é obrigatório'),
+  website: z.string().url('URL inválida').optional().or(z.literal('')),
+  address: z.string().min(1, 'Endereço é obrigatório'),
+  openingTime: z.string().min(1, 'Horário de abertura é obrigatório'),
+  closingTime: z.string().min(1, 'Horário de fechamento é obrigatório'),
+  description: z.string().optional()
 });
 
-// Configure schema for reservation settings
+const pageSettingsSchema = z.object({
+  pageTitle: z.string().min(1, 'Título da página é obrigatório'),
+  navBar: z.string().optional(),
+  aboutSection: z.string().optional(),
+  locationContact: z.string().optional(),
+  testimonials: z.string().optional(),
+  footer: z.string().optional()
+});
+
 const reservationSettingsSchema = z.object({
-  minReservationTime: z.coerce.number().min(30, 'Mínimo de 30 minutos'),
-  maxReservationTime: z.coerce.number().min(60, 'Mínimo de 60 minutos'),
-  reservationTimeInterval: z.coerce.number().min(15, 'Mínimo de 15 minutos'),
-  maxPartySize: z.coerce.number().min(1, 'Mínimo de 1 pessoa'),
-  reservationLeadHours: z.coerce.number().min(1, 'Mínimo de 1 hora'),
-  maxAdvanceReservationDays: z.coerce.number().min(1, 'Mínimo de 1 dia'),
-  allowCustomersToCancel: z.boolean(),
+  minReservationTime: z.number().min(0, 'Tempo mínimo deve ser positivo'),
+  maxDaysInAdvance: z.number().min(1, 'Deve permitir pelo menos 1 dia de antecedência'),
+  allowCancellation: z.boolean(),
   requireConfirmation: z.boolean(),
-  autoConfirmReservations: z.boolean(),
+  autoConfirmation: z.boolean()
 });
 
-// Configure schema for payment settings
 const paymentSettingsSchema = z.object({
-  currency: z.string().min(1, 'Moeda obrigatória'),
+  currency: z.string().min(1, 'Moeda é obrigatória'),
+  taxRate: z.number().min(0, 'Taxa de imposto deve ser positiva'),
+  eupagoApiKey: z.string().optional(),
   acceptCard: z.boolean(),
-  acceptCash: z.boolean(),
   acceptMBWay: z.boolean(),
   acceptMultibanco: z.boolean(),
   acceptBankTransfer: z.boolean(),
-  acceptMultibancoTPA: z.boolean(),
-  requirePrepayment: z.boolean(),
-  requirePrepaymentAmount: z.coerce.number().min(0, 'Valor não pode ser negativo'),
-  showPricesWithTax: z.boolean(),
-  taxRate: z.coerce.number().min(0, 'Taxa não pode ser negativa'),
-  eupagoApiKey: z.string().optional(),
+  acceptCash: z.boolean()
 });
 
-// Configure schema for notification settings
-const notificationSettingsSchema = z.object({
-  sendEmailConfirmation: z.boolean(),
-  sendSmsConfirmation: z.boolean(),
-  sendEmailReminders: z.boolean(),
-  sendSmsReminders: z.boolean(),
-  reminderHoursBeforeReservation: z.coerce.number().min(1, 'Mínimo de 1 hora'),
-  allowCustomerFeedback: z.boolean(),
-  collectCustomerFeedback: z.boolean(),
-});
+type GeneralSettings = z.infer<typeof generalSettingsSchema>;
+type PageSettings = z.infer<typeof pageSettingsSchema>;
+type ReservationSettings = z.infer<typeof reservationSettingsSchema>;
+type PaymentSettings = z.infer<typeof paymentSettingsSchema>;
 
-const Settings: React.FC = () => {
-  const { t } = useTranslation();
-  const { isAuthenticated, isAdmin, isLoading } = useAuth();
-  const [_, setLocation] = useLocation();
+const Settings = () => {
+  const [activeTab, setActiveTab] = useState(1);
   const { toast } = useToast();
-  
-  // Tab handling
-  const [activeTab, setActiveTab] = useState('general');
+  const queryClient = useQueryClient();
 
-  // General settings form
-  const generalForm = useForm<z.infer<typeof generalSettingsSchema>>({
+  // Forms for different tabs
+  const generalForm = useForm<GeneralSettings>({
     resolver: zodResolver(generalSettingsSchema),
     defaultValues: {
-      restaurantName: 'Opa que delicia',
-      address: 'MSBN Europe Convention Center, Barcelona',
-      phone: '+34 612 345 678',
-      email: 'contact@opaquedelicia.com',
-      website: 'https://opaquedelicia.com',
-      openingTime: '11:00',
-      closingTime: '23:00',
-      description: 'Autêntica comida brasileira durante a convenção MSBN Europe',
-    },
+      restaurantName: '',
+      email: '',
+      phone: '',
+      website: '',
+      address: '',
+      openingTime: '',
+      closingTime: '',
+      description: ''
+    }
   });
 
-  // Reservation settings form
-  const reservationForm = useForm<z.infer<typeof reservationSettingsSchema>>({
+  const pageForm = useForm<PageSettings>({
+    resolver: zodResolver(pageSettingsSchema),
+    defaultValues: {
+      pageTitle: '',
+      navBar: '',
+      aboutSection: '',
+      locationContact: '',
+      testimonials: '',
+      footer: ''
+    }
+  });
+
+  const reservationForm = useForm<ReservationSettings>({
     resolver: zodResolver(reservationSettingsSchema),
     defaultValues: {
-      minReservationTime: 60,
-      maxReservationTime: 180,
-      reservationTimeInterval: 30,
-      maxPartySize: 12,
-      reservationLeadHours: 2,
-      maxAdvanceReservationDays: 30,
-      allowCustomersToCancel: true,
-      requireConfirmation: true,
-      autoConfirmReservations: false,
-    },
+      minReservationTime: 30,
+      maxDaysInAdvance: 30,
+      allowCancellation: true,
+      requireConfirmation: false,
+      autoConfirmation: true
+    }
   });
 
-  // Payment settings form
-  const paymentForm = useForm<z.infer<typeof paymentSettingsSchema>>({
+  const paymentForm = useForm<PaymentSettings>({
     resolver: zodResolver(paymentSettingsSchema),
     defaultValues: {
       currency: 'EUR',
+      taxRate: 23,
+      eupagoApiKey: '',
       acceptCard: true,
-      acceptCash: true,
       acceptMBWay: true,
       acceptMultibanco: true,
       acceptBankTransfer: true,
-      acceptMultibancoTPA: true,
-      requirePrepayment: false,
-      requirePrepaymentAmount: 0,
-      showPricesWithTax: true,
-      taxRate: 23,
-      eupagoApiKey: '',
-    },
-  });
-  
-  // Log para depuração
-  const onPaymentFormChange = () => {
-    console.log("Formulário de pagamento atualizado:", paymentForm.getValues());
-  };
-  
-  useEffect(() => {
-    const subscription = paymentForm.watch(onPaymentFormChange);
-    return () => subscription.unsubscribe();
-  }, [paymentForm]);
-
-  // Notification settings form
-  const notificationForm = useForm<z.infer<typeof notificationSettingsSchema>>({
-    resolver: zodResolver(notificationSettingsSchema),
-    defaultValues: {
-      sendEmailConfirmation: true,
-      sendSmsConfirmation: false,
-      sendEmailReminders: true,
-      sendSmsReminders: false,
-      reminderHoursBeforeReservation: 24,
-      allowCustomerFeedback: true,
-      collectCustomerFeedback: true,
-    },
+      acceptCash: true
+    }
   });
 
-  // Fetch settings data
-  const { data: settings, isLoading: settingsLoading } = useQuery({
+  // Query to fetch current settings
+  const { data: settings } = useQuery({
     queryKey: ['/api/settings'],
-    enabled: isAuthenticated && isAdmin
+    staleTime: 5 * 60 * 1000
   });
-  
-  // Definir o tipo correto para o objeto de configurações
-  interface SettingsType {
-    payments?: Record<string, string>;
-    general?: Record<string, string>;
-    reservations?: Record<string, string>;
-    notifications?: Record<string, string>;
-  }
 
-  // Atualizar formulários quando os dados são carregados
+  // Mutations for saving settings
+  const saveGeneralSettings = useMutation({
+    mutationFn: (data: GeneralSettings) => 
+      fetch('/api/settings/general', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      }).then(res => res.json()),
+    onSuccess: () => {
+      toast({
+        title: 'Sucesso',
+        description: 'Configurações gerais salvas com sucesso!'
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+    },
+    onError: () => {
+      toast({
+        title: 'Erro',
+        description: 'Erro ao salvar configurações gerais',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  const savePageSettings = useMutation({
+    mutationFn: (data: PageSettings) => 
+      fetch('/api/settings/page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      }).then(res => res.json()),
+    onSuccess: () => {
+      toast({
+        title: 'Sucesso',
+        description: 'Configurações de página salvas com sucesso!'
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+    },
+    onError: () => {
+      toast({
+        title: 'Erro',
+        description: 'Erro ao salvar configurações de página',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  const saveReservationSettings = useMutation({
+    mutationFn: (data: ReservationSettings) => 
+      fetch('/api/settings/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      }).then(res => res.json()),
+    onSuccess: () => {
+      toast({
+        title: 'Sucesso',
+        description: 'Configurações de reservas salvas com sucesso!'
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+    },
+    onError: () => {
+      toast({
+        title: 'Erro',
+        description: 'Erro ao salvar configurações de reservas',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  const savePaymentSettings = useMutation({
+    mutationFn: (data: PaymentSettings) => apiRequest('/api/settings/payments', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+    onSuccess: () => {
+      toast({
+        title: 'Sucesso',
+        description: 'Configurações de pagamento salvas com sucesso!'
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+    },
+    onError: () => {
+      toast({
+        title: 'Erro',
+        description: 'Erro ao salvar configurações de pagamento',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Tab configuration
+  const tabs = [
+    { id: 1, label: 'Configurações Gerais', icon: Building, color: 'text-brasil-green' },
+    { id: 2, label: 'Configurações de Página', icon: Globe, color: 'text-brasil-yellow' },
+    { id: 3, label: 'Configurações de Reservas', icon: CalendarCheck, color: 'text-brasil-blue' },
+    { id: 4, label: 'Configurações de Pagamento', icon: CreditCard, color: 'text-brasil-green' },
+    { id: 5, label: 'Configuração de Notificações', icon: Bell, color: 'text-brasil-yellow' },
+    { id: 6, label: 'Configurações POS', icon: DollarSign, color: 'text-brasil-blue' }
+  ];
+
+  // Update forms when settings are loaded
   useEffect(() => {
     if (settings) {
-      console.log("Configurações carregadas do servidor:", settings);
-      
-      const typedSettings = settings as SettingsType;
-      
-      // Atualizar formulário de pagamentos
-      if (typedSettings.payments) {
-        // Converter strings "true"/"false" para boolean
-        const paymentSettings = Object.entries(typedSettings.payments).reduce((acc, [key, value]) => {
-          if (value === 'true') acc[key] = true;
-          else if (value === 'false') acc[key] = false;
-          else acc[key] = value;
-          return acc;
-        }, {} as Record<string, any>);
-        
-        console.log("Configurações de pagamento formatadas:", paymentSettings);
-        paymentForm.reset(paymentSettings);
+      // Update forms with existing settings
+      if (settings.general) {
+        generalForm.reset(settings.general);
       }
-      
-      // Atualizar outros formulários
-      if (typedSettings.general) {
-        generalForm.reset(typedSettings.general as Record<string, any>);
+      if (settings.page) {
+        pageForm.reset(settings.page);
       }
-      
-      if (typedSettings.reservations) {
-        reservationForm.reset(typedSettings.reservations as Record<string, any>);
+      if (settings.reservations) {
+        reservationForm.reset(settings.reservations);
       }
-      
-      if (typedSettings.notifications) {
-        notificationForm.reset(typedSettings.notifications as Record<string, any>);
+      if (settings.payments) {
+        paymentForm.reset(settings.payments);
       }
     }
-  }, [settings, generalForm, reservationForm, paymentForm, notificationForm]);
+  }, [settings, generalForm, pageForm, reservationForm, paymentForm]);
 
-  // Update general settings mutation
-  const updateGeneralSettingsMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof generalSettingsSchema>) => {
-      return apiRequest('PUT', '/api/settings/general', data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
-      toast({
-        title: t('SettingsSaved'),
-        description: t('GeneralSettingsSavedDescription'),
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: t('SettingsSaveError'),
-        description: error.message || t('SettingsSaveErrorDescription'),
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Update reservation settings mutation
-  const updateReservationSettingsMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof reservationSettingsSchema>) => {
-      return apiRequest('PUT', '/api/settings/reservations', data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
-      toast({
-        title: t('SettingsSaved'),
-        description: t('ReservationSettingsSavedDescription'),
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: t('SettingsSaveError'),
-        description: error.message || t('SettingsSaveErrorDescription'),
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Update payment settings mutation
-  const updatePaymentSettingsMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof paymentSettingsSchema>) => {
-      return apiRequest('PUT', '/api/settings/payments', data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
-      toast({
-        title: t('SettingsSaved'),
-        description: t('PaymentSettingsSavedDescription'),
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: t('SettingsSaveError'),
-        description: error.message || t('SettingsSaveErrorDescription'),
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Update notification settings mutation
-  const updateNotificationSettingsMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof notificationSettingsSchema>) => {
-      return apiRequest('PUT', '/api/settings/notifications', data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
-      toast({
-        title: t('SettingsSaved'),
-        description: t('NotificationSettingsSavedDescription'),
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: t('SettingsSaveError'),
-        description: error.message || t('SettingsSaveErrorDescription'),
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Redirect if not authenticated or not admin
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !isAdmin)) {
-      setLocation('/');
-    }
-  }, [isAuthenticated, isAdmin, isLoading, setLocation]);
-
-  // Submit handlers
-  const onGeneralSubmit = (data: z.infer<typeof generalSettingsSchema>) => {
-    updateGeneralSettingsMutation.mutate(data);
+  const onSubmitGeneral = (data: GeneralSettings) => {
+    saveGeneralSettings.mutate(data);
   };
 
-  const onReservationSubmit = (data: z.infer<typeof reservationSettingsSchema>) => {
-    updateReservationSettingsMutation.mutate(data);
+  const onSubmitPage = (data: PageSettings) => {
+    savePageSettings.mutate(data);
   };
 
-  const onPaymentSubmit = (data: z.infer<typeof paymentSettingsSchema>) => {
-    console.log("Enviando configurações de pagamento:", data);
-    // Garantir que os valores booleanos sejam enviados corretamente
-    const paymentSettings = {
-      ...data,
-      acceptCard: Boolean(data.acceptCard),
-      acceptMBWay: Boolean(data.acceptMBWay),
-      acceptMultibanco: Boolean(data.acceptMultibanco),
-      acceptBankTransfer: Boolean(data.acceptBankTransfer),
-      acceptCash: Boolean(data.acceptCash),
-      acceptMultibancoTPA: Boolean(data.acceptMultibancoTPA),
-      requirePrepayment: Boolean(data.requirePrepayment),
-      showPricesWithTax: Boolean(data.showPricesWithTax)
-    };
-    console.log("Configurações de pagamento formatadas para envio:", paymentSettings);
-    updatePaymentSettingsMutation.mutate(paymentSettings);
+  const onSubmitReservation = (data: ReservationSettings) => {
+    saveReservationSettings.mutate(data);
   };
 
-  const onNotificationSubmit = (data: z.infer<typeof notificationSettingsSchema>) => {
-    updateNotificationSettingsMutation.mutate(data);
+  const onSubmitPayment = (data: PaymentSettings) => {
+    savePaymentSettings.mutate(data);
   };
-
-  if (settingsLoading || isLoading) {
-    return (
-      <AdminLayout title={t('Settings')}>
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-96 bg-gray-200 rounded"></div>
-        </div>
-      </AdminLayout>
-    );
-  }
 
   return (
-    <AdminLayout title={t('Settings')}>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-montserrat font-bold">{t('Settings')}</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-800 font-montserrat">Configurações</h1>
+        <p className="text-gray-600 mt-1">Gerencie as configurações do seu restaurante</p>
       </div>
 
-      <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-5 w-full mb-8">
-          <TabsTrigger value="general" className="flex items-center">
-            <Store className="w-4 h-4 mr-2" /> {t('GeneralSettings')}
-          </TabsTrigger>
-          <TabsTrigger value="reservations" className="flex items-center">
-            <Calendar className="w-4 h-4 mr-2" /> {t('ReservationSettings')}
-          </TabsTrigger>
-          <TabsTrigger value="payments" className="flex items-center">
-            <CreditCard className="w-4 h-4 mr-2" /> {t('PaymentSettings')}
-          </TabsTrigger>
-          <TabsTrigger value="pos" className="flex items-center">
-            <Printer className="w-4 h-4 mr-2" /> POS
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center">
-            <BellRing className="w-4 h-4 mr-2" /> {t('NotificationSettings')}
-          </TabsTrigger>
-        </TabsList>
+      <div className="bg-white rounded-xl shadow-md p-6 sm:p-8">
+        {/* Tabs Navigation */}
+        <div className="flex flex-wrap gap-2 mb-8 border-b border-gray-200 overflow-x-auto">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center px-4 py-3 font-semibold text-sm whitespace-nowrap rounded-t-md border-b-4 transition-all ${
+                  activeTab === tab.id
+                    ? 'text-brasil-blue border-brasil-blue bg-gray-50'
+                    : 'text-gray-600 border-transparent hover:text-brasil-blue hover:bg-gray-50'
+                }`}
+              >
+                <Icon className={`w-4 h-4 mr-2 ${tab.color}`} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
 
-        {/* General Settings */}
-        <TabsContent value="general">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('GeneralSettings')}</CardTitle>
-              <CardDescription>{t('GeneralSettingsDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...generalForm}>
-                <form onSubmit={generalForm.handleSubmit(onGeneralSubmit)} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={generalForm.control}
-                      name="restaurantName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('RestaurantName')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+        {/* Tab Content */}
+        {activeTab === 1 && (
+          <Form {...generalForm}>
+            <form onSubmit={generalForm.handleSubmit(onSubmitGeneral)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={generalForm.control}
+                  name="restaurantName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Nome do Restaurante</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Opa que delicia"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={generalForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('Email')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="email" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={generalForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Email</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="email"
+                          placeholder="contato@opaquedelicia.com"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={generalForm.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('Phone')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={generalForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Telefone</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="(11) 98765-4321"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={generalForm.control}
-                      name="website"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('Website')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={generalForm.control}
+                  name="website"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Website</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="url"
+                          placeholder="https://opaquedelicia.com"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={generalForm.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem className="col-span-1 md:col-span-2">
-                          <FormLabel>{t('Address')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                <FormField
+                  control={generalForm.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="font-semibold text-gray-700">Endereço</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Rua da Gastronomia, 123 - São Paulo, SP"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={generalForm.control}
-                      name="openingTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('OpeningTime')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="time" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={generalForm.control}
+                  name="openingTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Horário de Abertura</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="time"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={generalForm.control}
-                      name="closingTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('ClosingTime')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="time" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                <FormField
+                  control={generalForm.control}
+                  name="closingTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Horário de Fechamento</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="time"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <FormField
-                    control={generalForm.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('Description')}</FormLabel>
+                <FormField
+                  control={generalForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="font-semibold text-gray-700">Descrição</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          rows={3}
+                          placeholder="Conte um pouco sobre o restaurante, especialidades, história, etc."
+                          className="bg-gray-50 font-semibold resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button 
+                  type="submit" 
+                  className="bg-brasil-green hover:bg-green-700 text-white font-bold"
+                  disabled={saveGeneralSettings.isPending}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {saveGeneralSettings.isPending ? 'Salvando...' : 'Salvar Configurações'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
+
+        {activeTab === 2 && (
+          <Form {...pageForm}>
+            <form onSubmit={pageForm.handleSubmit(onSubmitPage)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={pageForm.control}
+                  name="pageTitle"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Título da Página</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Opa que delicia - Restaurante Brasileiro"
+                          className="bg-gray-50 font-semibold"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={pageForm.control}
+                  name="navBar"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Barra de Navegação</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          rows={2}
+                          placeholder="Ex: Home, Cardápio, Reservas, Sobre, Contato"
+                          className="bg-gray-50 font-semibold resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={pageForm.control}
+                  name="aboutSection"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Sobre</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          rows={2}
+                          placeholder="Descrição da história, missão, valores, equipe"
+                          className="bg-gray-50 font-semibold resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={pageForm.control}
+                  name="locationContact"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Localização e Contato</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          rows={2}
+                          placeholder="Endereço, telefone, email"
+                          className="bg-gray-50 font-semibold resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={pageForm.control}
+                  name="testimonials"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Testemunhos</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          rows={2}
+                          placeholder="Comentários de clientes, avaliações"
+                          className="bg-gray-50 font-semibold resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={pageForm.control}
+                  name="footer"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="font-semibold text-gray-700">Footer</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          rows={2}
+                          placeholder="Informações de copyright, links, redes sociais"
+                          className="bg-gray-50 font-semibold resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button 
+                  type="submit" 
+                  className="bg-brasil-green hover:bg-green-700 text-white font-bold"
+                  disabled={savePageSettings.isPending}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {savePageSettings.isPending ? 'Salvando...' : 'Salvar Configurações'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
+
+        {activeTab === 3 && (
+          <Form {...reservationForm}>
+            <form onSubmit={reservationForm.handleSubmit(onSubmitReservation)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={reservationForm.control}
+                  name="minReservationTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Tempo mínimo para reserva (min)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="number"
+                          min="0"
+                          placeholder="30"
+                          className="bg-gray-50 font-semibold"
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={reservationForm.control}
+                  name="maxDaysInAdvance"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Dias de reserva máxima antecipada</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="number"
+                          min="1"
+                          placeholder="30"
+                          className="bg-gray-50 font-semibold"
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField
+                  control={reservationForm.control}
+                  name="allowCancellation"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="data-[state=checked]:bg-brasil-green"
+                        />
+                      </FormControl>
+                      <FormLabel className="font-semibold text-gray-700">
+                        Permitir que os clientes cancelem
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={reservationForm.control}
+                  name="requireConfirmation"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="data-[state=checked]:bg-brasil-yellow"
+                        />
+                      </FormControl>
+                      <FormLabel className="font-semibold text-gray-700">
+                        Requer confirmação
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={reservationForm.control}
+                  name="autoConfirmation"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="data-[state=checked]:bg-brasil-blue"
+                        />
+                      </FormControl>
+                      <FormLabel className="font-semibold text-gray-700">
+                        Confirmação automática da reserva
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button 
+                  type="submit" 
+                  className="bg-brasil-green hover:bg-green-700 text-white font-bold"
+                  disabled={saveReservationSettings.isPending}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {saveReservationSettings.isPending ? 'Salvando...' : 'Salvar Configurações'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
+
+        {activeTab === 4 && (
+          <Form {...paymentForm}>
+            <form onSubmit={paymentForm.handleSubmit(onSubmitPayment)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={paymentForm.control}
+                  name="currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Moeda do Sistema</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <Textarea 
-                            {...field} 
-                            rows={4}
-                            placeholder={t('RestaurantDescriptionPlaceholder')} 
+                          <SelectTrigger className="bg-gray-50 font-semibold">
+                            <SelectValue placeholder="Selecione a moeda" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="BRL">Real Brasileiro (BRL)</SelectItem>
+                          <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                          <SelectItem value="USD">Dólar Americano (USD)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={paymentForm.control}
+                  name="taxRate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-gray-700">Taxa de Impostos (%)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="23.0"
+                          className="bg-gray-50 font-semibold"
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="bg-brasil-yellow/20 border-l-4 border-brasil-yellow px-4 py-3 rounded-lg flex items-center">
+                <Lock className="text-brasil-yellow mr-3 text-lg w-5 h-5" />
+                <span className="text-sm font-semibold text-brasil-yellow">
+                  Chave de API para o serviço de pagamento EuPago. Esta informação é sensível e deve ser mantida segura.
+                </span>
+              </div>
+
+              <FormField
+                control={paymentForm.control}
+                name="eupagoApiKey"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-semibold text-gray-700">Chave API do EuPago</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        type="password"
+                        placeholder="Insira sua chave API"
+                        className="bg-gray-50 font-semibold"
+                      />
+                    </FormControl>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Requer chave API do EuPago para ativação para métodos de pagamento online
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div>
+                <FormLabel className="font-semibold text-gray-700 mb-4 block">Métodos de Pagamento</FormLabel>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={paymentForm.control}
+                    name="acceptCard"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-brasil-green"
                           />
                         </FormControl>
-                        <FormDescription>
-                          {t('DescriptionHelp')}
-                        </FormDescription>
-                        <FormMessage />
+                        <FormLabel className="text-sm text-gray-700">
+                          Cartão de Crédito/Débito
+                        </FormLabel>
                       </FormItem>
                     )}
                   />
 
-                  <div className="flex justify-end">
-                    <Button 
-                      type="submit" 
-                      className="bg-brasil-green text-white"
-                    >
-                      <Save className="w-4 h-4 mr-2" /> {t('SaveSettings')}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Reservation Settings */}
-        <TabsContent value="reservations">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('ReservationSettings')}</CardTitle>
-              <CardDescription>{t('ReservationSettingsDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...reservationForm}>
-                <form onSubmit={reservationForm.handleSubmit(onReservationSubmit)} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={reservationForm.control}
-                      name="minReservationTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('MinReservationTime')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" min="30" step="15" />
-                          </FormControl>
-                          <FormDescription>
-                            {t('MinutesValue')}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={reservationForm.control}
-                      name="maxReservationTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('MaxReservationTime')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" min="60" step="15" />
-                          </FormControl>
-                          <FormDescription>
-                            {t('MinutesValue')}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={reservationForm.control}
-                      name="reservationTimeInterval"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('ReservationTimeInterval')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" min="15" step="15" />
-                          </FormControl>
-                          <FormDescription>
-                            {t('MinutesValue')}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={reservationForm.control}
-                      name="maxPartySize"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('MaxPartySize')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" min="1" />
-                          </FormControl>
-                          <FormDescription>
-                            {t('PeopleValue')}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={reservationForm.control}
-                      name="reservationLeadHours"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('ReservationLeadHours')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" min="1" />
-                          </FormControl>
-                          <FormDescription>
-                            {t('HoursValue')}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={reservationForm.control}
-                      name="maxAdvanceReservationDays"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('MaxAdvanceReservationDays')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" min="1" />
-                          </FormControl>
-                          <FormDescription>
-                            {t('DaysValue')}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <Separator className="my-6" />
-
-                  <div className="space-y-4">
-                    <FormField
-                      control={reservationForm.control}
-                      name="allowCustomersToCancel"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('AllowCustomersToCancel')}</FormLabel>
-                            <FormDescription>
-                              {t('AllowCustomersToCancelDescription')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={reservationForm.control}
-                      name="requireConfirmation"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('RequireConfirmation')}</FormLabel>
-                            <FormDescription>
-                              {t('RequireConfirmationDescription')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={reservationForm.control}
-                      name="autoConfirmReservations"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('AutoConfirmReservations')}</FormLabel>
-                            <FormDescription>
-                              {t('AutoConfirmReservationsDescription')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button 
-                      type="submit" 
-                      className="bg-brasil-green text-white"
-                    >
-                      <Save className="w-4 h-4 mr-2" /> {t('SaveSettings')}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Payment Settings */}
-        <TabsContent value="payments">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('PaymentSettings')}</CardTitle>
-              <CardDescription>{t('PaymentSettingsDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...paymentForm}>
-                <form onSubmit={paymentForm.handleSubmit(onPaymentSubmit)} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={paymentForm.control}
-                      name="currency"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('Currency')}</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder={t('SelectCurrency')} />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="EUR">Euro (€)</SelectItem>
-                              <SelectItem value="USD">US Dollar ($)</SelectItem>
-                              <SelectItem value="GBP">British Pound (£)</SelectItem>
-                              <SelectItem value="BRL">Real Brasileiro (R$)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={paymentForm.control}
-                      name="taxRate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('TaxRate')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" min="0" step="0.01" />
-                          </FormControl>
-                          <FormDescription>
-                            {t('PercentageValue')}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <Separator className="my-6" />
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium mt-6">{t('PaymentGatewaySettings')}</h3>
-                    
-                    <div className="p-6 border rounded-md bg-slate-50 mt-2 mb-6">
-                      <FormField
-                        control={paymentForm.control}
-                        name="eupagoApiKey"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-lg font-semibold">{t('EuPagoAPIKey')}</FormLabel>
-                            <FormDescription className="mb-2">
-                              {t('EuPagoAPIKeyDescription')}
-                            </FormDescription>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                type="password" 
-                                className="font-mono" 
-                                onChange={(e) => {
-                                  // Atualizar o valor da chave API
-                                  field.onChange(e);
-                                  
-                                  // Se a chave API for removida, desabilite os métodos de pagamento
-                                  const apiValue = e.target.value;
-                                  if (!apiValue || apiValue.trim() === '') {
-                                    // Desabilitar automaticamente os métodos que dependem da API
-                                    paymentForm.setValue('acceptCard', false);
-                                    paymentForm.setValue('acceptMBWay', false);
-                                    paymentForm.setValue('acceptMultibanco', false);
-                                  }
-                                }}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                            {!field.value || field.value.trim() === '' ? (
-                              <p className="text-sm mt-2 text-amber-600">
-                                {t('RequiresEuPagoAPIKey')} para métodos de pagamento online
-                              </p>
-                            ) : null}
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <h3 className="text-lg font-medium">{t('PaymentMethods')}</h3>
-                    
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
-                      <div className="flex">
-                        <div className="flex-shrink-0">
-                          <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div className="ml-3">
-                          <h3 className="text-sm font-medium text-yellow-800">{t('ImportantNote')}</h3>
-                          <div className="mt-2 text-sm text-yellow-700">
-                            <p>{t('CashPaymentVisibleOnlyToAdmin')}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-4 grid gap-4">
-                      <FormField
-                        control={paymentForm.control}
-                        name="acceptCard"
-                        render={({ field }) => {
-                          // Verificar se tem uma API key
-                          const apiKey = paymentForm.watch('eupagoApiKey') || '';
-                          const hasApiKey = apiKey.trim().length > 0;
-                          
-                          return (
-                            <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                              <div className="space-y-0.5">
-                                <FormLabel>{t('AcceptCard')}</FormLabel>
-                                <FormDescription>
-                                  {t('ProcessedByEuPago')}
-                                </FormDescription>
-                                {!hasApiKey && (
-                                  <p className="text-xs text-red-600">{t('RequiresEuPagoAPIKey')}</p>
-                                )}
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={hasApiKey ? field.value : false}
-                                  onCheckedChange={field.onChange}
-                                  disabled={!hasApiKey}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          );
-                        }}
-                      />
-
-                      <FormField
-                        control={paymentForm.control}
-                        name="acceptMBWay"
-                        render={({ field }) => {
-                          // Verificar se tem uma API key
-                          const apiKey = paymentForm.watch('eupagoApiKey') || '';
-                          const hasApiKey = apiKey.trim().length > 0;
-                          
-                          return (
-                            <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                              <div className="space-y-0.5">
-                                <FormLabel>{t('AcceptMBWay')}</FormLabel>
-                                <FormDescription>
-                                  {t('ProcessedByEuPago')}
-                                </FormDescription>
-                                {!hasApiKey && (
-                                  <p className="text-xs text-red-600">{t('RequiresEuPagoAPIKey')}</p>
-                                )}
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={hasApiKey ? field.value : false}
-                                  onCheckedChange={field.onChange}
-                                  disabled={!hasApiKey}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          );
-                        }}
-                      />
-                      
-                      <FormField
-                        control={paymentForm.control}
-                        name="acceptMultibanco"
-                        render={({ field }) => {
-                          // Verificar se tem uma API key
-                          const apiKey = paymentForm.watch('eupagoApiKey') || '';
-                          const hasApiKey = apiKey.trim().length > 0;
-                          
-                          return (
-                            <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                              <div className="space-y-0.5">
-                                <FormLabel>{t('AcceptMultibanco')}</FormLabel>
-                                <FormDescription>
-                                  {t('ProcessedByEuPago')}
-                                </FormDescription>
-                                {!hasApiKey && (
-                                  <p className="text-xs text-red-600">{t('RequiresEuPagoAPIKey')}</p>
-                                )}
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={hasApiKey ? field.value : false}
-                                  onCheckedChange={field.onChange}
-                                  disabled={!hasApiKey}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          );
-                        }}
-                      />
-                      
-                      <FormField
-                        control={paymentForm.control}
-                        name="acceptBankTransfer"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                            <div className="space-y-0.5">
-                              <FormLabel>{t('AcceptBankTransfer')}</FormLabel>
-                              <FormDescription>
-                                {t('ManualVerification')}
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={paymentForm.control}
-                        name="acceptCash"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                            <div className="space-y-0.5">
-                              <FormLabel>{t('AcceptCash')}</FormLabel>
-                              <FormDescription>
-                                {t('PaidAtRestaurant')}
-                              </FormDescription>
-                              <p className="text-xs text-amber-600">{t('OnlyVisibleToAdmin')}</p>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={paymentForm.control}
-                        name="acceptMultibancoTPA"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                            <div className="space-y-0.5">
-                              <FormLabel>Multibancoqq (TPA)</FormLabel>
-                              <FormDescription>
-                                Terminal de pagamento automático físico
-                              </FormDescription>
-                              <p className="text-xs text-amber-600">{t('OnlyVisibleToAdmin')}</p>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-
-                    </div>
-                  </div>
-
-                  <Separator className="my-6" />
-
-                  <div className="space-y-4">
-                    <FormField
-                      control={paymentForm.control}
-                      name="requirePrepayment"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('RequirePrepayment')}</FormLabel>
-                            <FormDescription>
-                              {t('RequirePrepaymentDescription')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    {paymentForm.watch('requirePrepayment') && (
-                      <FormField
-                        control={paymentForm.control}
-                        name="requirePrepaymentAmount"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('PrepaymentAmount')}</FormLabel>
-                            <FormControl>
-                              <Input {...field} type="number" min="0" step="0.01" />
-                            </FormControl>
-                            <FormDescription>
-                              {t('AmountValue')}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  <FormField
+                    control={paymentForm.control}
+                    name="acceptMBWay"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-brasil-yellow"
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm text-gray-700">
+                          MBWay
+                        </FormLabel>
+                      </FormItem>
                     )}
+                  />
 
-                    <FormField
-                      control={paymentForm.control}
-                      name="showPricesWithTax"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('ShowPricesWithTax')}</FormLabel>
-                            <FormDescription>
-                              {t('ShowPricesWithTaxDescription')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button 
-                      type="submit" 
-                      className="bg-brasil-green text-white"
-                    >
-                      <Save className="w-4 h-4 mr-2" /> {t('SaveSettings')}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* POS Settings */}
-        <TabsContent value="pos">
-          <POSSettingsContent />
-        </TabsContent>
-
-        {/* Notification Settings */}
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('NotificationSettings')}</CardTitle>
-              <CardDescription>{t('NotificationSettingsDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...notificationForm}>
-                <form onSubmit={notificationForm.handleSubmit(onNotificationSubmit)} className="space-y-6">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">{t('Confirmations')}</h3>
-                    
-                    <FormField
-                      control={notificationForm.control}
-                      name="sendEmailConfirmation"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('SendEmailConfirmation')}</FormLabel>
-                            <FormDescription>
-                              {t('SendEmailConfirmationDescription')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={notificationForm.control}
-                      name="sendSmsConfirmation"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('SendSmsConfirmation')}</FormLabel>
-                            <FormDescription>
-                              {t('SendSmsConfirmationDescription')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <Separator className="my-6" />
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">{t('Reminders')}</h3>
-                    
-                    <FormField
-                      control={notificationForm.control}
-                      name="sendEmailReminders"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('SendEmailReminders')}</FormLabel>
-                            <FormDescription>
-                              {t('SendEmailRemindersDescription')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={notificationForm.control}
-                      name="sendSmsReminders"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('SendSmsReminders')}</FormLabel>
-                            <FormDescription>
-                              {t('SendSmsRemindersDescription')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    {(notificationForm.watch('sendEmailReminders') || notificationForm.watch('sendSmsReminders')) && (
-                      <FormField
-                        control={notificationForm.control}
-                        name="reminderHoursBeforeReservation"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('ReminderHoursBeforeReservation')}</FormLabel>
-                            <FormControl>
-                              <Input {...field} type="number" min="1" />
-                            </FormControl>
-                            <FormDescription>
-                              {t('HoursValue')}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  <FormField
+                    control={paymentForm.control}
+                    name="acceptMultibanco"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-brasil-blue"
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm text-gray-700">
+                          Multibanco
+                        </FormLabel>
+                      </FormItem>
                     )}
-                  </div>
+                  />
 
-                  <Separator className="my-6" />
+                  <FormField
+                    control={paymentForm.control}
+                    name="acceptBankTransfer"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-brasil-green"
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm text-gray-700">
+                          Transferência Bancária
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
 
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">{t('Feedback')}</h3>
-                    
-                    <FormField
-                      control={notificationForm.control}
-                      name="allowCustomerFeedback"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('AllowCustomerFeedback')}</FormLabel>
-                            <FormDescription>
-                              {t('AllowCustomerFeedbackDescription')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+                  <FormField
+                    control={paymentForm.control}
+                    name="acceptCash"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-brasil-yellow"
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm text-gray-700">
+                          Dinheiro
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
-                    <FormField
-                      control={notificationForm.control}
-                      name="collectCustomerFeedback"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg">
-                          <div className="space-y-0.5">
-                            <FormLabel>{t('CollectCustomerFeedback')}</FormLabel>
-                            <FormDescription>
-                              {t('CollectCustomerFeedbackDescription')}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+              <div className="flex justify-end pt-4">
+                <Button 
+                  type="submit" 
+                  className="bg-brasil-green hover:bg-green-700 text-white font-bold"
+                  disabled={savePaymentSettings.isPending}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {savePaymentSettings.isPending ? 'Salvando...' : 'Salvar Configurações'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
 
-                  <div className="flex justify-end">
-                    <Button 
-                      type="submit" 
-                      className="bg-brasil-green text-white"
-                    >
-                      <Save className="w-4 h-4 mr-2" /> {t('SaveSettings')}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </AdminLayout>
+        {activeTab === 5 && (
+          <div className="text-center py-16">
+            <Bell className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Configurações de Notificações</h3>
+            <p className="text-gray-500">Esta seção estará disponível em breve.</p>
+          </div>
+        )}
+
+        {activeTab === 6 && (
+          <div className="text-center py-16">
+            <DollarSign className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Configurações POS</h3>
+            <p className="text-gray-500">Esta seção estará disponível em breve.</p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

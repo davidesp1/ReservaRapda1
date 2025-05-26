@@ -1,0 +1,357 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>::-webkit-scrollbar { display: none;}</style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brazil-green': '#009c3b',
+                        'brazil-yellow': '#ffdf00',
+                        'brazil-blue': '#002776',
+                        'brazil-red': '#c8102e'
+                    },
+                    fontFamily: {
+                        'montserrat': ['Montserrat', 'sans-serif'],
+                        'opensans': ['Open Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" /><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap" /><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="bg-gray-100 font-opensans">
+
+<div id="admin-dashboard" class="flex h-[900px]">
+    <div id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-brazil-blue flex flex-col">
+        <div class="p-6">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-brazil-yellow rounded-full flex items-center justify-center mr-2">
+                    <i class="fa-solid fa-utensils text-brazil-blue"></i>
+                </div>
+                <span class="text-xl font-semibold text-white font-montserrat">
+                    Opa que delicia
+                </span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <ul>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-chart-line text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Dashboard</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-users text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão de Clientes</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-book-open text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão do Menu</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-chair text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão das Mesas</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-coins text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão Financeira</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-credit-card text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Pagamentos</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-calendar-check text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Reservas</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+        <div class="mt-auto border-t border-blue-400 p-4">
+            <span class="flex items-center text-white bg-brazil-blue bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                <i class="fa-solid fa-gear text-brazil-yellow w-6"></i>
+                <span class="ml-2 font-medium">Configurações</span>
+            </span>
+            <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 mt-2 cursor-pointer">
+                <i class="fa-solid fa-right-from-bracket text-brazil-yellow w-6"></i>
+                <span class="ml-2 font-medium">Sair</span>
+            </span>
+        </div>
+    </div>
+
+    <div id="main-content" class="ml-64 flex-1 p-8">
+        <div id="header" class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-800 font-montserrat">Configurações</h1>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="relative">
+                        <i class="fa-regular fa-bell text-xl text-gray-600"></i>
+                        <span class="absolute -top-1 -right-1 bg-brazil-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
+                    </button>
+                </div>
+                <div class="flex items-center">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User Avatar" class="w-10 h-10 rounded-full border-2 border-brazil-yellow" />
+                    <div class="ml-2">
+                        <p class="text-sm font-medium text-gray-800">Carlos Silva</p>
+                        <p class="text-xs text-gray-500">Administrador</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-tabs-section" class="bg-white rounded-xl shadow-md p-8">
+            <div id="settings-tabs" class="flex space-x-2 mb-8 border-b border-gray-200">
+                <button id="tab-1" class="tab-btn px-5 py-3 font-semibold text-brazil-blue border-b-4 border-brazil-blue bg-gray-50 -mb-px rounded-t-md font-montserrat" onclick="switchTab(1)">
+                    <i class="fa-solid fa-building text-brazil-green mr-2"></i>Configurações Gerais
+                </button>
+                <button id="tab-2" class="tab-btn px-5 py-3 font-medium text-gray-600 hover:text-brazil-blue border-b-4 border-transparent bg-gray-50 -mb-px rounded-t-md font-montserrat" onclick="switchTab(2)">
+                    <i class="fa-solid fa-globe text-brazil-yellow mr-2"></i>Configurações de Página
+                </button>
+                <button id="tab-3" class="tab-btn px-5 py-3 font-medium text-gray-600 hover:text-brazil-blue border-b-4 border-transparent bg-gray-50 -mb-px rounded-t-md font-montserrat" onclick="switchTab(3)">
+                    <i class="fa-solid fa-calendar-check text-brazil-blue mr-2"></i>Configurações de Reservas
+                </button>
+                <button id="tab-4" class="tab-btn px-5 py-3 font-medium text-gray-600 hover:text-brazil-blue border-b-4 border-transparent bg-gray-50 -mb-px rounded-t-md font-montserrat" onclick="switchTab(4)">
+                    <i class="fa-solid fa-credit-card text-brazil-green mr-2"></i>Configurações de Pagamento
+                </button>
+                <button id="tab-5" class="tab-btn px-5 py-3 font-medium text-gray-600 hover:text-brazil-blue border-b-4 border-transparent bg-gray-50 -mb-px rounded-t-md font-montserrat" onclick="switchTab(5)">
+                    <i class="fa-solid fa-bell text-brazil-yellow mr-2"></i>Configuração de Notificações
+                </button>
+                <button id="tab-6" class="tab-btn px-5 py-3 font-medium text-gray-600 hover:text-brazil-blue border-b-4 border-transparent bg-gray-50 -mb-px rounded-t-md font-montserrat" onclick="switchTab(6)">
+                    <i class="fa-solid fa-cash-register text-brazil-blue mr-2"></i>Configurações POS
+                </button>
+            </div>
+
+            <div id="tab-content-1" class="tab-content">
+                <form id="general-settings-form" class="space-y-8">
+                    <div id="block-dados-gerais" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <label for="restaurante-nome" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Nome do Restaurante</label>
+                            <input id="restaurante-nome" type="text" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50" placeholder="Opa que delicia" />
+                        </div>
+                        <div>
+                            <label for="restaurante-email" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Email</label>
+                            <input id="restaurante-email" type="email" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50" placeholder="contato@opaquedelicia.com" />
+                        </div>
+                        <div>
+                            <label for="restaurante-telefone" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Telefone</label>
+                            <input id="restaurante-telefone" type="tel" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50" placeholder="(11) 98765-4321" />
+                        </div>
+                        <div>
+                            <label for="restaurante-website" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Website</label>
+                            <input id="restaurante-website" type="url" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50" placeholder="https://opaquedelicia.com" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="restaurante-endereco" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Endereço</label>
+                            <input id="restaurante-endereco" type="text" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50" placeholder="Rua da Gastronomia, 123 - São Paulo, SP" />
+                        </div>
+                    </div>
+                    <div id="block-horario-funcionamento" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Horário de Funcionamento</label>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-medium text-gray-500">Abertura</span>
+                                <input id="restaurante-abertura" type="time" class="px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50 font-semibold w-24" />
+                                <span class="text-xs font-medium text-gray-500">Fechamento</span>
+                                <input id="restaurante-fechamento" type="time" class="px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50 font-semibold w-24" />
+                            </div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="restaurante-descricao" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Descrição</label>
+                            <textarea id="restaurante-descricao" rows="3" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50 resize-none" placeholder="Conte um pouco sobre o restaurante, especialidades, história, etc."></textarea>
+                        </div>
+                    </div>
+                    <div class="flex justify-end pt-4">
+                        <button type="submit" class="flex items-center px-6 py-3 bg-brazil-green text-white font-bold rounded-lg shadow hover:bg-green-700 transition-colors text-base font-montserrat">
+                            <i class="fa-solid fa-floppy-disk mr-2"></i>
+                            Salvar Configurações
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="tab-content-2" class="tab-content hidden">
+                <form id="page-settings-form" class="space-y-8">
+                    <div id="block-page-title-logo" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <label for="page-title" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Título da Página</label>
+                            <input id="page-title" type="text" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50" placeholder="Opa que delicia - Restaurante Brasileiro" />
+                        </div>
+                        <div class="flex flex-col space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Insira a Logo</label>
+                                <div class="flex items-center space-x-4">
+                                    <input id="page-logo" type="file" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brazil-blue file:text-white hover:file:bg-brazil-green" />
+                                    <img id="logo-preview" class="w-12 h-12 object-contain bg-gray-100 rounded-md border" src="" alt="" style="display:none;" />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Insira o Favicon</label>
+                                <div class="flex items-center space-x-4">
+                                    <input id="page-favicon" type="file" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brazil-yellow file:text-brazil-blue hover:file:bg-brazil-green" />
+                                    <img id="favicon-preview" class="w-8 h-8 object-contain bg-gray-100 rounded-md border" src="" alt="" style="display:none;" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="block-nav-about" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <label for="nav-bar" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Barra de Navegação</label>
+                            <textarea id="nav-bar" rows="2" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50 resize-none" placeholder="Ex: Home, Cardápio, Reservas, Sobre, Contato"></textarea>
+                        </div>
+                        <div>
+                            <label for="about-section" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Sobre</label>
+                            <textarea id="about-section" rows="2" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50 resize-none" placeholder="Descrição da história, missão, valores, equipe"></textarea>
+                        </div>
+                        <div>
+                            <label for="location-contact" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Localização e Contato</label>
+                            <textarea id="location-contact" rows="2" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50 resize-none" placeholder="Endereço, telefone, email"></textarea>
+                        </div>
+                        <div>
+                            <label for="testimonials" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Testemunhos</label>
+                            <textarea id="testimonials" rows="2" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50 resize-none" placeholder="Comentários de clientes, avaliações"></textarea>
+                        </div>
+                    </div>
+                    <div id="block-footer" class="col-span-2">
+                        <label for="footer" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Footer</label>
+                        <textarea id="footer" rows="2" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50 resize-none" placeholder="Informações de copyright, links, redes sociais"></textarea>
+                    </div>
+                    <div class="flex justify-end pt-4">
+                        <button type="submit" class="flex items-center px-6 py-3 bg-brazil-green text-white font-bold rounded-lg shadow hover:bg-green-700 transition-colors text-base font-montserrat">
+                            <i class="fa-solid fa-floppy-disk mr-2"></i>
+                            Salvar Configurações
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="tab-content-3" class="tab-content hidden">
+                <form id="reserva-settings-form" class="space-y-8">
+                    <div id="block-reserva-geral" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <label for="tempo-minimo" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Tempo mínimo para reserva (min)</label>
+                            <input id="tempo-minimo" type="number" min="0" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50" placeholder="30" />
+                        </div>
+                        <div>
+                            <label for="dias-antecedencia" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Dias de reserva máxima antecipada</label>
+                            <input id="dias-antecedencia" type="number" min="1" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50" placeholder="30" />
+                        </div>
+                    </div>
+                    <div id="block-reserva-toggles" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="flex items-center space-x-3">
+                            <input type="checkbox" id="permite-cancelamento" class="accent-brazil-green w-5 h-5 rounded-md border border-gray-300" />
+                            <label for="permite-cancelamento" class="text-sm font-semibold text-gray-700 font-montserrat">Permitir que os clientes cancelem</label>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <input type="checkbox" id="requer-confirmacao" class="accent-brazil-yellow w-5 h-5 rounded-md border border-gray-300" />
+                            <label for="requer-confirmacao" class="text-sm font-semibold text-gray-700 font-montserrat">Requer confirmação</label>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <input type="checkbox" id="confirmacao-automatica" class="accent-brazil-blue w-5 h-5 rounded-md border border-gray-300" />
+                            <label for="confirmacao-automatica" class="text-sm font-semibold text-gray-700 font-montserrat">Confirmação automática da reserva</label>
+                        </div>
+                    </div>
+                    <div class="flex justify-end pt-4">
+                        <button type="submit" class="flex items-center px-6 py-3 bg-brazil-green text-white font-bold rounded-lg shadow hover:bg-green-700 transition-colors text-base font-montserrat">
+                            <i class="fa-solid fa-floppy-disk mr-2"></i>
+                            Salvar Configurações
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="tab-content-4" class="tab-content hidden">
+                <form id="pagamento-settings-form" class="space-y-8">
+                    <div id="block-pagamento-top" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <label for="moeda-sistema" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Moeda do Sistema</label>
+                            <select id="moeda-sistema" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50">
+                                <option value="BRL">Real Brasileiro (BRL)</option>
+                                <option value="EUR">Euro (EUR)</option>
+                                <option value="USD">Dólar Americano (USD)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="taxa-impostos" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Taxa de Impostos (%)</label>
+                            <input id="taxa-impostos" type="number" step="0.01" min="0" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50" placeholder="10.0" />
+                        </div>
+                    </div>
+                    <div id="block-gateway-aviso" class="bg-brazil-yellow/20 border-l-4 border-brazil-yellow px-4 py-3 rounded-lg flex items-center mb-2">
+                        <i class="fa-solid fa-lock text-brazil-yellow mr-3 text-lg"></i>
+                        <span class="text-sm font-semibold text-brazil-yellow">Chave de API para o serviço de pagamento EuPago. Esta informação é sensível e deve ser mantida segura.</span>
+                    </div>
+                    <div id="block-gateway-input" class="mb-2">
+                        <label for="eupago-api-key" class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Chave API do EuPago</label>
+                        <input id="eupago-api-key" type="password" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brazil-blue focus:outline-none font-semibold bg-gray-50" placeholder="Insira sua chave API" />
+                        <span class="block text-xs text-gray-400 mt-2">Requer chave API do EuPago para ativação para métodos de pagamento online</span>
+                    </div>
+                    <div id="block-metodos-pagamento" class="mb-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Métodos de Pagamento</label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" id="metodo-cc" class="accent-brazil-green w-5 h-5 rounded-md border border-gray-300" />
+                                <label for="metodo-cc" class="text-sm text-gray-700 font-montserrat">Cartão de Crédito/Débito</label>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" id="metodo-mbway" class="accent-brazil-yellow w-5 h-5 rounded-md border border-gray-300" />
+                                <label for="metodo-mbway" class="text-sm text-gray-700 font-montserrat">MBWay</label>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" id="metodo-multibanco" class="accent-brazil-blue w-5 h-5 rounded-md border border-gray-300" />
+                                <label for="metodo-multibanco" class="text-sm text-gray-700 font-montserrat">Multibanco</label>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" id="metodo-transferencia" class="accent-brazil-green w-5 h-5 rounded-md border border-gray-300" />
+                                <label for="metodo-transferencia" class="text-sm text-gray-700 font-montserrat">Transferência Bancária</label>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" id="metodo-dinheiro" class="accent-brazil-yellow w-5 h-5 rounded-md border border-gray-300" />
+                                <label for="metodo-dinheiro" class="text-sm text-gray-700 font-montserrat">Dinheiro</label>
+                            </div>
+                            </div></div></form></div></div></div></div></body></html>
