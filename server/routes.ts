@@ -1016,9 +1016,15 @@ router.post("/api/payments/cancel", isAuthenticated, async (req, res) => {
 });
 
 // Rotas para o sistema POS
-router.post('/api/pos/orders', async (req, res) => {
+router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
   try {
     const orderData = req.body;
+    const userId = req.session.userId;
+    
+    // Validação de autenticação
+    if (!userId) {
+      return res.status(401).json({ error: 'Usuário não autenticado' });
+    }
     
     // Validação básica
     if (!orderData.items || !orderData.totalAmount || orderData.items.length === 0) {
@@ -1080,9 +1086,9 @@ router.post('/api/pos/orders', async (req, res) => {
       }
     }
 
-    // Criar o pedido
+    // Criar o pedido com o usuário autenticado
     const newOrder = await drizzleDb.insert(schema.orders).values({
-      userId: orderData.userId || 1, // Default para o primeiro usuário se não especificado
+      userId: Number(userId), // Sempre usar o usuário autenticado
       type: 'pos',
       status: 'completed',
       items: validatedItems,
