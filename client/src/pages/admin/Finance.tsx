@@ -362,12 +362,12 @@ const Finance: React.FC = () => {
                 
                 <div className="min-w-[150px]">
                   <label className="block text-xs text-gray-600 mb-1 font-semibold">Status</label>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <Select value={statusFilter || "all"} onValueChange={(value) => setStatusFilter(value === "all" ? "" : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
                       <SelectItem value="completed">Concluído</SelectItem>
                       <SelectItem value="pending">Pendente</SelectItem>
                       <SelectItem value="failed">Falha</SelectItem>
@@ -377,12 +377,12 @@ const Finance: React.FC = () => {
                 
                 <div className="min-w-[150px]">
                   <label className="block text-xs text-gray-600 mb-1 font-semibold">Método</label>
-                  <Select value={methodFilter} onValueChange={setMethodFilter}>
+                  <Select value={methodFilter || "all"} onValueChange={(value) => setMethodFilter(value === "all" ? "" : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
                       <SelectItem value="card">Cartão</SelectItem>
                       <SelectItem value="cash">Dinheiro</SelectItem>
                       <SelectItem value="transfer">Transferência</SelectItem>
