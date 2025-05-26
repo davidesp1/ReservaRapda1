@@ -21,6 +21,7 @@ export const users = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   phone: text("phone"),
+  pin: text("pin"), // PIN de 4 dígitos para login rápido
   address: text("address"),
   city: text("city"),
   postalCode: text("postal_code"),

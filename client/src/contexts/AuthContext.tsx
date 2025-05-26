@@ -10,7 +10,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isCollaborator: boolean;
   login: (username: string, password: string) => Promise<User>;
-  loginWithPin: (pin: string) => Promise<User>;
+  loginWithPin: (credentials: { userId: string; pin: string }) => Promise<User>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -175,8 +175,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Login with PIN mutation
   const loginWithPinMutation = useMutation({
-    mutationFn: async (pin: string) => {
-      const response = await apiRequest('POST', '/api/auth/login-pin', { pin });
+    mutationFn: async (credentials: { userId: string; pin: string }) => {
+      const response = await apiRequest('POST', '/api/auth/login-pin', credentials);
       return response.json();
     },
     onSuccess: (data) => {
@@ -278,7 +278,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin,
         isCollaborator,
         login,
-        loginWithPin: (pin: string) => loginWithPinMutation.mutateAsync(pin),
+        loginWithPin: (credentials: { userId: string; pin: string }) => loginWithPinMutation.mutateAsync(credentials),
         register,
         logout,
       }}

@@ -34,6 +34,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPinLogin, setShowPinLogin] = useState(false);
   const [pin, setPin] = useState('');
+  const [userId, setUserId] = useState('');
   const [isPinSubmitting, setIsPinSubmitting] = useState(false);
 
   const loginSchema = z.object({
@@ -74,13 +75,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
     }
   };
 
-  const onPinSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (pin.length !== 4) return;
+  const onPinSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (pin.length !== 4 || !userId) return;
     
     try {
       setIsPinSubmitting(true);
-      const userData = await loginWithPin(pin);
+      const userData = await loginWithPin({ userId, pin });
       onClose();
       
       // Redirecionar baseado no papel do usuário
@@ -120,7 +121,20 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
         {showPinLogin ? (
           <div className="space-y-6">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Acessar Conta</h1>
-            <p className="text-gray-500 mb-6">Digite seu PIN de 4 dígitos</p>
+            <p className="text-gray-500 mb-6">Digite seu ID de usuário e PIN de 4 dígitos</p>
+            
+            {/* User ID Input */}
+            <div className="mb-4">
+              <Label htmlFor="userId">ID do Usuário</Label>
+              <Input
+                id="userId"
+                type="number"
+                placeholder="Digite seu ID"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg border"
+              />
+            </div>
             
             {/* PIN Display */}
             <div className="mb-6">

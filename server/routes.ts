@@ -31,19 +31,19 @@ router.post("/api/auth/register", register);
 router.post("/api/auth/login", login);
 router.post("/api/auth/login-pin", async (req: express.Request, res: express.Response) => {
   try {
-    const { pin } = req.body;
+    const { userId, pin } = req.body;
     
-    if (!pin || pin.length !== 4) {
-      return res.status(400).json({ message: "PIN deve ter 4 dígitos" });
+    if (!userId || !pin || pin.length !== 4) {
+      return res.status(400).json({ message: "ID do usuário e PIN de 4 dígitos são obrigatórios" });
     }
 
-    // Buscar usuário pelo PIN (assumindo que o PIN está no campo phone ou em um campo específico)
+    // Buscar usuário pelo ID e PIN
     const user = await queryClient`
-      SELECT id, username, email, first_name, last_name, phone, role, status, 
+      SELECT id, username, email, first_name, last_name, phone, pin, role, status, 
              address, city, postal_code, country, birth_date, profile_picture, 
              biography, preferences, member_since, last_login, loyalty_points
       FROM users 
-      WHERE phone = ${pin} AND status = 'active'
+      WHERE id = ${userId} AND pin = ${pin} AND status = 'active'
       LIMIT 1
     `;
 
