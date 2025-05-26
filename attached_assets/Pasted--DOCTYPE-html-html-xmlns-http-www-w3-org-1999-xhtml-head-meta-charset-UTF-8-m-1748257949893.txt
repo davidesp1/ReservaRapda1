@@ -1,0 +1,288 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>::-webkit-scrollbar { display: none;}</style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brazil-green': '#009c3b',
+                        'brazil-yellow': '#ffdf00',
+                        'brazil-blue': '#002776',
+                        'brazil-red': '#c8102e'
+                    },
+                    fontFamily: {
+                        'montserrat': ['Montserrat', 'sans-serif'],
+                        'opensans': ['Open Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" /><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap" /><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="bg-gray-100 font-opensans">
+
+<div id="admin-dashboard" class="flex h-[900px]">
+    <div id="sidebar" class="fixed top-0 left-0 flex flex-col w-64 h-full bg-brazil-blue">
+        <div class="p-6">
+            <div class="flex items-center">
+                <div class="flex items-center justify-center w-10 h-10 mr-2 rounded-full bg-brazil-yellow">
+                    <i class="fa-solid fa-utensils text-brazil-blue"></i>
+                </div>
+                <span class="text-xl font-semibold text-white font-montserrat">
+                    Opa que delicia
+                </span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <ul>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-chart-line text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Dashboard</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-users text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Clientes</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-book-open text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Gestão do Menu</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-chair text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Mesas</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-coins text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Finanças</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-cash-register text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Modo POS</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-calendar-check text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Reservas</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer bg-brazil-blue bg-opacity-40">
+                        <i class="w-6 fa-solid fa-gear text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Configurações</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+        <div class="p-4 mt-auto border-t border-blue-400">
+            <span class="flex items-center p-2 mt-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                <i class="w-6 fa-solid fa-right-from-bracket text-brazil-yellow"></i>
+                <span class="ml-2 font-medium">Sair</span>
+            </span>
+        </div>
+    </div>
+
+    <div id="main-content" class="flex-1 p-8 ml-64">
+        <div id="header" class="flex items-center justify-between mb-8">
+            <h1 class="text-2xl font-bold text-gray-800 font-montserrat">Configurações</h1>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="relative">
+                        <i class="text-xl text-gray-600 fa-regular fa-bell"></i>
+                        <span class="absolute flex items-center justify-center w-4 h-4 text-xs text-white rounded-full -top-1 -right-1 bg-brazil-red">3</span>
+                    </button>
+                </div>
+                <div class="flex items-center">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User Avatar" class="w-10 h-10 border-2 rounded-full border-brazil-yellow" />
+                    <div class="ml-2">
+                        <p class="text-sm font-medium text-gray-800">Carlos Silva</p>
+                        <p class="text-xs text-gray-500">Administrador</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-tabs-section" class="p-8 bg-white shadow-md rounded-xl">
+            <div id="settings-tabs" class="flex mb-8 space-x-2 border-b border-gray-200">
+                <button id="tab-1" class="px-5 py-3 -mb-px font-semibold border-b-4 tab-btn text-brazil-blue border-brazil-blue bg-gray-50 rounded-t-md font-montserrat" onclick="switchTab(1)">
+                    <i class="mr-2 fa-solid fa-building text-brazil-green"></i>Configurações Gerais
+                </button>
+                <button id="tab-2" class="px-5 py-3 -mb-px font-medium text-gray-600 border-b-4 border-transparent tab-btn hover:text-brazil-blue bg-gray-50 rounded-t-md font-montserrat" onclick="switchTab(2)">
+                    <i class="mr-2 fa-solid fa-globe text-brazil-yellow"></i>Configurações de Página
+                </button>
+                <button id="tab-3" class="px-5 py-3 -mb-px font-medium text-gray-600 border-b-4 border-transparent tab-btn hover:text-brazil-blue bg-gray-50 rounded-t-md font-montserrat" onclick="switchTab(3)">
+                    <i class="mr-2 fa-solid fa-calendar-check text-brazil-blue"></i>Configurações de Reservas
+                </button>
+                <button id="tab-4" class="px-5 py-3 -mb-px font-medium text-gray-600 border-b-4 border-transparent tab-btn hover:text-brazil-blue bg-gray-50 rounded-t-md font-montserrat" onclick="switchTab(4)">
+                    <i class="mr-2 fa-solid fa-credit-card text-brazil-green"></i>Configurações de Pagamento
+                </button>
+                <button id="tab-5" class="px-5 py-3 -mb-px font-medium text-gray-600 border-b-4 border-transparent tab-btn hover:text-brazil-blue bg-gray-50 rounded-t-md font-montserrat" onclick="switchTab(5)">
+                    <i class="mr-2 fa-solid fa-bell text-brazil-yellow"></i>Configuração de Notificações
+                </button>
+                <button id="tab-6" class="px-5 py-3 -mb-px font-medium text-gray-600 border-b-4 border-transparent tab-btn hover:text-brazil-blue bg-gray-50 rounded-t-md font-montserrat" onclick="switchTab(6)">
+                    <i class="mr-2 fa-solid fa-cash-register text-brazil-blue"></i>Configurações POS
+                </button>
+            </div>
+
+            <div id="tab-content-1" class="tab-content">
+                <form id="general-settings-form" class="space-y-8">
+                    <div id="block-dados-gerais" class="grid grid-cols-1 gap-8 md:grid-cols-2">
+                        <div>
+                            <label for="restaurante-nome" class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Nome do Restaurante</label>
+                            <input id="restaurante-nome" type="text" class="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50" placeholder="Opa que delicia" />
+                        </div>
+                        <div>
+                            <label for="restaurante-email" class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Email</label>
+                            <input id="restaurante-email" type="email" class="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50" placeholder="contato@opaquedelicia.com" />
+                        </div>
+                        <div>
+                            <label for="restaurante-telefone" class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Telefone</label>
+                            <input id="restaurante-telefone" type="tel" class="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50" placeholder="(11) 98765-4321" />
+                        </div>
+                        <div>
+                            <label for="restaurante-website" class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Website</label>
+                            <input id="restaurante-website" type="url" class="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50" placeholder="https://opaquedelicia.com" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="restaurante-endereco" class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Endereço</label>
+                            <input id="restaurante-endereco" type="text" class="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50" placeholder="Rua da Gastronomia, 123 - São Paulo, SP" />
+                        </div>
+                    </div>
+
+                    <div id="block-horario-funcionamento" class="grid grid-cols-1 gap-8 md:grid-cols-3">
+                        <div>
+                            <label class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Horário de Funcionamento</label>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-medium text-gray-500">Abertura</span>
+                                <input id="restaurante-abertura" type="time" class="w-24 px-3 py-2 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50" />
+                                <span class="text-xs font-medium text-gray-500">Fechamento</span>
+                                <input id="restaurante-fechamento" type="time" class="w-24 px-3 py-2 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50" />
+                            </div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="restaurante-descricao" class="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Descrição</label>
+                            <textarea id="restaurante-descricao" rows="3" class="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-brazil-blue focus:outline-none bg-gray-50" placeholder="Conte um pouco sobre o restaurante, especialidades, história, etc."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-4">
+                        <button type="submit" class="flex items-center px-6 py-3 text-base font-bold text-white transition-colors rounded-lg shadow bg-brazil-green hover:bg-green-700 font-montserrat">
+                            <i class="mr-2 fa-solid fa-floppy-disk"></i>
+                            Salvar Configurações
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="tab-content-2" class="hidden tab-content">
+                <div class="flex flex-col items-center justify-center h-56 text-gray-400">
+                    <i class="mb-3 text-3xl fa-solid fa-gears"></i>
+                    <span class="font-semibold">Configurações de Página<br /><span class="text-sm font-normal text-gray-400">(Em breve)</span></span>
+                </div>
+            </div>
+
+            <div id="tab-content-3" class="hidden tab-content">
+                <div class="flex flex-col items-center justify-center h-56 text-gray-400">
+                    <i class="mb-3 text-3xl fa-solid fa-calendar-days"></i>
+                    <span class="font-semibold">Configurações de Reservas<br /><span class="text-sm font-normal text-gray-400">(Em breve)</span></span>
+                </div>
+            </div>
+
+            <div id="tab-content-4" class="hidden tab-content">
+                <div class="flex flex-col items-center justify-center h-56 text-gray-400">
+                    <i class="mb-3 text-3xl fa-solid fa-credit-card"></i>
+                    <span class="font-semibold">Configurações de Pagamento<br /><span class="text-sm font-normal text-gray-400">(Em breve)</span></span>
+                </div>
+            </div>
+
+            <div id="tab-content-5" class="hidden tab-content">
+                <div class="flex flex-col items-center justify-center h-56 text-gray-400">
+                    <i class="mb-3 text-3xl fa-solid fa-bell"></i>
+                    <span class="font-semibold">Configuração de Notificações<br /><span class="text-sm font-normal text-gray-400">(Em breve)</span></span>
+                </div>
+            </div>
+
+            <div id="tab-content-6" class="hidden tab-content">
+                <div class="flex flex-col items-center justify-center h-56 text-gray-400">
+                    <i class="mb-3 text-3xl fa-solid fa-cash-register"></i>
+                    <span class="font-semibold">Configurações POS<br /><span class="text-sm font-normal text-gray-400">(Em breve)</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(tabNumber) {
+        for (let i = 1; i &lt;= 6; i++) {
+            document.getElementById('tab-' + i).classList.remove('text-brazil-blue', 'font-semibold', 'border-brazil-blue');
+            document.getElementById('tab-' + i).classList.add('text-gray-600', 'font-medium', 'border-transparent');
+            document.getElementById('tab-content-' + i).classList.add('hidden');
+        }
+        document.getElementById('tab-' + tabNumber).classList.remove('text-gray-600', 'font-medium', 'border-transparent');
+        document.getElementById('tab-' + tabNumber).classList.add('text-brazil-blue', 'font-semibold', 'border-brazil-blue');
+        document.getElementById('tab-content-' + tabNumber).classList.remove('hidden');
+    }
+    // Ativa o tab inicial
+    switchTab(1);
+
+    document.getElementById('general-settings-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        // Demo de feedback visual simples
+        const btn = this.querySelector('button[type="submit"]');
+        btn.innerHTML = '&lt;i class="mr-2 fa-solid fa-circle-check"&gt;&lt;/i&gt;Salvo!';
+        btn.classList.add('bg-brazil-blue');
+        setTimeout(() =&gt; {
+            btn.innerHTML = '&lt;i class="mr-2 fa-solid fa-floppy-disk"&gt;&lt;/i&gt;Salvar Configurações';
+            btn.classList.remove('bg-brazil-blue');
+        }, 1600);
+    });
+</script>
+
+
+</body></html>
