@@ -285,24 +285,29 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
+            <div className="text-center">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">{t('AccessAccount')}</h1>
+              <p className="text-sm sm:text-base text-gray-500 mb-4 sm:mb-6">{t('EnterYourCredentials')}</p>
+            </div>
+
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
                 <FormField
                   control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('Email')}</FormLabel>
+                      <FormLabel className="text-sm sm:text-base font-medium">{t('Email')}</FormLabel>
                       <FormControl>
                         <Input 
                           type="email"
                           placeholder="exemplo@email.com" 
                           {...field} 
-                          className="w-full px-4 py-3 rounded-lg border"
+                          className="w-full px-3 sm:px-4 py-3 sm:py-4 rounded-lg border text-sm sm:text-base focus:ring-2 focus:ring-brasil-green focus:border-brasil-green transition-all"
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-xs sm:text-sm" />
                     </FormItem>
                   )}
                 />
@@ -312,43 +317,62 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('Password')}</FormLabel>
+                      <FormLabel className="text-sm sm:text-base font-medium">{t('Password')}</FormLabel>
                       <FormControl>
                         <Input 
                           type="password" 
                           placeholder="•••••••••" 
                           {...field} 
-                          className="w-full px-4 py-3 rounded-lg border"
+                          className="w-full px-3 sm:px-4 py-3 sm:py-4 rounded-lg border text-sm sm:text-base focus:ring-2 focus:ring-brasil-green focus:border-brasil-green transition-all"
                         />
                       </FormControl>
-                      <div className="flex justify-end mt-1">
-                        <a href="#" className="text-sm text-brasil-green hover:text-green-700">
+                      <div className="flex justify-end mt-1 sm:mt-2">
+                        <a href="#" className="text-xs sm:text-sm text-brasil-green hover:text-green-700 hover:underline transition-colors">
                           {t('ForgotPassword')}
                         </a>
                       </div>
-                      <FormMessage />
+                      <FormMessage className="text-xs sm:text-sm" />
                     </FormItem>
                   )}
                 />
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-brasil-green hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg"
+                  className="w-full bg-brasil-green hover:bg-green-700 text-white font-bold py-3 sm:py-4 px-4 rounded-lg text-sm sm:text-base transition-all duration-200 shadow-md hover:shadow-lg"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? <i className="fas fa-spinner fa-spin mr-2"></i> : null}
-                  {t('Login')}
+                  {isSubmitting ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin mr-2"></i>
+                      Entrando...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-sign-in-alt mr-2"></i>
+                      {t('Login')}
+                    </>
+                  )}
                 </Button>
               </form>
             </Form>
             
-            <div className="text-center">
+            <div className="space-y-3">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-xs sm:text-sm uppercase">
+                  <span className="bg-white px-2 text-gray-500">ou</span>
+                </div>
+              </div>
+              
               <Button
                 variant="outline"
-                className="w-full border-brasil-green text-brasil-green hover:bg-brasil-green hover:text-white"
+                className="w-full border-2 border-brasil-green text-brasil-green hover:bg-brasil-green hover:text-white py-3 sm:py-4 text-sm sm:text-base font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
                 onClick={() => setShowPinLogin(true)}
               >
-                🔢 Logar com PIN
+                <i className="fas fa-calculator mr-2"></i>
+                Logar com PIN
               </Button>
             </div>
           </div>
