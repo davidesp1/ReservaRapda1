@@ -957,7 +957,7 @@ const Reservations: React.FC = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{t('Table')}</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : ""}>
+                          <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : undefined}>
                             <SelectTrigger>
                               <SelectValue placeholder={t('SelectTable')} />
                             </SelectTrigger>
