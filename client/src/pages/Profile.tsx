@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/contexts/AuthContext';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,12 +11,18 @@ import { Badge } from '@/components/ui/badge';
 
 const ProfilePage = () => {
   const { t } = useTranslation();
+  const { isCollaborator } = useAuth();
   const [activeTab, setActiveTab] = useState('personal');
   
   // Buscar dados do usuário
   const { data: user, isLoading } = useQuery({
     queryKey: ['/api/auth/me'],
   });
+
+  // Para colaboradores, renderize apenas o conteúdo sem o layout do cliente
+  if (isCollaborator) {
+    return null; // Será redirecionado para CollaboratorProfile via rota
+  }
 
   return (
     <CustomerLayout>

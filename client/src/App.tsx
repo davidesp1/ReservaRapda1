@@ -12,6 +12,7 @@ import CustomerDashboard from "@/pages/CustomerDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import CollaboratorDashboard from "@/pages/CollaboratorDashboard";
 import CollaboratorProfile from "@/pages/CollaboratorProfile";
+import POSWrapper from "@/pages/POSWrapper";
 import Reservations from "@/pages/Reservations";
 import { ThemeProvider } from "next-themes";
 import { lazy, Suspense } from "react";
@@ -112,7 +113,7 @@ function Router() {
       
       {/* Collaborator routes */}
       <Route path="/collaborator" component={CollaboratorDashboard} />
-      <Route path="/collaborator/pos" component={POSMode} />
+      <Route path="/collaborator/pos" component={POSWrapper} />
       <Route path="/collaborator/profile" component={CollaboratorProfile} />
       <Route path="/admin/dashboard" component={Dashboard} />
       <Route path="/admin/customers" component={Customers} />
