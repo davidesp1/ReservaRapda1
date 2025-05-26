@@ -81,16 +81,16 @@ const NewSettings: React.FC = () => {
     });
   };
 
-  const TabButton = ({ tabId, icon: Icon, label, isActive }: any) => (
+  const TabButton = ({ tabId, icon: Icon, label, isActive, color }: any) => (
     <button
       onClick={() => setActiveTab(tabId)}
-      className={`px-5 py-3 font-semibold border-b-4 -mb-px rounded-t-md font-montserrat transition-all duration-200 flex items-center ${
+      className={`px-5 py-3 border-b-4 -mb-px rounded-t-md font-montserrat transition-all duration-200 flex items-center ${
         isActive
-          ? 'text-brasil-blue border-brasil-blue bg-gray-50'
-          : 'text-gray-600 border-transparent bg-gray-50 hover:text-brasil-blue'
+          ? 'font-semibold text-blue-900 border-blue-900 bg-gray-50'
+          : 'font-medium text-gray-600 border-transparent bg-gray-50 hover:text-blue-900'
       }`}
     >
-      <Icon className="w-4 h-4 mr-2" />
+      <Icon className={`w-4 h-4 mr-2 ${color}`} />
       {label}
     </button>
   );
@@ -110,12 +110,12 @@ const NewSettings: React.FC = () => {
       <div className="bg-white rounded-xl shadow-md p-8">
         {/* Tabs Navigation */}
         <div className="flex space-x-2 mb-8 border-b border-gray-200 overflow-x-auto">
-          <TabButton tabId={1} icon={Building} label="Configurações Gerais" isActive={activeTab === 1} />
-          <TabButton tabId={2} icon={Globe} label="Configurações de Página" isActive={activeTab === 2} />
-          <TabButton tabId={3} icon={Calendar} label="Configurações de Reservas" isActive={activeTab === 3} />
-          <TabButton tabId={4} icon={CreditCard} label="Configurações de Pagamento" isActive={activeTab === 4} />
-          <TabButton tabId={5} icon={Bell} label="Configuração de Notificações" isActive={activeTab === 5} />
-          <TabButton tabId={6} icon={ShoppingCart} label="Configurações POS" isActive={activeTab === 6} />
+          <TabButton tabId={1} icon={Building} label="Configurações Gerais" isActive={activeTab === 1} color="text-green-600" />
+          <TabButton tabId={2} icon={Globe} label="Configurações de Página" isActive={activeTab === 2} color="text-yellow-500" />
+          <TabButton tabId={3} icon={Calendar} label="Configurações de Reservas" isActive={activeTab === 3} color="text-blue-700" />
+          <TabButton tabId={4} icon={CreditCard} label="Configurações de Pagamento" isActive={activeTab === 4} color="text-green-600" />
+          <TabButton tabId={5} icon={Bell} label="Configuração de Notificações" isActive={activeTab === 5} color="text-yellow-500" />
+          <TabButton tabId={6} icon={ShoppingCart} label="Configurações POS" isActive={activeTab === 6} color="text-blue-700" />
         </div>
 
         {/* Tab Content */}
@@ -123,12 +123,12 @@ const NewSettings: React.FC = () => {
           <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Nome do Restaurante</Label>
+                <Label className="block text-sm font-semibold text-gray-700 mb-2 font-montserrat">Nome do Restaurante</Label>
                 <Input
                   value={settings.restaurantName || ''}
                   onChange={(e) => updateSetting('restaurantName', e.target.value)}
                   placeholder="Opa que delicia"
-                  className="bg-gray-50 font-semibold"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:outline-none font-semibold bg-gray-50"
                 />
               </div>
               <div>
@@ -497,7 +497,7 @@ const NewSettings: React.FC = () => {
                           updateSetting('logoFile', file);
                         }
                       }}
-                      className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brasil-blue file:text-white hover:file:bg-brasil-green"
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-700 file:text-white hover:file:bg-green-600"
                     />
                   </div>
                 </div>
@@ -513,7 +513,7 @@ const NewSettings: React.FC = () => {
                           updateSetting('faviconFile', file);
                         }
                       }}
-                      className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brasil-yellow file:text-brasil-blue hover:file:bg-brasil-green"
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-yellow-500 file:text-blue-700 hover:file:bg-green-600"
                     />
                   </div>
                 </div>
@@ -659,9 +659,9 @@ const NewSettings: React.FC = () => {
               </div>
             </div>
             
-            <div className="bg-brasil-yellow/20 border-l-4 border-brasil-yellow px-4 py-3 rounded-lg flex items-center mb-2">
-              <FileText className="text-brasil-yellow mr-3 text-lg" />
-              <span className="text-sm font-semibold text-brasil-yellow">Chave de API para o serviço de pagamento EuPago. Esta informação é sensível e deve ser mantida segura.</span>
+            <div className="bg-yellow-100 border-l-4 border-yellow-500 px-4 py-3 rounded-lg flex items-center mb-2">
+              <FileText className="text-yellow-600 mr-3 text-lg" />
+              <span className="text-sm font-semibold text-yellow-700">Chave de API para o serviço de pagamento EuPago. Esta informação é sensível e deve ser mantida segura.</span>
             </div>
             
             <div className="mb-2">
@@ -814,11 +814,11 @@ const NewSettings: React.FC = () => {
         )}
 
         {/* Save Button */}
-        <div className="flex justify-end pt-6 border-t border-gray-200 mt-8">
+        <div className="flex justify-end pt-4">
           <Button
             onClick={handleSave}
             disabled={saveSettingsMutation.isPending}
-            className="flex items-center px-6 py-3 bg-brasil-green text-white font-bold rounded-lg shadow hover:bg-green-700 transition-colors text-base font-montserrat"
+            className="flex items-center px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow hover:bg-green-700 transition-colors text-base font-montserrat"
           >
             <Save className="w-4 h-4 mr-2" />
             {saveSettingsMutation.isPending ? 'Salvando...' : 'Salvar Configurações'}
