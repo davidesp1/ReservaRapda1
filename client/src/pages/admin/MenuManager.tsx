@@ -705,7 +705,20 @@ const MenuManager: React.FC = () => {
         isAvailable: product.is_available !== false,
       });
     } else {
-      productForm.reset();
+      // Limpar completamente o formulário para novo produto
+      productForm.reset({
+        name: "",
+        description: "",
+        price: 0,
+        categoryId: 0,
+        featured: false,
+        imageUrl: "",
+        stockQuantity: 0,
+        minStockLevel: 5,
+        maxStockLevel: 100,
+        trackStock: true,
+        isAvailable: true,
+      });
     }
     setIsProductModalOpen(true);
   };
