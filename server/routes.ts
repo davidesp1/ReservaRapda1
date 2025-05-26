@@ -971,7 +971,7 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
 router.get("/api/payments", isAuthenticated, async (req, res) => {
   try {
     const payments = await queryClient`
-      SELECT p.*, u.username, u.email, u.first_name, u.last_name, r.date as reservation_date,
+      SELECT p.*, u.username, u.email, u.first_name, u.last_name,
         CASE
           WHEN p.reservation_id IS NOT NULL THEN 'reservation'
           WHEN p.details->>'type' = 'pos' THEN 'pos'
@@ -979,7 +979,6 @@ router.get("/api/payments", isAuthenticated, async (req, res) => {
         END as payment_source
       FROM payments p
       LEFT JOIN users u ON p.user_id = u.id
-      LEFT JOIN reservations r ON p.reservation_id = r.id
       ORDER BY p.payment_date DESC, p.id DESC
     `;
     
