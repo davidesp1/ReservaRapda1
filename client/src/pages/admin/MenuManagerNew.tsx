@@ -295,7 +295,7 @@ const MenuManager: React.FC = () => {
                     <SelectValue placeholder="Todas as categorias" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="">Todas</SelectItem>
                     {categories?.map((category: any) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.name}
