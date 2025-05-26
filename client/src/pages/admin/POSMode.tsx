@@ -28,6 +28,7 @@ interface OrderItem {
 const POSMode = () => {
   const { t } = useTranslation();
   const [_, navigate] = useLocation();
+  const { user, isCollaborator } = useAuth();
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -291,6 +292,7 @@ Status: PAGO
           
           // Preparar os dados do pedido para enviar para a API
           const orderData = {
+            collaboratorId: isCollaborator ? user?.id : null, // Rastrear colaborador responsável pela venda
             items: orderItems.map(item => ({
               menuItemId: item.menuItem.id,
               quantity: item.quantity,
