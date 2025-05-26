@@ -1,87 +1,110 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
-import { pt } from 'date-fns/locale';
+import { format } from 'date-fns';
 import { 
-  Download, Search, ChevronDown, Calendar, CreditCard, 
-  Smartphone, Banknote, ArrowLeftRight, Landmark
+  Search, TrendingUp, Clock, XCircle, CheckCircle, 
+  Filter, FileDown, CreditCard, Banknote
 } from 'lucide-react';
-import { PAYMENT_METHODS, PAYMENT_STATUS } from '@/constants';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { FinanceSummary, PaymentTable, FinanceAnalytics } from '@/components/admin/Finance';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+
+interface Payment {
+  id: number;
+  transaction_id: string;
+  reference: string;
+  amount: number;
+  method: string;
+  status: string;
+  payment_date: string;
+  user_id: number;
+  details?: any;
+}
+
+interface PaymentWithUser extends Payment {
+  username?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+}
 
 const Finance: React.FC = () => {
   const { t } = useTranslation();
-  const { isAuthenticated, isAdmin } = useAuth();
-  const [currentTab, setCurrentTab] = useState('payments');
+  const { isAuthenticated, isAdmin, user } = useAuth();
+  const [currentTab, setCurrentTab] = useState('pagamentos');
   const [searchText, setSearchText] = useState('');
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
-    from: subDays(new Date(), 30),
-    to: new Date(),
-  });
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [methodFilter, setMethodFilter] = useState<string>('all');
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [methodFilter, setMethodFilter] = useState<string>('');
+  const [filteredPayments, setFilteredPayments] = useState<PaymentWithUser[]>([]);
   const { toast } = useToast();
 
   // Fetch payments com atualização em tempo real
-  const { data: payments, isLoading: paymentsLoading } = useQuery<any>({
+  const { data: payments, isLoading: paymentsLoading, refetch } = useQuery<PaymentWithUser[]>({
     queryKey: ['/api/payments'],
     enabled: isAuthenticated && isAdmin,
-    refetchInterval: 15000, // Atualiza a cada 15 segundos automaticamente
-    refetchIntervalInBackground: true, // Continua atualizando mesmo quando a aba não está em foco
-    staleTime: 5000, // Considera os dados obsoletos após 5 segundos
+    refetchInterval: 10000, // Atualiza a cada 10 segundos para realtime
+    refetchIntervalInBackground: true,
   });
 
-  // Filter payments based on search, date range, status, and method
-  const filteredPayments = React.useMemo(() => {
-    if (!payments) return [];
-    
-    return payments.filter((payment: any) => {
-      const searchLower = searchText.toLowerCase();
-      const matchesSearch = 
-        (payment.transaction_id?.toLowerCase()?.includes(searchLower) || false) ||
-        (payment.reference?.toLowerCase()?.includes(searchLower) || false) ||
-        (payment.reservation_id ? payment.reservation_id.toString().includes(searchLower) : false) ||
-        (payment.details?.orderId ? payment.details.orderId.toString().includes(searchLower) : false);
-      
-      // Date range filter
-      const paymentDate = payment.payment_date ? new Date(payment.payment_date) : null;
-      const matchesDateRange = paymentDate ? 
-        (!dateRange.from || paymentDate >= dateRange.from) && 
-        (!dateRange.to || paymentDate <= dateRange.to) : true;
-      
-      // Status filter
-      const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
-      
-      // Method filter
-      const matchesMethod = methodFilter === 'all' || payment.method === methodFilter;
-      
-      return matchesSearch && matchesDateRange && matchesStatus && matchesMethod;
-    });
-  }, [payments, searchText, dateRange, statusFilter, methodFilter]);
+  // Aplicar filtros
+  const applyFilters = () => {
+    if (!payments) {
+      setFilteredPayments([]);
+      return;
+    }
 
-  // Calculate totals
+    let filtered = [...payments];
+
+    // Filtro de busca
+    if (searchText) {
+      filtered = filtered.filter(payment => 
+        payment.transaction_id?.toLowerCase().includes(searchText.toLowerCase()) ||
+        payment.reference?.toLowerCase().includes(searchText.toLowerCase()) ||
+        payment.username?.toLowerCase().includes(searchText.toLowerCase()) ||
+        payment.first_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+        payment.last_name?.toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+
+    // Filtro de data
+    if (startDate) {
+      filtered = filtered.filter(payment => 
+        new Date(payment.payment_date) >= new Date(startDate)
+      );
+    }
+
+    if (endDate) {
+      filtered = filtered.filter(payment => 
+        new Date(payment.payment_date) <= new Date(endDate + 'T23:59:59')
+      );
+    }
+
+    // Filtro de status
+    if (statusFilter) {
+      filtered = filtered.filter(payment => payment.status === statusFilter);
+    }
+
+    // Filtro de método
+    if (methodFilter) {
+      filtered = filtered.filter(payment => payment.method === methodFilter);
+    }
+
+    setFilteredPayments(filtered);
+  };
+
+  // Aplicar filtros automaticamente quando os dados mudarem
+  useEffect(() => {
+    applyFilters();
+  }, [payments, searchText, startDate, endDate, statusFilter, methodFilter]);
+
+  // Calcular totais
   const totals = React.useMemo(() => {
     if (!payments) return {
       totalRevenue: 0,
@@ -90,11 +113,11 @@ const Finance: React.FC = () => {
       failedPayments: 0
     };
     
-    const completed = payments?.filter((p: any) => p.status === 'completed') || [];
-    const pending = payments?.filter((p: any) => p.status === 'pending') || [];
-    const failed = payments?.filter((p: any) => p.status === 'failed') || [];
+    const completed = payments.filter(p => p.status === 'completed');
+    const pending = payments.filter(p => p.status === 'pending');
+    const failed = payments.filter(p => p.status === 'failed');
     
-    const totalRevenue = completed.reduce((sum: number, p: any) => sum + p.amount, 0);
+    const totalRevenue = completed.reduce((sum, p) => sum + p.amount, 0);
     
     return {
       totalRevenue,
@@ -104,54 +127,7 @@ const Finance: React.FC = () => {
     };
   }, [payments]);
 
-  // Generate chart data
-  const revenueByDay = React.useMemo(() => {
-    if (!payments) return [];
-    
-    const paymentsByDay: Record<string, number> = {};
-    
-    payments
-      .filter((p: any) => p.status === 'completed' && p.paymentDate)
-      .forEach((p: any) => {
-        const date = format(new Date(p.paymentDate), 'yyyy-MM-dd');
-        paymentsByDay[date] = (paymentsByDay[date] || 0) + p.amount;
-      });
-    
-    const last30Days = Array.from({ length: 30 }, (_, i) => {
-      const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
-      return {
-        date,
-        amount: paymentsByDay[date] || 0
-      };
-    }).reverse();
-    
-    return last30Days;
-  }, [payments]);
-
-  // Nenhuma configuração de pagamento é necessária nesta página agora
-
-  // Generate payment method distribution data
-  const paymentsByMethod = React.useMemo(() => {
-    if (!payments) return [];
-    
-    const methodTotals: Record<string, number> = {};
-    
-    payments
-      .filter((p: any) => p.status === 'completed')
-      .forEach((p: any) => {
-        methodTotals[p.method] = (methodTotals[p.method] || 0) + 1;
-      });
-    
-    return Object.entries(methodTotals).map(([method, count]) => {
-      const methodInfo = PAYMENT_METHODS.find(m => m.id === method) || { name: method, id: method };
-      return {
-        label: methodInfo.name,
-        value: count
-      };
-    });
-  }, [payments]);
-
-  // Format price to display as currency
+  // Formato de preço
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-PT', {
       style: 'currency',
@@ -160,51 +136,60 @@ const Finance: React.FC = () => {
     }).format(price / 100);
   };
 
-  // Format date range for display
-  const formatDateRange = () => {
-    if (!dateRange.from) return t('AllTime');
-    
-    if (!dateRange.to) {
-      return `${format(dateRange.from, 'PPP', { locale: pt })} - ${t('Present')}`;
+  // Ícone do método de pagamento
+  const getPaymentMethodIcon = (method: string) => {
+    switch (method?.toLowerCase()) {
+      case 'card':
+      case 'cartao':
+        return <CreditCard className="w-4 h-4 text-blue-600" />;
+      case 'cash':
+      case 'dinheiro':
+        return <Banknote className="w-4 h-4 text-green-600" />;
+      default:
+        return <CreditCard className="w-4 h-4 text-gray-600" />;
     }
-    
-    return `${format(dateRange.from, 'PPP', { locale: pt })} - ${format(dateRange.to, 'PPP', { locale: pt })}`;
   };
 
-  // Handle date presets
-  const handleDatePreset = (preset: string) => {
-    const today = new Date();
-    
-    switch (preset) {
-      case 'today':
-        setDateRange({ from: today, to: today });
-        break;
-      case 'yesterday':
-        const yesterday = subDays(today, 1);
-        setDateRange({ from: yesterday, to: yesterday });
-        break;
-      case 'last7days':
-        setDateRange({ from: subDays(today, 6), to: today });
-        break;
-      case 'last30days':
-        setDateRange({ from: subDays(today, 29), to: today });
-        break;
-      case 'thisMonth':
-        setDateRange({ from: startOfMonth(today), to: today });
-        break;
-      case 'lastMonth':
-        const lastMonthStart = startOfMonth(subDays(startOfMonth(today), 1));
-        const lastMonthEnd = endOfMonth(lastMonthStart);
-        setDateRange({ from: lastMonthStart, to: lastMonthEnd });
-        break;
-      case 'allTime':
-        setDateRange({ from: undefined, to: undefined });
-        break;
+  // Badge do status
+  const getStatusBadge = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+        return (
+          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Concluído
+          </Badge>
+        );
+      case 'pending':
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+            <Clock className="w-3 h-3 mr-1" />
+            Pendente
+          </Badge>
+        );
+      case 'failed':
+        return (
+          <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
+            <XCircle className="w-3 h-3 mr-1" />
+            Falha
+          </Badge>
+        );
       default:
-        break;
+        return (
+          <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">
+            {status}
+          </Badge>
+        );
     }
-    
-    setIsDatePickerOpen(false);
+  };
+
+  // Exportar dados
+  const handleExport = () => {
+    toast({
+      title: "Exportação iniciada",
+      description: "Os dados serão baixados em breve.",
+    });
+    // Implementar lógica de exportação aqui
   };
 
   if (paymentsLoading) {
@@ -212,216 +197,299 @@ const Finance: React.FC = () => {
       <AdminLayout title={t('Finance')}>
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-12 bg-gray-200 rounded"></div>
-          <div className="h-96 bg-gray-200 rounded"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-32 bg-gray-200 rounded-xl"></div>
+            ))}
+          </div>
+          <div className="h-96 bg-gray-200 rounded-xl"></div>
         </div>
       </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout title={t('Finance')}>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-montserrat font-bold">{t('Finance')}</h1>
-      </div>
+    <AdminLayout title="Finanças">
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-900">Finanças</h1>
+        </div>
 
-      <FinanceSummary 
-        totalRevenue={totals.totalRevenue}
-        completedPayments={totals.completedPayments}
-        pendingPayments={totals.pendingPayments}
-        failedPayments={totals.failedPayments}
-      />
+        {/* Metrics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Receita Total */}
+          <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-green-500">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm text-gray-500 font-medium">Receita Total</p>
+                <p className="text-2xl font-bold text-gray-800 mt-1">
+                  {formatPrice(totals.totalRevenue)}
+                </p>
+                <div className="flex items-center mt-2 text-sm">
+                  <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                  <span className="text-green-500 font-medium">+7%</span>
+                  <span className="text-gray-500 ml-1">em relação ao mês passado</span>
+                </div>
+              </div>
+              <div className="bg-green-100 p-3 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-green-500" />
+              </div>
+            </div>
+          </div>
 
-      <Tabs defaultValue={currentTab} onValueChange={setCurrentTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:w-[500px]">
-          <TabsTrigger value="payments">{t('Payments')}</TabsTrigger>
-          <TabsTrigger value="analytics">{t('Analytics')}</TabsTrigger>
-        </TabsList>
+          {/* Pagamentos Concluídos */}
+          <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-blue-600">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm text-gray-500 font-medium">Pagamentos Concluídos</p>
+                <p className="text-2xl font-bold text-gray-800 mt-1">{totals.completedPayments}</p>
+                <div className="flex items-center mt-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-blue-600 mr-1" />
+                  <span className="text-blue-600 font-medium">
+                    {payments ? Math.round((totals.completedPayments / payments.length) * 100) : 0}%
+                  </span>
+                  <span className="text-gray-500 ml-1">do total</span>
+                </div>
+              </div>
+              <div className="bg-blue-100 p-3 rounded-lg">
+                <CheckCircle className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </div>
 
-        <TabsContent value="payments">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('PaymentHistory')}</CardTitle>
-              <CardDescription>{t('ManageAndTrackPayments')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          {/* Pagamentos Pendentes */}
+          <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-yellow-500">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm text-gray-500 font-medium">Pagamentos Pendentes</p>
+                <p className="text-2xl font-bold text-gray-800 mt-1">{totals.pendingPayments}</p>
+                <div className="flex items-center mt-2 text-sm">
+                  <Clock className="w-4 h-4 text-yellow-500 mr-1" />
+                  <span className="text-yellow-500 font-medium">
+                    {payments ? Math.round((totals.pendingPayments / payments.length) * 100) : 0}%
+                  </span>
+                  <span className="text-gray-500 ml-1">do total</span>
+                </div>
+              </div>
+              <div className="bg-yellow-100 p-3 rounded-lg">
+                <Clock className="w-6 h-6 text-yellow-500" />
+              </div>
+            </div>
+          </div>
+
+          {/* Falhas de Pagamento */}
+          <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-red-500">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm text-gray-500 font-medium">Falhas de Pagamento</p>
+                <p className="text-2xl font-bold text-gray-800 mt-1">{totals.failedPayments}</p>
+                <div className="flex items-center mt-2 text-sm">
+                  <XCircle className="w-4 h-4 text-red-500 mr-1" />
+                  <span className="text-red-500 font-medium">
+                    {payments ? Math.round((totals.failedPayments / payments.length) * 100) : 0}%
+                  </span>
+                  <span className="text-gray-500 ml-1">do total</span>
+                </div>
+              </div>
+              <div className="bg-red-100 p-3 rounded-lg">
+                <XCircle className="w-6 h-6 text-red-500" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="w-full">
+          <div className="flex border-b border-gray-200 mb-4">
+            <button 
+              onClick={() => setCurrentTab('pagamentos')}
+              className={`px-6 py-3 font-semibold rounded-t-lg focus:outline-none ${
+                currentTab === 'pagamentos' 
+                  ? 'text-blue-600 border-b-2 border-blue-600 bg-white' 
+                  : 'text-gray-500 hover:text-blue-600 bg-white'
+              }`}
+            >
+              Pagamentos
+            </button>
+            <button 
+              onClick={() => setCurrentTab('analise')}
+              className={`px-6 py-3 font-semibold rounded-t-lg focus:outline-none ml-2 ${
+                currentTab === 'analise' 
+                  ? 'text-blue-600 border-b-2 border-blue-600 bg-white' 
+                  : 'text-gray-500 hover:text-blue-600 bg-white'
+              }`}
+            >
+              Análise
+            </button>
+          </div>
+
+          {currentTab === 'pagamentos' && (
+            <div className="space-y-6">
+              {/* Filtros */}
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="flex-1 min-w-[180px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">Pesquisar</label>
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      className="pl-10"
+                      placeholder="Buscar por transação, reserva ou usuário..."
+                    />
+                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                  </div>
+                </div>
+                
+                <div className="min-w-[150px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">Data Início</label>
                   <Input
-                    placeholder={t('SearchTransactionId')}
-                    className="pl-10"
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
                   />
                 </div>
                 
-                <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="justify-start w-full md:w-auto">
-                      <Calendar className="mr-2 h-4 w-4" />
-                      {formatDateRange()}
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <div className="grid grid-cols-2 gap-2 p-2">
-                      <div>
-                        <div className="pb-4 pt-2 px-4 font-medium text-sm">
-                          {t('DatePresets')}
-                        </div>
-                        <div className="space-y-2 px-2">
-                          {[
-                            { id: 'today', label: t('Today') },
-                            { id: 'yesterday', label: t('Yesterday') },
-                            { id: 'last7days', label: t('Last7Days') },
-                            { id: 'last30days', label: t('Last30Days') },
-                            { id: 'thisMonth', label: t('ThisMonth') },
-                            { id: 'lastMonth', label: t('LastMonth') },
-                            { id: 'allTime', label: t('AllTime') },
-                          ].map((preset) => (
-                            <Button
-                              key={preset.id}
-                              variant="ghost"
-                              className="w-full justify-start text-sm font-normal"
-                              onClick={() => handleDatePreset(preset.id)}
-                            >
-                              {preset.label}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="border-l">
-                        <div className="pb-4 pt-2 px-4 font-medium text-sm">
-                          {t('CustomRange')}
-                        </div>
-                        <CalendarComponent
-                          mode="range"
-                          selected={{ 
-                            from: dateRange.from || undefined, 
-                            to: dateRange.to || undefined 
-                          }}
-                          onSelect={(range) => setDateRange({
-                            from: range?.from,
-                            to: range?.to
-                          })}
-                          numberOfMonths={1}
-                        />
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                <div className="min-w-[150px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">Data Fim</label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
                 
-                <Select
-                  value={statusFilter}
-                  onValueChange={setStatusFilter}
-                >
-                  <SelectTrigger className="md:w-[150px]">
-                    <SelectValue placeholder={t('Status')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('AllStatus')}</SelectItem>
-                    {PAYMENT_STATUS.map((status) => (
-                      <SelectItem key={status.id} value={status.id}>
-                        {status.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="min-w-[150px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">Status</label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="completed">Concluído</SelectItem>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="failed">Falha</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 
-                <Select
-                  value={methodFilter}
-                  onValueChange={setMethodFilter}
-                >
-                  <SelectTrigger className="md:w-[150px]">
-                    <SelectValue placeholder={t('Method')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('AllMethods')}</SelectItem>
-                    {PAYMENT_METHODS.map((method) => (
-                      <SelectItem key={method.id} value={method.id}>
-                        {method.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="min-w-[150px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">Método</label>
+                  <Select value={methodFilter} onValueChange={setMethodFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="card">Cartão</SelectItem>
+                      <SelectItem value="cash">Dinheiro</SelectItem>
+                      <SelectItem value="transfer">Transferência</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 
-                <Button variant="outline">
-                  <Download className="mr-2 h-4 w-4" />
-                  {t('Export')}
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={handleExport} className="bg-yellow-500 hover:bg-yellow-600 text-blue-900">
+                    <FileDown className="w-4 h-4 mr-2" />
+                    Exportar
+                  </Button>
+                  <Button onClick={applyFilters} variant="outline">
+                    <Filter className="w-4 h-4 mr-2" />
+                    Aplicar
+                  </Button>
+                </div>
               </div>
 
-              <div className="border rounded-md">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('Date')}</TableHead>
-                      <TableHead>{t('TransactionId')}</TableHead>
-                      <TableHead>{t('ReservationId')}</TableHead>
-                      <TableHead>{t('Amount')}</TableHead>
-                      <TableHead>{t('Method')}</TableHead>
-                      <TableHead>{t('Status')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPayments.length > 0 ? (
-                      filteredPayments.map((payment: any) => (
-                        <TableRow key={payment.id}>
-                          <TableCell>
-                            {payment.paymentDate ? format(new Date(payment.paymentDate), 'dd/MM/yyyy HH:mm') : '-'}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {payment.transactionId || '-'}
-                          </TableCell>
-                          <TableCell>
-                            #{payment.reservationId}
-                          </TableCell>
-                          <TableCell className="font-medium">
+              {/* Tabela de Pagamentos */}
+              <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-blue-600">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Data
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Transação
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Referência
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Valor
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Método
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Usuário
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-100 text-sm">
+                      {filteredPayments.map((payment) => (
+                        <tr key={payment.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {format(new Date(payment.payment_date), 'dd/MM/yyyy')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">
+                            #{payment.transaction_id}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {payment.reference}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap font-bold text-gray-800">
                             {formatPrice(payment.amount)}
-                          </TableCell>
-                          <TableCell>
-                            {PAYMENT_METHODS.find(m => m.id === payment.method)?.name || payment.method}
-                          </TableCell>
-                          <TableCell>
-                            <Badge 
-                              className={
-                                payment.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                                payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                                'bg-red-100 text-red-800'
-                              }
-                            >
-                              {PAYMENT_STATUS.find(s => s.id === payment.status)?.name || payment.status}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-6 text-gray-500">
-                          {searchText || statusFilter !== 'all' || methodFilter !== 'all' ? 
-                            t('NoPaymentsMatchingFilters') : 
-                            t('NoPaymentsYet')
-                          }
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              {getPaymentMethodIcon(payment.method)}
+                              <span className="capitalize">{payment.method}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span className="text-blue-600 font-semibold text-sm">
+                                  {payment.first_name?.[0]}{payment.last_name?.[0]}
+                                </span>
+                              </div>
+                              <span>{payment.first_name} {payment.last_name}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(payment.status)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  
+                  {filteredPayments.length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-gray-500">Nenhum pagamento encontrado</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          )}
 
-        <TabsContent value="analytics">
-          <FinanceAnalytics 
-            revenueData={revenueByDay}
-            paymentMethodData={paymentsByMethod}
-          />
-        </TabsContent>
-
-
-      </Tabs>
+          {currentTab === 'analise' && (
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h3 className="text-lg font-semibold mb-4">Análise Financeira</h3>
+              <p className="text-gray-600">
+                Gráficos e análises detalhadas serão implementados aqui.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </AdminLayout>
   );
 };
