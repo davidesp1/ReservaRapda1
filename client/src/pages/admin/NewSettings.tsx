@@ -470,36 +470,346 @@ const NewSettings: React.FC = () => {
           </div>
         )}
 
-        {/* Outros tabs permanecem como placeholder por enquanto */}
+        {/* Tab 2 - Configurações de Página */}
         {activeTab === 2 && (
-          <div className="text-center py-12">
-            <Globe className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-600">Configurações de Página</h3>
-            <p className="text-gray-500">Em desenvolvimento...</p>
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Título da Página</Label>
+                <Input
+                  value={settings.pageTitle || ''}
+                  onChange={(e) => updateSetting('pageTitle', e.target.value)}
+                  placeholder="Opa que delicia - Restaurante Brasileiro"
+                  className="bg-gray-50 font-semibold"
+                />
+              </div>
+              <div className="flex flex-col space-y-4">
+                <div>
+                  <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Insira a Logo</Label>
+                  <div className="flex items-center space-x-4">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // Handle file upload logic here
+                          updateSetting('logoFile', file);
+                        }
+                      }}
+                      className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brasil-blue file:text-white hover:file:bg-brasil-green"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Insira o Favicon</Label>
+                  <div className="flex items-center space-x-4">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          updateSetting('faviconFile', file);
+                        }
+                      }}
+                      className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brasil-yellow file:text-brasil-blue hover:file:bg-brasil-green"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Barra de Navegação</Label>
+                <Textarea
+                  value={settings.navigationBar || ''}
+                  onChange={(e) => updateSetting('navigationBar', e.target.value)}
+                  placeholder="Ex: Home, Cardápio, Reservas, Sobre, Contato"
+                  rows={2}
+                  className="bg-gray-50 font-semibold resize-none"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Sobre</Label>
+                <Textarea
+                  value={settings.aboutSection || ''}
+                  onChange={(e) => updateSetting('aboutSection', e.target.value)}
+                  placeholder="Descrição da história, missão, valores, equipe"
+                  rows={2}
+                  className="bg-gray-50 font-semibold resize-none"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Localização e Contato</Label>
+                <Textarea
+                  value={settings.locationContact || ''}
+                  onChange={(e) => updateSetting('locationContact', e.target.value)}
+                  placeholder="Endereço, telefone, email"
+                  rows={2}
+                  className="bg-gray-50 font-semibold resize-none"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Testemunhos</Label>
+                <Textarea
+                  value={settings.testimonials || ''}
+                  onChange={(e) => updateSetting('testimonials', e.target.value)}
+                  placeholder="Comentários de clientes, avaliações"
+                  rows={2}
+                  className="bg-gray-50 font-semibold resize-none"
+                />
+              </div>
+            </div>
+            <div>
+              <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Footer</Label>
+              <Textarea
+                value={settings.footer || ''}
+                onChange={(e) => updateSetting('footer', e.target.value)}
+                placeholder="Informações de copyright, links, redes sociais"
+                rows={2}
+                className="bg-gray-50 font-semibold resize-none"
+              />
+            </div>
           </div>
         )}
 
+        {/* Tab 3 - Configurações de Reservas */}
         {activeTab === 3 && (
-          <div className="text-center py-12">
-            <Calendar className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-600">Configurações de Reservas</h3>
-            <p className="text-gray-500">Em desenvolvimento...</p>
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Tempo mínimo para reserva (min)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={settings.minReservationTime || ''}
+                  onChange={(e) => updateSetting('minReservationTime', Number(e.target.value))}
+                  placeholder="30"
+                  className="bg-gray-50 font-semibold"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Dias de reserva máxima antecipada</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={settings.maxAdvanceDays || ''}
+                  onChange={(e) => updateSetting('maxAdvanceDays', Number(e.target.value))}
+                  placeholder="30"
+                  className="bg-gray-50 font-semibold"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  checked={settings.allowCancellation || false}
+                  onCheckedChange={(checked) => updateSetting('allowCancellation', checked)}
+                />
+                <Label className="text-sm font-semibold text-gray-700 font-montserrat">Permitir que os clientes cancelem</Label>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  checked={settings.requireConfirmation || false}
+                  onCheckedChange={(checked) => updateSetting('requireConfirmation', checked)}
+                />
+                <Label className="text-sm font-semibold text-gray-700 font-montserrat">Requer confirmação</Label>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  checked={settings.autoConfirmation || false}
+                  onCheckedChange={(checked) => updateSetting('autoConfirmation', checked)}
+                />
+                <Label className="text-sm font-semibold text-gray-700 font-montserrat">Confirmação automática da reserva</Label>
+              </div>
+            </div>
           </div>
         )}
 
+        {/* Tab 4 - Configurações de Pagamento */}
         {activeTab === 4 && (
-          <div className="text-center py-12">
-            <CreditCard className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-600">Configurações de Pagamento</h3>
-            <p className="text-gray-500">Em desenvolvimento...</p>
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Moeda do Sistema</Label>
+                <Select value={settings.systemCurrency || 'EUR'} onValueChange={(value) => updateSetting('systemCurrency', value)}>
+                  <SelectTrigger className="bg-gray-50 font-semibold">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="BRL">Real Brasileiro (BRL)</SelectItem>
+                    <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                    <SelectItem value="USD">Dólar Americano (USD)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Taxa de Impostos (%)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={settings.taxRate || ''}
+                  onChange={(e) => updateSetting('taxRate', Number(e.target.value))}
+                  placeholder="10.0"
+                  className="bg-gray-50 font-semibold"
+                />
+              </div>
+            </div>
+            
+            <div className="bg-brasil-yellow/20 border-l-4 border-brasil-yellow px-4 py-3 rounded-lg flex items-center mb-2">
+              <FileText className="text-brasil-yellow mr-3 text-lg" />
+              <span className="text-sm font-semibold text-brasil-yellow">Chave de API para o serviço de pagamento EuPago. Esta informação é sensível e deve ser mantida segura.</span>
+            </div>
+            
+            <div className="mb-2">
+              <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Chave API do EuPago</Label>
+              <Input
+                type="password"
+                value={settings.eupagoApiKey || ''}
+                onChange={(e) => updateSetting('eupagoApiKey', e.target.value)}
+                placeholder="Insira sua chave API"
+                className="bg-gray-50 font-semibold"
+              />
+              <span className="block text-xs text-gray-400 mt-2">Requer chave API do EuPago para ativação para métodos de pagamento online</span>
+            </div>
+            
+            <div className="mb-2">
+              <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Métodos de Pagamento</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={settings.acceptCard || false}
+                    onCheckedChange={(checked) => updateSetting('acceptCard', checked)}
+                  />
+                  <Label className="text-sm text-gray-700 font-montserrat">Cartão de Crédito/Débito</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={settings.acceptMBWay || false}
+                    onCheckedChange={(checked) => updateSetting('acceptMBWay', checked)}
+                  />
+                  <Label className="text-sm text-gray-700 font-montserrat">MBWay</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={settings.acceptMultibanco || false}
+                    onCheckedChange={(checked) => updateSetting('acceptMultibanco', checked)}
+                  />
+                  <Label className="text-sm text-gray-700 font-montserrat">Multibanco</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={settings.acceptBankTransfer || false}
+                    onCheckedChange={(checked) => updateSetting('acceptBankTransfer', checked)}
+                  />
+                  <Label className="text-sm text-gray-700 font-montserrat">Transferência Bancária</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={settings.acceptCash || false}
+                    onCheckedChange={(checked) => updateSetting('acceptCash', checked)}
+                  />
+                  <Label className="text-sm text-gray-700 font-montserrat">Dinheiro</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={settings.acceptMultibancoTPA || false}
+                    onCheckedChange={(checked) => updateSetting('acceptMultibancoTPA', checked)}
+                  />
+                  <Label className="text-sm text-gray-700 font-montserrat">Multibanco TPA</Label>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
+        {/* Tab 5 - Configuração de Notificações */}
         {activeTab === 5 && (
-          <div className="text-center py-12">
-            <Bell className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-600">Configuração de Notificações</h3>
-            <p className="text-gray-500">Em desenvolvimento...</p>
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <h4 className="text-md font-semibold text-gray-700 font-montserrat">Notificações por Email</h4>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    checked={settings.emailNotifications || false}
+                    onCheckedChange={(checked) => updateSetting('emailNotifications', checked)}
+                  />
+                  <Label className="text-sm text-gray-700 font-montserrat">Ativar notificações por email</Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    checked={settings.emailNewReservations || false}
+                    onCheckedChange={(checked) => updateSetting('emailNewReservations', checked)}
+                  />
+                  <Label className="text-sm text-gray-700 font-montserrat">Novas reservas</Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    checked={settings.emailCancellations || false}
+                    onCheckedChange={(checked) => updateSetting('emailCancellations', checked)}
+                  />
+                  <Label className="text-sm text-gray-700 font-montserrat">Cancelamentos</Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    checked={settings.emailPayments || false}
+                    onCheckedChange={(checked) => updateSetting('emailPayments', checked)}
+                  />
+                  <Label className="text-sm text-gray-700 font-montserrat">Pagamentos recebidos</Label>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <h4 className="text-md font-semibold text-gray-700 font-montserrat">Notificações SMS</h4>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    checked={settings.smsNotifications || false}
+                    onCheckedChange={(checked) => updateSetting('smsNotifications', checked)}
+                  />
+                  <Label className="text-sm text-gray-700 font-montserrat">Ativar notificações por SMS</Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    checked={settings.smsReservationReminders || false}
+                    onCheckedChange={(checked) => updateSetting('smsReservationReminders', checked)}
+                  />
+                  <Label className="text-sm text-gray-700 font-montserrat">Lembretes de reserva</Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    checked={settings.smsPromotions || false}
+                    onCheckedChange={(checked) => updateSetting('smsPromotions', checked)}
+                  />
+                  <Label className="text-sm text-gray-700 font-montserrat">Promoções e ofertas</Label>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Email do administrador</Label>
+                <Input
+                  type="email"
+                  value={settings.adminEmail || ''}
+                  onChange={(e) => updateSetting('adminEmail', e.target.value)}
+                  placeholder="admin@opaquedelicia.com"
+                  className="bg-gray-50 font-semibold"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-semibold text-gray-700 mb-2 font-montserrat">Telefone para SMS</Label>
+                <Input
+                  type="tel"
+                  value={settings.smsPhone || ''}
+                  onChange={(e) => updateSetting('smsPhone', e.target.value)}
+                  placeholder="+351 123 456 789"
+                  className="bg-gray-50 font-semibold"
+                />
+              </div>
+            </div>
           </div>
         )}
 
