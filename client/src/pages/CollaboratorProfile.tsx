@@ -6,16 +6,21 @@ import { Helmet } from 'react-helmet';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Menu, 
   CreditCard, 
   User, 
   LogOut,
-  ChefHat
+  ChefHat,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar
 } from 'lucide-react';
 import { FaUtensils } from 'react-icons/fa';
 
-const CollaboratorDashboard: React.FC = () => {
+const CollaboratorProfile: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, isCollaborator, isLoading, user, logout } = useAuth();
   const [_, setLocation] = useLocation();
@@ -26,13 +31,6 @@ const CollaboratorDashboard: React.FC = () => {
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || !isCollaborator)) {
       setLocation('/');
-    }
-  }, [isAuthenticated, isCollaborator, isLoading, setLocation]);
-  
-  // Redirect collaborators directly to POS
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && isCollaborator) {
-      setLocation('/collaborator/pos');
     }
   }, [isAuthenticated, isCollaborator, isLoading, setLocation]);
 
@@ -76,8 +74,8 @@ const CollaboratorDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
-        <title>Dashboard - Opa que delicia</title>
-        <meta name="description" content="Dashboard do colaborador do restaurante Opa que delicia." />
+        <title>Perfil - Opa que delicia</title>
+        <meta name="description" content="Perfil do colaborador do restaurante Opa que delicia." />
       </Helmet>
       
       {/* Desktop Sidebar */}
@@ -226,7 +224,7 @@ const CollaboratorDashboard: React.FC = () => {
               </Sheet>
               
               <h1 className="ml-4 md:ml-0 text-xl font-semibold text-gray-900">
-                Dashboard Colaborador
+                Meu Perfil
               </h1>
             </div>
             
@@ -242,11 +240,105 @@ const CollaboratorDashboard: React.FC = () => {
         
         {/* Page Content */}
         <main className="p-6">
-          <div className="flex items-center justify-center h-96">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold mb-4">Bem-vindo ao Sistema POS</h1>
-              <p className="text-gray-600 mb-6">Redirecionando para o sistema de vendas...</p>
-              <Button onClick={() => setLocation('/collaborator/pos')} className="bg-brasil-blue hover:bg-brasil-blue/90">
+          <div className="max-w-4xl mx-auto">
+            {/* Profile Header */}
+            <Card className="mb-6">
+              <CardContent className="pt-6">
+                <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={user?.profilePicture} />
+                    <AvatarFallback className="bg-brasil-yellow text-brasil-blue text-2xl">
+                      {user?.firstName?.[0]}{user?.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-center md:text-left">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                      {user?.firstName} {user?.lastName}
+                    </h2>
+                    <p className="text-lg text-gray-600 mb-2">@{user?.username}</p>
+                    <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-brasil-blue text-white">
+                      <ChefHat className="w-4 h-4 mr-2" />
+                      Colaborador
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Contact Information */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Informações de Contato</CardTitle>
+                <CardDescription>Seus dados de contato registrados no sistema</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <Mail className="w-5 h-5 text-gray-400" />
+                  <span className="text-gray-900">{user?.email}</span>
+                </div>
+                {user?.phone && (
+                  <div className="flex items-center space-x-3">
+                    <Phone className="w-5 h-5 text-gray-400" />
+                    <span className="text-gray-900">{user?.phone}</span>
+                  </div>
+                )}
+                {user?.address && (
+                  <div className="flex items-start space-x-3">
+                    <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                    <div>
+                      <p className="text-gray-900">{user?.address}</p>
+                      {(user?.city || user?.postalCode) && (
+                        <p className="text-gray-600 text-sm">
+                          {user?.city} {user?.postalCode}
+                        </p>
+                      )}
+                      {user?.country && (
+                        <p className="text-gray-600 text-sm">{user?.country}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {user?.memberSince && (
+                  <div className="flex items-center space-x-3">
+                    <Calendar className="w-5 h-5 text-gray-400" />
+                    <span className="text-gray-900">
+                      Membro desde {new Date(user.memberSince).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Access Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Acesso ao Sistema</CardTitle>
+                <CardDescription>Informações sobre suas permissões e último acesso</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Suas Permissões:</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Acesso ao Sistema POS</li>
+                    <li>• Visualização e edição do perfil pessoal</li>
+                    <li>• Processamento de vendas e pagamentos</li>
+                  </ul>
+                </div>
+                {user?.lastLogin && (
+                  <div className="text-sm text-gray-600">
+                    <strong>Último acesso:</strong> {new Date(user.lastLogin).toLocaleString('pt-BR')}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Action Buttons */}
+            <div className="mt-6 flex flex-col sm:flex-row gap-4">
+              <Button 
+                onClick={() => setLocation('/collaborator/pos')} 
+                className="bg-brasil-blue hover:bg-brasil-blue/90"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
                 Ir para Sistema POS
               </Button>
             </div>
@@ -257,4 +349,4 @@ const CollaboratorDashboard: React.FC = () => {
   );
 };
 
-export default CollaboratorDashboard;
+export default CollaboratorProfile;

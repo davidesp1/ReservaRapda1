@@ -422,7 +422,8 @@ const Customers: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="customer">{t('Customer')}</SelectItem>
+                          <SelectItem value="customer">{t('Cliente')}</SelectItem>
+                          <SelectItem value="collaborator">{t('colaborator')}</SelectItem>
                           <SelectItem value="admin">{t('Administrator')}</SelectItem>
                         </SelectContent>
                       </Select>
