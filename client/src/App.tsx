@@ -113,7 +113,7 @@ function Router() {
       {/* Collaborator routes */}
       <Route path="/collaborator" component={CollaboratorDashboard} />
       <Route path="/collaborator/pos" component={POSMode} />
-      <Route path="/collaborator/profile" component={Profile} />
+      <Route path="/collaborator/profile" component={CollaboratorProfile} />
       <Route path="/admin/dashboard" component={Dashboard} />
       <Route path="/admin/customers" component={Customers} />
       <Route path="/admin/customers/add" component={CustomersAdd} />
