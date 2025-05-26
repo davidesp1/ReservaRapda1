@@ -36,6 +36,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
   const [pin, setPin] = useState('');
   const [userId, setUserId] = useState('');
   const [isPinSubmitting, setIsPinSubmitting] = useState(false);
+  const [activeInput, setActiveInput] = useState<'userId' | 'pin'>('userId');
 
   const loginSchema = z.object({
     email: z.string().min(1, { message: 'Username ou email é obrigatório' }),
@@ -101,7 +102,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={`${showPinLogin ? 'sm:max-w-lg lg:max-w-xl' : 'sm:max-w-md'} max-h-[95vh] overflow-y-auto`}>
         <DialogHeader className="text-center">
           <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
             <X className="h-4 w-4" />
@@ -119,51 +120,84 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
         </DialogHeader>
         
         {showPinLogin ? (
-          <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Acessar Conta</h1>
-            <p className="text-gray-500 mb-6">Digite seu ID de usuário e PIN de 4 dígitos</p>
-            
-            {/* User ID Input */}
-            <div className="mb-4">
-              <Label htmlFor="userId">ID do Usuário</Label>
-              <Input
-                id="userId"
-                type="number"
-                placeholder="Digite seu ID"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border"
-              />
+          <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
+            <div className="text-center">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Acessar Conta</h1>
+              <p className="text-sm sm:text-base text-gray-500 mb-4 sm:mb-6">
+                Selecione o campo e use o teclado numérico
+              </p>
             </div>
             
-            {/* PIN Display */}
-            <div className="mb-6">
-              <label className="block text-gray-700 font-medium mb-2">PIN</label>
-              <div className="mb-3 p-3 bg-gray-50 border border-gray-300 rounded-lg flex justify-center">
-                <div className="flex space-x-2">
-                  {[1, 2, 3, 4].map((index) => (
-                    <div
-                      key={index}
-                      className={`w-3 h-3 rounded-full ${
-                        pin.length >= index ? 'bg-brasil-green' : 'bg-gray-300'
-                      }`}
-                    />
-                  ))}
+            {/* Input Fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              {/* User ID Input */}
+              <div>
+                <Label htmlFor="userId" className="text-sm font-medium">ID do Usuário</Label>
+                <div
+                  onClick={() => setActiveInput('userId')}
+                  className={`mt-1 p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                    activeInput === 'userId' 
+                      ? 'border-brasil-green bg-green-50' 
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="text-center">
+                    <span className="text-lg sm:text-xl font-mono">
+                      {userId || '---'}
+                    </span>
+                  </div>
                 </div>
               </div>
-              
-              {/* Numeric Keypad */}
-              <div className="grid grid-cols-3 gap-2">
+
+              {/* PIN Input */}
+              <div>
+                <Label className="text-sm font-medium">PIN (4 dígitos)</Label>
+                <div
+                  onClick={() => setActiveInput('pin')}
+                  className={`mt-1 p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                    activeInput === 'pin' 
+                      ? 'border-brasil-green bg-green-50' 
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="flex justify-center space-x-2">
+                    {[1, 2, 3, 4].map((index) => (
+                      <div
+                        key={index}
+                        className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full transition-colors ${
+                          pin.length >= index ? 'bg-brasil-green' : 'bg-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Field Indicator */}
+            <div className="text-center">
+              <span className="text-sm text-gray-600">
+                Campo ativo: <span className="font-semibold text-brasil-green">
+                  {activeInput === 'userId' ? 'ID do Usuário' : 'PIN'}
+                </span>
+              </span>
+            </div>
+            
+            {/* Shared Numeric Keypad */}
+            <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+              <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => (
                   <button
                     key={number}
                     type="button"
                     onClick={() => {
-                      if (pin.length < 4) {
+                      if (activeInput === 'userId') {
+                        setUserId(prev => prev + number.toString());
+                      } else if (activeInput === 'pin' && pin.length < 4) {
                         setPin(prev => prev + number.toString());
                       }
                     }}
-                    className="h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors"
+                    className="h-12 sm:h-14 bg-white border border-gray-300 rounded-lg font-medium text-lg sm:text-xl hover:bg-gray-100 active:bg-gray-200 transition-colors shadow-sm"
                   >
                     {number}
                   </button>
@@ -172,8 +206,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
                 {/* Clear button */}
                 <button
                   type="button"
-                  onClick={() => setPin(prev => prev.slice(0, -1))}
-                  className="h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors"
+                  onClick={() => {
+                    if (activeInput === 'userId') {
+                      setUserId(prev => prev.slice(0, -1));
+                    } else if (activeInput === 'pin') {
+                      setPin(prev => prev.slice(0, -1));
+                    }
+                  }}
+                  className="h-12 sm:h-14 bg-white border border-gray-300 rounded-lg font-medium text-lg sm:text-xl hover:bg-gray-100 active:bg-gray-200 transition-colors shadow-sm"
                 >
                   <i className="fas fa-backspace"></i>
                 </button>
@@ -182,23 +222,30 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
                 <button
                   type="button"
                   onClick={() => {
-                    if (pin.length < 4) {
+                    if (activeInput === 'userId') {
+                      setUserId(prev => prev + '0');
+                    } else if (activeInput === 'pin' && pin.length < 4) {
                       setPin(prev => prev + '0');
                     }
                   }}
-                  className="h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors"
+                  className="h-12 sm:h-14 bg-white border border-gray-300 rounded-lg font-medium text-lg sm:text-xl hover:bg-gray-100 active:bg-gray-200 transition-colors shadow-sm"
                 >
                   0
                 </button>
                 
-                {/* Enter button */}
+                {/* Clear All button */}
                 <button
                   type="button"
-                  onClick={onPinSubmit}
-                  disabled={pin.length !== 4 || isPinSubmitting}
-                  className="h-14 bg-white border border-gray-300 rounded-lg font-medium text-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  onClick={() => {
+                    if (activeInput === 'userId') {
+                      setUserId('');
+                    } else if (activeInput === 'pin') {
+                      setPin('');
+                    }
+                  }}
+                  className="h-12 sm:h-14 bg-red-100 border border-red-300 rounded-lg font-medium text-lg sm:text-xl hover:bg-red-200 active:bg-red-300 transition-colors shadow-sm text-red-600"
                 >
-                  <i className="fas fa-check"></i>
+                  <i className="fas fa-times"></i>
                 </button>
               </div>
             </div>
@@ -206,21 +253,31 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
             {/* Login Button */}
             <Button 
               onClick={onPinSubmit}
-              className="w-full bg-brasil-green hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors"
-              disabled={isPinSubmitting || pin.length !== 4}
+              className="w-full bg-brasil-green hover:bg-green-700 text-white font-bold py-3 sm:py-4 px-4 rounded-lg transition-colors text-base sm:text-lg"
+              disabled={isPinSubmitting || pin.length !== 4 || !userId}
             >
-              {isPinSubmitting ? <i className="fas fa-spinner fa-spin mr-2"></i> : null}
-              Entrar
+              {isPinSubmitting ? (
+                <>
+                  <i className="fas fa-spinner fa-spin mr-2"></i>
+                  Entrando...
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-sign-in-alt mr-2"></i>
+                  Entrar
+                </>
+              )}
             </Button>
             
             <div className="text-center">
               <Button
                 variant="link"
-                className="text-brasil-green hover:text-green-700"
+                className="text-brasil-green hover:text-green-700 text-sm sm:text-base"
                 onClick={() => {
                   setShowPinLogin(false);
                   setPin('');
                   setUserId('');
+                  setActiveInput('userId');
                 }}
               >
                 ← Voltar para login normal
