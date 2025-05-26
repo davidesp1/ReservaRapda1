@@ -59,6 +59,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
       // Redirecionar baseado no papel do usuário
       if (userData && userData.role === 'admin') {
         setLocation('/admin/dashboard');
+      } else if (userData && userData.role === 'collaborator') {
+        setLocation('/collaborator');
       } else {
         setLocation('/dashboard');
       }

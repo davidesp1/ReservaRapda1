@@ -108,6 +108,9 @@ function Router() {
       
       {/* Admin routes */}
       <Route path="/admin" component={AdminDashboard} />
+      
+      {/* Collaborator routes */}
+      <Route path="/collaborator" component={CollaboratorDashboard} />
       <Route path="/admin/dashboard" component={Dashboard} />
       <Route path="/admin/customers" component={Customers} />
       <Route path="/admin/customers/add" component={CustomersAdd} />

@@ -42,7 +42,7 @@ const formSchema = z.object({
   allergies: z.string().optional(),
   preferredCuisine: z.string().optional(),
   seatingPreference: z.string().optional(),
-  isAdmin: z.boolean().default(false),
+  role: z.enum(['customer', 'admin', 'collaborator']).default('customer'),
   preferredLanguage: z.string().default('pt'),
 });
 
@@ -74,7 +74,7 @@ const CustomersAdd: React.FC = () => {
       allergies: '',
       preferredCuisine: '',
       seatingPreference: '',
-      isAdmin: false,
+      role: 'customer' as const,
       preferredLanguage: 'pt',
     },
   });
@@ -177,21 +177,26 @@ const CustomersAdd: React.FC = () => {
                   
                   <FormField
                     control={form.control}
-                    name="isAdmin"
+                    name="role"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-4">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>{t('AdminPrivileges')}</FormLabel>
-                          <FormDescription>
-                            {t('GrantAdminAccess')}
-                          </FormDescription>
-                        </div>
+                      <FormItem>
+                        <FormLabel>Tipo de Usuário</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o tipo de usuário" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="customer">Cliente</SelectItem>
+                            <SelectItem value="collaborator">Colaborador (POS)</SelectItem>
+                            <SelectItem value="admin">Administrador</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Colaboradores têm acesso apenas ao sistema POS
+                        </FormDescription>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
