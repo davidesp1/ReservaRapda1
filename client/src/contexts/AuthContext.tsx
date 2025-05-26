@@ -10,6 +10,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isCollaborator: boolean;
   login: (username: string, password: string) => Promise<User>;
+  loginWithPin: (pin: string) => Promise<User>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -64,7 +65,41 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [sessionTimer, setSessionTimer] = useState<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+
+  // Configuração de timeout da sessão (5 minutos)
+  const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutos em milissegundos
+
+  // Função para resetar o timer de sessão
+  const resetSessionTimer = () => {
+    if (sessionTimer) {
+      clearTimeout(sessionTimer);
+    }
+    
+    if (user) {
+      const newTimer = setTimeout(() => {
+        handleAutoLogout();
+      }, SESSION_TIMEOUT);
+      setSessionTimer(newTimer);
+    }
+  };
+
+  // Função para logout automático
+  const handleAutoLogout = async () => {
+    try {
+      await apiRequest('POST', '/api/auth/logout');
+      setUser(null);
+      queryClient.clear();
+      toast({
+        title: "Sessão Expirada",
+        description: "Sua sessão expirou por inatividade. Faça login novamente.",
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error('Erro no logout automático:', error);
+    }
+  };
 
   // Fetch current user on mount com atualização periódica
   const { isLoading, isError } = useQuery<User>({
@@ -84,9 +119,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userData = queryClient.getQueryData<User>(['/api/auth/me']);
       if (userData) {
         setUser(userData);
+        resetSessionTimer();
       }
     }
   }, [isLoading, isError]);
+
+  // Adicionar listeners de atividade para resetar o timer
+  useEffect(() => {
+    if (!user) return;
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    const resetTimer = () => {
+      resetSessionTimer();
+    };
+
+    // Adicionar listeners
+    events.forEach(event => {
+      document.addEventListener(event, resetTimer, true);
+    });
+
+    // Cleanup
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, resetTimer, true);
+      });
+      if (sessionTimer) {
+        clearTimeout(sessionTimer);
+      }
+    };
+  }, [user, sessionTimer]);
 
   // Login mutation
   const loginMutation = useMutation<User, Error, { email?: string; username?: string; password: string }>({
@@ -106,6 +168,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Falha no login",
         description: error.message || "Credenciais inválidas. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Login with PIN mutation
+  const loginWithPinMutation = useMutation({
+    mutationFn: async (pin: string) => {
+      const response = await apiRequest('POST', '/api/auth/login-pin', { pin });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setUser(data);
+      resetSessionTimer();
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({
+        title: "Login realizado",
+        description: `Bem-vindo de volta, ${data.firstName}!`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "PIN inválido",
+        description: "PIN incorreto. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -192,6 +278,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin,
         isCollaborator,
         login,
+        loginWithPin: (pin: string) => loginWithPinMutation.mutateAsync(pin),
         register,
         logout,
       }}
