@@ -971,7 +971,21 @@ router.get("/api/stats/dashboard", isAuthenticated, async (req, res) => {
 router.get("/api/payments", isAuthenticated, async (req, res) => {
   try {
     const payments = await queryClient`
-      SELECT p.*, u.username, u.email, u.first_name, u.last_name,
+      SELECT 
+        p.id,
+        p.user_id,
+        p.reservation_id,
+        p.amount,
+        p.method,
+        p.status,
+        p.reference,
+        p.transaction_id,
+        p.payment_date,
+        p.details,
+        u.username,
+        u.email,
+        u.first_name,
+        u.last_name,
         CASE
           WHEN p.reservation_id IS NOT NULL THEN 'reservation'
           WHEN p.details->>'type' = 'pos' THEN 'pos'
@@ -982,7 +996,7 @@ router.get("/api/payments", isAuthenticated, async (req, res) => {
       ORDER BY p.payment_date DESC, p.id DESC
     `;
     
-    console.log(`Retornando ${payments.length} pagamentos (cartão, MBWay, Multibanco, transferência bancária, dinheiro e TPA)`);
+    console.log(`Retornando ${payments.length} pagamentos para a página de finanças`);
     res.json(payments);
   } catch (err: any) {
     console.error("Erro ao buscar pagamentos:", err);
