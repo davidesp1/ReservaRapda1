@@ -247,7 +247,14 @@ const MenuManager: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["supabase-menu-items"] });
       setIsProductModalOpen(false);
       productForm.reset();
-      toast({ title: "Produto criado com sucesso!" });
+      Swal.fire({
+        icon: 'success',
+        title: 'Produto Criado!',
+        text: 'O produto foi adicionado com sucesso ao menu.',
+        confirmButtonColor: '#10b981',
+        timer: 2500,
+        showConfirmButton: false
+      });
     },
     onError: (error: any) => {
       toast({
