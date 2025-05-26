@@ -220,6 +220,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
                 onClick={() => {
                   setShowPinLogin(false);
                   setPin('');
+                  setUserId('');
                 }}
               >
                 ← Voltar para login normal
