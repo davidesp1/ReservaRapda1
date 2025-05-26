@@ -29,9 +29,12 @@ interface LoginModalProps {
 
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClick }) => {
   const { t } = useTranslation();
-  const { login } = useAuth();
+  const { login, loginWithPin } = useAuth();
   const [_, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPinLogin, setShowPinLogin] = useState(false);
+  const [pin, setPin] = useState('');
+  const [isPinSubmitting, setIsPinSubmitting] = useState(false);
 
   const loginSchema = z.object({
     email: z.string().min(1, { message: 'Username ou email é obrigatório' }),
@@ -71,6 +74,30 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
     }
   };
 
+  const onPinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pin.length !== 4) return;
+    
+    try {
+      setIsPinSubmitting(true);
+      const userData = await loginWithPin(pin);
+      onClose();
+      
+      // Redirecionar baseado no papel do usuário
+      if (userData && userData.role === 'admin') {
+        setLocation('/admin/dashboard');
+      } else if (userData && userData.role === 'collaborator') {
+        setLocation('/collaborator');
+      } else {
+        setLocation('/dashboard');
+      }
+    } catch (error) {
+      console.error('PIN login error:', error);
+    } finally {
+      setIsPinSubmitting(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -82,65 +109,122 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onRegisterClic
           <div className="flex items-center justify-center mb-6">
             <Logo />
           </div>
-          <DialogTitle className="text-2xl font-montserrat">{t('AccessAccount')}</DialogTitle>
-          <DialogDescription>{t('EnterYourCredentials')}</DialogDescription>
+          <DialogTitle className="text-2xl font-montserrat">
+            {showPinLogin ? 'Login com PIN' : t('AccessAccount')}
+          </DialogTitle>
+          <DialogDescription>
+            {showPinLogin ? 'Digite seu PIN de 4 dígitos' : t('EnterYourCredentials')}
+          </DialogDescription>
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Email')}</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="email"
-                      placeholder="exemplo@email.com" 
-                      {...field} 
-                      className="w-full px-4 py-3 rounded-lg border"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {showPinLogin ? (
+          <div className="space-y-6">
+            <form onSubmit={onPinSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="pin">PIN de 4 dígitos</Label>
+                <Input
+                  id="pin"
+                  type="number"
+                  placeholder="0000"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value)}
+                  maxLength={4}
+                  className="w-full px-4 py-3 rounded-lg border text-center text-2xl font-mono"
+                />
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full bg-brasil-green hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg"
+                disabled={isPinSubmitting || pin.length !== 4}
+              >
+                {isPinSubmitting ? <i className="fas fa-spinner fa-spin mr-2"></i> : null}
+                Entrar com PIN
+              </Button>
+            </form>
             
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Password')}</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="•••••••••" 
-                      {...field} 
-                      className="w-full px-4 py-3 rounded-lg border"
-                    />
-                  </FormControl>
-                  <div className="flex justify-end mt-1">
-                    <a href="#" className="text-sm text-brasil-green hover:text-green-700">
-                      {t('ForgotPassword')}
-                    </a>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="text-center">
+              <Button
+                variant="link"
+                className="text-brasil-green hover:text-green-700"
+                onClick={() => {
+                  setShowPinLogin(false);
+                  setPin('');
+                }}
+              >
+                ← Voltar para login normal
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Email')}</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="email"
+                          placeholder="exemplo@email.com" 
+                          {...field} 
+                          className="w-full px-4 py-3 rounded-lg border"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Password')}</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="•••••••••" 
+                          {...field} 
+                          className="w-full px-4 py-3 rounded-lg border"
+                        />
+                      </FormControl>
+                      <div className="flex justify-end mt-1">
+                        <a href="#" className="text-sm text-brasil-green hover:text-green-700">
+                          {t('ForgotPassword')}
+                        </a>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <Button 
+                  type="submit" 
+                  className="w-full bg-brasil-green hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? <i className="fas fa-spinner fa-spin mr-2"></i> : null}
+                  {t('Login')}
+                </Button>
+              </form>
+            </Form>
             
-            <Button 
-              type="submit" 
-              className="w-full bg-brasil-green hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? <i className="fas fa-spinner fa-spin mr-2"></i> : null}
-              {t('Login')}
-            </Button>
-          </form>
-        </Form>
+            <div className="text-center">
+              <Button
+                variant="outline"
+                className="w-full border-brasil-green text-brasil-green hover:bg-brasil-green hover:text-white"
+                onClick={() => setShowPinLogin(true)}
+              >
+                🔢 Logar com PIN
+              </Button>
+            </div>
+          </div>
+        )}
         
         <DialogFooter className="sm:justify-center">
           <div className="mt-4 text-center text-sm text-gray-600">

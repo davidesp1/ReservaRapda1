@@ -29,6 +29,69 @@ const isAuthenticated = (req: express.Request, res: express.Response, next: expr
 // Rotas de autenticação
 router.post("/api/auth/register", register);
 router.post("/api/auth/login", login);
+router.post("/api/auth/login-pin", async (req: express.Request, res: express.Response) => {
+  try {
+    const { pin } = req.body;
+    
+    if (!pin || pin.length !== 4) {
+      return res.status(400).json({ message: "PIN deve ter 4 dígitos" });
+    }
+
+    // Buscar usuário pelo PIN (assumindo que o PIN está no campo phone ou em um campo específico)
+    const user = await queryClient`
+      SELECT id, username, email, first_name, last_name, phone, role, status, 
+             address, city, postal_code, country, birth_date, profile_picture, 
+             biography, preferences, member_since, last_login, loyalty_points
+      FROM users 
+      WHERE phone = ${pin} AND status = 'active'
+      LIMIT 1
+    `;
+
+    if (user.length === 0) {
+      return res.status(401).json({ message: "PIN inválido" });
+    }
+
+    const userData = user[0];
+    
+    // Atualizar último login
+    await queryClient`
+      UPDATE users 
+      SET last_login = NOW() 
+      WHERE id = ${userData.id}
+    `;
+
+    // Criar sessão
+    req.session.userId = userData.id;
+
+    // Retornar dados do usuário formatados
+    const userResponse = {
+      id: userData.id,
+      username: userData.username,
+      email: userData.email,
+      firstName: userData.first_name,
+      lastName: userData.last_name,
+      phone: userData.phone,
+      address: userData.address,
+      city: userData.city,
+      postalCode: userData.postal_code,
+      country: userData.country,
+      birthDate: userData.birth_date,
+      profilePicture: userData.profile_picture,
+      biography: userData.biography,
+      role: userData.role,
+      preferences: userData.preferences,
+      memberSince: userData.member_since,
+      lastLogin: userData.last_login,
+      status: userData.status,
+      loyaltyPoints: userData.loyalty_points
+    };
+
+    res.json(userResponse);
+  } catch (err: any) {
+    console.error("Erro no login com PIN:", err);
+    res.status(500).json({ message: "Erro interno do servidor" });
+  }
+});
 router.post("/api/auth/logout", logout);
 router.get("/api/auth/me", getProfile);
 
