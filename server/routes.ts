@@ -1083,7 +1083,6 @@ router.post('/api/pos/orders', async (req, res) => {
     // Criar o pedido
     const newOrder = await drizzleDb.insert(schema.orders).values({
       userId: orderData.userId || 1, // Default para o primeiro usuário se não especificado
-      collaboratorId: orderData.collaboratorId || null, // Rastrear colaborador responsável pela venda
       type: 'pos',
       status: 'completed',
       items: validatedItems,
@@ -1461,36 +1460,6 @@ router.put("/api/settings/payments", isAuthenticated, async (req, res) => {
       stack: err.stack,
       message: "Falha ao atualizar configurações de pagamento. Por favor, contate o suporte."
     });
-  }
-});
-
-// Rota para relatório de vendas por colaborador
-router.get('/api/sales/by-collaborator', async (req, res) => {
-  try {
-    const salesByCollaborator = await drizzleDb
-      .select({
-        orderId: schema.orders.id,
-        totalAmount: schema.orders.totalAmount,
-        paymentMethod: schema.orders.paymentMethod,
-        orderTime: schema.orders.orderTime,
-        collaboratorId: schema.orders.collaboratorId,
-        collaboratorName: sql`CONCAT(${schema.users.firstName}, ' ', ${schema.users.lastName})`,
-        collaboratorUsername: schema.users.username,
-      })
-      .from(schema.orders)
-      .leftJoin(schema.users, eq(schema.orders.collaboratorId, schema.users.id))
-      .where(
-        and(
-          eq(schema.orders.type, 'pos'),
-          eq(schema.orders.status, 'completed')
-        )
-      )
-      .orderBy(desc(schema.orders.orderTime));
-
-    res.json(salesByCollaborator);
-  } catch (error) {
-    console.error('Erro ao buscar vendas por colaborador:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 

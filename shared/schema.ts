@@ -177,7 +177,6 @@ export const orders = pgTable("orders", {
   reservationId: integer("reservation_id"),
   userId: integer("user_id").notNull(),
   tableId: integer("table_id"),
-  collaboratorId: integer("collaborator_id"), // ID do colaborador que processou a venda
   status: orderStatusEnum("status").default("pending"),
   type: text("type").default("reservation"), // reservation, pos
   items: json("items").$type<Array<{
@@ -282,10 +281,6 @@ export const ordersRelations = relations(orders, ({ one }) => ({
   }),
   user: one(users, {
     fields: [orders.userId],
-    references: [users.id],
-  }),
-  collaborator: one(users, {
-    fields: [orders.collaboratorId],
     references: [users.id],
   }),
 }));

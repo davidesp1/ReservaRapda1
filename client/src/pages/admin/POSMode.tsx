@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "@/contexts/AuthContext";
 import { Check, Search, ShoppingCart, X, Plus, Minus, ArrowRightFromLine } from "lucide-react";
 import { Loader2 } from "lucide-react";
 
@@ -28,7 +27,6 @@ interface OrderItem {
 const POSMode = () => {
   const { t } = useTranslation();
   const [_, navigate] = useLocation();
-  const { user, isCollaborator } = useAuth();
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -292,7 +290,6 @@ Status: PAGO
           
           // Preparar os dados do pedido para enviar para a API
           const orderData = {
-            collaboratorId: isCollaborator ? user?.id : null, // Rastrear colaborador responsável pela venda
             items: orderItems.map(item => ({
               menuItemId: item.menuItem.id,
               quantity: item.quantity,
