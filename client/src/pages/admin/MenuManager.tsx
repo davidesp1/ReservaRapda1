@@ -484,6 +484,7 @@ const MenuManager: React.FC = () => {
       reader.onload = () => {
         const base64String = reader.result as string;
         productForm.setValue("imageUrl", base64String);
+        console.log("Imagem carregada:", base64String.substring(0, 100) + "...");
         
         toast({
           title: "Upload realizado",
@@ -508,6 +509,9 @@ const MenuManager: React.FC = () => {
       ...data,
       price: Math.round(data.price * 100), // Convert to cents
     };
+
+    console.log("Dados do formulário enviados:", formattedData);
+    console.log("URL da imagem no submit:", formattedData.imageUrl);
 
     if (editingProduct) {
       updateItemMutation.mutate({ id: editingProduct.id, data: formattedData });
