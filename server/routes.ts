@@ -1317,106 +1317,6 @@ router.get("/api/settings", async (req, res) => {
   }
 });
 
-// Rota PUT para atualizar configurações gerais
-router.put("/api/settings", isAuthenticated, async (req, res) => {
-  try {
-    const userId = req.session.userId;
-    const settings = req.body;
-    
-    // Verificar se o usuário é admin
-    const userResult = await queryClient`
-      SELECT role FROM users WHERE id = ${Number(userId)}
-    `;
-    
-    const user = userResult[0];
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ message: "Apenas administradores podem alterar configurações" });
-    }
-
-    console.log("Atualizando configurações gerais:", settings);
-
-    // Mapeamento das configurações para a estrutura de banco
-    const settingsMap = [
-      // Configurações Gerais
-      { category: 'general', key: 'restaurantName', value: settings.restaurantName },
-      { category: 'general', key: 'restaurantEmail', value: settings.restaurantEmail },
-      { category: 'general', key: 'restaurantPhone', value: settings.restaurantPhone },
-      { category: 'general', key: 'restaurantAddress', value: settings.restaurantAddress },
-      { category: 'general', key: 'restaurantWebsite', value: settings.restaurantWebsite },
-      { category: 'general', key: 'openingTime', value: settings.openingTime },
-      { category: 'general', key: 'closingTime', value: settings.closingTime },
-      { category: 'general', key: 'restaurantDescription', value: settings.restaurantDescription },
-      
-      // Configurações de Página
-      { category: 'page', key: 'pageTitle', value: settings.pageTitle },
-      { category: 'page', key: 'navBar', value: settings.navBar },
-      { category: 'page', key: 'aboutSection', value: settings.aboutSection },
-      { category: 'page', key: 'locationContact', value: settings.locationContact },
-      { category: 'page', key: 'testimonials', value: settings.testimonials },
-      { category: 'page', key: 'footer', value: settings.footer },
-      
-      // Configurações de Reservas
-      { category: 'reservations', key: 'minReservationTime', value: settings.minReservationTime?.toString() },
-      { category: 'reservations', key: 'maxReservationDays', value: settings.maxReservationDays?.toString() },
-      { category: 'reservations', key: 'allowCancellation', value: settings.allowCancellation?.toString() },
-      { category: 'reservations', key: 'requireConfirmation', value: settings.requireConfirmation?.toString() },
-      { category: 'reservations', key: 'automaticConfirmation', value: settings.automaticConfirmation?.toString() },
-      
-      // Configurações de Pagamento
-      { category: 'payments', key: 'currency', value: settings.currency },
-      { category: 'payments', key: 'taxRate', value: settings.taxRate?.toString() },
-      { category: 'payments', key: 'eupagoApiKey', value: settings.eupagoApiKey },
-      { category: 'payments', key: 'allowCard', value: settings.allowCard?.toString() },
-      { category: 'payments', key: 'allowMbway', value: settings.allowMbway?.toString() },
-      { category: 'payments', key: 'allowMultibanco', value: settings.allowMultibanco?.toString() },
-      { category: 'payments', key: 'allowTransfer', value: settings.allowTransfer?.toString() },
-      { category: 'payments', key: 'allowCash', value: settings.allowCash?.toString() }
-    ];
-
-    // Atualizar ou inserir cada configuração usando postgres-js diretamente
-    for (const setting of settingsMap) {
-      if (setting.value !== undefined && setting.value !== null) {
-        try {
-          // Usar upsert com postgres-js para maior confiabilidade
-          await queryClient`
-            INSERT INTO settings (category, key, value, created_at, updated_at)
-            VALUES (${setting.category}, ${setting.key}, ${setting.value}, NOW(), NOW())
-            ON CONFLICT (category, key) 
-            DO UPDATE SET 
-              value = EXCLUDED.value,
-              updated_at = NOW()
-          `;
-        } catch (error) {
-          console.error(`Erro ao atualizar configuração ${setting.category}.${setting.key}:`, error);
-        }
-      }
-    }
-
-    // Buscar e retornar as configurações atualizadas
-    const updatedSettings = await drizzleDb.select()
-      .from(schema.settings);
-    
-    const settingsByCategory: Record<string, Record<string, string>> = {};
-    
-    updatedSettings.forEach(setting => {
-      if (!settingsByCategory[setting.category]) {
-        settingsByCategory[setting.category] = {};
-      }
-      settingsByCategory[setting.category][setting.key] = setting.value || '';
-    });
-
-    console.log("Configurações atualizadas com sucesso:", settingsByCategory);
-    
-    res.json({ 
-      message: "Configurações atualizadas com sucesso",
-      settings: settingsByCategory
-    });
-  } catch (err: any) {
-    console.error("Erro ao atualizar configurações:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
 router.get("/api/settings/payments", async (req, res) => {
   try {
     // Buscar configurações da tabela payment_settings
@@ -1799,6 +1699,192 @@ router.get('/api/reports/user-stats/:userId', isAuthenticated, async (req, res) 
   } catch (error: any) {
     console.error('Erro ao buscar estatísticas do usuário:', error);
     res.status(500).json({ error: error.message || 'Erro ao buscar estatísticas' });
+  }
+});
+
+// ===============================
+// CONFIGURAÇÕES DO SISTEMA
+// ===============================
+
+// Obter todas as configurações
+router.get("/api/settings", isAuthenticated, async (req, res) => {
+  try {
+    const settings = await queryClient`
+      SELECT setting_key, setting_value, setting_type 
+      FROM settings 
+      ORDER BY setting_key
+    `;
+    
+    // Organizar configurações por categoria
+    const organized = {
+      general: {},
+      page: {},
+      reservations: {},
+      payments: {},
+      notifications: {},
+      pos: {}
+    };
+    
+    settings.forEach(setting => {
+      const [category, key] = setting.setting_key.split('.');
+      if (organized[category]) {
+        let value = setting.setting_value;
+        
+        // Parse JSON values
+        if (setting.setting_type === 'json') {
+          try {
+            value = JSON.parse(value);
+          } catch (e) {
+            console.error('Erro ao fazer parse do JSON:', e);
+          }
+        } else if (setting.setting_type === 'boolean') {
+          value = value === 'true';
+        } else if (setting.setting_type === 'number') {
+          value = parseFloat(value);
+        }
+        
+        organized[category][key] = value;
+      }
+    });
+    
+    res.json(organized);
+  } catch (error: any) {
+    console.error('Erro ao buscar configurações:', error);
+    res.status(500).json({ error: error.message || 'Erro ao buscar configurações' });
+  }
+});
+
+// Salvar configurações gerais
+router.post("/api/settings/general", isAuthenticated, async (req, res) => {
+  try {
+    const { restaurantName, email, phone, website, address, openingTime, closingTime, description } = req.body;
+    
+    const settings = [
+      { key: 'general.restaurantName', value: restaurantName, type: 'string' },
+      { key: 'general.email', value: email, type: 'string' },
+      { key: 'general.phone', value: phone, type: 'string' },
+      { key: 'general.website', value: website || '', type: 'string' },
+      { key: 'general.address', value: address, type: 'string' },
+      { key: 'general.openingTime', value: openingTime, type: 'string' },
+      { key: 'general.closingTime', value: closingTime, type: 'string' },
+      { key: 'general.description', value: description || '', type: 'string' }
+    ];
+    
+    for (const setting of settings) {
+      await queryClient`
+        INSERT INTO settings (setting_key, setting_value, setting_type, updated_at)
+        VALUES (${setting.key}, ${setting.value}, ${setting.type}, NOW())
+        ON CONFLICT (setting_key) 
+        DO UPDATE SET 
+          setting_value = EXCLUDED.setting_value,
+          updated_at = NOW()
+      `;
+    }
+    
+    res.json({ message: 'Configurações gerais salvas com sucesso' });
+  } catch (error: any) {
+    console.error('Erro ao salvar configurações gerais:', error);
+    res.status(500).json({ error: error.message || 'Erro ao salvar configurações gerais' });
+  }
+});
+
+// Salvar configurações de página
+router.post("/api/settings/page", isAuthenticated, async (req, res) => {
+  try {
+    const { pageTitle, navBar, aboutSection, locationContact, testimonials, footer } = req.body;
+    
+    const settings = [
+      { key: 'page.pageTitle', value: pageTitle, type: 'string' },
+      { key: 'page.navBar', value: navBar || '', type: 'string' },
+      { key: 'page.aboutSection', value: aboutSection || '', type: 'string' },
+      { key: 'page.locationContact', value: locationContact || '', type: 'string' },
+      { key: 'page.testimonials', value: testimonials || '', type: 'string' },
+      { key: 'page.footer', value: footer || '', type: 'string' }
+    ];
+    
+    for (const setting of settings) {
+      await queryClient`
+        INSERT INTO settings (setting_key, setting_value, setting_type, updated_at)
+        VALUES (${setting.key}, ${setting.value}, ${setting.type}, NOW())
+        ON CONFLICT (setting_key) 
+        DO UPDATE SET 
+          setting_value = EXCLUDED.setting_value,
+          updated_at = NOW()
+      `;
+    }
+    
+    res.json({ message: 'Configurações de página salvas com sucesso' });
+  } catch (error: any) {
+    console.error('Erro ao salvar configurações de página:', error);
+    res.status(500).json({ error: error.message || 'Erro ao salvar configurações de página' });
+  }
+});
+
+// Salvar configurações de reservas
+router.post("/api/settings/reservations", isAuthenticated, async (req, res) => {
+  try {
+    const { minReservationTime, maxDaysInAdvance, allowCancellation, requireConfirmation, autoConfirmation } = req.body;
+    
+    const settings = [
+      { key: 'reservations.minReservationTime', value: minReservationTime.toString(), type: 'number' },
+      { key: 'reservations.maxDaysInAdvance', value: maxDaysInAdvance.toString(), type: 'number' },
+      { key: 'reservations.allowCancellation', value: allowCancellation.toString(), type: 'boolean' },
+      { key: 'reservations.requireConfirmation', value: requireConfirmation.toString(), type: 'boolean' },
+      { key: 'reservations.autoConfirmation', value: autoConfirmation.toString(), type: 'boolean' }
+    ];
+    
+    for (const setting of settings) {
+      await queryClient`
+        INSERT INTO settings (setting_key, setting_value, setting_type, updated_at)
+        VALUES (${setting.key}, ${setting.value}, ${setting.type}, NOW())
+        ON CONFLICT (setting_key) 
+        DO UPDATE SET 
+          setting_value = EXCLUDED.setting_value,
+          updated_at = NOW()
+      `;
+    }
+    
+    res.json({ message: 'Configurações de reservas salvas com sucesso' });
+  } catch (error: any) {
+    console.error('Erro ao salvar configurações de reservas:', error);
+    res.status(500).json({ error: error.message || 'Erro ao salvar configurações de reservas' });
+  }
+});
+
+// Salvar configurações de pagamento
+router.post("/api/settings/payments", isAuthenticated, async (req, res) => {
+  try {
+    const { 
+      currency, taxRate, eupagoApiKey, 
+      acceptCard, acceptMBWay, acceptMultibanco, acceptBankTransfer, acceptCash 
+    } = req.body;
+    
+    const settings = [
+      { key: 'payments.currency', value: currency, type: 'string' },
+      { key: 'payments.taxRate', value: taxRate.toString(), type: 'number' },
+      { key: 'payments.eupagoApiKey', value: eupagoApiKey || '', type: 'string' },
+      { key: 'payments.acceptCard', value: acceptCard.toString(), type: 'boolean' },
+      { key: 'payments.acceptMBWay', value: acceptMBWay.toString(), type: 'boolean' },
+      { key: 'payments.acceptMultibanco', value: acceptMultibanco.toString(), type: 'boolean' },
+      { key: 'payments.acceptBankTransfer', value: acceptBankTransfer.toString(), type: 'boolean' },
+      { key: 'payments.acceptCash', value: acceptCash.toString(), type: 'boolean' }
+    ];
+    
+    for (const setting of settings) {
+      await queryClient`
+        INSERT INTO settings (setting_key, setting_value, setting_type, updated_at)
+        VALUES (${setting.key}, ${setting.value}, ${setting.type}, NOW())
+        ON CONFLICT (setting_key) 
+        DO UPDATE SET 
+          setting_value = EXCLUDED.setting_value,
+          updated_at = NOW()
+      `;
+    }
+    
+    res.json({ message: 'Configurações de pagamento salvas com sucesso' });
+  } catch (error: any) {
+    console.error('Erro ao salvar configurações de pagamento:', error);
+    res.status(500).json({ error: error.message || 'Erro ao salvar configurações de pagamento' });
   }
 });
 
