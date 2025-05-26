@@ -88,18 +88,24 @@ const Settings: React.FC = () => {
   // Fetch settings
   const { data: settings, isLoading } = useQuery({
     queryKey: ['/api/settings'],
-    queryFn: () => apiRequest('/api/settings')
+    queryFn: async () => {
+      const response = await fetch('/api/settings');
+      return response.json();
+    },
   });
 
   // Update settings mutation
   const updateSettingsMutation = useMutation({
-    mutationFn: (data: Settings) => apiRequest('/api/settings', {
-      method: 'PUT',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    }),
+    mutationFn: async (data: Settings) => {
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
       Swal.fire({
