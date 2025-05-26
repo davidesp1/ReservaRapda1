@@ -20,6 +20,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import AdminSidebar from '@/components/admin/Sidebar';
+import AdminNavbar from '@/components/admin/Navbar';
 
 interface Payment {
   id: number;
