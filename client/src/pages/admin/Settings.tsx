@@ -941,6 +941,241 @@ const Settings: React.FC = () => {
                         </div>
                       </div>
                     </div>
+                    
+                    <div className="mb-4">
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Largura das Colunas</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="block mb-1 text-xs text-gray-500">Descrição</label>
+                          <div className="flex items-center">
+                            <input type="range" min="20" max="70" defaultValue="50" className="w-full" style={{ accentColor: '#002776' }} />
+                            <span className="w-8 ml-2 text-sm font-medium">50%</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block mb-1 text-xs text-gray-500">Quantidade</label>
+                          <div className="flex items-center">
+                            <input type="range" min="10" max="40" defaultValue="20" className="w-full" style={{ accentColor: '#002776' }} />
+                            <span className="w-8 ml-2 text-sm font-medium">20%</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block mb-1 text-xs text-gray-500">Preço</label>
+                          <div className="flex items-center">
+                            <input type="range" min="10" max="40" defaultValue="30" className="w-full" style={{ accentColor: '#002776' }} />
+                            <span className="w-8 ml-2 text-sm font-medium">30%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Espaçamento entre Itens (mm)</label>
+                        <input type="number" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" defaultValue="1" min="0" max="10" step="0.5" />
+                      </div>
+                      
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Linhas de Destaque</label>
+                        <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                          <option value="none">Nenhum</option>
+                          <option value="border" selected>Borda</option>
+                          <option value="shade">Sombreado</option>
+                          <option value="dashed">Linha Pontilhada</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 4. Fonte e Charset */}
+                  <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                      <i className="mr-2 fa-solid fa-font" style={{ color: '#002776' }}></i>
+                      Fonte e Charset
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Charset</label>
+                        <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                          <option value="CP437">CP437 (US/Internacional)</option>
+                          <option value="CP850" selected>CP850 (Multilíngue)</option>
+                          <option value="CP860">CP860 (Português)</option>
+                          <option value="CP863">CP863 (Canadense-Francês)</option>
+                          <option value="CP865">CP865 (Nórdico)</option>
+                          <option value="UTF8">UTF-8 (Unicode)</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Tamanho da Fonte</label>
+                        <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                          <option value="small">Pequeno</option>
+                          <option value="medium" selected>Médio</option>
+                          <option value="large">Grande</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="flex items-center mb-2">
+                        <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                        <label className="ml-2 text-sm font-medium text-gray-700">Suporte a caracteres acentuados</label>
+                      </div>
+                      <div className="flex items-center">
+                        <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                        <label className="ml-2 text-sm font-medium text-gray-700">Usar fonte secundária para caracteres não suportados</label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 5. Imagens e Gráficos */}
+                  <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                      <i className="mr-2 fa-solid fa-image" style={{ color: '#009c3b' }}></i>
+                      Imagens e Gráficos
+                    </h2>
+                    
+                    <div className="mb-4">
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Logo</label>
+                      <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-y-0 md:space-x-4">
+                        <input type="file" className="hidden" accept="image/*" />
+                        <label className="inline-flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-md cursor-pointer hover:bg-gray-200">
+                          <i className="mr-2 fa-solid fa-upload"></i> Carregar Logo
+                        </label>
+                        <span className="text-sm text-gray-500">Nenhum arquivo selecionado</span>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Posição da Logo</label>
+                        <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                          <option value="top-left">Superior Esquerdo</option>
+                          <option value="top-center" selected>Superior Centro</option>
+                          <option value="top-right">Superior Direito</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Escala da Logo (%)</label>
+                        <input type="number" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" defaultValue="100" min="10" max="200" />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Código de Barras</label>
+                        <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                          <option value="none">Nenhum</option>
+                          <option value="EAN13" selected>EAN-13</option>
+                          <option value="CODE128">CODE-128</option>
+                          <option value="CODE39">CODE-39</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">QR Code de Opinião</label>
+                        <div className="flex items-center">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                          <label className="ml-2 text-sm text-gray-700">Incluir QR Code</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 6. Cabeçalho e Rodapé */}
+                  <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                      <i className="mr-2 fa-solid fa-file-lines" style={{ color: '#ffdf00' }}></i>
+                      Cabeçalho e Rodapé
+                    </h2>
+                    
+                    <div className="mb-4">
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Formato de Data/Hora</label>
+                      <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                        <option value="short">DD/MM/YYYY HH:MM</option>
+                        <option value="medium" selected>DD de Mês de YYYY às HH:MM</option>
+                        <option value="long">Dia da semana, DD de Mês de YYYY às HH:MM</option>
+                      </select>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                      <div>
+                        <div className="flex items-center mb-2">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                          <label className="ml-2 text-sm font-medium text-gray-700">Exibir Dados do Operador</label>
+                        </div>
+                        <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" defaultValue="Atendente: {nome} ({id})" />
+                      </div>
+                      
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Mensagem Promocional</label>
+                        <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" defaultValue="Volte sempre! Siga-nos no Instagram @opaquedelicia" />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Rodapé Customizado</label>
+                      <textarea className="w-full h-20 px-4 py-2 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-800 focus:outline-none" placeholder="Digite o texto para o rodapé personalizado" defaultValue="Opa que delicia - CNPJ: 12.345.678/0001-99&#10;Rua da Gastronomia, 123 - São Paulo, SP&#10;Tel: (11) 98765-4321 | www.opaquedelicia.com"></textarea>
+                    </div>
+                  </div>
+                  
+                  {/* 7. Campos Personalizados de Recibo */}
+                  <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                      <i className="mr-2 fa-solid fa-list-check" style={{ color: '#002776' }}></i>
+                      Campos Personalizados de Recibo
+                    </h2>
+                    
+                    <div className="mb-4">
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Campos a Exibir</label>
+                      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                        <div className="flex items-center">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                          <label className="ml-2 text-sm text-gray-700">Itens</label>
+                        </div>
+                        <div className="flex items-center">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                          <label className="ml-2 text-sm text-gray-700">Descontos</label>
+                        </div>
+                        <div className="flex items-center">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                          <label className="ml-2 text-sm text-gray-700">Taxas</label>
+                        </div>
+                        <div className="flex items-center">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                          <label className="ml-2 text-sm text-gray-700">Subtotal</label>
+                        </div>
+                        <div className="flex items-center">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                          <label className="ml-2 text-sm text-gray-700">Total</label>
+                        </div>
+                        <div className="flex items-center">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                          <label className="ml-2 text-sm text-gray-700">Forma de Pagamento</label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Mensagens Fixas</label>
+                      <div className="grid grid-cols-1 gap-3">
+                        <div className="flex items-center">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                          <label className="ml-2 text-sm text-gray-700">Obrigado pela preferência!</label>
+                        </div>
+                        <div className="flex items-center">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                          <label className="ml-2 text-sm text-gray-700">Não é documento fiscal</label>
+                        </div>
+                        <div className="flex items-center">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} />
+                          <label className="ml-2 text-sm text-gray-700">Mensagem personalizada:</label>
+                        </div>
+                        <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" placeholder="Digite sua mensagem personalizada" />
+                      </div>
+                    </div>
                   </div>
                   
                   {/* 4. Testes e Diagnósticos */}
