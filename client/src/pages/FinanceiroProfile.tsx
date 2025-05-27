@@ -49,29 +49,14 @@ const FinanceiroProfile: React.FC = () => {
   // Navegação específica para usuários financeiros
   const navItems = [
     {
-      path: '/financeiro/dashboard',
-      label: 'Dashboard Financeiro',
-      icon: <BarChart3 className="w-5 h-5" />,
-    },
-    {
-      path: '/financeiro/receitas',
-      label: 'Receitas',
-      icon: <TrendingUp className="w-5 h-5" />,
-    },
-    {
-      path: '/financeiro/pagamentos',
-      label: 'Pagamentos',
-      icon: <CreditCard className="w-5 h-5" />,
-    },
-    {
-      path: '/financeiro/relatorios',
-      label: 'Relatórios',
-      icon: <FileText className="w-5 h-5" />,
-    },
-    {
       path: '/financeiro/profile',
       label: 'Meu Perfil',
       icon: <User className="w-5 h-5" />,
+    },
+    {
+      path: '/admin/finance',
+      label: 'Módulo Financeiro',
+      icon: <DollarSign className="w-5 h-5" />,
     }
   ];
   
@@ -269,26 +254,26 @@ const FinanceiroProfile: React.FC = () => {
                         <Button 
                           className="w-full justify-start" 
                           variant="outline"
-                          onClick={() => setLocation('/financeiro/dashboard')}
+                          onClick={() => setLocation('/admin/finance')}
                         >
-                          <BarChart3 className="w-4 h-4 mr-2" />
-                          Ver Dashboard
+                          <DollarSign className="w-4 h-4 mr-2" />
+                          Acessar Finanças
                         </Button>
                         <Button 
                           className="w-full justify-start" 
                           variant="outline"
-                          onClick={() => setLocation('/financeiro/receitas')}
+                          onClick={() => setLocation('/admin/finance')}
                         >
                           <TrendingUp className="w-4 h-4 mr-2" />
-                          Consultar Receitas
+                          Ver Receitas
                         </Button>
                         <Button 
                           className="w-full justify-start" 
                           variant="outline"
-                          onClick={() => setLocation('/financeiro/relatorios')}
+                          onClick={() => setLocation('/admin/finance')}
                         >
                           <FileText className="w-4 h-4 mr-2" />
-                          Gerar Relatórios
+                          Relatórios Financeiros
                         </Button>
                       </div>
                     </CardContent>
@@ -302,8 +287,12 @@ const FinanceiroProfile: React.FC = () => {
                     <CardContent>
                       <div className="space-y-2">
                         <div className="flex items-center text-green-600">
-                          <BarChart3 className="w-4 h-4 mr-2" />
-                          <span className="text-sm">Dashboard Financeiro</span>
+                          <User className="w-4 h-4 mr-2" />
+                          <span className="text-sm">Perfil Pessoal</span>
+                        </div>
+                        <div className="flex items-center text-green-600">
+                          <DollarSign className="w-4 h-4 mr-2" />
+                          <span className="text-sm">Módulo Financeiro Completo</span>
                         </div>
                         <div className="flex items-center text-green-600">
                           <TrendingUp className="w-4 h-4 mr-2" />
@@ -316,10 +305,6 @@ const FinanceiroProfile: React.FC = () => {
                         <div className="flex items-center text-green-600">
                           <FileText className="w-4 h-4 mr-2" />
                           <span className="text-sm">Relatórios Financeiros</span>
-                        </div>
-                        <div className="flex items-center text-green-600">
-                          <User className="w-4 h-4 mr-2" />
-                          <span className="text-sm">Perfil Pessoal</span>
                         </div>
                       </div>
                     </CardContent>
