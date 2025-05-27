@@ -8,6 +8,7 @@ import { register, login, logout, getProfile } from "./controllers/authControlle
 import { db as drizzleDb, queryClient } from "./db";
 import { eq, gte, desc, and, sql, inArray } from "drizzle-orm";
 import * as schema from "@shared/schema";
+import { printerService } from "./printer-service.js";
 
 declare module 'express-session' {
   interface SessionData {
@@ -1699,6 +1700,39 @@ router.get('/api/reports/user-stats/:userId', isAuthenticated, async (req, res) 
   } catch (error: any) {
     console.error('Erro ao buscar estatísticas do usuário:', error);
     res.status(500).json({ error: error.message || 'Erro ao buscar estatísticas' });
+  }
+});
+
+// Rotas para gerenciamento de impressoras POS
+router.get("/api/printers", isAuthenticated, async (req, res) => {
+  try {
+    const printers = await printerService.getAvailablePrinters();
+    res.json(printers);
+  } catch (err: any) {
+    console.error("Erro ao buscar impressoras:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/api/printers/:printerId/test", isAuthenticated, async (req, res) => {
+  try {
+    const { printerId } = req.params;
+    const result = await printerService.testPrinterConnection(printerId);
+    res.json(result);
+  } catch (err: any) {
+    console.error("Erro ao testar impressora:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/api/printers/:printerId/print-test", isAuthenticated, async (req, res) => {
+  try {
+    const { printerId } = req.params;
+    const result = await printerService.printTestPage(printerId);
+    res.json(result);
+  } catch (err: any) {
+    console.error("Erro ao imprimir teste:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
