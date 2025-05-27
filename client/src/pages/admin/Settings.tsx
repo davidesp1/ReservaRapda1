@@ -175,10 +175,7 @@ const Settings: React.FC = () => {
       
       const data = await response.json();
       
-      toast({
-        title: "Status da conexão",
-        description: data.message || "Impressora conectada",
-      });
+      showSuccess("Status da Conexão", data.message || "Impressora conectada");
     } catch (error: any) {
       showError("Erro na Conexão", error.message || "Erro ao verificar conexão");
     }
