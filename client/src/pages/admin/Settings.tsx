@@ -1505,78 +1505,121 @@ const Settings: React.FC = () => {
                         Pré-visualização em Tempo Real
                       </h2>
                       
-                      <div className="p-4 mx-auto bg-white border border-gray-300 rounded-lg" style={{ width: '300px', height: '500px', overflowY: 'auto', fontFamily: 'Courier New, monospace' }}>
-                        <div className="mb-4 text-center">
+                      <div 
+                        className="p-4 mx-auto bg-white border border-gray-300 rounded-lg" 
+                        style={{ 
+                          width: '300px', 
+                          height: '500px', 
+                          overflowY: 'auto', 
+                          fontFamily: 'Courier New, monospace',
+                          fontSize: posSettings.fontSize === 'small' ? '10px' : posSettings.fontSize === 'large' ? '14px' : '12px',
+                          textAlign: posSettings.globalAlignment || 'center'
+                        }}
+                      >
+                        {/* Header com logo baseado na configuração */}
+                        <div className={`mb-4 ${posSettings.logoPosition?.includes('center') ? 'text-center' : posSettings.logoPosition?.includes('left') ? 'text-left' : 'text-right'}`}>
                           <div className="mb-1 text-xs">LOGO</div>
                           <div className="font-bold">OPA QUE DELICIA</div>
-                          <div className="text-xs">CNPJ: 12.345.678/0001-99</div>
-                          <div className="text-xs">Rua da Gastronomia, 123 - São Paulo, SP</div>
-                          <div className="text-xs">Tel: (11) 98765-4321</div>
+                          <div className="text-xs">{posSettings.customFooter?.split('\n')[0] || 'CNPJ: 12.345.678/0001-99'}</div>
+                          <div className="text-xs">{posSettings.customFooter?.split('\n')[1] || 'Rua da Gastronomia, 123 - São Paulo, SP'}</div>
+                          <div className="text-xs">{posSettings.customFooter?.split('\n')[2] || 'Tel: (11) 98765-4321'}</div>
                         </div>
                         
+                        {/* Informações do cupom com timestamp dinâmico */}
                         <div className="py-2 my-2 text-xs border-t border-b border-gray-400 border-dashed">
-                          <div>CUPOM NÃO FISCAL</div>
-                          <div>Data: 27/05/2025 15:30:45</div>
-                          <div>Atendente: Carlos Silva (ID: 1234)</div>
+                          {posSettings.nonFiscalMessage !== false && <div>CUPOM NÃO FISCAL</div>}
+                          <div>Data: {new Date().toLocaleString('pt-BR', { 
+                            dateStyle: posSettings.timestampFormat === 'short' ? 'short' : posSettings.timestampFormat === 'long' ? 'full' : 'medium',
+                            timeStyle: 'medium'
+                          })}</div>
+                          {posSettings.showOperator !== false && (
+                            <div>{posSettings.operatorFormat?.replace('{nome}', 'Carlos Silva').replace('{id}', '1234') || 'Atendente: Carlos Silva (ID: 1234)'}</div>
+                          )}
                           <div>Mesa: 08 | Comanda: 4567</div>
                         </div>
                         
+                        {/* Items com layout baseado nas configurações de coluna */}
+                        {posSettings.showItems !== false && (
+                          <div className="my-3 text-xs">
+                            <div className="flex justify-between mb-1 font-bold">
+                              <span style={{ width: `${posSettings.columnWidthDescription || 50}%` }}>DESCRIÇÃO</span>
+                              <span style={{ width: `${posSettings.columnWidthQuantity || 20}%` }} className="text-center">QTD</span>
+                              <span style={{ width: `${posSettings.columnWidthPrice || 30}%` }} className="text-right">VALOR</span>
+                            </div>
+                            
+                            <div className="flex justify-between py-1 border-b border-gray-300 border-dotted" style={{ marginBottom: `${posSettings.itemSpacing || 1}px` }}>
+                              <span style={{ width: `${posSettings.columnWidthDescription || 50}%` }}>Feijoada Completa</span>
+                              <span style={{ width: `${posSettings.columnWidthQuantity || 20}%` }} className="text-center">1</span>
+                              <span style={{ width: `${posSettings.columnWidthPrice || 30}%` }} className="text-right">R$ 45,90</span>
+                            </div>
+                            
+                            <div className="flex justify-between py-1 border-b border-gray-300 border-dotted" style={{ marginBottom: `${posSettings.itemSpacing || 1}px` }}>
+                              <span style={{ width: `${posSettings.columnWidthDescription || 50}%` }}>Caipirinha de Limão</span>
+                              <span style={{ width: `${posSettings.columnWidthQuantity || 20}%` }} className="text-center">2</span>
+                              <span style={{ width: `${posSettings.columnWidthPrice || 30}%` }} className="text-right">R$ 29,80</span>
+                            </div>
+                            
+                            <div className="flex justify-between py-1 border-b border-gray-300 border-dotted" style={{ marginBottom: `${posSettings.itemSpacing || 1}px` }}>
+                              <span style={{ width: `${posSettings.columnWidthDescription || 50}%` }}>Pudim de Leite</span>
+                              <span style={{ width: `${posSettings.columnWidthQuantity || 20}%` }} className="text-center">1</span>
+                              <span style={{ width: `${posSettings.columnWidthPrice || 30}%` }} className="text-right">R$ 15,90</span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Totais baseados nas configurações */}
                         <div className="my-3 text-xs">
-                          <div className="flex justify-between mb-1 font-bold">
-                            <span style={{ width: '50%' }}>DESCRIÇÃO</span>
-                            <span style={{ width: '20%' }} className="text-center">QTD</span>
-                            <span style={{ width: '30%' }} className="text-right">VALOR</span>
-                          </div>
-                          
-                          <div className="flex justify-between py-1 border-b border-gray-300 border-dotted">
-                            <span style={{ width: '50%' }}>Feijoada Completa</span>
-                            <span style={{ width: '20%' }} className="text-center">1</span>
-                            <span style={{ width: '30%' }} className="text-right">R$ 45,90</span>
-                          </div>
-                          
-                          <div className="flex justify-between py-1 border-b border-gray-300 border-dotted">
-                            <span style={{ width: '50%' }}>Caipirinha de Limão</span>
-                            <span style={{ width: '20%' }} className="text-center">2</span>
-                            <span style={{ width: '30%' }} className="text-right">R$ 29,80</span>
-                          </div>
-                          
-                          <div className="flex justify-between py-1 border-b border-gray-300 border-dotted">
-                            <span style={{ width: '50%' }}>Pudim de Leite</span>
-                            <span style={{ width: '20%' }} className="text-center">1</span>
-                            <span style={{ width: '30%' }} className="text-right">R$ 15,90</span>
-                          </div>
+                          {posSettings.showSubtotal !== false && (
+                            <div className="flex justify-between py-1">
+                              <span>Subtotal:</span>
+                              <span>R$ 91,60</span>
+                            </div>
+                          )}
+                          {posSettings.showTaxes !== false && (
+                            <div className="flex justify-between py-1">
+                              <span>Taxa de Serviço (10%):</span>
+                              <span>R$ 9,16</span>
+                            </div>
+                          )}
+                          {posSettings.showTotal !== false && (
+                            <div className="flex justify-between py-1 font-bold">
+                              <span>TOTAL:</span>
+                              <span>R$ 100,76</span>
+                            </div>
+                          )}
                         </div>
                         
-                        <div className="my-3 text-xs">
-                          <div className="flex justify-between py-1">
-                            <span>Subtotal:</span>
-                            <span>R$ 91,60</span>
+                        {/* Informações de pagamento */}
+                        {posSettings.showPaymentMethod !== false && (
+                          <div className="py-2 my-2 text-xs border-t border-b border-gray-400 border-dashed">
+                            <div>Forma de Pagamento: Cartão de Crédito</div>
+                            <div>Valor Pago: R$ 100,76</div>
                           </div>
-                          <div className="flex justify-between py-1">
-                            <span>Taxa de Serviço (10%):</span>
-                            <span>R$ 9,16</span>
-                          </div>
-                          <div className="flex justify-between py-1 font-bold">
-                            <span>TOTAL:</span>
-                            <span>R$ 100,76</span>
-                          </div>
-                        </div>
+                        )}
                         
-                        <div className="py-2 my-2 text-xs border-t border-b border-gray-400 border-dashed">
-                          <div>Forma de Pagamento: Cartão de Crédito</div>
-                          <div>Valor Pago: R$ 100,76</div>
-                        </div>
-                        
+                        {/* Mensagens personalizáveis */}
                         <div className="my-3 text-xs text-center">
-                          <div className="mb-2">OBRIGADO PELA PREFERÊNCIA!</div>
-                          <div className="mb-2">Volte sempre! Siga-nos no Instagram @opaquedelicia</div>
-                          <div className="mx-auto my-2 bg-gray-200" style={{ width: '100px', height: '100px' }}></div>
+                          {posSettings.thankYouMessage !== false && <div className="mb-2">OBRIGADO PELA PREFERÊNCIA!</div>}
+                          <div className="mb-2">{posSettings.promoMessage || 'Volte sempre! Siga-nos no Instagram @opaquedelicia'}</div>
+                          {posSettings.qrcodeEnabled && (
+                            <div 
+                              className="mx-auto my-2 bg-gray-200" 
+                              style={{ 
+                                width: `${posSettings.qrcodeSize || 100}px`, 
+                                height: `${posSettings.qrcodeSize || 100}px`,
+                                margin: `${posSettings.qrcodeMargin || 2}px auto`
+                              }}
+                            ></div>
+                          )}
                           <div>Avalie nosso atendimento</div>
+                          {posSettings.customMessageEnabled && posSettings.customMessage && (
+                            <div className="mt-2 font-medium">{posSettings.customMessage}</div>
+                          )}
                         </div>
                         
                         <div className="pt-2 mt-4 text-xs text-center border-t border-gray-300">
                           <div>www.opaquedelicia.com</div>
-                          <div>*** DOCUMENTO SEM VALOR FISCAL ***</div>
+                          {posSettings.nonFiscalMessage !== false && <div>*** DOCUMENTO SEM VALOR FISCAL ***</div>}
                         </div>
                       </div>
                     </div>
