@@ -1884,41 +1884,138 @@ router.get("/api/settings/pos/export-profile", isAuthenticated, async (req, res)
 // Rota para listar impressoras disponíveis no sistema
 router.get("/api/settings/pos/printers", isAuthenticated, async (req, res) => {
   try {
-    // Simular impressoras disponíveis no sistema
-    const availablePrinters = [
+    console.log("🖨️ Iniciando varredura de impressoras do sistema...");
+    
+    const { exec } = require('child_process');
+    const util = require('util');
+    const execPromise = util.promisify(exec);
+    
+    const platform = process.platform;
+    console.log(`🔍 Sistema detectado: ${platform}`);
+    
+    let availablePrinters: any[] = [];
+    
+    try {
+      if (platform === 'win32') {
+        // Windows: usar wmic para listar impressoras
+        const { stdout } = await execPromise('wmic printer get name,status,drivername /format:csv');
+        const lines = stdout.split('\n').filter((line: string) => line.trim() && !line.startsWith('Node'));
+        
+        lines.forEach((line: string, index: number) => {
+          const parts = line.split(',').map((part: string) => part.trim()).filter((part: string) => part);
+          if (parts.length >= 3) {
+            const [, driverName, name, status] = parts;
+            if (name && name !== 'Name') {
+              availablePrinters.push({
+                id: `windows_printer_${index}`,
+                name: name,
+                driver: driverName || 'Desconhecido',
+                type: driverName?.toLowerCase().includes('thermal') ? 'thermal' : 
+                      driverName?.toLowerCase().includes('laser') ? 'laser' : 'inkjet',
+                connection: 'usb',
+                status: status?.toLowerCase().includes('ok') ? 'online' : 'offline',
+                platform: 'windows'
+              });
+            }
+          }
+        });
+      } else if (platform === 'darwin') {
+        // macOS: usar lpstat para listar impressoras
+        const { stdout } = await execPromise('lpstat -p');
+        const lines = stdout.split('\n').filter((line: string) => line.trim());
+        
+        lines.forEach((line: string, index: number) => {
+          if (line.startsWith('printer')) {
+            const match = line.match(/printer\s+(.+?)\s+(.+)/);
+            if (match) {
+              const [, name, status] = match;
+              availablePrinters.push({
+                id: `macos_printer_${index}`,
+                name: name,
+                type: 'unknown',
+                connection: 'usb',
+                status: status.includes('disabled') ? 'offline' : 'online',
+                platform: 'macos'
+              });
+            }
+          }
+        });
+      } else {
+        // Linux: usar lpstat para listar impressoras
+        const { stdout } = await execPromise('lpstat -p 2>/dev/null || echo "No printers found"');
+        const lines = stdout.split('\n').filter((line: string) => line.trim());
+        
+        lines.forEach((line: string, index: number) => {
+          if (line.startsWith('printer')) {
+            const match = line.match(/printer\s+(.+?)\s+(.+)/);
+            if (match) {
+              const [, name, status] = match;
+              availablePrinters.push({
+                id: `linux_printer_${index}`,
+                name: name,
+                type: 'unknown',
+                connection: 'usb',
+                status: status.includes('disabled') ? 'offline' : 'online',
+                platform: 'linux'
+              });
+            }
+          }
+        });
+      }
+    } catch (execError: any) {
+      console.log("⚠️ Erro ao executar comando de detecção:", execError.message);
+      
+      // Fallback: adicionar impressoras de exemplo se a detecção falhar
+      availablePrinters = [
+        {
+          id: "fallback_thermal",
+          name: "Impressora Térmica Padrão",
+          type: "thermal",
+          connection: "usb",
+          status: "online",
+          platform: platform,
+          fallback: true
+        },
+        {
+          id: "fallback_system",
+          name: "Impressora Padrão do Sistema",
+          type: "laser",
+          connection: "usb", 
+          status: "online",
+          platform: platform,
+          fallback: true
+        }
+      ];
+    }
+    
+    // Adicionar impressoras virtuais sempre disponíveis
+    const virtualPrinters = [
       {
-        id: "usb_thermal_printer",
-        name: "Impressora Térmica USB (TM-T20)",
-        type: "thermal",
-        connection: "usb",
-        status: "online"
+        id: "virtual_pdf",
+        name: "Salvar como PDF",
+        type: "virtual",
+        connection: "virtual",
+        status: "online",
+        platform: "virtual"
       },
       {
-        id: "network_printer_1",
-        name: "Impressora de Rede (192.168.1.100)",
-        type: "inkjet",
-        connection: "network",
-        status: "online"
-      },
-      {
-        id: "bluetooth_printer",
-        name: "Impressora Bluetooth (BT-P300)",
-        type: "thermal",
-        connection: "bluetooth",
-        status: "offline"
-      },
-      {
-        id: "default_system_printer",
-        name: "Impressora Padrão do Sistema",
-        type: "laser",
-        connection: "usb",
-        status: "online"
+        id: "virtual_preview",
+        name: "Visualizar (Pré-visualização)",
+        type: "virtual", 
+        connection: "virtual",
+        status: "online",
+        platform: "virtual"
       }
     ];
     
+    availablePrinters = [...availablePrinters, ...virtualPrinters];
+    
+    console.log(`✅ Encontradas ${availablePrinters.length} impressoras:`, 
+      availablePrinters.map(p => `${p.name} (${p.status})`));
+    
     res.json(availablePrinters);
   } catch (err: any) {
-    console.error("Erro ao buscar impressoras:", err);
+    console.error("❌ Erro ao buscar impressoras:", err);
     res.status(500).json({ error: err.message });
   }
 });

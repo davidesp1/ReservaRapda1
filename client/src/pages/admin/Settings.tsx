@@ -974,7 +974,14 @@ const Settings: React.FC = () => {
                       </select>
                       <button 
                         className="flex items-center px-3 py-1 mt-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                        onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/settings/pos/printers'] })}
+                        onClick={async () => {
+                          console.log("🔄 Atualizando lista de impressoras...");
+                          await queryClient.invalidateQueries({ queryKey: ['/api/settings/pos/printers'] });
+                          toast({
+                            title: "Lista atualizada",
+                            description: "A lista de impressoras foi atualizada com sucesso!",
+                          });
+                        }}
                       >
                         <i className="mr-1 fa-solid fa-sync-alt"></i> Atualizar Lista
                       </button>
