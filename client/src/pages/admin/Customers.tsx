@@ -1,559 +1,423 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, UserPlus, Eye, Edit, Trash2, Key, Lock } from 'lucide-react';
-import AdminLayout from '@/components/layouts/AdminLayout';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from '@/components/ui/label';
-import { apiRequest } from '@/lib/queryClient';
-import { useForm } from 'react-hook-form';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 
-const Customers: React.FC = () => {
-  const { t } = useTranslation();
-  const { isAuthenticated, isAdmin, isLoading } = useAuth();
-  const [_, setLocation] = useLocation();
-  const [searchText, setSearchText] = useState('');
-  const [viewCustomerInfo, setViewCustomerInfo] = useState<any>(null);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  // Form para edição de cliente
-  const form = useForm({
-    defaultValues: {
-      username: '',
-      email: '',
-      first_name: '',
-      last_name: '',
-      phone: '',
-      role: 'customer',
-      status: 'active',
-      password: '********' // Senha oculta
-    }
-  });
-  
-  // Fetch customers com atualizações em tempo real
-  const { data: customers, isLoading: customersLoading } = useQuery<any>({
+interface Customer {
+  id: number;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  role: string;
+  status?: string;
+  memberSince?: string;
+  loyaltyPoints?: number;
+  profilePicture?: string;
+}
+
+export default function Customers() {
+  const { user } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const { data: customers, isLoading } = useQuery<Customer[]>({
     queryKey: ['/api/users'],
-    enabled: isAuthenticated && isAdmin,
-    refetchInterval: 30000, // Atualiza a cada 30 segundos
-    refetchIntervalInBackground: true,
-    staleTime: 10000, // Considera os dados obsoletos após 10 segundos
+    staleTime: 30000,
   });
 
-  // Filter customers based on search
-  const filteredCustomers = React.useMemo(() => {
-    if (!customers) return [];
-    
-    return customers.filter((customer: any) => {
-      const searchLower = searchText.toLowerCase();
-      return (
-        (customer.first_name && customer.first_name.toLowerCase().includes(searchLower)) ||
-        (customer.last_name && customer.last_name.toLowerCase().includes(searchLower)) ||
-        (customer.email && customer.email.toLowerCase().includes(searchLower)) ||
-        (customer.username && customer.username.toLowerCase().includes(searchLower))
-      );
+  // Filter customers based on search and filters
+  useEffect(() => {
+    if (!customers) return;
+
+    let filtered = customers.filter(customer => {
+      const matchesSearch = searchTerm === '' || 
+        customer.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.phone?.includes(searchTerm);
+
+      const matchesRole = roleFilter === '' || 
+        (roleFilter === 'Master' && customer.role === 'admin') ||
+        (roleFilter === 'Financeiro' && customer.role === 'financeiro') ||
+        (roleFilter === 'Colaborador' && customer.role === 'collaborator') ||
+        (roleFilter === 'Cliente' && customer.role === 'customer') ||
+        (roleFilter === 'Staff' && customer.role === 'admin');
+
+      const matchesStatus = statusFilter === '' || 
+        (statusFilter === 'ativo' && customer.status === 'active') ||
+        (statusFilter === 'Suspenso' && customer.status === 'suspended') ||
+        (statusFilter === 'inativo' && customer.status === 'inactive');
+
+      return matchesSearch && matchesRole && matchesStatus;
     });
-  }, [customers, searchText]);
-  
-  // Mutation para atualizar usuário
-  const updateUserMutation = useMutation({
-    mutationFn: async (userData: any) => {
-      const response = await apiRequest('PUT', `/api/users/${userData.id}`, userData);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Erro ao atualizar usuário');
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: t('CustomerUpdated'),
-        description: t('CustomerUpdatedSuccessfully'),
-        variant: 'default',
-      });
-      setIsEditModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: t('Error'),
-        description: error.message,
-        variant: 'destructive',
-      });
+
+    setFilteredCustomers(filtered);
+    setCurrentPage(1);
+  }, [customers, searchTerm, roleFilter, statusFilter]);
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setRoleFilter('');
+    setStatusFilter('');
+  };
+
+  const getRoleDisplay = (role: string) => {
+    switch (role) {
+      case 'admin': return { label: 'Master', icon: 'fa-crown', color: 'brazil-green' };
+      case 'financeiro': return { label: 'Financeiro', icon: 'fa-dollar-sign', color: 'brazil-yellow' };
+      case 'collaborator': return { label: 'Colaborador', icon: 'fa-fire', color: 'brazil-red' };
+      case 'customer': return { label: 'Cliente', icon: '', color: 'gray' };
+      default: return { label: 'Staff', icon: 'fa-star', color: 'brazil-blue' };
     }
-  });
-  
-  // Abrir modal de visualização do cliente
-  const handleViewCustomer = (customer: any) => {
-    setViewCustomerInfo(customer);
-    setIsViewModalOpen(true);
   };
-  
-  // Abrir modal de edição do cliente
-  const handleEditCustomer = (customer: any) => {
-    setSelectedCustomer(customer);
-    form.reset({
-      username: customer.username,
-      email: customer.email,
-      first_name: customer.first_name,
-      last_name: customer.last_name,
-      phone: customer.phone || '',
-      role: customer.role || 'customer',
-      status: customer.status || 'active',
-      password: '********' // Senha oculta
-    });
-    setIsEditModalOpen(true);
-  };
-  
-  // Abrir modal de confirmação de exclusão
-  const handleDeleteConfirm = (customer: any) => {
-    setSelectedCustomer(customer);
-    setIsDeleteModalOpen(true);
-  };
-  
-  // Enviar o formulário de edição
-  const onSubmit = (data: any) => {
-    // Remover a senha do objeto se não foi alterada (continua sendo asteriscos)
-    if (data.password === '********') {
-      delete data.password;
+
+  const getStatusDisplay = (status?: string) => {
+    switch (status) {
+      case 'active': return { label: 'Ativo', color: 'brazil-green' };
+      case 'suspended': return { label: 'Suspenso', color: 'brazil-yellow' };
+      case 'inactive': return { label: 'Inativo', color: 'brazil-red' };
+      default: return { label: 'Ativo', color: 'brazil-green' };
     }
-    
-    // Adicionar ID do cliente
-    const userData = {
-      ...data,
-      id: selectedCustomer.id,
-      firstName: data.first_name,
-      lastName: data.last_name,
-      postalCode: selectedCustomer.postal_code,
-      loyaltyPoints: selectedCustomer.loyalty_points
-    };
-    
-    updateUserMutation.mutate(userData);
   };
-  
-  if (customersLoading) {
+
+  const getAvatarImage = (customer: Customer, index: number) => {
+    if (customer.profilePicture) return customer.profilePicture;
+    const avatars = [
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg", 
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg"
+    ];
+    return avatars[index % avatars.length];
+  };
+
+  const getBorderColor = (role: string) => {
+    switch (role) {
+      case 'admin': return 'border-brazil-green';
+      case 'financeiro': return 'border-brazil-yellow';
+      case 'collaborator': return 'border-brazil-red';
+      case 'customer': return 'border-gray-200';
+      default: return 'border-brazil-blue';
+    }
+  };
+
+  const showCustomerProfile = (customer: Customer) => {
+    setSelectedCustomer(customer);
+  };
+
+  const hideCustomerProfile = () => {
+    setSelectedCustomer(null);
+  };
+
+  // Pagination
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentCustomers = filteredCustomers.slice(startIndex, endIndex);
+
+  if (isLoading) {
     return (
-      <AdminLayout title={t('Customers')}>
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-12 bg-gray-200 rounded"></div>
-          <div className="h-96 bg-gray-200 rounded"></div>
+      <div className="bg-gray-100 font-opensans min-h-screen">
+        <div className="flex h-screen">
+          <div className="relative flex-1 p-8 ml-64">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-16 bg-gray-200 rounded"></div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-      </AdminLayout>
+      </div>
     );
   }
 
   return (
-    <AdminLayout title={t('Customers')}>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-montserrat font-bold">{t('Customers')}</h1>
-      </div>
-      
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle>{t('ManageCustomers')}</CardTitle>
-          <CardDescription>{t('ViewAndManageAllCustomers')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder={t('SearchCustomers')}
-                className="pl-10"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-              />
-            </div>
-            <Button 
-              className="bg-brasil-green text-white hover:bg-brasil-green/90"
-              onClick={() => setLocation('/admin/customers/add')}
-            >
-              <UserPlus className="mr-2 h-4 w-4" /> {t('AddCustomer')}
-            </Button>
-          </div>
-          
-          <div className="border rounded-md">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('Name')}</TableHead>
-                  <TableHead>{t('Email')}</TableHead>
-                  <TableHead>{t('Username')}</TableHead>
-                  <TableHead>{t('Phone')}</TableHead>
-                  <TableHead className="text-right">{t('Actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCustomers.length > 0 ? (
-                  filteredCustomers.map((customer: any) => (
-                    <TableRow key={customer.id}>
-                      <TableCell className="font-medium">
-                        {customer.first_name} {customer.last_name}
-                      </TableCell>
-                      <TableCell>{customer.email}</TableCell>
-                      <TableCell>{customer.username}</TableCell>
-                      <TableCell>{customer.phone || '-'}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
-                          <Button variant="ghost" size="icon" onClick={() => handleViewCustomer(customer)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleEditCustomer(customer)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeleteConfirm(customer)}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-6 text-gray-500">
-                      {searchText ? t('NoCustomersFound') : t('NoCustomers')}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* View Customer Dialog */}
-      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t('CustomerDetails')}</DialogTitle>
-            <DialogDescription>
-              {viewCustomerInfo ? `${viewCustomerInfo.first_name} ${viewCustomerInfo.last_name}` : ''}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {viewCustomerInfo && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">{t('FirstName')}</label>
-                  <p className="font-semibold">{viewCustomerInfo.first_name}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">{t('LastName')}</label>
-                  <p className="font-semibold">{viewCustomerInfo.last_name}</p>
+    <div className="bg-gray-100 font-opensans min-h-screen">
+      <div className="flex h-screen">
+        {/* Main Content */}
+        <div className="relative flex-1 p-8 ml-64">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-2xl font-bold text-gray-800 font-montserrat">Gestão de Clientes</h1>
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <button className="relative">
+                  <i className="text-xl text-gray-600 fa-regular fa-bell"></i>
+                  <span className="absolute flex items-center justify-center w-4 h-4 text-xs text-white rounded-full -top-1 -right-1 bg-brazil-red">2</span>
+                </button>
+              </div>
+              <div className="flex items-center">
+                <img 
+                  src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" 
+                  alt="User Avatar" 
+                  className="w-10 h-10 border-2 rounded-full border-brazil-yellow" 
+                />
+                <div className="ml-2">
+                  <p className="text-sm font-medium text-gray-800">{user?.firstName} {user?.lastName}</p>
+                  <p className="text-xs text-gray-500">Administrador</p>
                 </div>
               </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">{t('Email')}</label>
-                <p className="font-semibold">{viewCustomerInfo.email}</p>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">{t('Username')}</label>
-                <p className="font-semibold">{viewCustomerInfo.username}</p>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">{t('Phone')}</label>
-                <p className="font-semibold">{viewCustomerInfo.phone || '-'}</p>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">{t('Role')}</label>
-                <p className="font-semibold capitalize">{viewCustomerInfo.role}</p>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">{t('PreferredLanguage')}</label>
-                <p className="font-semibold">
-                  {viewCustomerInfo.preferences?.language || 'pt'}
-                </p>
-              </div>
-            </div>
-          )}
-          
-          <DialogFooter className="flex sm:justify-between mt-4">
-            <Button variant="outline" onClick={() => setIsViewModalOpen(false)}>
-              {t('Close')}
-            </Button>
-            <Button onClick={() => {
-              setIsViewModalOpen(false);
-              handleEditCustomer(viewCustomerInfo);
-            }}>
-              <Edit className="mr-2 h-4 w-4" /> {t('EditCustomer')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Edit Customer Dialog */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{t('EditCustomer')}</DialogTitle>
-            <DialogDescription>
-              {selectedCustomer ? t('EditingCustomer', { name: `${selectedCustomer.first_name} ${selectedCustomer.last_name}` }) : ''}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="first_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('FirstName')}</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="last_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('LastName')}</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Email')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="email" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Username')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Phone')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('Role')}</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t('SelectRole')} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="customer">{t('Cliente')}</SelectItem>
-                          <SelectItem value="collaborator">{t('colaborator')}</SelectItem>
-                          <SelectItem value="admin">{t('Administrator')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('Status')}</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t('SelectStatus')} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="active">{t('Active')}</SelectItem>
-                          <SelectItem value="inactive">{t('Inactive')}</SelectItem>
-                          <SelectItem value="banned">{t('Banned')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      {t('Password')}
-                      <Lock className="ml-2 h-4 w-4 text-gray-400" />
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        type="password" 
-                        className="font-mono"
-                      />
-                    </FormControl>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {t('LeavePasswordUnchangedHint')}
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <DialogFooter className="pt-4">
-                <Button 
-                  variant="outline" 
-                  type="button" 
-                  onClick={() => setIsEditModalOpen(false)}
-                >
-                  {t('Cancel')}
-                </Button>
-                <Button 
-                  type="submit"
-                  disabled={updateUserMutation.isPending}
-                  className="bg-brasil-green text-white hover:bg-brasil-green/90"
-                >
-                  {updateUserMutation.isPending ? t('Saving') : t('SaveChanges')}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-red-500">{t('ConfirmDeletion')}</DialogTitle>
-            <DialogDescription>
-              {selectedCustomer && t('DeleteCustomerConfirmation', { 
-                name: `${selectedCustomer.first_name} ${selectedCustomer.last_name}` 
-              })}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="pt-4 space-y-2">
-            <p className="text-sm text-gray-600">
-              {t('DeleteCustomerWarning')}
-            </p>
-            
-            <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
-              <div className="flex items-center text-amber-800">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 mr-2">
-                  <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
-                </svg>
-                <span className="text-sm font-medium">{t('ThisActionCannotBeUndone')}</span>
-              </div>
             </div>
           </div>
-          
-          <DialogFooter className="pt-4">
-            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
-              {t('Cancel')}
-            </Button>
-            <Button 
-              variant="destructive"
-              onClick={() => {
-                // Implementação de exclusão
-                toast({
-                  title: t('NotImplemented'),
-                  description: t('FeatureNotImplementedYet'),
-                  variant: 'destructive',
-                });
-                setIsDeleteModalOpen(false);
-              }}
-            >
-              {t('DeleteCustomer')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </AdminLayout>
-  );
-};
 
-export default Customers;
+          <div className="flex flex-col lg:flex-row gap-8 h-[720px]">
+            <div className="flex flex-col flex-1">
+              {/* Filters */}
+              <div className="flex flex-col mb-4 space-y-3 md:flex-row md:items-end md:space-x-6 md:space-y-0">
+                <div className="flex-1">
+                  <label className="block mb-1 text-sm font-semibold text-gray-700 font-montserrat">Buscar Cliente</label>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      placeholder="Nome, email ou telefone" 
+                      className="w-full py-2 pl-10 pr-4 font-medium text-gray-800 transition bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brazil-blue"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <span className="absolute text-gray-400 transform -translate-y-1/2 left-3 top-1/2">
+                      <i className="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block mb-1 text-sm font-semibold text-gray-700 font-montserrat">Classificação</label>
+                  <select 
+                    className="w-full px-3 py-2 font-medium text-gray-700 bg-white border border-gray-200 rounded-lg md:w-40 focus:ring-2 focus:ring-brazil-blue"
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                  >
+                    <option value="">Todas</option>
+                    <option value="Master">Master</option>
+                    <option value="Financeiro">Financeiro</option>
+                    <option value="Colaborador">Colaborador</option>
+                    <option value="Cliente">Cliente</option>
+                    <option value="Staff">Staff</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block mb-1 text-sm font-semibold text-gray-700 font-montserrat">Status</label>
+                  <select 
+                    className="w-full px-3 py-2 font-medium text-gray-700 bg-white border border-gray-200 rounded-lg md:w-32 focus:ring-2 focus:ring-brazil-blue"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="">Todos</option>
+                    <option value="ativo">Ativo</option>
+                    <option value="Suspenso">Suspenso</option>
+                    <option value="inativo">Inativo</option>
+                  </select>
+                </div>
+                <button 
+                  className="px-4 py-2 ml-auto font-semibold transition rounded-lg shadow bg-brazil-yellow text-brazil-blue hover:bg-yellow-200 md:ml-0"
+                  onClick={clearFilters}
+                >
+                  Limpar
+                </button>
+              </div>
+
+              {/* Table */}
+              <div className="flex flex-col flex-1 p-0 overflow-hidden bg-white shadow-lg rounded-xl">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-100">
+                    <thead className="bg-brazil-blue">
+                      <tr>
+                        <th className="px-6 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Nome</th>
+                        <th className="px-4 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Telefone</th>
+                        <th className="px-4 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Email</th>
+                        <th className="px-4 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">acessos</th>
+                        <th className="px-4 py-4 text-xs font-bold tracking-wider text-center text-white font-montserrat">Status</th>
+                        <th className="px-4 py-4 text-xs font-bold tracking-wider text-center text-white font-montserrat">ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="font-medium text-gray-800 bg-white divide-y divide-gray-100">
+                      {currentCustomers.map((customer, index) => {
+                        const role = getRoleDisplay(customer.role);
+                        const status = getStatusDisplay(customer.status);
+                        return (
+                          <tr key={customer.id} className="transition cursor-pointer hover:bg-gray-50" data-id={customer.id}>
+                            <td className="flex items-center px-6 py-4">
+                              <img 
+                                src={getAvatarImage(customer, index)} 
+                                alt="" 
+                                className={`w-8 h-8 mr-3 border-2 rounded-full ${getBorderColor(customer.role)}`} 
+                              />
+                              {customer.firstName} {customer.lastName}
+                            </td>
+                            <td className="px-4 py-4">{customer.phone || 'Não informado'}</td>
+                            <td className="px-4 py-4">{customer.email}</td>
+                            <td className="px-4 py-4">
+                              <span className={`inline-flex items-center px-2 py-1 mr-1 text-xs font-semibold rounded bg-${role.color} bg-opacity-10 text-${role.color}`}>
+                                {role.icon && <i className={`mr-1 fa-solid ${role.icon}`}></i>}
+                                {role.label}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-center">
+                              <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold ${
+                                status.color === 'brazil-green' ? 'bg-green-100 text-brazil-green' :
+                                status.color === 'brazil-yellow' ? 'bg-yellow-100 text-brazil-yellow' :
+                                'bg-red-100 text-brazil-red'
+                              } rounded`}>
+                                <i className="mr-1 text-xs fa-solid fa-circle"></i> {status.label}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <button 
+                                className="mr-2 text-brazil-blue hover:text-brazil-green"
+                                onClick={() => showCustomerProfile(customer)}
+                              >
+                                <i className="fa-solid fa-eye"></i>
+                              </button>
+                              <button className="mr-2 text-brazil-blue hover:text-brazil-green">
+                                <i className="fa-solid fa-file-pen"></i>
+                              </button>
+                              <button className="text-brazil-blue hover:text-brazil-green">
+                                <i className="fa-solid fa-trash-can"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Pagination */}
+                <div className="flex items-center justify-between px-6 py-3 bg-gray-50">
+                  <span className="text-xs text-gray-600">
+                    Exibindo {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} de {filteredCustomers.length} clientes
+                  </span>
+                  <div className="space-x-1">
+                    <button 
+                      className="px-2 py-1 transition rounded text-brazil-blue hover:bg-brazil-blue hover:text-white disabled:opacity-50"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    >
+                      <i className="fa-solid fa-angle-left"></i>
+                    </button>
+                    {[...Array(totalPages)].map((_, i) => (
+                      <button 
+                        key={i + 1}
+                        className={`px-2 py-1 rounded transition ${
+                          currentPage === i + 1 
+                            ? 'font-bold text-brazil-blue bg-brazil-yellow' 
+                            : 'text-brazil-blue hover:bg-brazil-blue hover:text-white'
+                        }`}
+                        onClick={() => setCurrentPage(i + 1)}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                    <button 
+                      className="px-2 py-1 transition rounded text-brazil-blue hover:bg-brazil-blue hover:text-white disabled:opacity-50"
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    >
+                      <i className="fa-solid fa-angle-right"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Customer Profile Card */}
+            {selectedCustomer && (
+              <div className="w-full lg:w-[400px] bg-white rounded-2xl shadow-xl p-8 flex flex-col transition-all duration-300" style={{minWidth: '370px', maxWidth: '400px'}}>
+                <button 
+                  onClick={hideCustomerProfile}
+                  className="self-end mb-4 text-gray-400 hover:text-gray-600"
+                >
+                  <i className="fa-solid fa-times"></i>
+                </button>
+                
+                <div className="flex flex-col items-center">
+                  <img 
+                    src={getAvatarImage(selectedCustomer, 0)} 
+                    alt="" 
+                    className={`object-cover w-24 h-24 mb-3 border-4 rounded-full shadow-lg ${getBorderColor(selectedCustomer.role)}`} 
+                  />
+                  <div className="flex items-center mb-2 space-x-2">
+                    <h2 className="text-xl font-bold text-gray-800 font-montserrat">
+                      {selectedCustomer.firstName} {selectedCustomer.lastName}
+                    </h2>
+                    <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-${getRoleDisplay(selectedCustomer.role).color} bg-opacity-10 text-${getRoleDisplay(selectedCustomer.role).color}`}>
+                      {getRoleDisplay(selectedCustomer.role).icon && (
+                        <i className={`mr-1 fa-solid ${getRoleDisplay(selectedCustomer.role).icon}`}></i>
+                      )}
+                      {getRoleDisplay(selectedCustomer.role).label}
+                    </span>
+                  </div>
+                  <span className={`inline-flex items-center px-2 py-1 mb-2 text-xs font-semibold ${
+                    getStatusDisplay(selectedCustomer.status).color === 'brazil-green' ? 'bg-green-100 text-brazil-green' :
+                    getStatusDisplay(selectedCustomer.status).color === 'brazil-yellow' ? 'bg-yellow-100 text-brazil-yellow' :
+                    'bg-red-100 text-brazil-red'
+                  } rounded`}>
+                    <i className="mr-1 text-xs fa-solid fa-circle"></i> {getStatusDisplay(selectedCustomer.status).label}
+                  </span>
+                  <p className="mb-1 text-sm text-gray-600">{selectedCustomer.email}</p>
+                  <p className="mb-5 text-sm text-gray-600">{selectedCustomer.phone || 'Telefone não informado'}</p>
+                </div>
+                
+                <div className="mb-6">
+                  <h3 className="mb-2 font-semibold text-gray-800 text-md font-montserrat">Classificações</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-${getRoleDisplay(selectedCustomer.role).color} bg-opacity-10 text-${getRoleDisplay(selectedCustomer.role).color}`}>
+                      {getRoleDisplay(selectedCustomer.role).icon && (
+                        <i className={`mr-1 fa-solid ${getRoleDisplay(selectedCustomer.role).icon}`}></i>
+                      )}
+                      {getRoleDisplay(selectedCustomer.role).label}
+                    </span>
+                    {selectedCustomer.loyaltyPoints && selectedCustomer.loyaltyPoints > 100 && (
+                      <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-brazil-yellow bg-opacity-20 text-brazil-blue">
+                        Frequente
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <h3 className="mb-2 font-semibold text-gray-800 text-md font-montserrat">Informações</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Username:</span>
+                      <span className="text-sm font-medium">@{selectedCustomer.username}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Pontos de fidelidade:</span>
+                      <span className="text-sm font-medium">{selectedCustomer.loyaltyPoints || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Membro desde:</span>
+                      <span className="text-sm font-medium">
+                        {selectedCustomer.memberSince ? new Date(selectedCustomer.memberSince).toLocaleDateString('pt-PT') : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-auto">
+                  <button className="w-full px-4 py-2 mb-2 font-semibold transition rounded-lg bg-brazil-blue text-white hover:bg-blue-700">
+                    <i className="mr-2 fa-solid fa-file-pen"></i>
+                    Editar Cliente
+                  </button>
+                  <button className="w-full px-4 py-2 font-semibold transition border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    <i className="mr-2 fa-solid fa-history"></i>
+                    Ver Histórico
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
