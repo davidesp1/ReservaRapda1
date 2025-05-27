@@ -20,7 +20,7 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
   title = 'Dashboard' 
 }) => {
   const { t } = useTranslation();
-  const { isAuthenticated, isLoading, user, isCollaborator } = useAuth();
+  const { isAuthenticated, isLoading, user, isCollaborator, isFinanceiro } = useAuth();
   const [_, setLocation] = useLocation();
   // Estado para o menu móvel foi removido pois é gerenciado pelo componente Sheet
   
@@ -37,6 +37,13 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
       setLocation('/collaborator');
     }
   }, [isAuthenticated, isCollaborator, isLoading, setLocation]);
+
+  // Redirect finance users to their own dashboard
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && isFinanceiro) {
+      setLocation('/financeiro/dashboard');
+    }
+  }, [isAuthenticated, isFinanceiro, isLoading, setLocation]);
   
   if (isLoading) {
     return (
