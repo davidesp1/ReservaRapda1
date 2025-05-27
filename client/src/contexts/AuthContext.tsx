@@ -9,6 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isCollaborator: boolean;
+  isFinanceiro: boolean;
   login: (username: string, password: string) => Promise<User>;
   loginWithPin: (credentials: { userId: string; pin: string }) => Promise<User>;
   register: (userData: RegisterData) => Promise<void>;
@@ -269,6 +270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!user;
   const isAdmin = isAuthenticated && user?.role === 'admin';
   const isCollaborator = isAuthenticated && user?.role === 'collaborator';
+  const isFinanceiro = isAuthenticated && user?.role === 'financeiro';
 
   return (
     <AuthContext.Provider
@@ -278,6 +280,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated,
         isAdmin,
         isCollaborator,
+        isFinanceiro,
         login,
         loginWithPin: (credentials: { userId: string; pin: string }) => loginWithPinMutation.mutateAsync(credentials),
         register,
@@ -299,6 +302,7 @@ export function useAuth() {
       isAuthenticated: false,
       isAdmin: false,
       isCollaborator: false,
+      isFinanceiro: false,
       login: async () => ({ id: 0, username: '', email: '', firstName: '', lastName: '', role: '' } as User),
       loginWithPin: async () => ({ id: 0, username: '', email: '', firstName: '', lastName: '', role: '' } as User),
       register: async () => {},
