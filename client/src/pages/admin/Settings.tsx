@@ -157,16 +157,9 @@ const Settings: React.FC = () => {
       
       const data = await response.json();
       
-      toast({
-        title: "Teste de impressão",
-        description: data.message || "Página de teste enviada para impressão",
-      });
+      showSuccess("Teste de Impressão", data.message || "Página de teste enviada para impressão");
     } catch (error: any) {
-      toast({
-        title: "Erro no teste",
-        description: error.message || "Erro ao testar impressão",
-        variant: "destructive",
-      });
+      showError("Erro no Teste", error.message || "Erro ao testar impressão");
     }
   };
 
@@ -187,11 +180,7 @@ const Settings: React.FC = () => {
         description: data.message || "Impressora conectada",
       });
     } catch (error: any) {
-      toast({
-        title: "Erro na conexão",
-        description: error.message || "Erro ao verificar conexão",
-        variant: "destructive",
-      });
+      showError("Erro na Conexão", error.message || "Erro ao verificar conexão");
     }
   };
 
@@ -211,10 +200,7 @@ const Settings: React.FC = () => {
       // Simular salvamento (aqui você pode integrar com sua API)
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      toast({
-        title: "Configurações salvas!",
-        description: "As configurações foram atualizadas com sucesso.",
-      });
+      showSuccess("Configurações Salvas!", "As configurações foram atualizadas com sucesso.");
       
       // Feedback visual no botão
       const submitBtn = document.querySelector('#submit-btn') as HTMLButtonElement;
@@ -227,11 +213,7 @@ const Settings: React.FC = () => {
         }, 1600);
       }
     } catch (error) {
-      toast({
-        title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar as configurações.",
-        variant: "destructive",
-      });
+      showError("Erro ao Salvar", "Ocorreu um erro ao salvar as configurações.");
     } finally {
       setIsSubmitting(false);
     }
@@ -986,16 +968,9 @@ const Settings: React.FC = () => {
                           console.log("🔄 Executando varredura de impressoras...");
                           try {
                             await refetchPrinters();
-                            toast({
-                              title: "Varredura concluída",
-                              description: "Lista de impressoras atualizada com sucesso!",
-                            });
+                            showPrinterNotification('detected', availablePrinters.length);
                           } catch (error) {
-                            toast({
-                              title: "Erro na varredura",
-                              description: "Erro ao atualizar lista de impressoras",
-                              variant: "destructive",
-                            });
+                            showPrinterNotification('error');
                           }
                         }}
                       >
