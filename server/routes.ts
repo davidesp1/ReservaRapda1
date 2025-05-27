@@ -1994,6 +1994,21 @@ router.post("/api/settings/pos/test-communication", isAuthenticated, async (req,
         };
       }
       
+      // Se nenhum teste específico foi executado, fornecer feedback real
+      if (testResult.status === 'unknown') {
+        testResult = {
+          success: false,
+          status: 'not_available',
+          message: `Nenhuma impressora física conectada detectada no sistema ${platform}. Para testar com impressoras reais, conecte uma impressora USB ou configure CUPS no Linux.`,
+          details: { 
+            platform: platform,
+            available_methods: platform === 'linux' ? ['CUPS', 'USB', 'Direct Device'] : ['Sistema padrão'],
+            recommendation: 'Conecte uma impressora física para testes reais'
+          },
+          timestamp: new Date().toISOString()
+        };
+      }
+      
     } catch (execError) {
       console.error(`❌ [ERRO] Falha no teste de comunicação:`, execError);
       testResult = {
@@ -2091,43 +2106,97 @@ está funcionando corretamente.
       } else {
         // Tentar impressão real no sistema
         if (platform === 'linux') {
-          // Criar arquivo temporário e imprimir via lp
-          const tempFile = `/tmp/pos_test_${Date.now()}.txt`;
-          const fs = await import('fs');
-          fs.writeFileSync(tempFile, testPageContent);
-          await execAsync(`lp -d ${printerName} ${tempFile} 2>/dev/null && rm ${tempFile} || rm ${tempFile}`);
-          
-          printResult = {
-            success: true,
-            message: `Página de teste enviada para ${printerName} via CUPS`,
-            timestamp: new Date().toISOString()
-          };
+          // Verificar se CUPS está disponível
+          try {
+            await execAsync('which lp 2>/dev/null');
+            // CUPS disponível, tentar imprimir
+            const tempFile = `/tmp/pos_test_${Date.now()}.txt`;
+            const fs = await import('fs');
+            fs.writeFileSync(tempFile, testPageContent);
+            
+            const result = await execAsync(`lp -d ${printerName} ${tempFile} 2>&1 && rm ${tempFile} || (echo "print_failed" && rm ${tempFile})`);
+            
+            if (result.stdout.includes('print_failed') || result.stderr) {
+              printResult = {
+                success: false,
+                message: `Falha ao imprimir em ${printerName}: ${result.stderr || 'Impressora não encontrada ou offline'}`,
+                timestamp: new Date().toISOString()
+              };
+            } else {
+              printResult = {
+                success: true,
+                message: `Página de teste enviada para ${printerName} via CUPS`,
+                timestamp: new Date().toISOString()
+              };
+            }
+          } catch (cupsError) {
+            // CUPS não disponível, tentar método direto
+            printResult = {
+              success: false,
+              message: `CUPS não está instalado neste sistema Linux. Para impressão real, instale CUPS: sudo apt-get install cups-client`,
+              timestamp: new Date().toISOString()
+            };
+          }
           
         } else if (platform === 'darwin') {
           // Impressão no macOS
-          const tempFile = `/tmp/pos_test_${Date.now()}.txt`;
-          const fs = await import('fs');
-          fs.writeFileSync(tempFile, testPageContent);
-          await execAsync(`lp -d ${printerName} ${tempFile} 2>/dev/null && rm ${tempFile} || rm ${tempFile}`);
-          
-          printResult = {
-            success: true,
-            message: `Página de teste enviada para ${printerName} via macOS`,
-            timestamp: new Date().toISOString()
-          };
+          try {
+            const tempFile = `/tmp/pos_test_${Date.now()}.txt`;
+            const fs = await import('fs');
+            fs.writeFileSync(tempFile, testPageContent);
+            
+            const result = await execAsync(`lp -d ${printerName} ${tempFile} 2>&1 && rm ${tempFile} || (echo "print_failed" && rm ${tempFile})`);
+            
+            if (result.stdout.includes('print_failed') || result.stderr) {
+              printResult = {
+                success: false,
+                message: `Falha ao imprimir em ${printerName}: ${result.stderr || 'Impressora não encontrada ou offline'}`,
+                timestamp: new Date().toISOString()
+              };
+            } else {
+              printResult = {
+                success: true,
+                message: `Página de teste enviada para ${printerName} via macOS`,
+                timestamp: new Date().toISOString()
+              };
+            }
+          } catch (macError) {
+            printResult = {
+              success: false,
+              message: `Erro ao acessar sistema de impressão do macOS: ${macError}`,
+              timestamp: new Date().toISOString()
+            };
+          }
           
         } else if (platform === 'win32') {
           // Impressão no Windows via PowerShell
-          const tempFile = `C:\\temp\\pos_test_${Date.now()}.txt`;
-          const fs = await import('fs');
-          fs.writeFileSync(tempFile, testPageContent);
-          await execAsync(`powershell -Command "Get-Content '${tempFile}' | Out-Printer -Name '${printerName}'" 2>nul && del "${tempFile}" || del "${tempFile}"`);
-          
-          printResult = {
-            success: true,
-            message: `Página de teste enviada para ${printerName} via Windows`,
-            timestamp: new Date().toISOString()
-          };
+          try {
+            const tempFile = `C:\\temp\\pos_test_${Date.now()}.txt`;
+            const fs = await import('fs');
+            fs.writeFileSync(tempFile, testPageContent);
+            
+            const result = await execAsync(`powershell -Command "Get-Content '${tempFile}' | Out-Printer -Name '${printerName}'" 2>&1 && del "${tempFile}" || (echo "print_failed" && del "${tempFile}")`);
+            
+            if (result.stdout.includes('print_failed') || result.stderr) {
+              printResult = {
+                success: false,
+                message: `Falha ao imprimir em ${printerName}: ${result.stderr || 'Impressora não encontrada ou offline'}`,
+                timestamp: new Date().toISOString()
+              };
+            } else {
+              printResult = {
+                success: true,
+                message: `Página de teste enviada para ${printerName} via Windows`,
+                timestamp: new Date().toISOString()
+              };
+            }
+          } catch (winError) {
+            printResult = {
+              success: false,
+              message: `Erro ao acessar sistema de impressão do Windows: ${winError}`,
+              timestamp: new Date().toISOString()
+            };
+          }
         }
       }
       
@@ -2153,21 +2222,7 @@ está funcionando corretamente.
   }
 });
 
-// Rota para verificar status da impressora
-router.post("/api/settings/pos/check-connection", isAuthenticated, async (req, res) => {
-  try {
-    // Simular verificação de conexão
-    console.log("Verificação de conexão executada pelo usuário:", req.session.userId);
-    res.json({ 
-      success: true, 
-      status: "connected", 
-      message: "Impressora conectada e funcionando normalmente" 
-    });
-  } catch (err: any) {
-    console.error("Erro na verificação de conexão:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+// Esta rota foi movida para test-communication - removendo duplicata
 
 // Rota para exportar perfil de configuração
 router.get("/api/settings/pos/export-profile", isAuthenticated, async (req, res) => {
@@ -2216,53 +2271,104 @@ router.get("/api/settings/pos/printers", isAuthenticated, async (req, res) => {
       
       try {
         if (platform === 'linux') {
-          console.log("🐧 [LINUX] Detectando impressoras via CUPS...");
+          console.log("🐧 [LINUX] Detectando impressoras do sistema...");
           
-          // Comando para listar impressoras no Linux (CUPS)
-          const { stdout } = await execAsync('lpstat -p 2>/dev/null || echo "no_printers"');
-          
-          if (stdout !== "no_printers" && stdout.trim() !== "") {
-            const lines = stdout.split('\n').filter(line => line.includes('printer'));
-            
-            for (const line of lines) {
-              const match = line.match(/printer\s+(\S+)/);
-              if (match) {
-                const printerName = match[1];
-                
-                // Verificar status da impressora
-                let status = 'unknown';
-                try {
-                  const { stdout: statusOut } = await execAsync(`lpstat -p ${printerName} 2>/dev/null || echo "unknown"`);
-                  if (statusOut.includes('idle')) status = 'online';
-                  else if (statusOut.includes('disabled')) status = 'offline';
-                  else if (statusOut.includes('printing')) status = 'printing';
-                  else status = 'unknown';
-                } catch (e) {
-                  status = 'unknown';
+          // Método 1: Tentar CUPS primeiro
+          try {
+            const { stdout: cupsOut } = await execAsync('lpstat -p 2>/dev/null || echo "no_cups"');
+            if (cupsOut !== "no_cups" && cupsOut.trim() !== "") {
+              const lines = cupsOut.split('\n').filter((line: string) => line.includes('printer'));
+              
+              for (const line of lines) {
+                const match = line.match(/printer\s+(\S+)/);
+                if (match) {
+                  const printerName = match[1];
+                  
+                  // Verificar status da impressora
+                  let status = 'unknown';
+                  try {
+                    const { stdout: statusOut } = await execAsync(`lpstat -p ${printerName} 2>/dev/null || echo "unknown"`);
+                    if (statusOut.includes('idle')) status = 'online';
+                    else if (statusOut.includes('disabled')) status = 'offline';
+                    else if (statusOut.includes('printing')) status = 'printing';
+                  } catch (e) {
+                    status = 'unknown';
+                  }
+                  
+                  systemPrinters.push({
+                    id: `linux_cups_${printerName}_${Date.now()}`,
+                    name: printerName,
+                    type: "cups",
+                    status: status,
+                    platform: "linux",
+                    driver: "CUPS",
+                    connection: "system"
+                  });
                 }
-                
+              }
+            }
+          } catch (cupsError) {
+            console.log("⚠️ [LINUX] CUPS não disponível, tentando métodos alternativos...");
+          }
+          
+          // Método 2: Verificar dispositivos USB (impressoras USB)
+          try {
+            const { stdout: usbOut } = await execAsync('lsusb 2>/dev/null | grep -i "printer\\|canon\\|epson\\|hp\\|brother\\|samsung" || echo "no_usb"');
+            if (usbOut !== "no_usb" && usbOut.trim() !== "") {
+              const usbLines = usbOut.split('\n').filter((line: string) => line.trim() !== "");
+              
+              for (const line of usbLines) {
+                const deviceMatch = line.match(/ID\s+[\da-f]{4}:[\da-f]{4}\s+(.+)$/i);
+                if (deviceMatch) {
+                  const deviceName = deviceMatch[1].trim();
+                  
+                  systemPrinters.push({
+                    id: `linux_usb_${Date.now()}_${systemPrinters.length}`,
+                    name: `USB: ${deviceName}`,
+                    type: "usb",
+                    status: "detected",
+                    platform: "linux",
+                    driver: "USB Direct",
+                    connection: "usb"
+                  });
+                }
+              }
+            }
+          } catch (usbError) {
+            console.log("⚠️ [LINUX] Detecção USB falhou");
+          }
+          
+          // Método 3: Verificar dispositivos seriais/paralelos
+          try {
+            const { stdout: devOut } = await execAsync('ls /dev/lp* /dev/usb/lp* 2>/dev/null || echo "no_dev"');
+            if (devOut !== "no_dev" && devOut.trim() !== "") {
+              const devices = devOut.split('\n').filter((line: string) => line.trim() !== "");
+              
+              for (const device of devices) {
                 systemPrinters.push({
-                  id: `linux_${printerName}_${Date.now()}`,
-                  name: printerName,
-                  type: "cups",
-                  status: status,
+                  id: `linux_dev_${Date.now()}_${systemPrinters.length}`,
+                  name: `Dispositivo: ${device}`,
+                  type: "device",
+                  status: "available",
                   platform: "linux",
-                  driver: "CUPS",
-                  connection: "system"
+                  driver: "Direct Device",
+                  connection: "direct"
                 });
               }
             }
+          } catch (devError) {
+            console.log("⚠️ [LINUX] Detecção de dispositivos falhou");
           }
           
-          // Se não encontrou impressoras, adicionar uma genérica
+          // Se não encontrou nenhuma impressora real, adicionar opções genéricas
           if (systemPrinters.length === 0) {
             systemPrinters.push({
-              id: `linux_generic_${Date.now()}`,
-              name: "Impressora Linux (Sistema)",
+              id: `linux_system_${Date.now()}`,
+              name: "Impressora do Sistema Linux",
               type: "system",
-              status: "unknown",
+              status: "available",
               platform: "linux",
-              driver: "CUPS",
+              driver: "Sistema",
               connection: "system"
             });
           }
