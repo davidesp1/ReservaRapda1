@@ -1,559 +1,430 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, UserPlus, Eye, Edit, Trash2, Key, Lock } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from '@/components/ui/label';
 import { apiRequest } from '@/lib/queryClient';
-import { useForm } from 'react-hook-form';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { useAuth } from '@/contexts/AuthContext';
 
-const Customers: React.FC = () => {
-  const { t } = useTranslation();
-  const { isAuthenticated, isAdmin, isLoading } = useAuth();
-  const [_, setLocation] = useLocation();
-  const [searchText, setSearchText] = useState('');
-  const [viewCustomerInfo, setViewCustomerInfo] = useState<any>(null);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
+  role: string;
+  status?: string;
+  memberSince?: string;
+  loyaltyPoints?: number;
+  profilePicture?: string;
+}
+
+interface Reservation {
+  id: number;
+  user_id: number;
+  table_id: number;
+  date: string;
+  time: string;
+  guests: number;
+  status: string;
+  total: number;
+  user_name?: string;
+}
+
+export default function Customers() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showProfile, setShowProfile] = useState(false);
+  const itemsPerPage = 8;
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // Form para edição de cliente
-  const form = useForm({
-    defaultValues: {
-      username: '',
-      email: '',
-      first_name: '',
-      last_name: '',
-      phone: '',
-      role: 'customer',
-      status: 'active',
-      password: '********' // Senha oculta
-    }
-  });
-  
-  // Fetch customers com atualizações em tempo real
-  const { data: customers, isLoading: customersLoading } = useQuery<any>({
+  const { user: currentUser } = useAuth();
+
+  const { data: users, isLoading, error } = useQuery<User[]>({
     queryKey: ['/api/users'],
-    enabled: isAuthenticated && isAdmin,
-    refetchInterval: 30000, // Atualiza a cada 30 segundos
-    refetchIntervalInBackground: true,
-    staleTime: 10000, // Considera os dados obsoletos após 10 segundos
+    staleTime: 30000,
   });
 
-  // Filter customers based on search
-  const filteredCustomers = React.useMemo(() => {
-    if (!customers) return [];
-    
-    return customers.filter((customer: any) => {
-      const searchLower = searchText.toLowerCase();
-      return (
-        (customer.first_name && customer.first_name.toLowerCase().includes(searchLower)) ||
-        (customer.last_name && customer.last_name.toLowerCase().includes(searchLower)) ||
-        (customer.email && customer.email.toLowerCase().includes(searchLower)) ||
-        (customer.username && customer.username.toLowerCase().includes(searchLower))
-      );
-    });
-  }, [customers, searchText]);
-  
-  // Mutation para atualizar usuário
-  const updateUserMutation = useMutation({
-    mutationFn: async (userData: any) => {
-      const response = await apiRequest('PUT', `/api/users/${userData.id}`, userData);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Erro ao atualizar usuário');
-      }
+  const { data: reservations } = useQuery<Reservation[]>({
+    queryKey: ['/api/admin/reservations'],
+    staleTime: 30000,
+    enabled: !!selectedUser,
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const response = await apiRequest('DELETE', `/api/users/${userId}`);
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: t('CustomerUpdated'),
-        description: t('CustomerUpdatedSuccessfully'),
-        variant: 'default',
+        title: "Usuário excluído",
+        description: "O usuário foi excluído com sucesso.",
       });
-      setIsEditModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      setSelectedUser(null);
+      setShowProfile(false);
     },
     onError: (error: any) => {
       toast({
-        title: t('Error'),
-        description: error.message,
-        variant: 'destructive',
+        title: "Erro ao excluir",
+        description: error.message || "Não foi possível excluir o usuário.",
+        variant: "destructive",
       });
     }
   });
-  
-  // Abrir modal de visualização do cliente
-  const handleViewCustomer = (customer: any) => {
-    setViewCustomerInfo(customer);
-    setIsViewModalOpen(true);
-  };
-  
-  // Abrir modal de edição do cliente
-  const handleEditCustomer = (customer: any) => {
-    setSelectedCustomer(customer);
-    form.reset({
-      username: customer.username,
-      email: customer.email,
-      first_name: customer.first_name,
-      last_name: customer.last_name,
-      phone: customer.phone || '',
-      role: customer.role || 'customer',
-      status: customer.status || 'active',
-      password: '********' // Senha oculta
-    });
-    setIsEditModalOpen(true);
-  };
-  
-  // Abrir modal de confirmação de exclusão
-  const handleDeleteConfirm = (customer: any) => {
-    setSelectedCustomer(customer);
-    setIsDeleteModalOpen(true);
-  };
-  
-  // Enviar o formulário de edição
-  const onSubmit = (data: any) => {
-    // Remover a senha do objeto se não foi alterada (continua sendo asteriscos)
-    if (data.password === '********') {
-      delete data.password;
-    }
+
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
     
-    // Adicionar ID do cliente
-    const userData = {
-      ...data,
-      id: selectedCustomer.id,
-      firstName: data.first_name,
-      lastName: data.last_name,
-      postalCode: selectedCustomer.postal_code,
-      loyaltyPoints: selectedCustomer.loyalty_points
+    return users.filter(user => {
+      const matchesSearch = !searchTerm || 
+        user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.phone?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesRole = !roleFilter || user.role.toLowerCase() === roleFilter.toLowerCase();
+      const matchesStatus = !statusFilter || (user.status || 'active').toLowerCase() === statusFilter.toLowerCase();
+      
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }, [users, searchTerm, roleFilter, statusFilter]);
+
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredUsers, currentPage]);
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  const getRoleInfo = (role: string) => {
+    const roleMap = {
+      admin: { label: 'Master', icon: 'fa-crown', bgColor: 'bg-brasil-green bg-opacity-10', textColor: 'text-brasil-green', borderColor: 'border-brasil-green' },
+      financeiro: { label: 'Financeiro', icon: 'fa-dollar-sign', bgColor: 'bg-brasil-yellow bg-opacity-10', textColor: 'text-brasil-yellow', borderColor: 'border-brasil-yellow' },
+      collaborator: { label: 'Colaborador', icon: 'fa-users', bgColor: 'bg-brasil-red bg-opacity-10', textColor: 'text-brasil-red', borderColor: 'border-brasil-red' },
+      customer: { label: 'Cliente', icon: 'fa-user', bgColor: 'bg-gray-100', textColor: 'text-gray-600', borderColor: 'border-gray-200' },
     };
     
-    updateUserMutation.mutate(userData);
+    return roleMap[role as keyof typeof roleMap] || roleMap.customer;
   };
-  
-  if (customersLoading) {
+
+  const getStatusInfo = (status: string) => {
+    const statusMap = {
+      active: { label: 'Ativo', bgColor: 'bg-green-100', textColor: 'text-brasil-green' },
+      ativo: { label: 'Ativo', bgColor: 'bg-green-100', textColor: 'text-brasil-green' },
+      suspended: { label: 'Suspenso', bgColor: 'bg-yellow-100', textColor: 'text-brasil-yellow' },
+      suspenso: { label: 'Suspenso', bgColor: 'bg-yellow-100', textColor: 'text-brasil-yellow' },
+      inactive: { label: 'Inativo', bgColor: 'bg-red-100', textColor: 'text-brasil-red' },
+      inativo: { label: 'Inativo', bgColor: 'bg-red-100', textColor: 'text-brasil-red' },
+    };
+    
+    return statusMap[status?.toLowerCase() as keyof typeof statusMap] || statusMap.active;
+  };
+
+  const getDefaultAvatar = (index: number) => {
+    const avatars = [
+      'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg',
+      'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg',
+      'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg',
+      'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg',
+      'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg',
+      'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg',
+    ];
+    return avatars[index % avatars.length];
+  };
+
+  const getUserReservations = () => {
+    if (!selectedUser || !reservations) return [];
+    return reservations.filter(res => res.user_id === selectedUser.id).slice(0, 5);
+  };
+
+  const handleDeleteUser = (userId: number) => {
+    if (window.confirm('Tem certeza que deseja excluir este usuário?')) {
+      deleteUserMutation.mutate(userId);
+    }
+  };
+
+  const showClienteProfile = (user: User) => {
+    setSelectedUser(user);
+    setShowProfile(true);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setRoleFilter('');
+    setStatusFilter('');
+    setCurrentPage(1);
+  };
+
+  if (isLoading) {
     return (
-      <AdminLayout title={t('Customers')}>
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-12 bg-gray-200 rounded"></div>
-          <div className="h-96 bg-gray-200 rounded"></div>
+      <AdminLayout title="Gestão de Clientes">
+        <div className="bg-gray-100 font-opensans min-h-screen">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brasil-green"></div>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout title="Gestão de Clientes">
+        <div className="bg-gray-100 font-opensans min-h-screen p-8">
+          <div className="bg-white rounded-lg p-6 text-center">
+            <p className="text-red-600">Erro ao carregar clientes</p>
+          </div>
         </div>
       </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout title={t('Customers')}>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-montserrat font-bold">{t('Customers')}</h1>
-      </div>
-      
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle>{t('ManageCustomers')}</CardTitle>
-          <CardDescription>{t('ViewAndManageAllCustomers')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder={t('SearchCustomers')}
-                className="pl-10"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-              />
+    <AdminLayout title="Gestão de Clientes">
+      <div className="bg-gray-100 font-opensans">
+        <div className={`flex gap-8 h-[720px] ${showProfile ? 'lg:flex-row' : 'flex-col'}`}>
+          {/* Tabela de Clientes */}
+          <div className="flex flex-col flex-1">
+            {/* Filtros */}
+            <div className="flex flex-col mb-4 space-y-3 md:flex-row md:items-end md:space-x-6 md:space-y-0">
+              <div className="flex-1">
+                <label className="block mb-1 text-sm font-semibold text-gray-700 font-montserrat">Buscar Cliente</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Nome, email ou telefone"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full py-2 pl-10 pr-4 font-medium text-gray-800 transition bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brasil-blue"
+                  />
+                  <span className="absolute text-gray-400 transform -translate-y-1/2 left-3 top-1/2">
+                    <i className="fa-solid fa-magnifying-glass"></i>
+                  </span>
+                </div>
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-semibold text-gray-700 font-montserrat">Classificação</label>
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="w-full px-3 py-2 font-medium text-gray-700 bg-white border border-gray-200 rounded-lg md:w-40 focus:ring-2 focus:ring-brasil-blue"
+                >
+                  <option value="">Todas</option>
+                  <option value="admin">Master</option>
+                  <option value="financeiro">Financeiro</option>
+                  <option value="collaborator">Colaborador</option>
+                  <option value="customer">Cliente</option>
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-semibold text-gray-700 font-montserrat">Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full px-3 py-2 font-medium text-gray-700 bg-white border border-gray-200 rounded-lg md:w-32 focus:ring-2 focus:ring-brasil-blue"
+                >
+                  <option value="">Todos</option>
+                  <option value="active">Ativo</option>
+                  <option value="suspended">Suspenso</option>
+                  <option value="inactive">Inativo</option>
+                </select>
+              </div>
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 ml-auto font-semibold transition rounded-lg shadow bg-brasil-yellow text-brasil-blue hover:bg-yellow-200 md:ml-0"
+              >
+                Limpar
+              </button>
             </div>
-            <Button 
-              className="bg-brasil-green text-white hover:bg-brasil-green/90"
-              onClick={() => setLocation('/admin/customers/add')}
-            >
-              <UserPlus className="mr-2 h-4 w-4" /> {t('AddCustomer')}
-            </Button>
-          </div>
-          
-          <div className="border rounded-md">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('Name')}</TableHead>
-                  <TableHead>{t('Email')}</TableHead>
-                  <TableHead>{t('Username')}</TableHead>
-                  <TableHead>{t('Phone')}</TableHead>
-                  <TableHead className="text-right">{t('Actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCustomers.length > 0 ? (
-                  filteredCustomers.map((customer: any) => (
-                    <TableRow key={customer.id}>
-                      <TableCell className="font-medium">
-                        {customer.first_name} {customer.last_name}
-                      </TableCell>
-                      <TableCell>{customer.email}</TableCell>
-                      <TableCell>{customer.username}</TableCell>
-                      <TableCell>{customer.phone || '-'}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
-                          <Button variant="ghost" size="icon" onClick={() => handleViewCustomer(customer)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleEditCustomer(customer)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeleteConfirm(customer)}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-6 text-gray-500">
-                      {searchText ? t('NoCustomersFound') : t('NoCustomers')}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* View Customer Dialog */}
-      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t('CustomerDetails')}</DialogTitle>
-            <DialogDescription>
-              {viewCustomerInfo ? `${viewCustomerInfo.first_name} ${viewCustomerInfo.last_name}` : ''}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {viewCustomerInfo && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">{t('FirstName')}</label>
-                  <p className="font-semibold">{viewCustomerInfo.first_name}</p>
+
+            {/* Tabela */}
+            <div className="flex flex-col flex-1 p-0 overflow-hidden bg-white shadow-lg rounded-xl">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-100">
+                  <thead className="bg-brasil-blue">
+                    <tr>
+                      <th className="px-6 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Nome</th>
+                      <th className="px-4 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Telefone</th>
+                      <th className="px-4 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Email</th>
+                      <th className="px-4 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Acessos</th>
+                      <th className="px-4 py-4 text-xs font-bold tracking-wider text-center text-white font-montserrat">Status</th>
+                      <th className="px-4 py-4 text-xs font-bold tracking-wider text-center text-white font-montserrat">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="font-medium text-gray-800 bg-white divide-y divide-gray-100">
+                    {paginatedUsers.map((user, index) => {
+                      const roleInfo = getRoleInfo(user.role);
+                      const statusInfo = getStatusInfo(user.status || 'active');
+                      
+                      return (
+                        <tr key={user.id} className="transition cursor-pointer hover:bg-gray-50" onClick={() => showClienteProfile(user)}>
+                          <td className="flex items-center px-6 py-4">
+                            <img
+                              src={user.profilePicture || getDefaultAvatar(index)}
+                              alt=""
+                              className={`w-8 h-8 mr-3 border-2 rounded-full ${roleInfo.borderColor}`}
+                            />
+                            {user.firstName} {user.lastName}
+                          </td>
+                          <td className="px-4 py-4">{user.phone || 'N/A'}</td>
+                          <td className="px-4 py-4">{user.email}</td>
+                          <td className="px-4 py-4">
+                            <span className={`inline-flex items-center px-2 py-1 mr-1 text-xs font-semibold rounded ${roleInfo.bgColor} ${roleInfo.textColor}`}>
+                              <i className={`mr-1 fa-solid ${roleInfo.icon}`}></i> {roleInfo.label}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded ${statusInfo.bgColor} ${statusInfo.textColor}`}>
+                              <i className="mr-1 text-xs fa-solid fa-circle"></i> {statusInfo.label}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <button className="mr-2 text-brasil-blue hover:text-brasil-green" onClick={(e) => { e.stopPropagation(); showClienteProfile(user); }}>
+                              <i className="fa-solid fa-eye"></i>
+                            </button>
+                            <button className="mr-2 text-brasil-blue hover:text-brasil-green" onClick={(e) => { e.stopPropagation(); /* Editar função */ }}>
+                              <i className="fa-solid fa-file-pen"></i>
+                            </button>
+                            <button 
+                              className="text-brasil-blue hover:text-red-600" 
+                              onClick={(e) => { e.stopPropagation(); handleDeleteUser(user.id); }}
+                            >
+                              <i className="fa-solid fa-trash-can"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Paginação */}
+              <div className="flex items-center justify-between px-6 py-3 bg-gray-50">
+                <span className="text-xs text-gray-600">
+                  Exibindo {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, filteredUsers.length)} de {filteredUsers.length} clientes
+                </span>
+                <div className="space-x-1">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-2 py-1 transition rounded text-brasil-blue hover:bg-brasil-blue hover:text-white disabled:opacity-50"
+                  >
+                    <i className="fa-solid fa-angle-left"></i>
+                  </button>
+                  {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`px-2 py-1 rounded ${
+                          currentPage === pageNum
+                            ? 'font-bold text-brasil-blue bg-brasil-yellow'
+                            : 'transition text-brasil-blue hover:bg-brasil-blue hover:text-white'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-2 py-1 transition rounded text-brasil-blue hover:bg-brasil-blue hover:text-white disabled:opacity-50"
+                  >
+                    <i className="fa-solid fa-angle-right"></i>
+                  </button>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">{t('LastName')}</label>
-                  <p className="font-semibold">{viewCustomerInfo.last_name}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Perfil do Cliente */}
+          {showProfile && selectedUser && (
+            <div className="w-full lg:w-[400px] bg-white rounded-2xl shadow-xl p-8 flex flex-col transition-all duration-300" style={{ minWidth: '370px', maxWidth: '400px' }}>
+              <div className="flex flex-col items-center">
+                <img
+                  src={selectedUser.profilePicture || getDefaultAvatar(selectedUser.id)}
+                  alt=""
+                  className={`object-cover w-24 h-24 mb-3 border-4 rounded-full shadow-lg ${getRoleInfo(selectedUser.role).borderColor}`}
+                />
+                <div className="flex items-center mb-2 space-x-2">
+                  <h2 className="text-xl font-bold text-gray-800 font-montserrat">{selectedUser.firstName} {selectedUser.lastName}</h2>
+                  <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded ${getRoleInfo(selectedUser.role).bgColor} ${getRoleInfo(selectedUser.role).textColor}`}>
+                    <i className={`mr-1 fa-solid ${getRoleInfo(selectedUser.role).icon}`}></i> {getRoleInfo(selectedUser.role).label}
+                  </span>
+                </div>
+                <span className={`inline-flex items-center px-2 py-1 mb-2 text-xs font-semibold rounded ${getStatusInfo(selectedUser.status || 'active').bgColor} ${getStatusInfo(selectedUser.status || 'active').textColor}`}>
+                  <i className="mr-1 text-xs fa-solid fa-circle"></i> {getStatusInfo(selectedUser.status || 'active').label}
+                </span>
+                <p className="mb-1 text-sm text-gray-600">{selectedUser.email}</p>
+                <p className="mb-5 text-sm text-gray-600">{selectedUser.phone || 'Telefone não informado'}</p>
+              </div>
+              
+              <div className="mb-6">
+                <h3 className="mb-2 font-semibold text-gray-800 text-md font-montserrat">Informações</h3>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Username:</strong> @{selectedUser.username}</p>
+                  <p><strong>Membro desde:</strong> {selectedUser.memberSince ? new Date(selectedUser.memberSince).toLocaleDateString('pt-PT') : 'N/A'}</p>
+                  {selectedUser.loyaltyPoints !== undefined && (
+                    <p><strong>Pontos:</strong> {selectedUser.loyaltyPoints}</p>
+                  )}
+                  {selectedUser.address && (
+                    <p><strong>Endereço:</strong> {selectedUser.address}, {selectedUser.city} {selectedUser.postalCode}</p>
+                  )}
                 </div>
               </div>
               
               <div>
-                <label className="text-sm font-medium text-gray-500">{t('Email')}</label>
-                <p className="font-semibold">{viewCustomerInfo.email}</p>
+                <h3 className="mb-2 font-semibold text-gray-800 text-md font-montserrat">Histórico de Reservas</h3>
+                <div className="pr-2 space-y-3 overflow-y-auto max-h-48">
+                  {getUserReservations().map((reservation) => (
+                    <div key={reservation.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50">
+                      <div>
+                        <p className="text-sm font-medium">Mesa {reservation.table_id} - {new Date(reservation.date).toLocaleDateString('pt-PT')}</p>
+                        <p className="text-xs text-gray-500">{reservation.guests} pessoas - {reservation.time}</p>
+                      </div>
+                      <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded ${
+                        reservation.status === 'confirmed' ? 'text-white bg-brasil-blue' :
+                        reservation.status === 'completed' ? 'bg-brasil-yellow text-brasil-blue' :
+                        'bg-gray-300 text-gray-700'
+                      }`}>
+                        {reservation.status === 'confirmed' ? 'Confirmada' :
+                         reservation.status === 'completed' ? 'Realizada' :
+                         reservation.status === 'cancelled' ? 'Cancelada' : 'Pendente'}
+                      </span>
+                    </div>
+                  ))}
+                  
+                  {getUserReservations().length === 0 && (
+                    <p className="text-sm text-gray-500 text-center py-4">Nenhuma reserva encontrada</p>
+                  )}
+                </div>
               </div>
               
-              <div>
-                <label className="text-sm font-medium text-gray-500">{t('Username')}</label>
-                <p className="font-semibold">{viewCustomerInfo.username}</p>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">{t('Phone')}</label>
-                <p className="font-semibold">{viewCustomerInfo.phone || '-'}</p>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">{t('Role')}</label>
-                <p className="font-semibold capitalize">{viewCustomerInfo.role}</p>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">{t('PreferredLanguage')}</label>
-                <p className="font-semibold">
-                  {viewCustomerInfo.preferences?.language || 'pt'}
-                </p>
+              <div className="mt-auto pt-6">
+                <button
+                  onClick={() => setShowProfile(false)}
+                  className="w-full px-4 py-2 text-sm font-semibold text-gray-600 transition border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Fechar
+                </button>
               </div>
             </div>
           )}
-          
-          <DialogFooter className="flex sm:justify-between mt-4">
-            <Button variant="outline" onClick={() => setIsViewModalOpen(false)}>
-              {t('Close')}
-            </Button>
-            <Button onClick={() => {
-              setIsViewModalOpen(false);
-              handleEditCustomer(viewCustomerInfo);
-            }}>
-              <Edit className="mr-2 h-4 w-4" /> {t('EditCustomer')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Edit Customer Dialog */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{t('EditCustomer')}</DialogTitle>
-            <DialogDescription>
-              {selectedCustomer ? t('EditingCustomer', { name: `${selectedCustomer.first_name} ${selectedCustomer.last_name}` }) : ''}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="first_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('FirstName')}</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="last_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('LastName')}</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Email')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="email" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Username')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Phone')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('Role')}</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t('SelectRole')} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="customer">{t('Cliente')}</SelectItem>
-                          <SelectItem value="collaborator">{t('colaborator')}</SelectItem>
-                          <SelectItem value="admin">{t('Administrator')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('Status')}</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t('SelectStatus')} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="active">{t('Active')}</SelectItem>
-                          <SelectItem value="inactive">{t('Inactive')}</SelectItem>
-                          <SelectItem value="banned">{t('Banned')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      {t('Password')}
-                      <Lock className="ml-2 h-4 w-4 text-gray-400" />
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        type="password" 
-                        className="font-mono"
-                      />
-                    </FormControl>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {t('LeavePasswordUnchangedHint')}
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <DialogFooter className="pt-4">
-                <Button 
-                  variant="outline" 
-                  type="button" 
-                  onClick={() => setIsEditModalOpen(false)}
-                >
-                  {t('Cancel')}
-                </Button>
-                <Button 
-                  type="submit"
-                  disabled={updateUserMutation.isPending}
-                  className="bg-brasil-green text-white hover:bg-brasil-green/90"
-                >
-                  {updateUserMutation.isPending ? t('Saving') : t('SaveChanges')}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-red-500">{t('ConfirmDeletion')}</DialogTitle>
-            <DialogDescription>
-              {selectedCustomer && t('DeleteCustomerConfirmation', { 
-                name: `${selectedCustomer.first_name} ${selectedCustomer.last_name}` 
-              })}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="pt-4 space-y-2">
-            <p className="text-sm text-gray-600">
-              {t('DeleteCustomerWarning')}
-            </p>
-            
-            <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
-              <div className="flex items-center text-amber-800">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 mr-2">
-                  <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
-                </svg>
-                <span className="text-sm font-medium">{t('ThisActionCannotBeUndone')}</span>
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter className="pt-4">
-            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
-              {t('Cancel')}
-            </Button>
-            <Button 
-              variant="destructive"
-              onClick={() => {
-                // Implementação de exclusão
-                toast({
-                  title: t('NotImplemented'),
-                  description: t('FeatureNotImplementedYet'),
-                  variant: 'destructive',
-                });
-                setIsDeleteModalOpen(false);
-              }}
-            >
-              {t('DeleteCustomer')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </div>
     </AdminLayout>
   );
-};
-
-export default Customers;
+}

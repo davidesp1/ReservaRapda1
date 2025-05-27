@@ -1,0 +1,466 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>::-webkit-scrollbar { display: none;}</style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brazil-green': '#009c3b',
+                        'brazil-yellow': '#ffdf00',
+                        'brazil-blue': '#002776',
+                        'brazil-red': '#c8102e'
+                    },
+                    fontFamily: {
+                        'montserrat': ['Montserrat', 'sans-serif'],
+                        'opensans': ['Open Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" /><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap" /><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="bg-gray-100 font-opensans">
+
+<div id="admin-dashboard" class="flex h-[900px]">
+    <div id="sidebar" class="fixed top-0 left-0 flex flex-col w-64 h-full bg-brazil-blue">
+        <div class="p-6">
+            <div class="flex items-center">
+                <div class="flex items-center justify-center w-10 h-10 mr-2 rounded-full bg-brazil-yellow">
+                    <i class="fa-solid fa-utensils text-brazil-blue"></i>
+                </div>
+                <span class="text-xl font-semibold text-white font-montserrat">
+                    Opa que delicia
+                </span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <ul>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-chart-line text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Dashboard</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer bg-brazil-blue bg-opacity-40">
+                        <i class="w-6 fa-solid fa-users text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Gestão de Clientes</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-book-open text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Gestão do Menu</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-chair text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Gestão das Mesas</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-coins text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Gestão Financeira</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-credit-card text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Pagamentos</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-calendar-check text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Reservas</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+        <div class="p-4 mt-auto border-t border-blue-400">
+            <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                <i class="w-6 fa-solid fa-gear text-brazil-yellow"></i>
+                <span class="ml-2 font-medium">Configurações</span>
+            </span>
+            <span class="flex items-center p-2 mt-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                <i class="w-6 fa-solid fa-right-from-bracket text-brazil-yellow"></i>
+                <span class="ml-2 font-medium">Sair</span>
+            </span>
+        </div>
+    </div>
+
+    <div id="main-content" class="relative flex-1 p-8 ml-64">
+        <div id="header" class="flex items-center justify-between mb-8">
+            <h1 class="text-2xl font-bold text-gray-800 font-montserrat">Gestão de Clientes</h1>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="relative">
+                        <i class="text-xl text-gray-600 fa-regular fa-bell"></i>
+                        <span class="absolute flex items-center justify-center w-4 h-4 text-xs text-white rounded-full -top-1 -right-1 bg-brazil-red">2</span>
+                    </button>
+                </div>
+                <div class="flex items-center">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User Avatar" class="w-10 h-10 border-2 rounded-full border-brazil-yellow" />
+                    <div class="ml-2">
+                        <p class="text-sm font-medium text-gray-800">Carlos Silva</p>
+                        <p class="text-xs text-gray-500">Administrador</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="clientes-section" class="flex flex-col lg:flex-row gap-8 h-[720px]">
+            <div id="clientes-table-section" class="flex flex-col flex-1">
+                <div id="clientes-filtros" class="flex flex-col mb-4 space-y-3 md:flex-row md:items-end md:space-x-6 md:space-y-0">
+                    <div class="flex-1">
+                        <label class="block mb-1 text-sm font-semibold text-gray-700 font-montserrat">Buscar Cliente</label>
+                        <div class="relative">
+                            <input id="clientes-search" type="text" placeholder="Nome, email ou telefone" class="w-full py-2 pl-10 pr-4 font-medium text-gray-800 transition bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brazil-blue" />
+                            <span class="absolute text-gray-400 transform -translate-y-1/2 left-3 top-1/2">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-sm font-semibold text-gray-700 font-montserrat">Classificação</label>
+                        <select id="clientes-tag-filter" class="w-full px-3 py-2 font-medium text-gray-700 bg-white border border-gray-200 rounded-lg md:w-40 focus:ring-2 focus:ring-brazil-blue">
+                            <option value="">Todas</option>
+                            <option value="Master">Master</option>
+                            <option value="Financeiro">Financeiro</option>
+                            <option value="Colaborador">Colaborador</option>
+                            <option value="Cliente">Cliente</option>
+                            <option value="Staff">Staff</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-sm font-semibold text-gray-700 font-montserrat">Status</label>
+                        <select id="clientes-status-filter" class="w-full px-3 py-2 font-medium text-gray-700 bg-white border border-gray-200 rounded-lg md:w-32 focus:ring-2 focus:ring-brazil-blue">
+                            <option value="">Todos</option>
+                            <option value="ativo">Ativo</option>
+                            <option value="Suspenso">Suspenso</option>
+                            <option value="inativo">Inativo</option>
+                        </select>
+                    </div>
+                    <button id="clientes-clean-filters" class="px-4 py-2 ml-auto font-semibold transition rounded-lg shadow bg-brazil-yellow text-brazil-blue hover:bg-yellow-200 md:ml-0">
+                        Limpar
+                    </button>
+                </div>
+                <div id="clientes-table-card" class="flex flex-col flex-1 p-0 overflow-hidden bg-white shadow-lg rounded-xl">
+                    <div class="overflow-x-auto">
+                        <table id="clientes-table" class="min-w-full divide-y divide-gray-100">
+                            <thead class="bg-brazil-blue">
+                                <tr>
+                                    <th class="px-6 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Nome</th>
+                                    <th class="px-4 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Telefone</th>
+                                    <th class="px-4 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Email</th>
+                                    <th class="px-4 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">acessos</th>
+                                    <th class="px-4 py-4 text-xs font-bold tracking-wider text-center text-white font-montserrat">Status</th>
+                                    <th class="px-4 py-4 text-xs font-bold tracking-wider text-center text-white font-montserrat">ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientes-tbody" class="font-medium text-gray-800 bg-white divide-y divide-gray-100">
+                                <tr class="transition cursor-pointer hover:bg-gray-50" data-id="1">
+                                    <td class="flex items-center px-6 py-4">
+                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="" class="w-8 h-8 mr-3 border-2 rounded-full border-brazil-green" />
+                                        João Pereira
+                                    </td>
+                                    <td class="px-4 py-4">(11) 99999-1234</td>
+                                    <td class="px-4 py-4">joao.p@gmail.com</td>
+                                    <td class="px-4 py-4">
+                                        <span class="inline-flex items-center px-2 py-1 mr-1 text-xs font-semibold rounded bg-brazil-green bg-opacity-10 text-brazil-green">
+                                            <i class="mr-1 fa-solid fa-crown"></i> Master
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-4 text-center">
+                                        <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-green-100 rounded text-brazil-green">
+                                            <i class="mr-1 text-xs fa-solid fa-circle"></i> Ativo
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)"></button>
+                                            <i class="fa-solid fa-file-pen"></i>
+                                        </button>
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)"></button>
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="transition cursor-pointer hover:bg-gray-50" data-id="2">
+                                    <td class="flex items-center px-6 py-4">
+                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" alt="" class="w-8 h-8 mr-3 border-2 rounded-full border-brazil-yellow" />
+                                        Ana Julia
+                                    </td>
+                                    <td class="px-4 py-4">(21) 98888-4321</td>
+                                    <td class="px-4 py-4">anajulia@email.com</td>
+                                    <td class="px-4 py-4">
+                                        <span class="inline-flex items-center px-2 py-1 mr-1 text-xs font-semibold rounded bg-brazil-yellow bg-opacity-10 text-brazil-yellow">
+                                            <i class="mr-1 fa-solid fa-dollar-sign"></i> Financeiro
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-4 text-center">
+                                        <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-yellow-100 rounded text-brazil-yellow">
+                                            <i class="mr-1 text-xs fa-solid fa-circle"></i> Suspenso
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)"></button>
+                                            <i class="fa-solid fa-file-pen"></i>
+                                        </button>
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)"></button>
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="transition cursor-pointer hover:bg-gray-50" data-id="3">
+                                    <td class="flex items-center px-6 py-4">
+                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg" alt="" class="w-8 h-8 mr-3 border-2 rounded-full border-brazil-red" />
+                                        Fernanda Lima
+                                    </td>
+                                    <td class="px-4 py-4">(31) 97777-5555</td>
+                                    <td class="px-4 py-4">fernanda.lima@email.com</td>
+                                    <td class="px-4 py-4">
+                                        <span class="inline-flex items-center px-2 py-1 mr-1 text-xs font-semibold rounded bg-brazil-red bg-opacity-10 text-brazil-red">
+                                            <i class="mr-1 fa-solid fa-fire"></i> Colaborador
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-4 text-center">
+                                        <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-red-100 rounded text-brazil-red">
+                                            <i class="mr-1 text-xs fa-solid fa-circle"></i> Inativo
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)"></button>
+                                            <i class="fa-solid fa-file-pen"></i>
+                                        </button>
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)"></button>
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="transition cursor-pointer hover:bg-gray-50" data-id="4">
+                                    <td class="flex items-center px-6 py-4">
+                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="" class="w-8 h-8 mr-3 border-2 border-gray-200 rounded-full" />
+                                        Marcos Oliveira
+                                    </td>
+                                    <td class="px-4 py-4">(11) 96789-1010</td>
+                                    <td class="px-4 py-4">marcos.oli@email.com</td>
+                                    <td class="px-4 py-4">
+                                        <span class="inline-flex items-center px-2 py-1 text-xs font-semibold text-gray-600 bg-gray-100 rounded">
+                                            Cliente
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-4 text-center">
+                                        <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-green-100 rounded text-brazil-green">
+                                            <i class="mr-1 text-xs fa-solid fa-circle"></i> Ativo
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)"></button>
+                                            <i class="fa-solid fa-file-pen"></i>
+                                        </button>
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)"></button>
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="transition cursor-pointer hover:bg-gray-50" data-id="5">
+                                    <td class="flex items-center px-6 py-4">
+                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg" alt="" class="w-8 h-8 mr-3 border-2 rounded-full border-brazil-green" />
+                                        Pedro Santos
+                                    </td>
+                                    <td class="px-4 py-4">(21) 99900-5678</td>
+                                    <td class="px-4 py-4">psantos@email.com</td>
+                                    <td class="px-4 py-4">
+                                        <span class="inline-flex items-center px-2 py-1 mr-1 text-xs font-semibold rounded bg-brazil-blue bg-opacity-10 text-brazil-blue">
+                                            <i class="mr-1 fa-solid fa-star"></i> Staff
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-4 text-center">
+                                        <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-green-100 rounded text-brazil-green">
+                                            <i class="mr-1 text-xs fa-solid fa-circle"></i> Ativo
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)"></button>
+                                            <i class="fa-solid fa-file-pen"></i>
+                                        </button>
+                                        <button class="text-brazil-blue hover:text-brazil-green" onclick="showClienteProfile(5)"></button>
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex items-center justify-between px-6 py-3 bg-gray-50">
+                        <span class="text-xs text-gray-600">Exibindo 1-5 de 25 clientes</span>
+                        <div class="space-x-1">
+                            <button class="px-2 py-1 transition rounded text-brazil-blue hover:bg-brazil-blue hover:text-white">
+                                <i class="fa-solid fa-angle-left"></i>
+                            </button>
+                            <button class="px-2 py-1 font-bold rounded text-brazil-blue bg-brazil-yellow">1</button>
+                            <button class="px-2 py-1 transition rounded text-brazil-blue hover:bg-brazil-blue hover:text-white">2</button>
+                            <button class="px-2 py-1 transition rounded text-brazil-blue hover:bg-brazil-blue hover:text-white">3</button>
+                            <button class="px-2 py-1 transition rounded text-brazil-blue hover:bg-brazil-blue hover:text-white">
+                                <i class="fa-solid fa-angle-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="cliente-profile-card" class="w-full lg:w-[400px] bg-white rounded-2xl shadow-xl p-8 flex flex-col transition-all duration-300" style="min-width: 370px; max-width: 400px; display: none;">
+                <div class="flex flex-col items-center">
+                    <img id="cliente-profile-avatar" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="" class="object-cover w-24 h-24 mb-3 border-4 rounded-full shadow-lg border-brazil-green" />
+                    <div class="flex items-center mb-2 space-x-2">
+                        <h2 id="cliente-profile-nome" class="text-xl font-bold text-gray-800 font-montserrat">João Pereira</h2>
+                        <span id="cliente-profile-tag" class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-brazil-green bg-opacity-10 text-brazil-green">
+                            <i class="mr-1 fa-solid fa-crown"></i> VIP
+                        </span>
+                    </div>
+                    <span id="cliente-profile-status" class="inline-flex items-center px-2 py-1 mb-2 text-xs font-semibold bg-green-100 rounded text-brazil-green">
+                        <i class="mr-1 text-xs fa-solid fa-circle"></i> Ativo
+                    </span>
+                    <p id="cliente-profile-email" class="mb-1 text-sm text-gray-600">joao.p@gmail.com</p>
+                    <p id="cliente-profile-fone" class="mb-5 text-sm text-gray-600">(11) 99999-1234</p>
+                </div>
+                <div class="mb-6">
+                    <h3 class="mb-2 font-semibold text-gray-800 text-md font-montserrat">Classificações</h3>
+                    <div id="cliente-profile-tags" class="flex flex-wrap gap-2">
+                        <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-brazil-green bg-opacity-10 text-brazil-green">
+                            <i class="mr-1 fa-solid fa-crown"></i> VIP
+                        </span>
+                        <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-brazil-yellow bg-opacity-20 text-brazil-blue">
+                            Frequente
+                        </span>
+                    </div>
+                </div>
+                <div id="cliente-historico-section" class="">
+                    <h3 class="mb-2 font-semibold text-gray-800 text-md font-montserrat">Histórico de Reservas</h3>
+                    <div class="pr-2 space-y-3 overflow-y-auto max-h-48">
+                        <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50">
+                            <div>
+                                <p class="text-sm font-medium">Mesa 8 - 04/05/2024</p>
+                                <p class="text-xs text-gray-500">4 pessoas - 20:00h</p>
+                            </div>
+                            <span class="inline-flex items-center px-2 py-1 text-xs font-semibold text-white rounded bg-brazil-blue">
+                                Confirmada
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50">
+                            <div>
+                                <p class="text-sm font-medium">Mesa 3 - 27/04/2024</p>
+                                <p class="text-xs text-gray-500">2 pessoas - 19:30h</p>
+                            </div>
+                            <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-brazil-yellow text-brazil-blue">
+                                Realizada
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50">
+                            <div>
+                                <p class="text-sm font-medium">Mesa 12 - 15/04/2024</p>
+                                <p class="text-xs text-gray-500">6 pessoas - 21:00h</p>
+                            </div>
+                            <span class="inline-flex items-center px-2 py-1 text-xs font-semibold text-white rounded bg-brazil-red">
+                                Cancelada
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="hideClienteProfile()" class="py-2 font-semibold text-white transition rounded-lg shadow mt-7 bg-brazil-blue hover:bg-brazil-green">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const clientes = [
+        {
+            id: 1,
+            avatar: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg",
+            nome: "João Pereira",
+            email: "joao.p@gmail.com",
+            fone: "(11) 99999-1234",
+            tags: [
+                { label: "VIP", icon: "fa-crown", color: "brazil-green", bg: "bg-brazil-green bg-opacity-10 text-brazil-green" },
+                { label: "Frequente", icon: "", color: "brazil-yellow", bg: "bg-brazil-yellow bg-opacity-20 text-brazil-blue" }
+            ],
+            status: { label: "Ativo", color: "bg-green-100 text-brazil-green", icon: "fa-circle" },
+            historico: [
+                { mesa: "Mesa 8", data: "04/05/2024", pessoas: 4, hora: "20:00h", status: "Confirmada", color: "bg-brazil-blue text-white" },
+                { mesa: "Mesa 3", data: "27/04/2024", pessoas: 2, hora: "19:30h", status: "Realizada", color: "bg-brazil-yellow text-brazil-blue" },
+                { mesa: "Mesa 12", data: "15/04/2024", pessoas: 6, hora: "21:00h", status: "Cancelada", color: "bg-brazil-red text-white" }
+            ]
+        },
+        {
+            id: 2,
+            avatar: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg",
+            nome: "Ana Julia",
+            email: "anajulia@email.com",
+            fone: "(21) 98888-4321",
+            tags: [
+                { label: "Novato", icon: "fa-star", color: "brazil-yellow", bg: "bg-brazil-yellow bg-opacity-10 text-brazil-yellow" }
+            ],
+            status: { label: "Ativo", color: "bg-yellow-100 text-brazil-yellow", icon: "fa-circle" },
+            historico: [
+                { mesa: "Mesa 1", data: "03/05/2024", pessoas: 2, hora: "18:00h", status: "Confirmada", color: "bg-brazil-blue text-white" }
+            ]
+        },
+        {
+            id: 3,
+            avatar: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg",
+            nome: "Fernanda Lima",
+           </script></body></html>
