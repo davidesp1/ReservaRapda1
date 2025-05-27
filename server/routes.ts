@@ -2093,7 +2093,8 @@ está funcionando corretamente.
         if (platform === 'linux') {
           // Criar arquivo temporário e imprimir via lp
           const tempFile = `/tmp/pos_test_${Date.now()}.txt`;
-          require('fs').writeFileSync(tempFile, testPageContent);
+          const fs = await import('fs');
+          fs.writeFileSync(tempFile, testPageContent);
           await execAsync(`lp -d ${printerName} ${tempFile} 2>/dev/null && rm ${tempFile} || rm ${tempFile}`);
           
           printResult = {
@@ -2105,7 +2106,8 @@ está funcionando corretamente.
         } else if (platform === 'darwin') {
           // Impressão no macOS
           const tempFile = `/tmp/pos_test_${Date.now()}.txt`;
-          require('fs').writeFileSync(tempFile, testPageContent);
+          const fs = await import('fs');
+          fs.writeFileSync(tempFile, testPageContent);
           await execAsync(`lp -d ${printerName} ${tempFile} 2>/dev/null && rm ${tempFile} || rm ${tempFile}`);
           
           printResult = {
@@ -2117,7 +2119,8 @@ está funcionando corretamente.
         } else if (platform === 'win32') {
           // Impressão no Windows via PowerShell
           const tempFile = `C:\\temp\\pos_test_${Date.now()}.txt`;
-          require('fs').writeFileSync(tempFile, testPageContent);
+          const fs = await import('fs');
+          fs.writeFileSync(tempFile, testPageContent);
           await execAsync(`powershell -Command "Get-Content '${tempFile}' | Out-Printer -Name '${printerName}'" 2>nul && del "${tempFile}" || del "${tempFile}"`);
           
           printResult = {
