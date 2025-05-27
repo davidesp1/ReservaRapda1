@@ -78,15 +78,16 @@ const Settings: React.FC = () => {
     }
   }, [posData, activeTab]);
 
-  // Auto-salvar configurações quando mudarem (debounced)
+  // Auto-salvar configurações quando mudarem (debounced) - DESABILITADO para resolver erro
   useEffect(() => {
     if (Object.keys(posSettings).length > 0) {
-      const timeoutId = setTimeout(() => {
-        console.log("💾 Auto-salvando configurações POS...");
-        savePosSettingsMutation.mutate(posSettings);
-      }, 1000); // Salvar após 1 segundo de inatividade
-
-      return () => clearTimeout(timeoutId);
+      console.log("📝 Configurações POS carregadas:", posSettings);
+      // Auto-save desabilitado temporariamente para resolver erro de undefined values
+      // const timeoutId = setTimeout(() => {
+      //   console.log("💾 Auto-salvando configurações POS...");
+      //   savePosSettingsMutation.mutate(posSettings);
+      // }, 1000);
+      // return () => clearTimeout(timeoutId);
     }
   }, [posSettings]);
   

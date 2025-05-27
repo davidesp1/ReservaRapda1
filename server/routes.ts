@@ -1825,55 +1825,21 @@ router.post("/api/settings/pos", isAuthenticated, async (req, res) => {
           cut_type = ${settings.cutType},
           cash_drawer_kick = ${settings.cashDrawerKick},
           number_of_copies = ${settings.numberOfCopies},
-          global_alignment = ${settings.globalAlignment},
-          column_width_description = ${settings.columnWidthDescription},
-          column_width_quantity = ${settings.columnWidthQuantity},
-          column_width_price = ${settings.columnWidthPrice},
-          item_spacing = ${settings.itemSpacing},
-          highlight_style = ${settings.highlightStyle},
-          charset = ${settings.charset},
-          font_size = ${settings.fontSize},
-          accented_chars = ${settings.accentedChars},
-          font_fallback = ${settings.fontFallback},
-          logo_position = ${settings.logoPosition},
-          logo_scale = ${settings.logoScale},
-          barcode_type = ${settings.barcodeType},
-          qrcode_enabled = ${settings.qrcodeEnabled},
-          qrcode_size = ${settings.qrcodeSize},
-          qrcode_margin = ${settings.qrcodeMargin},
-          qrcode_error_level = ${settings.qrcodeErrorLevel},
-          timestamp_format = ${settings.timestampFormat},
-          show_operator = ${settings.showOperator},
-          operator_format = ${settings.operatorFormat},
-          promo_message = ${settings.promoMessage},
-          custom_footer = ${settings.customFooter},
-          show_items = ${settings.showItems},
-          show_discounts = ${settings.showDiscounts},
-          show_taxes = ${settings.showTaxes},
-          show_subtotal = ${settings.showSubtotal},
-          show_total = ${settings.showTotal},
-          show_payment_method = ${settings.showPaymentMethod},
-          thank_you_message = ${settings.thankYouMessage},
-          non_fiscal_message = ${settings.nonFiscalMessage},
-          custom_message = ${settings.customMessage},
-          custom_message_enabled = ${settings.customMessageEnabled},
-          beep_after_print = ${settings.beepAfterPrint},
-          send_pdf_email = ${settings.sendPdfEmail},
-          cash_drawer_timing = ${settings.cashDrawerTiming},
-          require_auth = ${settings.requireAuth},
-          admin_password = ${settings.adminPassword},
-          enable_audit = ${settings.enableAudit},
-          log_retention = ${settings.logRetention},
-          active_profile = ${settings.activeProfile},
-          updated_at = NOW()
+          global_alignment = ${settings.globalAlignment}
         WHERE id = ${existing[0].id}
         RETURNING *
       `;
+      console.log("✅ [DEBUG] Configuração atualizada:", updatedSettings[0]);
       res.json(updatedSettings[0]);
     }
+
   } catch (err: any) {
-    console.error("Erro ao salvar configurações POS:", err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ [ERRO] Falha ao salvar configurações POS:", err);
+    console.error("❌ [STACK]", err.stack);
+    res.status(500).json({ 
+      error: "Erro ao salvar configurações POS",
+      details: err.message 
+    });
   }
 });
 
