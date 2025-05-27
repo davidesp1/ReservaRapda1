@@ -4,7 +4,7 @@ import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+import { showSuccess, showError, showPrinterNotification, showLoading, closeNotification } from '@/lib/notifications';
 
 // Schema para configurações gerais
 const generalSettingsSchema = {
@@ -22,7 +22,7 @@ const Settings: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, isAdmin, isLoading, user } = useAuth();
   const [_, setLocation] = useLocation();
-  const { toast } = useToast();
+
   
   // Estado para controlar a aba ativa
   const [activeTab, setActiveTab] = useState(1);
@@ -62,18 +62,11 @@ const Settings: React.FC = () => {
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Configurações POS salvas",
-        description: "As configurações foram salvas com sucesso!",
-      });
+      showSuccess("Configurações POS Salvas!", "As configurações foram salvas com sucesso!");
       queryClient.invalidateQueries({ queryKey: ['/api/settings/pos'] });
     },
     onError: (error: any) => {
-      toast({
-        title: "Erro ao salvar",
-        description: error.message || "Erro ao salvar configurações POS",
-        variant: "destructive",
-      });
+      showError("Erro ao Salvar", error.message || "Erro ao salvar configurações POS");
     },
   });
 
