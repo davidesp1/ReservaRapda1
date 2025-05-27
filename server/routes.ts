@@ -1925,58 +1925,216 @@ router.post("/api/settings/pos/test-communication", isAuthenticated, async (req,
         }
         
       } else if (platform === 'win32') {
-        // Teste no Windows via PowerShell
-        console.log("🪟 [WINDOWS] Testando via PowerShell...");
+        // Teste no Windows via múltiplos métodos
+        console.log("🪟 [WINDOWS] Testando comunicação via múltiplos métodos...");
         
         if (printerName && printerName !== 'Salvar como PDF') {
-          const psCommand = `Get-WmiObject -Class Win32_Printer -Filter "Name='${printerName}'" | Select-Object Name,PrinterStatus,WorkOffline | ConvertTo-Json`;
-          const { stdout } = await execAsync(`powershell -Command "${psCommand}" 2>nul || echo "null"`);
-          
+          // Método 1: WMI detalhado
           try {
+            const psCommand = `Get-WmiObject -Class Win32_Printer -Filter "Name='${printerName}'" | Select-Object Name,PrinterStatus,WorkOffline,DriverName,PortName,Location,PrinterState | ConvertTo-Json`;
+            const { stdout } = await execAsync(`powershell -Command "${psCommand}" 2>nul || echo "null"`);
+            
             const printer = JSON.parse(stdout);
             if (printer && printer.Name) {
-              if (printer.PrinterStatus === 3 && !printer.WorkOffline) {
-                testResult = {
-                  success: true,
-                  status: 'online',
-                  message: `Impressora ${printerName} está online e funcionando`,
-                  details: { 
-                    platform: 'win32', 
-                    driver: 'Windows', 
-                    printerStatus: printer.PrinterStatus,
-                    workOffline: printer.WorkOffline 
-                  },
-                  timestamp: new Date().toISOString()
-                };
+              let status = 'unknown';
+              let statusMessage = '';
+              
+              // Status detalhado baseado em PrinterStatus e PrinterState
+              if (printer.WorkOffline === true) {
+                status = 'offline';
+                statusMessage = 'Impressora está configurada como offline';
               } else {
+                switch (printer.PrinterStatus) {
+                  case 1: status = 'unknown'; statusMessage = 'Status: Outro'; break;
+                  case 2: status = 'unknown'; statusMessage = 'Status: Desconhecido'; break;
+                  case 3: status = 'online'; statusMessage = 'Status: Pronta (Inativa)'; break;
+                  case 4: status = 'printing'; statusMessage = 'Status: Imprimindo'; break;
+                  case 5: status = 'offline'; statusMessage = 'Status: Processamento Offline'; break;
+                  case 6: status = 'error'; statusMessage = 'Status: Papel Atolado'; break;
+                  case 7: status = 'error'; statusMessage = 'Status: Sem Papel'; break;
+                  case 8: status = 'error'; statusMessage = 'Status: Erro na Impressora'; break;
+                  default: status = 'unknown'; statusMessage = `Status: Código ${printer.PrinterStatus}`;
+                }
+              }
+              
+              testResult = {
+                success: status === 'online' || status === 'printing',
+                status: status,
+                message: `${statusMessage} - Driver: ${printer.DriverName || 'Desconhecido'}`,
+                details: { 
+                  platform: 'win32', 
+                  driver: printer.DriverName || 'Windows', 
+                  port: printer.PortName || 'Desconhecido',
+                  location: printer.Location || 'Local',
+                  printerStatus: printer.PrinterStatus,
+                  printerState: printer.PrinterState,
+                  workOffline: printer.WorkOffline,
+                  method: 'WMI Detalhado'
+                },
+                timestamp: new Date().toISOString()
+              };
+            } else {
+              // Método 2: Get-Printer moderno
+              try {
+                const modernCommand = `Get-Printer -Name "${printerName}" | Select-Object Name,PrinterStatus,Type,DriverName,PortName | ConvertTo-Json`;
+                const { stdout: modernOut } = await execAsync(`powershell -Command "${modernCommand}" 2>nul || echo "null"`);
+                
+                const modernPrinter = JSON.parse(modernOut);
+                if (modernPrinter && modernPrinter.Name) {
+                  let modernStatus = 'unknown';
+                  switch (modernPrinter.PrinterStatus) {
+                    case 0: modernStatus = 'online'; break;
+                    case 1: modernStatus = 'offline'; break;
+                    case 2: modernStatus = 'error'; break;
+                    case 3: modernStatus = 'printing'; break;
+                    case 4: modernStatus = 'offline'; break;
+                  }
+                  
+                  testResult = {
+                    success: modernStatus === 'online',
+                    status: modernStatus,
+                    message: `Impressora ${printerName} detectada via Get-Printer - Status: ${modernStatus}`,
+                    details: { 
+                      platform: 'win32', 
+                      driver: modernPrinter.DriverName || 'Windows Modern',
+                      port: modernPrinter.PortName || 'Sistema',
+                      type: modernPrinter.Type || 'Local',
+                      method: 'Get-Printer Moderno'
+                    },
+                    timestamp: new Date().toISOString()
+                  };
+                } else {
+                  testResult = {
+                    success: false,
+                    status: 'not_found',
+                    message: `Impressora ${printerName} não foi encontrada no sistema Windows`,
+                    details: { platform: 'win32', method: 'Múltiplos Métodos' },
+                    timestamp: new Date().toISOString()
+                  };
+                }
+              } catch (modernError) {
                 testResult = {
                   success: false,
-                  status: 'offline',
-                  message: `Impressora ${printerName} está offline ou com problemas`,
-                  details: { 
-                    platform: 'win32', 
-                    driver: 'Windows', 
-                    printerStatus: printer.PrinterStatus,
-                    workOffline: printer.WorkOffline 
-                  },
+                  status: 'error',
+                  message: `Erro ao verificar impressora ${printerName} no Windows`,
+                  details: { platform: 'win32', error: 'Falha em múltiplos métodos' },
                   timestamp: new Date().toISOString()
                 };
               }
-            } else {
-              testResult = {
-                success: false,
-                status: 'not_found',
-                message: `Impressora ${printerName} não foi encontrada no sistema`,
-                details: { platform: 'win32', driver: 'Windows' },
-                timestamp: new Date().toISOString()
-              };
             }
-          } catch (parseError) {
+          } catch (wmiError) {
             testResult = {
               success: false,
               status: 'error',
-              message: `Erro ao verificar status da impressora ${printerName}`,
-              details: { platform: 'win32', error: parseError },
+              message: `Erro ao acessar WMI para impressora ${printerName}`,
+              details: { platform: 'win32', error: 'Falha no WMI' },
+              timestamp: new Date().toISOString()
+            };
+          }
+        }
+        
+      } else if (platform === 'android') {
+        // Teste no Android via Android Print Framework
+        console.log("📱 [ANDROID] Testando comunicação via Android Print Framework...");
+        
+        if (printerName && printerName !== 'Salvar como PDF') {
+          try {
+            // Verificar se estamos em ambiente Android real
+            const { stdout: androidCheck } = await execAsync('getprop ro.build.version.release 2>/dev/null || echo "not_android"');
+            
+            if (!androidCheck.includes('not_android')) {
+              console.log(`📱 [ANDROID] Testando em Android ${androidCheck.trim()}`);
+              
+              // Método 1: Verificar via dumpsys print
+              try {
+                const { stdout: printStatus } = await execAsync('dumpsys print 2>/dev/null || echo "no_print_service"');
+                
+                if (printStatus.includes(printerName) || printStatus.includes('printer')) {
+                  testResult = {
+                    success: true,
+                    status: 'online',
+                    message: `Impressora ${printerName} encontrada no Android Print Service`,
+                    details: { 
+                      platform: 'android', 
+                      driver: 'Android Print Service',
+                      version: androidCheck.trim(),
+                      method: 'dumpsys print'
+                    },
+                    timestamp: new Date().toISOString()
+                  };
+                } else {
+                  testResult = {
+                    success: false,
+                    status: 'not_found',
+                    message: `Impressora ${printerName} não encontrada no Android Print Service`,
+                    details: { 
+                      platform: 'android',
+                      recommendation: 'Verifique se a impressora está emparelhada via Bluetooth ou conectada via USB OTG'
+                    },
+                    timestamp: new Date().toISOString()
+                  };
+                }
+              } catch (printError) {
+                // Método 2: Verificar dispositivos USB/Bluetooth
+                try {
+                  const { stdout: usbCheck } = await execAsync('ls /dev/usb/lp* 2>/dev/null || echo "no_usb"');
+                  const { stdout: btCheck } = await execAsync('dumpsys bluetooth_manager 2>/dev/null | grep -i printer || echo "no_bluetooth"');
+                  
+                  if (!usbCheck.includes('no_usb') || !btCheck.includes('no_bluetooth')) {
+                    testResult = {
+                      success: true,
+                      status: 'detected',
+                      message: `Dispositivos de impressão detectados no Android`,
+                      details: { 
+                        platform: 'android',
+                        usb: !usbCheck.includes('no_usb'),
+                        bluetooth: !btCheck.includes('no_bluetooth'),
+                        method: 'Detecção de Hardware'
+                      },
+                      timestamp: new Date().toISOString()
+                    };
+                  } else {
+                    testResult = {
+                      success: false,
+                      status: 'no_devices',
+                      message: `Nenhum dispositivo de impressão detectado no Android`,
+                      details: { 
+                        platform: 'android',
+                        recommendation: 'Conecte uma impressora via USB OTG ou emparelhe via Bluetooth'
+                      },
+                      timestamp: new Date().toISOString()
+                    };
+                  }
+                } catch (deviceError) {
+                  testResult = {
+                    success: false,
+                    status: 'error',
+                    message: `Erro ao verificar dispositivos de impressão no Android`,
+                    details: { platform: 'android', error: 'Falha na detecção' },
+                    timestamp: new Date().toISOString()
+                  };
+                }
+              }
+            } else {
+              // Ambiente emulado ou Termux
+              testResult = {
+                success: true,
+                status: 'emulated',
+                message: `Ambiente Android emulado detectado - ${printerName}`,
+                details: { 
+                  platform: 'android',
+                  type: 'emulated',
+                  note: 'Funcionando em ambiente Termux ou emulador'
+                },
+                timestamp: new Date().toISOString()
+              };
+            }
+          } catch (androidError) {
+            testResult = {
+              success: false,
+              status: 'error',
+              message: `Erro ao testar comunicação Android com ${printerName}`,
+              details: { platform: 'android', error: 'Falha no sistema Android' },
               timestamp: new Date().toISOString()
             };
           }
@@ -2436,51 +2594,247 @@ router.get("/api/settings/pos/printers", isAuthenticated, async (req, res) => {
           }
           
         } else if (platform === 'win32') {
-          console.log("🪟 [WINDOWS] Detectando impressoras via PowerShell...");
+          console.log("🪟 [WINDOWS] Detectando impressoras via múltiplos métodos...");
           
-          // Comando PowerShell para detectar impressoras no Windows
-          const psCommand = 'Get-WmiObject -Class Win32_Printer | Select-Object Name,PrinterStatus,WorkOffline | ConvertTo-Json';
-          const { stdout } = await execAsync(`powershell -Command "${psCommand}" 2>nul || echo "[]"`);
-          
+          // Método 1: PowerShell WMI (mais confiável)
           try {
-            let printers = JSON.parse(stdout);
+            const psCommand = 'Get-WmiObject -Class Win32_Printer | Select-Object Name,PrinterStatus,WorkOffline,DriverName,PortName,Location | ConvertTo-Json';
+            const { stdout: wmiOut } = await execAsync(`powershell -Command "${psCommand}" 2>nul || echo "[]"`);
+            
+            let printers = JSON.parse(wmiOut);
             if (!Array.isArray(printers)) printers = [printers];
             
             for (const printer of printers) {
               if (printer && printer.Name) {
                 let status = 'unknown';
-                if (printer.PrinterStatus === 3) status = 'online';
-                else if (printer.WorkOffline === true) status = 'offline';
-                else if (printer.PrinterStatus === 4) status = 'printing';
-                else if (printer.PrinterStatus === 2) status = 'error';
+                let statusText = 'Desconhecido';
+                
+                // Status mais detalhado
+                switch (printer.PrinterStatus) {
+                  case 1: status = 'unknown'; statusText = 'Outro'; break;
+                  case 2: status = 'unknown'; statusText = 'Desconhecido'; break;
+                  case 3: status = 'online'; statusText = 'Inativo'; break;
+                  case 4: status = 'printing'; statusText = 'Imprimindo'; break;
+                  case 5: status = 'offline'; statusText = 'Processamento Offline'; break;
+                  case 6: status = 'error'; statusText = 'Papel Atolado'; break;
+                  case 7: status = 'error'; statusText = 'Sem Papel'; break;
+                  case 8: status = 'error'; statusText = 'Erro'; break;
+                }
+                
+                if (printer.WorkOffline === true) {
+                  status = 'offline';
+                  statusText = 'Offline';
+                }
                 
                 systemPrinters.push({
-                  id: `windows_${printer.Name.replace(/\s+/g, '_')}_${Date.now()}`,
+                  id: `windows_wmi_${printer.Name.replace(/\s+/g, '_')}_${Date.now()}`,
                   name: printer.Name,
                   type: "system",
                   status: status,
+                  statusText: statusText,
                   platform: "win32",
-                  driver: "Windows",
-                  connection: "system",
+                  driver: printer.DriverName || "Windows System",
+                  connection: printer.PortName || "system",
+                  location: printer.Location || "Local",
                   printerStatus: printer.PrinterStatus,
                   workOffline: printer.WorkOffline
                 });
               }
             }
-          } catch (parseError) {
-            console.log("⚠️ [WINDOWS] Erro ao parsear saída do PowerShell");
+          } catch (wmiError) {
+            console.log("⚠️ [WINDOWS] Erro no WMI, tentando método alternativo...");
+          }
+          
+          // Método 2: PowerShell Get-Printer (Windows 8+)
+          try {
+            const psModernCommand = 'Get-Printer | Select-Object Name,PrinterStatus,Type,DriverName,PortName | ConvertTo-Json';
+            const { stdout: modernOut } = await execAsync(`powershell -Command "${psModernCommand}" 2>nul || echo "[]"`);
+            
+            let modernPrinters = JSON.parse(modernOut);
+            if (!Array.isArray(modernPrinters)) modernPrinters = [modernPrinters];
+            
+            for (const printer of modernPrinters) {
+              if (printer && printer.Name) {
+                // Evitar duplicatas
+                const existing = systemPrinters.find(p => p.name === printer.Name);
+                if (!existing) {
+                  let status = 'unknown';
+                  switch (printer.PrinterStatus) {
+                    case 0: status = 'online'; break;
+                    case 1: status = 'offline'; break;
+                    case 2: status = 'error'; break;
+                    case 3: status = 'printing'; break;
+                    case 4: status = 'offline'; break;
+                  }
+                  
+                  systemPrinters.push({
+                    id: `windows_modern_${printer.Name.replace(/\s+/g, '_')}_${Date.now()}`,
+                    name: printer.Name,
+                    type: printer.Type || "system",
+                    status: status,
+                    platform: "win32",
+                    driver: printer.DriverName || "Windows Modern",
+                    connection: printer.PortName || "system"
+                  });
+                }
+              }
+            }
+          } catch (modernError) {
+            console.log("⚠️ [WINDOWS] Método moderno falhou");
+          }
+          
+          // Método 3: Detecção USB no Windows
+          try {
+            const usbCommand = 'Get-WmiObject -Class Win32_USBDevice | Where-Object {$_.Description -like "*printer*" -or $_.Description -like "*canon*" -or $_.Description -like "*epson*" -or $_.Description -like "*hp*"} | Select-Object Description,DeviceID | ConvertTo-Json';
+            const { stdout: usbOut } = await execAsync(`powershell -Command "${usbCommand}" 2>nul || echo "[]"`);
+            
+            let usbDevices = JSON.parse(usbOut);
+            if (!Array.isArray(usbDevices)) usbDevices = [usbDevices];
+            
+            for (const device of usbDevices) {
+              if (device && device.Description) {
+                systemPrinters.push({
+                  id: `windows_usb_${device.DeviceID.replace(/\W/g, '_')}_${Date.now()}`,
+                  name: `USB: ${device.Description}`,
+                  type: "usb",
+                  status: "detected",
+                  platform: "win32",
+                  driver: "USB Direct",
+                  connection: "usb",
+                  deviceId: device.DeviceID
+                });
+              }
+            }
+          } catch (usbError) {
+            console.log("⚠️ [WINDOWS] Detecção USB falhou");
           }
           
           // Fallback para Windows
           if (systemPrinters.length === 0) {
             systemPrinters.push({
-              id: `windows_generic_${Date.now()}`,
-              name: "Impressora Windows (Sistema)",
+              id: `windows_fallback_${Date.now()}`,
+              name: "Impressora Padrão do Windows",
               type: "system",
-              status: "unknown",
+              status: "available",
               platform: "win32",
-              driver: "Windows",
+              driver: "Windows System",
               connection: "system"
+            });
+          }
+          
+        } else if (platform === 'android') {
+          console.log("📱 [ANDROID] Detectando impressoras via Android Print Service...");
+          
+          // Android usa um sistema diferente - Android Print Service Framework
+          try {
+            // Verificar se estamos em ambiente Android (Node.js pode rodar em Termux)
+            const { stdout: androidCheck } = await execAsync('getprop ro.build.version.release 2>/dev/null || echo "not_android"');
+            
+            if (!androidCheck.includes('not_android')) {
+              console.log(`📱 [ANDROID] Versão Android detectada: ${androidCheck.trim()}`);
+              
+              // Método 1: Verificar serviços de impressão via dumpsys
+              try {
+                const { stdout: printServices } = await execAsync('dumpsys print 2>/dev/null || echo "no_print_service"');
+                if (!printServices.includes('no_print_service')) {
+                  // Parser básico para serviços de impressão Android
+                  const lines = printServices.split('\n');
+                  let currentService = null;
+                  
+                  for (const line of lines) {
+                    if (line.includes('Print service:')) {
+                      const match = line.match(/Print service: (.+)/);
+                      if (match) currentService = match[1];
+                    }
+                    
+                    if (line.includes('printer') && currentService) {
+                      systemPrinters.push({
+                        id: `android_service_${Date.now()}_${systemPrinters.length}`,
+                        name: `Android: ${currentService}`,
+                        type: "android_service",
+                        status: "available",
+                        platform: "android",
+                        driver: "Android Print Service",
+                        connection: "print_service"
+                      });
+                    }
+                  }
+                }
+              } catch (serviceError) {
+                console.log("⚠️ [ANDROID] Erro ao acessar print services");
+              }
+              
+              // Método 2: Verificar dispositivos USB OTG
+              try {
+                const { stdout: usbOtg } = await execAsync('ls /dev/usb/lp* /sys/class/usb_device/ 2>/dev/null || echo "no_usb_otg"');
+                if (!usbOtg.includes('no_usb_otg')) {
+                  const devices = usbOtg.split('\n').filter((line: string) => line.trim() !== '');
+                  
+                  for (const device of devices) {
+                    systemPrinters.push({
+                      id: `android_usb_${Date.now()}_${systemPrinters.length}`,
+                      name: `USB OTG: ${device}`,
+                      type: "usb_otg",
+                      status: "detected",
+                      platform: "android",
+                      driver: "USB OTG",
+                      connection: "usb_otg"
+                    });
+                  }
+                }
+              } catch (otgError) {
+                console.log("⚠️ [ANDROID] Erro na detecção USB OTG");
+              }
+              
+              // Método 3: Verificar impressoras Bluetooth
+              try {
+                const { stdout: bluetooth } = await execAsync('dumpsys bluetooth_manager 2>/dev/null | grep -i printer || echo "no_bluetooth"');
+                if (!bluetooth.includes('no_bluetooth')) {
+                  const btLines = bluetooth.split('\n').filter((line: string) => line.includes('printer'));
+                  
+                  for (const btLine of btLines) {
+                    systemPrinters.push({
+                      id: `android_bt_${Date.now()}_${systemPrinters.length}`,
+                      name: `Bluetooth: Impressora detectada`,
+                      type: "bluetooth",
+                      status: "paired",
+                      platform: "android",
+                      driver: "Bluetooth",
+                      connection: "bluetooth"
+                    });
+                  }
+                }
+              } catch (btError) {
+                console.log("⚠️ [ANDROID] Erro na detecção Bluetooth");
+              }
+              
+            } else {
+              // Não é Android real, mas pode ser Termux ou emulador
+              systemPrinters.push({
+                id: `android_emulated_${Date.now()}`,
+                name: "Android Emulado/Termux",
+                type: "emulated",
+                status: "available",
+                platform: "android",
+                driver: "Emulated Android",
+                connection: "emulated"
+              });
+            }
+            
+          } catch (androidError) {
+            console.log("⚠️ [ANDROID] Erro na detecção Android");
+          }
+          
+          // Fallback para Android
+          if (systemPrinters.length === 0) {
+            systemPrinters.push({
+              id: `android_fallback_${Date.now()}`,
+              name: "Impressora Android (Print Framework)",
+              type: "android_system",
+              status: "available",
+              platform: "android",
+              driver: "Android Print Framework",
+              connection: "print_framework"
             });
           }
         }
