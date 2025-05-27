@@ -18,7 +18,7 @@ interface SidebarProps {
 
 const AdminSidebar: React.FC<SidebarProps> = ({ isMobile = false, onClose }) => {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin, isFinanceiro } = useAuth();
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -27,7 +27,22 @@ const AdminSidebar: React.FC<SidebarProps> = ({ isMobile = false, onClose }) => 
     if (onClose) onClose();
   };
 
-  const navItems = [
+  // Navigation items for financial users (simplified)
+  const financeiroNavItems = [
+    {
+      path: '/financeiro/profile',
+      label: 'Meu Perfil',
+      icon: <FaUsers className="w-6 text-brasil-yellow" />
+    },
+    {
+      path: '/admin/finance',
+      label: t('Finance'),
+      icon: <FaCoins className="w-6 text-brasil-yellow" />
+    }
+  ];
+
+  // Full navigation items for admin users
+  const adminNavItems = [
     {
       path: '/admin/dashboard',
       label: t('Dashboard'),
@@ -53,7 +68,6 @@ const AdminSidebar: React.FC<SidebarProps> = ({ isMobile = false, onClose }) => 
       label: t('Finance'),
       icon: <FaCoins className="w-6 text-brasil-yellow" />
     },
-
     {
       path: '/admin/pos',
       label: t('Modo POS'),
@@ -70,6 +84,9 @@ const AdminSidebar: React.FC<SidebarProps> = ({ isMobile = false, onClose }) => 
       icon: <FaCog className="w-6 text-brasil-yellow" />
     }
   ];
+
+  // Choose navigation items based on user role
+  const navItems = isFinanceiro ? financeiroNavItems : adminNavItems;
 
   const handleLogout = async () => {
     await logout();
