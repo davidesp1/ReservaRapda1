@@ -1323,7 +1323,11 @@ const Settings: React.FC = () => {
                     </h2>
                     
                     <div className="flex flex-col space-y-3 md:flex-row md:items-center md:space-y-0 md:space-x-4">
-                      <button className="flex items-center px-4 py-2 text-white rounded-md hover:bg-blue-700" style={{ backgroundColor: '#002776' }}>
+                      <button 
+                        onClick={handleTestPrint}
+                        className="flex items-center px-4 py-2 text-white rounded-md hover:bg-blue-700" 
+                        style={{ backgroundColor: '#002776' }}
+                      >
                         <i className="mr-2 fa-solid fa-print"></i> Imprimir Página de Teste
                       </button>
                       
