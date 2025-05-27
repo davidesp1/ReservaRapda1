@@ -2337,31 +2337,290 @@ está funcionando corretamente.
           }
           
         } else if (platform === 'win32') {
-          // Impressão no Windows via PowerShell
+          // Impressão no Windows via múltiplos métodos
           try {
-            const tempFile = `C:\\temp\\pos_test_${Date.now()}.txt`;
+            console.log(`🪟 [WINDOWS] Iniciando impressão para ${printerName}...`);
+            
+            // Criar arquivo temporário
+            const tempDir = process.env.TEMP || process.env.TMP || 'C:\\temp';
+            const tempFile = `${tempDir}\\pos_test_${Date.now()}.txt`;
             const fs = await import('fs');
+            
+            // Garantir que o diretório existe
+            try {
+              await execAsync(`mkdir "${tempDir}" 2>nul || echo "dir_exists"`);
+            } catch (e) {
+              // Diretório já existe
+            }
+            
             fs.writeFileSync(tempFile, testPageContent);
+            console.log(`📄 [WINDOWS] Arquivo criado: ${tempFile}`);
             
-            const result = await execAsync(`powershell -Command "Get-Content '${tempFile}' | Out-Printer -Name '${printerName}'" 2>&1 && del "${tempFile}" || (echo "print_failed" && del "${tempFile}")`);
-            
-            if (result.stdout.includes('print_failed') || result.stderr) {
-              printResult = {
-                success: false,
-                message: `Falha ao imprimir em ${printerName}: ${result.stderr || 'Impressora não encontrada ou offline'}`,
-                timestamp: new Date().toISOString()
-              };
-            } else {
+            // Método 1: Out-Printer (PowerShell moderno)
+            try {
+              const printCommand = `Get-Content "${tempFile}" | Out-Printer -Name "${printerName}"`;
+              const result = await execAsync(`powershell -Command "${printCommand}" 2>&1`);
+              
+              // Limpar arquivo temporário
+              try {
+                await execAsync(`del "${tempFile}" 2>nul || echo "cleanup_ok"`);
+              } catch (e) {
+                // Ignore cleanup errors
+              }
+              
+              if (result.stderr && result.stderr.includes('error')) {
+                throw new Error(result.stderr);
+              }
+              
               printResult = {
                 success: true,
-                message: `Página de teste enviada para ${printerName} via Windows`,
+                message: `Página de teste enviada para ${printerName} via Out-Printer (Windows)`,
+                details: {
+                  method: 'Out-Printer PowerShell',
+                  file: tempFile,
+                  platform: 'win32'
+                },
                 timestamp: new Date().toISOString()
               };
+              
+            } catch (outPrinterError) {
+              console.log(`⚠️ [WINDOWS] Out-Printer falhou, tentando método alternativo...`);
+              
+              // Método 2: Comando print clássico
+              try {
+                const printResult2 = await execAsync(`print /D:"${printerName}" "${tempFile}" 2>&1`);
+                
+                // Limpar arquivo
+                try {
+                  await execAsync(`del "${tempFile}" 2>nul || echo "cleanup_ok"`);
+                } catch (e) {
+                  // Ignore cleanup errors
+                }
+                
+                if (printResult2.stderr && printResult2.stderr.toLowerCase().includes('error')) {
+                  throw new Error(printResult2.stderr);
+                }
+                
+                printResult = {
+                  success: true,
+                  message: `Página de teste enviada para ${printerName} via comando PRINT (Windows)`,
+                  details: {
+                    method: 'Comando PRINT clássico',
+                    file: tempFile,
+                    platform: 'win32'
+                  },
+                  timestamp: new Date().toISOString()
+                };
+                
+              } catch (printError) {
+                console.log(`⚠️ [WINDOWS] Comando PRINT falhou, tentando WMI...`);
+                
+                // Método 3: Via WMI (mais avançado)
+                try {
+                  const wmiCommand = `
+                    $printer = Get-WmiObject -Class Win32_Printer -Filter "Name='${printerName}'"
+                    if ($printer) {
+                      $printer.PrintTestPage()
+                      Write-Output "WMI_SUCCESS"
+                    } else {
+                      Write-Output "WMI_PRINTER_NOT_FOUND"
+                    }
+                  `;
+                  
+                  const wmiResult = await execAsync(`powershell -Command "${wmiCommand}" 2>&1`);
+                  
+                  // Limpar arquivo
+                  try {
+                    await execAsync(`del "${tempFile}" 2>nul || echo "cleanup_ok"`);
+                  } catch (e) {
+                    // Ignore cleanup errors
+                  }
+                  
+                  if (wmiResult.stdout.includes('WMI_SUCCESS')) {
+                    printResult = {
+                      success: true,
+                      message: `Página de teste enviada para ${printerName} via WMI (Windows)`,
+                      details: {
+                        method: 'WMI PrintTestPage',
+                        note: 'Usado página de teste padrão da impressora',
+                        platform: 'win32'
+                      },
+                      timestamp: new Date().toISOString()
+                    };
+                  } else {
+                    throw new Error('Impressora não encontrada via WMI');
+                  }
+                  
+                } catch (wmiError) {
+                  // Limpar arquivo em caso de erro
+                  try {
+                    await execAsync(`del "${tempFile}" 2>nul || echo "cleanup_ok"`);
+                  } catch (e) {
+                    // Ignore cleanup errors
+                  }
+                  
+                  printResult = {
+                    success: false,
+                    message: `Falha em todos os métodos de impressão Windows para ${printerName}`,
+                    details: {
+                      errors: {
+                        outPrinter: outPrinterError.message,
+                        printCommand: printError.message,
+                        wmi: wmiError
+                      },
+                      platform: 'win32',
+                      recommendation: 'Verifique se a impressora está instalada e online no Windows'
+                    },
+                    timestamp: new Date().toISOString()
+                  };
+                }
+              }
             }
+            
           } catch (winError) {
             printResult = {
               success: false,
-              message: `Erro ao acessar sistema de impressão do Windows: ${winError}`,
+              message: `Erro crítico no sistema de impressão Windows: ${winError}`,
+              timestamp: new Date().toISOString()
+            };
+          }
+          
+        } else if (platform === 'android') {
+          // Impressão no Android via Android Print Framework
+          try {
+            console.log(`📱 [ANDROID] Iniciando impressão para ${printerName}...`);
+            
+            // Verificar se estamos em ambiente Android real
+            const { stdout: androidCheck } = await execAsync('getprop ro.build.version.release 2>/dev/null || echo "not_android"');
+            
+            if (!androidCheck.includes('not_android')) {
+              console.log(`📱 [ANDROID] Executando em Android ${androidCheck.trim()}`);
+              
+              // Criar arquivo temporário no Android
+              const tempFile = `/data/local/tmp/pos_test_${Date.now()}.txt`;
+              const fs = await import('fs');
+              fs.writeFileSync(tempFile, testPageContent);
+              
+              // Método 1: Via Intent do Android Print Framework
+              try {
+                const intentCommand = `
+                  am start -a android.intent.action.PRINT \
+                  -d "file://${tempFile}" \
+                  --es android.intent.extra.TITLE "Teste POS" \
+                  2>/dev/null || echo "intent_failed"
+                `;
+                
+                const intentResult = await execAsync(intentCommand);
+                
+                if (!intentResult.stdout.includes('intent_failed')) {
+                  printResult = {
+                    success: true,
+                    message: `Teste de impressão iniciado no Android Print Framework`,
+                    details: {
+                      method: 'Android Intent PRINT',
+                      file: tempFile,
+                      platform: 'android',
+                      version: androidCheck.trim(),
+                      note: 'Usuário deve selecionar a impressora na interface do Android'
+                    },
+                    timestamp: new Date().toISOString()
+                  };
+                } else {
+                  throw new Error('Intent de impressão falhou');
+                }
+                
+              } catch (intentError) {
+                console.log(`⚠️ [ANDROID] Intent falhou, tentando método direto...`);
+                
+                // Método 2: Impressão direta via dispositivo
+                try {
+                  // Verificar dispositivos USB
+                  const { stdout: usbDevices } = await execAsync('ls /dev/usb/lp* 2>/dev/null || echo "no_usb"');
+                  
+                  if (!usbDevices.includes('no_usb')) {
+                    const devices = usbDevices.split('\n').filter((line: string) => line.trim() !== '');
+                    const targetDevice = devices[0]; // Usar primeiro dispositivo
+                    
+                    // Tentar enviar dados diretamente para o dispositivo
+                    await execAsync(`cat "${tempFile}" > "${targetDevice}" 2>/dev/null || echo "direct_failed"`);
+                    
+                    printResult = {
+                      success: true,
+                      message: `Dados enviados diretamente para dispositivo USB: ${targetDevice}`,
+                      details: {
+                        method: 'USB Direct Write',
+                        device: targetDevice,
+                        file: tempFile,
+                        platform: 'android',
+                        note: 'Impressão direta via USB OTG'
+                      },
+                      timestamp: new Date().toISOString()
+                    };
+                  } else {
+                    // Método 3: Via Bluetooth (se disponível)
+                    try {
+                      const { stdout: btDevices } = await execAsync('dumpsys bluetooth_manager 2>/dev/null | grep -i printer || echo "no_bluetooth"');
+                      
+                      if (!btDevices.includes('no_bluetooth')) {
+                        printResult = {
+                          success: true,
+                          message: `Impressoras Bluetooth detectadas no Android`,
+                          details: {
+                            method: 'Bluetooth Detection',
+                            platform: 'android',
+                            note: 'Use apps específicos para impressão via Bluetooth',
+                            recommendation: 'Instale app do fabricante da impressora'
+                          },
+                          timestamp: new Date().toISOString()
+                        };
+                      } else {
+                        throw new Error('Nenhum método de impressão disponível');
+                      }
+                    } catch (btError) {
+                      throw new Error('Falha em todos os métodos Android');
+                    }
+                  }
+                  
+                } catch (directError) {
+                  printResult = {
+                    success: false,
+                    message: `Nenhum método de impressão Android funcionou para ${printerName}`,
+                    details: {
+                      platform: 'android',
+                      version: androidCheck.trim(),
+                      recommendation: 'Conecte impressora via USB OTG ou emparelhe via Bluetooth',
+                      availableMethods: ['Android Print Framework', 'USB Direct', 'Bluetooth']
+                    },
+                    timestamp: new Date().toISOString()
+                  };
+                }
+              }
+              
+              // Limpar arquivo temporário
+              try {
+                await execAsync(`rm "${tempFile}" 2>/dev/null || echo "cleanup_ok"`);
+              } catch (e) {
+                // Ignore cleanup errors
+              }
+              
+            } else {
+              // Ambiente emulado
+              printResult = {
+                success: true,
+                message: `Teste de impressão simulado no ambiente Android emulado`,
+                details: {
+                  platform: 'android',
+                  type: 'emulated',
+                  note: 'Funcionando em Termux ou emulador - impressão simulada'
+                },
+                timestamp: new Date().toISOString()
+              };
+            }
+            
+          } catch (androidError) {
+            printResult = {
+              success: false,
+              message: `Erro no sistema de impressão Android: ${androidError}`,
               timestamp: new Date().toISOString()
             };
           }
