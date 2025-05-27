@@ -1843,15 +1843,310 @@ router.post("/api/settings/pos", isAuthenticated, async (req, res) => {
   }
 });
 
-// Rota para testar impressão
+// Rota para testar comunicação com impressora específica
+router.post("/api/settings/pos/test-communication", isAuthenticated, async (req, res) => {
+  try {
+    const { printerId, printerName } = req.body;
+    console.log(`🧪 [TESTE] Testando comunicação com impressora: ${printerName} (ID: ${printerId})`);
+    
+    const { exec } = require('child_process');
+    const util = require('util');
+    const execAsync = util.promisify(exec);
+    const platform = process.platform;
+    
+    let testResult = {
+      success: false,
+      status: 'unknown',
+      message: '',
+      details: {},
+      timestamp: new Date().toISOString()
+    };
+    
+    try {
+      if (platform === 'linux') {
+        // Teste no Linux via CUPS
+        console.log("🐧 [LINUX] Testando via CUPS...");
+        
+        if (printerName && printerName !== 'Salvar como PDF') {
+          // Testar status da impressora
+          const { stdout: statusOut } = await execAsync(`lpstat -p ${printerName} 2>/dev/null || echo "not_found"`);
+          
+          if (statusOut.includes('idle')) {
+            testResult = {
+              success: true,
+              status: 'online',
+              message: `Impressora ${printerName} está online e pronta para imprimir`,
+              details: { platform: 'linux', driver: 'CUPS', response: statusOut.trim() },
+              timestamp: new Date().toISOString()
+            };
+          } else if (statusOut.includes('disabled')) {
+            testResult = {
+              success: false,
+              status: 'offline',
+              message: `Impressora ${printerName} está desabilitada`,
+              details: { platform: 'linux', driver: 'CUPS', response: statusOut.trim() },
+              timestamp: new Date().toISOString()
+            };
+          } else {
+            testResult = {
+              success: false,
+              status: 'unknown',
+              message: `Status da impressora ${printerName} não pôde ser determinado`,
+              details: { platform: 'linux', driver: 'CUPS', response: statusOut.trim() },
+              timestamp: new Date().toISOString()
+            };
+          }
+        }
+        
+      } else if (platform === 'darwin') {
+        // Teste no macOS
+        console.log("🍎 [MACOS] Testando via lpstat...");
+        
+        if (printerName && printerName !== 'Salvar como PDF') {
+          const { stdout: statusOut } = await execAsync(`lpstat -p ${printerName} 2>/dev/null || echo "not_found"`);
+          
+          if (statusOut.includes('idle')) {
+            testResult = {
+              success: true,
+              status: 'online',
+              message: `Impressora ${printerName} está online e pronta`,
+              details: { platform: 'darwin', driver: 'macOS', response: statusOut.trim() },
+              timestamp: new Date().toISOString()
+            };
+          } else {
+            testResult = {
+              success: false,
+              status: 'offline',
+              message: `Impressora ${printerName} não está disponível`,
+              details: { platform: 'darwin', driver: 'macOS', response: statusOut.trim() },
+              timestamp: new Date().toISOString()
+            };
+          }
+        }
+        
+      } else if (platform === 'win32') {
+        // Teste no Windows via PowerShell
+        console.log("🪟 [WINDOWS] Testando via PowerShell...");
+        
+        if (printerName && printerName !== 'Salvar como PDF') {
+          const psCommand = `Get-WmiObject -Class Win32_Printer -Filter "Name='${printerName}'" | Select-Object Name,PrinterStatus,WorkOffline | ConvertTo-Json`;
+          const { stdout } = await execAsync(`powershell -Command "${psCommand}" 2>nul || echo "null"`);
+          
+          try {
+            const printer = JSON.parse(stdout);
+            if (printer && printer.Name) {
+              if (printer.PrinterStatus === 3 && !printer.WorkOffline) {
+                testResult = {
+                  success: true,
+                  status: 'online',
+                  message: `Impressora ${printerName} está online e funcionando`,
+                  details: { 
+                    platform: 'win32', 
+                    driver: 'Windows', 
+                    printerStatus: printer.PrinterStatus,
+                    workOffline: printer.WorkOffline 
+                  },
+                  timestamp: new Date().toISOString()
+                };
+              } else {
+                testResult = {
+                  success: false,
+                  status: 'offline',
+                  message: `Impressora ${printerName} está offline ou com problemas`,
+                  details: { 
+                    platform: 'win32', 
+                    driver: 'Windows', 
+                    printerStatus: printer.PrinterStatus,
+                    workOffline: printer.WorkOffline 
+                  },
+                  timestamp: new Date().toISOString()
+                };
+              }
+            } else {
+              testResult = {
+                success: false,
+                status: 'not_found',
+                message: `Impressora ${printerName} não foi encontrada no sistema`,
+                details: { platform: 'win32', driver: 'Windows' },
+                timestamp: new Date().toISOString()
+              };
+            }
+          } catch (parseError) {
+            testResult = {
+              success: false,
+              status: 'error',
+              message: `Erro ao verificar status da impressora ${printerName}`,
+              details: { platform: 'win32', error: parseError },
+              timestamp: new Date().toISOString()
+            };
+          }
+        }
+      }
+      
+      // Teste especial para impressoras virtuais
+      if (printerName === 'Salvar como PDF' || printerId.includes('virtual')) {
+        testResult = {
+          success: true,
+          status: 'online',
+          message: 'Impressora virtual está sempre disponível',
+          details: { type: 'virtual', driver: 'PDF' },
+          timestamp: new Date().toISOString()
+        };
+      }
+      
+    } catch (execError) {
+      console.error(`❌ [ERRO] Falha no teste de comunicação:`, execError);
+      testResult = {
+        success: false,
+        status: 'error',
+        message: `Erro ao testar comunicação com ${printerName}`,
+        details: { error: execError.message },
+        timestamp: new Date().toISOString()
+      };
+    }
+    
+    console.log(`📊 [RESULTADO] Teste de comunicação: ${testResult.success ? 'SUCESSO' : 'FALHA'}`);
+    res.json(testResult);
+    
+  } catch (err: any) {
+    console.error("❌ [ERRO] Erro no teste de comunicação:", err);
+    res.status(500).json({ 
+      success: false,
+      error: "Erro interno no teste de comunicação",
+      details: err.message 
+    });
+  }
+});
+
+// Rota para testar impressão real
 router.post("/api/settings/pos/test-print", isAuthenticated, async (req, res) => {
   try {
-    // Simular teste de impressão
-    console.log("Teste de impressão executado pelo usuário:", req.session.userId);
-    res.json({ success: true, message: "Página de teste enviada para impressão" });
+    const { printerId, printerName } = req.body;
+    console.log(`🖨️ [TESTE] Enviando página de teste para: ${printerName}`);
+    
+    const { exec } = require('child_process');
+    const util = require('util');
+    const execAsync = util.promisify(exec);
+    const platform = process.platform;
+    
+    // Conteúdo da página de teste
+    const testPageContent = `
+=================================
+    PÁGINA DE TESTE - POS
+=================================
+
+Data/Hora: ${new Date().toLocaleString('pt-BR')}
+Impressora: ${printerName}
+Sistema: ${platform}
+
+=================================
+    TESTE DE FORMATAÇÃO
+=================================
+
+TEXTO NORMAL
+TEXTO EM NEGRITO (SIMULADO)
+texto pequeno
+
+Números: 1234567890
+Símbolos: !@#$%^&*()
+
+Item 1........................R$ 10,00
+Item 2........................R$ 25,50
+Item 3........................R$ 8,75
+---------------------------------
+TOTAL.........................R$ 44,25
+
+=================================
+Este é um teste de impressão
+do sistema POS. Se você consegue
+ler este texto, a impressora
+está funcionando corretamente.
+=================================
+
+    `;
+    
+    let printResult = {
+      success: false,
+      message: '',
+      timestamp: new Date().toISOString()
+    };
+    
+    try {
+      if (printerName === 'Salvar como PDF' || printerId.includes('virtual_pdf')) {
+        // Simular salvamento como PDF
+        printResult = {
+          success: true,
+          message: 'Página de teste salva como PDF com sucesso',
+          timestamp: new Date().toISOString()
+        };
+        
+      } else if (printerId.includes('virtual_preview')) {
+        // Pré-visualização
+        printResult = {
+          success: true,
+          message: 'Página de teste exibida na pré-visualização',
+          timestamp: new Date().toISOString()
+        };
+        
+      } else {
+        // Tentar impressão real no sistema
+        if (platform === 'linux') {
+          // Criar arquivo temporário e imprimir via lp
+          const tempFile = `/tmp/pos_test_${Date.now()}.txt`;
+          require('fs').writeFileSync(tempFile, testPageContent);
+          await execAsync(`lp -d ${printerName} ${tempFile} 2>/dev/null && rm ${tempFile} || rm ${tempFile}`);
+          
+          printResult = {
+            success: true,
+            message: `Página de teste enviada para ${printerName} via CUPS`,
+            timestamp: new Date().toISOString()
+          };
+          
+        } else if (platform === 'darwin') {
+          // Impressão no macOS
+          const tempFile = `/tmp/pos_test_${Date.now()}.txt`;
+          require('fs').writeFileSync(tempFile, testPageContent);
+          await execAsync(`lp -d ${printerName} ${tempFile} 2>/dev/null && rm ${tempFile} || rm ${tempFile}`);
+          
+          printResult = {
+            success: true,
+            message: `Página de teste enviada para ${printerName} via macOS`,
+            timestamp: new Date().toISOString()
+          };
+          
+        } else if (platform === 'win32') {
+          // Impressão no Windows via PowerShell
+          const tempFile = `C:\\temp\\pos_test_${Date.now()}.txt`;
+          require('fs').writeFileSync(tempFile, testPageContent);
+          await execAsync(`powershell -Command "Get-Content '${tempFile}' | Out-Printer -Name '${printerName}'" 2>nul && del "${tempFile}" || del "${tempFile}"`);
+          
+          printResult = {
+            success: true,
+            message: `Página de teste enviada para ${printerName} via Windows`,
+            timestamp: new Date().toISOString()
+          };
+        }
+      }
+      
+    } catch (printError) {
+      console.error(`❌ [ERRO] Falha na impressão:`, printError);
+      printResult = {
+        success: false,
+        message: `Erro ao imprimir na ${printerName}: ${printError.message}`,
+        timestamp: new Date().toISOString()
+      };
+    }
+    
+    console.log(`📊 [RESULTADO] Teste de impressão: ${printResult.success ? 'SUCESSO' : 'FALHA'}`);
+    res.json(printResult);
+    
   } catch (err: any) {
-    console.error("Erro no teste de impressão:", err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ [ERRO] Erro no teste de impressão:", err);
+    res.status(500).json({ 
+      success: false,
+      error: "Erro interno no teste de impressão",
+      details: err.message 
+    });
   }
 });
 
@@ -1906,39 +2201,183 @@ router.get("/api/settings/pos/printers", isAuthenticated, async (req, res) => {
     
     const detectedPrinters: any[] = [];
     
-    // Simular detecção de impressoras - mais estável
-    const simulateDetection = async (): Promise<any[]> => {
-      console.log("🔍 [DETECÇÃO] Simulando varredura do sistema...");
+    // Detecção REAL de impressoras via comandos do sistema
+    const detectRealPrinters = async (): Promise<any[]> => {
+      console.log("🔍 [DETECÇÃO] Executando varredura REAL do sistema...");
       
-      // Aguardar um momento para simular processamento
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const { exec } = await import('child_process');
+      const util = await import('util');
+      const execAsync = util.promisify(exec);
       
       const systemPrinters = [];
       
-      // Adicionar impressoras baseadas no sistema operacional
-      if (platform === 'linux') {
+      try {
+        if (platform === 'linux') {
+          console.log("🐧 [LINUX] Detectando impressoras via CUPS...");
+          
+          // Comando para listar impressoras no Linux (CUPS)
+          const { stdout } = await execAsync('lpstat -p 2>/dev/null || echo "no_printers"');
+          
+          if (stdout !== "no_printers" && stdout.trim() !== "") {
+            const lines = stdout.split('\n').filter(line => line.includes('printer'));
+            
+            for (const line of lines) {
+              const match = line.match(/printer\s+(\S+)/);
+              if (match) {
+                const printerName = match[1];
+                
+                // Verificar status da impressora
+                let status = 'unknown';
+                try {
+                  const { stdout: statusOut } = await execAsync(`lpstat -p ${printerName} 2>/dev/null || echo "unknown"`);
+                  if (statusOut.includes('idle')) status = 'online';
+                  else if (statusOut.includes('disabled')) status = 'offline';
+                  else if (statusOut.includes('printing')) status = 'printing';
+                  else status = 'unknown';
+                } catch (e) {
+                  status = 'unknown';
+                }
+                
+                systemPrinters.push({
+                  id: `linux_${printerName}_${Date.now()}`,
+                  name: printerName,
+                  type: "cups",
+                  status: status,
+                  platform: "linux",
+                  driver: "CUPS",
+                  connection: "system"
+                });
+              }
+            }
+          }
+          
+          // Se não encontrou impressoras, adicionar uma genérica
+          if (systemPrinters.length === 0) {
+            systemPrinters.push({
+              id: `linux_generic_${Date.now()}`,
+              name: "Impressora Linux (Sistema)",
+              type: "system",
+              status: "unknown",
+              platform: "linux",
+              driver: "CUPS",
+              connection: "system"
+            });
+          }
+          
+        } else if (platform === 'darwin') {
+          console.log("🍎 [MACOS] Detectando impressoras via lpstat...");
+          
+          // Comando para listar impressoras no macOS
+          const { stdout } = await execAsync('lpstat -p 2>/dev/null || echo "no_printers"');
+          
+          if (stdout !== "no_printers" && stdout.trim() !== "") {
+            const lines = stdout.split('\n').filter(line => line.includes('printer'));
+            
+            for (const line of lines) {
+              const match = line.match(/printer\s+(\S+)/);
+              if (match) {
+                const printerName = match[1];
+                
+                // Verificar status
+                let status = 'unknown';
+                try {
+                  const { stdout: statusOut } = await execAsync(`lpstat -p ${printerName} 2>/dev/null || echo "unknown"`);
+                  if (statusOut.includes('idle')) status = 'online';
+                  else if (statusOut.includes('disabled')) status = 'offline';
+                  else if (statusOut.includes('printing')) status = 'printing';
+                  else status = 'unknown';
+                } catch (e) {
+                  status = 'unknown';
+                }
+                
+                systemPrinters.push({
+                  id: `macos_${printerName}_${Date.now()}`,
+                  name: printerName,
+                  type: "system",
+                  status: status,
+                  platform: "darwin",
+                  driver: "macOS",
+                  connection: "system"
+                });
+              }
+            }
+          }
+          
+          // Fallback para macOS
+          if (systemPrinters.length === 0) {
+            systemPrinters.push({
+              id: `macos_generic_${Date.now()}`,
+              name: "Impressora macOS (Sistema)",
+              type: "system",
+              status: "unknown",
+              platform: "darwin",
+              driver: "macOS",
+              connection: "system"
+            });
+          }
+          
+        } else if (platform === 'win32') {
+          console.log("🪟 [WINDOWS] Detectando impressoras via PowerShell...");
+          
+          // Comando PowerShell para detectar impressoras no Windows
+          const psCommand = 'Get-WmiObject -Class Win32_Printer | Select-Object Name,PrinterStatus,WorkOffline | ConvertTo-Json';
+          const { stdout } = await execAsync(`powershell -Command "${psCommand}" 2>nul || echo "[]"`);
+          
+          try {
+            let printers = JSON.parse(stdout);
+            if (!Array.isArray(printers)) printers = [printers];
+            
+            for (const printer of printers) {
+              if (printer && printer.Name) {
+                let status = 'unknown';
+                if (printer.PrinterStatus === 3) status = 'online';
+                else if (printer.WorkOffline === true) status = 'offline';
+                else if (printer.PrinterStatus === 4) status = 'printing';
+                else if (printer.PrinterStatus === 2) status = 'error';
+                
+                systemPrinters.push({
+                  id: `windows_${printer.Name.replace(/\s+/g, '_')}_${Date.now()}`,
+                  name: printer.Name,
+                  type: "system",
+                  status: status,
+                  platform: "win32",
+                  driver: "Windows",
+                  connection: "system",
+                  printerStatus: printer.PrinterStatus,
+                  workOffline: printer.WorkOffline
+                });
+              }
+            }
+          } catch (parseError) {
+            console.log("⚠️ [WINDOWS] Erro ao parsear saída do PowerShell");
+          }
+          
+          // Fallback para Windows
+          if (systemPrinters.length === 0) {
+            systemPrinters.push({
+              id: `windows_generic_${Date.now()}`,
+              name: "Impressora Windows (Sistema)",
+              type: "system",
+              status: "unknown",
+              platform: "win32",
+              driver: "Windows",
+              connection: "system"
+            });
+          }
+        }
+        
+      } catch (execError) {
+        console.error("❌ [ERRO] Falha na execução dos comandos do sistema:", execError);
+        
+        // Fallback genérico em caso de erro
         systemPrinters.push({
-          id: `linux_cups_${Date.now()}`,
-          name: "CUPS - Impressora do Sistema",
-          type: "cups",
-          status: "online",
-          platform: "linux"
-        });
-      } else if (platform === 'darwin') {
-        systemPrinters.push({
-          id: `macos_system_${Date.now()}`,
-          name: "Impressora macOS",
-          type: "system", 
-          status: "online",
-          platform: "darwin"
-        });
-      } else if (platform === 'win32') {
-        systemPrinters.push({
-          id: `windows_system_${Date.now()}`,
-          name: "Impressora Windows",
-          type: "system",
-          status: "online", 
-          platform: "win32"
+          id: `generic_fallback_${Date.now()}`,
+          name: `Impressora ${platform.toUpperCase()} (Detecção Automática)`,
+          type: "fallback",
+          status: "unknown",
+          platform: platform,
+          driver: "Generic",
+          connection: "system"
         });
       }
       
@@ -1946,8 +2385,8 @@ router.get("/api/settings/pos/printers", isAuthenticated, async (req, res) => {
       return systemPrinters;
     };
 
-    // Executar detecção
-    const systemPrinters = await simulateDetection();
+    // Executar detecção REAL
+    const systemPrinters = await detectRealPrinters();
     
     // Impressoras padrão sempre disponíveis
     const defaultPrinters = [

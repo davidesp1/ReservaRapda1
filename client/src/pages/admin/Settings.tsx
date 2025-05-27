@@ -956,24 +956,93 @@ const Settings: React.FC = () => {
                         <option value="">Selecione uma impressora</option>
                         {availablePrinters.map((printer: any) => (
                           <option key={printer.id} value={printer.id}>
-                            {printer.name} {printer.status === 'offline' ? '(Offline)' : ''}
+                            {printer.name} {printer.status === 'offline' ? '(Offline)' : printer.status === 'online' ? '(Online)' : '(Status Desconhecido)'}
                           </option>
                         ))}
                       </select>
-                      <button 
-                        className="flex items-center px-3 py-1 mt-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                        onClick={async () => {
-                          console.log("🔄 Executando varredura de impressoras...");
-                          try {
-                            await refetchPrinters();
-                            showPrinterNotification('detected', availablePrinters.length);
-                          } catch (error) {
-                            showPrinterNotification('error');
-                          }
-                        }}
-                      >
-                        <i className="mr-1 fa-solid fa-sync-alt"></i> Atualizar Lista
-                      </button>
+                      
+                      <div className="flex gap-2 mt-2">
+                        <button 
+                          className="flex items-center px-3 py-1 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                          onClick={async () => {
+                            console.log("🔄 Executando varredura de impressoras...");
+                            try {
+                              await refetchPrinters();
+                              showPrinterNotification('detected', availablePrinters.length);
+                            } catch (error) {
+                              showPrinterNotification('error');
+                            }
+                          }}
+                        >
+                          <i className="mr-1 fa-solid fa-sync-alt"></i> Atualizar Lista
+                        </button>
+                        
+                        {posSettings.selectedPrinter && (
+                          <>
+                            <button 
+                              className="flex items-center px-3 py-1 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                              onClick={async () => {
+                                const selectedPrinter = availablePrinters.find(p => p.id === posSettings.selectedPrinter);
+                                if (!selectedPrinter) return;
+                                
+                                try {
+                                  const response = await fetch('/api/settings/pos/test-communication', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      printerId: selectedPrinter.id,
+                                      printerName: selectedPrinter.name
+                                    })
+                                  });
+                                  
+                                  const result = await response.json();
+                                  
+                                  if (result.success) {
+                                    showSuccess("Teste de Comunicação", result.message);
+                                  } else {
+                                    showError("Falha na Comunicação", result.message);
+                                  }
+                                } catch (error) {
+                                  showError("Erro no Teste", "Falha ao testar comunicação com a impressora");
+                                }
+                              }}
+                            >
+                              <i className="mr-1 fa-solid fa-satellite-dish"></i> Testar Comunicação
+                            </button>
+                            
+                            <button 
+                              className="flex items-center px-3 py-1 text-sm text-white bg-green-600 rounded-md hover:bg-green-700"
+                              onClick={async () => {
+                                const selectedPrinter = availablePrinters.find(p => p.id === posSettings.selectedPrinter);
+                                if (!selectedPrinter) return;
+                                
+                                try {
+                                  const response = await fetch('/api/settings/pos/test-print', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      printerId: selectedPrinter.id,
+                                      printerName: selectedPrinter.name
+                                    })
+                                  });
+                                  
+                                  const result = await response.json();
+                                  
+                                  if (result.success) {
+                                    showSuccess("Teste de Impressão", result.message);
+                                  } else {
+                                    showError("Falha na Impressão", result.message);
+                                  }
+                                } catch (error) {
+                                  showError("Erro no Teste", "Falha ao enviar página de teste");
+                                }
+                              }}
+                            >
+                              <i className="mr-1 fa-solid fa-print"></i> Testar Impressão
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
