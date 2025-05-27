@@ -4,151 +4,7 @@ import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-
-interface PrinterInfo {
-  id: string;
-  name: string;
-  description: string;
-  status: string;
-  type: string;
-  location?: string;
-}
-
-const PrinterSelector = () => {
-  const { toast } = useToast();
-  const [selectedPrinter, setSelectedPrinter] = useState('');
-  
-  // Query para buscar impressoras disponíveis
-  const { data: printers = [], isLoading: printersLoading, refetch: refetchPrinters } = useQuery({
-    queryKey: ['/api/printers']
-  });
-  
-  // Mutation para testar impressora
-  const testPrinterMutation = useMutation({
-    mutationFn: async (printerId: string) => {
-      return await apiRequest(`/api/printers/${printerId}/test`, 'POST');
-    },
-    onSuccess: (data) => {
-      toast({
-        title: data.success ? "Conexão Testada" : "Problema Detectado",
-        description: data.message,
-        variant: data.success ? "default" : "destructive",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro no Teste",
-        description: error.message || "Erro ao testar impressora",
-        variant: "destructive",
-      });
-    }
-  });
-  
-  // Mutation para imprimir página de teste
-  const printTestMutation = useMutation({
-    mutationFn: async (printerId: string) => {
-      return await apiRequest(`/api/printers/${printerId}/print-test`, 'POST');
-    },
-    onSuccess: (data) => {
-      toast({
-        title: data.success ? "Teste Enviado" : "Problema na Impressão",
-        description: data.message,
-        variant: data.success ? "default" : "destructive",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro na Impressão",
-        description: error.message || "Erro ao imprimir teste",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const handleRefreshPrinters = async () => {
-    await refetchPrinters();
-    toast({
-      title: "Atualizado",
-      description: "Lista de impressoras atualizada com sucesso",
-    });
-  };
-
-  const handleTestConnection = () => {
-    if (!selectedPrinter) {
-      toast({
-        title: "Seleção Necessária",
-        description: "Por favor, selecione uma impressora primeiro",
-        variant: "destructive",
-      });
-      return;
-    }
-    testPrinterMutation.mutate(selectedPrinter);
-  };
-
-  const handlePrintTest = () => {
-    if (!selectedPrinter) {
-      toast({
-        title: "Seleção Necessária",
-        description: "Por favor, selecione uma impressora primeiro",
-        variant: "destructive",
-      });
-      return;
-    }
-    printTestMutation.mutate(selectedPrinter);
-  };
-
-  return (
-    <>
-      <select 
-        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none"
-        value={selectedPrinter}
-        onChange={(e) => setSelectedPrinter(e.target.value)}
-        disabled={printersLoading}
-      >
-        <option value="">
-          {printersLoading ? "Carregando impressoras..." : "Selecione uma impressora"}
-        </option>
-        {printers.map((printer: PrinterInfo) => (
-          <option key={printer.id} value={printer.id}>
-            {printer.name} - {printer.location} ({printer.status})
-          </option>
-        ))}
-      </select>
-      
-      <div className="flex gap-2 mt-2">
-        <button 
-          className="flex items-center px-3 py-1 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50"
-          onClick={handleRefreshPrinters}
-          disabled={printersLoading}
-        >
-          <i className={`mr-1 fa-solid fa-sync-alt ${printersLoading ? 'animate-spin' : ''}`}></i> 
-          Atualizar Lista
-        </button>
-        
-        <button 
-          className="flex items-center px-3 py-1 text-sm text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-          style={{ backgroundColor: '#002776' }}
-          onClick={handleTestConnection}
-          disabled={!selectedPrinter || testPrinterMutation.isPending}
-        >
-          <i className="mr-1 fa-solid fa-plug"></i> 
-          {testPrinterMutation.isPending ? 'Testando...' : 'Testar Conexão'}
-        </button>
-        
-        <button 
-          className="flex items-center px-3 py-1 text-sm text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-          style={{ backgroundColor: '#009c3b' }}
-          onClick={handlePrintTest}
-          disabled={!selectedPrinter || printTestMutation.isPending}
-        >
-          <i className="mr-1 fa-solid fa-print"></i> 
-          {printTestMutation.isPending ? 'Imprimindo...' : 'Teste de Impressão'}
-        </button>
-      </div>
-    </>
-  );
-};
+import { showSuccess, showError, showPrinterNotification, showLoading, closeNotification } from '@/lib/notifications';
 
 // Schema para configurações gerais
 const generalSettingsSchema = {
@@ -166,10 +22,74 @@ const Settings: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, isAdmin, isLoading, user } = useAuth();
   const [_, setLocation] = useLocation();
-  const { toast } = useToast();
+
   
   // Estado para controlar a aba ativa
   const [activeTab, setActiveTab] = useState(1);
+  
+  // Estado para configurações POS
+  const [posSettings, setPosSettings] = useState<any>({});
+  
+  // Query para carregar configurações POS
+  const { data: posData, isLoading: posLoading } = useQuery({
+    queryKey: ['/api/settings/pos'],
+    enabled: activeTab === 6,
+  });
+
+  // Query para carregar impressoras disponíveis
+  const { data: availablePrinters = [], refetch: refetchPrinters } = useQuery<any[]>({
+    queryKey: ['/api/settings/pos/printers'],
+    enabled: activeTab === 6,
+    staleTime: 30000, // Cache por 30 segundos para evitar múltiplas chamadas
+    refetchOnWindowFocus: false,
+  });
+
+  // Mutation para salvar configurações POS
+  const savePosSettingsMutation = useMutation({
+    mutationFn: async (settings: any) => {
+      const response = await fetch('/api/settings/pos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erro ao salvar configurações POS');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      showSuccess("Configurações POS Salvas!", "As configurações foram salvas com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/pos'] });
+    },
+    onError: (error: any) => {
+      showError("Erro ao Salvar", error.message || "Erro ao salvar configurações POS");
+    },
+  });
+
+  // Carregar dados do POS quando a aba for ativada
+  useEffect(() => {
+    if (posData && activeTab === 6) {
+      setPosSettings(posData);
+      console.log("📋 Configurações POS carregadas:", posData);
+    }
+  }, [posData, activeTab]);
+
+  // Auto-salvar configurações quando mudarem (debounced) - DESABILITADO para resolver erro
+  useEffect(() => {
+    if (Object.keys(posSettings).length > 0) {
+      console.log("📝 Configurações POS carregadas:", posSettings);
+      // Auto-save desabilitado temporariamente para resolver erro de undefined values
+      // const timeoutId = setTimeout(() => {
+      //   console.log("💾 Auto-salvando configurações POS...");
+      //   savePosSettingsMutation.mutate(posSettings);
+      // }, 1000);
+      // return () => clearTimeout(timeoutId);
+    }
+  }, [posSettings]);
   
   // Estado para o formulário de configurações gerais
   const [generalSettings, setGeneralSettings] = useState(generalSettingsSchema);
@@ -195,19 +115,19 @@ const Settings: React.FC = () => {
     }));
   };
 
-  // Função para salvar configurações
-  const handleSaveSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Função para atualizar configurações POS
+  const handlePosSettingChange = (field: string, value: any) => {
+    setPosSettings((prev: any) => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Função para salvar configurações POS
+  const handleSavePosSettings = async () => {
     setIsSubmitting(true);
-    
     try {
-      // Simular salvamento (aqui você pode integrar com sua API)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Configurações salvas!",
-        description: "As configurações foram atualizadas com sucesso.",
-      });
+      await savePosSettingsMutation.mutateAsync(posSettings);
       
       // Feedback visual no botão
       const submitBtn = document.querySelector('#submit-btn') as HTMLButtonElement;
@@ -220,11 +140,78 @@ const Settings: React.FC = () => {
         }, 1600);
       }
     } catch (error) {
-      toast({
-        title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar as configurações.",
-        variant: "destructive",
+      console.error('Erro ao salvar configurações POS:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Função para testar impressão
+  const handleTestPrint = async () => {
+    try {
+      const response = await fetch('/api/settings/pos/test-print', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
+      
+      const data = await response.json();
+      
+      showSuccess("Teste de Impressão", data.message || "Página de teste enviada para impressão");
+    } catch (error: any) {
+      showError("Erro no Teste", error.message || "Erro ao testar impressão");
+    }
+  };
+
+  // Função para verificar conexão
+  const handleCheckConnection = async () => {
+    try {
+      const response = await fetch('/api/settings/pos/check-connection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      
+      showSuccess("Status da Conexão", data.message || "Impressora conectada");
+    } catch (error: any) {
+      showError("Erro na Conexão", error.message || "Erro ao verificar conexão");
+    }
+  };
+
+  // Função para salvar configurações gerais
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Se estamos na aba POS, usar função específica
+    if (activeTab === 6) {
+      await handleSavePosSettings();
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Simular salvamento (aqui você pode integrar com sua API)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      showSuccess("Configurações Salvas!", "As configurações foram atualizadas com sucesso.");
+      
+      // Feedback visual no botão
+      const submitBtn = document.querySelector('#submit-btn') as HTMLButtonElement;
+      if (submitBtn) {
+        submitBtn.innerHTML = '<i class="mr-2 fa-solid fa-circle-check"></i>Salvo!';
+        submitBtn.classList.add('bg-blue-600');
+        setTimeout(() => {
+          submitBtn.innerHTML = '<i class="mr-2 fa-solid fa-floppy-disk"></i>Salvar Configurações';
+          submitBtn.classList.remove('bg-blue-600');
+        }, 1600);
+      }
+    } catch (error) {
+      showError("Erro ao Salvar", "Ocorreu um erro ao salvar as configurações.");
     } finally {
       setIsSubmitting(false);
     }
@@ -961,13 +948,111 @@ const Settings: React.FC = () => {
                     
                     <div className="mb-4">
                       <label className="block mb-2 text-sm font-medium text-gray-700">Impressoras Disponíveis</label>
-                      <PrinterSelector />
+                      <select 
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none"
+                        value={posSettings.selectedPrinter || ''}
+                        onChange={(e) => handlePosSettingChange('selectedPrinter', e.target.value)}
+                      >
+                        <option value="">Selecione uma impressora</option>
+                        {availablePrinters.map((printer: any) => (
+                          <option key={printer.id} value={printer.id}>
+                            {printer.name} {printer.status === 'offline' ? '(Offline)' : printer.status === 'online' ? '(Online)' : '(Status Desconhecido)'}
+                          </option>
+                        ))}
+                      </select>
+                      
+                      <div className="flex gap-2 mt-2">
+                        <button 
+                          className="flex items-center px-3 py-1 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                          onClick={async () => {
+                            console.log("🔄 Executando varredura de impressoras...");
+                            try {
+                              await refetchPrinters();
+                              showPrinterNotification('detected', availablePrinters.length);
+                            } catch (error) {
+                              showPrinterNotification('error');
+                            }
+                          }}
+                        >
+                          <i className="mr-1 fa-solid fa-sync-alt"></i> Atualizar Lista
+                        </button>
+                        
+                        {posSettings.selectedPrinter && (
+                          <>
+                            <button 
+                              className="flex items-center px-3 py-1 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                              onClick={async () => {
+                                const selectedPrinter = availablePrinters.find(p => p.id === posSettings.selectedPrinter);
+                                if (!selectedPrinter) return;
+                                
+                                try {
+                                  const response = await fetch('/api/settings/pos/test-communication', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      printerId: selectedPrinter.id,
+                                      printerName: selectedPrinter.name
+                                    })
+                                  });
+                                  
+                                  const result = await response.json();
+                                  
+                                  if (result.success) {
+                                    showSuccess("Teste de Comunicação", result.message);
+                                  } else {
+                                    showError("Falha na Comunicação", result.message);
+                                  }
+                                } catch (error) {
+                                  showError("Erro no Teste", "Falha ao testar comunicação com a impressora");
+                                }
+                              }}
+                            >
+                              <i className="mr-1 fa-solid fa-satellite-dish"></i> Testar Comunicação
+                            </button>
+                            
+                            <button 
+                              className="flex items-center px-3 py-1 text-sm text-white bg-green-600 rounded-md hover:bg-green-700"
+                              onClick={async () => {
+                                const selectedPrinter = availablePrinters.find(p => p.id === posSettings.selectedPrinter);
+                                if (!selectedPrinter) return;
+                                
+                                try {
+                                  const response = await fetch('/api/settings/pos/test-print', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      printerId: selectedPrinter.id,
+                                      printerName: selectedPrinter.name
+                                    })
+                                  });
+                                  
+                                  const result = await response.json();
+                                  
+                                  if (result.success) {
+                                    showSuccess("Teste de Impressão", result.message);
+                                  } else {
+                                    showError("Falha na Impressão", result.message);
+                                  }
+                                } catch (error) {
+                                  showError("Erro no Teste", "Falha ao enviar página de teste");
+                                }
+                              }}
+                            >
+                              <i className="mr-1 fa-solid fa-print"></i> Testar Impressão
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">Tipo de Conexão</label>
-                        <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                        <select 
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none"
+                          value={posSettings.connectionType || 'usb'}
+                          onChange={(e) => handlePosSettingChange('connectionType', e.target.value)}
+                        >
                           <option value="usb">USB</option>
                           <option value="bluetooth">Bluetooth</option>
                           <option value="network">Rede (TCP/IP)</option>
@@ -1000,17 +1085,29 @@ const Settings: React.FC = () => {
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">Intensidade (Darkness)</label>
                         <div className="flex items-center">
-                          <input type="range" min="0" max="100" defaultValue="70" className="w-full" style={{ accentColor: '#002776' }} />
-                          <span className="w-8 ml-2 text-sm font-medium">70%</span>
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="100" 
+                            value={posSettings.printIntensity || 70}
+                            onChange={(e) => handlePosSettingChange('printIntensity', parseInt(e.target.value))}
+                            className="w-full" 
+                            style={{ accentColor: '#002776' }} 
+                          />
+                          <span className="w-8 ml-2 text-sm font-medium">{posSettings.printIntensity || 70}%</span>
                         </div>
                       </div>
                       
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">Velocidade (mm/s)</label>
-                        <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                        <select 
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none"
+                          value={posSettings.printSpeed || 100}
+                          onChange={(e) => handlePosSettingChange('printSpeed', parseInt(e.target.value))}
+                        >
                           <option value="50">50 mm/s</option>
                           <option value="80">80 mm/s</option>
-                          <option value="100" selected>100 mm/s</option>
+                          <option value="100">100 mm/s</option>
                           <option value="150">150 mm/s</option>
                           <option value="200">200 mm/s</option>
                         </select>
@@ -1020,14 +1117,27 @@ const Settings: React.FC = () => {
                     <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">Avanço de Papel (mm)</label>
-                        <input type="number" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" defaultValue="3" min="0" max="50" />
+                        <input 
+                          type="number" 
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" 
+                          value={posSettings.paperFeed || 3}
+                          onChange={(e) => handlePosSettingChange('paperFeed', parseInt(e.target.value))}
+                          min="0" 
+                          max="50" 
+                        />
                       </div>
                       
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">Guilhotina Automática</label>
                         <div className="flex items-center space-x-4">
                           <div className="flex items-center">
-                            <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                            <input 
+                              type="checkbox" 
+                              className="w-5 h-5 rounded" 
+                              style={{ accentColor: '#002776' }} 
+                              checked={posSettings.autoCutterEnabled !== undefined ? posSettings.autoCutterEnabled : true}
+                              onChange={(e) => handlePosSettingChange('autoCutterEnabled', e.target.checked)}
+                            />
                             <label className="ml-2 text-sm text-gray-700">Ativar</label>
                           </div>
                           
@@ -1321,7 +1431,11 @@ const Settings: React.FC = () => {
                     </h2>
                     
                     <div className="flex flex-col space-y-3 md:flex-row md:items-center md:space-y-0 md:space-x-4">
-                      <button className="flex items-center px-4 py-2 text-white rounded-md hover:bg-blue-700" style={{ backgroundColor: '#002776' }}>
+                      <button 
+                        onClick={handleTestPrint}
+                        className="flex items-center px-4 py-2 text-white rounded-md hover:bg-blue-700" 
+                        style={{ backgroundColor: '#002776' }}
+                      >
                         <i className="mr-2 fa-solid fa-print"></i> Imprimir Página de Teste
                       </button>
                       
@@ -1329,7 +1443,11 @@ const Settings: React.FC = () => {
                         <i className="mr-2 fa-solid fa-circle-info"></i> Relatório de Status ESC/POS
                       </button>
                       
-                      <button className="flex items-center px-4 py-2 font-medium rounded-md hover:bg-yellow-400" style={{ backgroundColor: '#ffdf00', color: '#002776' }}>
+                      <button 
+                        onClick={handleCheckConnection}
+                        className="flex items-center px-4 py-2 font-medium rounded-md hover:bg-yellow-400" 
+                        style={{ backgroundColor: '#ffdf00', color: '#002776' }}
+                      >
                         <i className="mr-2 fa-solid fa-plug"></i> Verificar Conexão
                       </button>
                     </div>
@@ -1452,78 +1570,121 @@ const Settings: React.FC = () => {
                         Pré-visualização em Tempo Real
                       </h2>
                       
-                      <div className="p-4 mx-auto bg-white border border-gray-300 rounded-lg" style={{ width: '300px', height: '500px', overflowY: 'auto', fontFamily: 'Courier New, monospace' }}>
-                        <div className="mb-4 text-center">
+                      <div 
+                        className="p-4 mx-auto bg-white border border-gray-300 rounded-lg" 
+                        style={{ 
+                          width: '300px', 
+                          height: '500px', 
+                          overflowY: 'auto', 
+                          fontFamily: 'Courier New, monospace',
+                          fontSize: posSettings.fontSize === 'small' ? '10px' : posSettings.fontSize === 'large' ? '14px' : '12px',
+                          textAlign: posSettings.globalAlignment || 'center'
+                        }}
+                      >
+                        {/* Header com logo baseado na configuração */}
+                        <div className={`mb-4 ${posSettings.logoPosition?.includes('center') ? 'text-center' : posSettings.logoPosition?.includes('left') ? 'text-left' : 'text-right'}`}>
                           <div className="mb-1 text-xs">LOGO</div>
                           <div className="font-bold">OPA QUE DELICIA</div>
-                          <div className="text-xs">CNPJ: 12.345.678/0001-99</div>
-                          <div className="text-xs">Rua da Gastronomia, 123 - São Paulo, SP</div>
-                          <div className="text-xs">Tel: (11) 98765-4321</div>
+                          <div className="text-xs">{posSettings.customFooter?.split('\n')[0] || 'CNPJ: 12.345.678/0001-99'}</div>
+                          <div className="text-xs">{posSettings.customFooter?.split('\n')[1] || 'Rua da Gastronomia, 123 - São Paulo, SP'}</div>
+                          <div className="text-xs">{posSettings.customFooter?.split('\n')[2] || 'Tel: (11) 98765-4321'}</div>
                         </div>
                         
+                        {/* Informações do cupom com timestamp dinâmico */}
                         <div className="py-2 my-2 text-xs border-t border-b border-gray-400 border-dashed">
-                          <div>CUPOM NÃO FISCAL</div>
-                          <div>Data: 27/05/2025 15:30:45</div>
-                          <div>Atendente: Carlos Silva (ID: 1234)</div>
+                          {posSettings.nonFiscalMessage !== false && <div>CUPOM NÃO FISCAL</div>}
+                          <div>Data: {new Date().toLocaleString('pt-BR', { 
+                            dateStyle: posSettings.timestampFormat === 'short' ? 'short' : posSettings.timestampFormat === 'long' ? 'full' : 'medium',
+                            timeStyle: 'medium'
+                          })}</div>
+                          {posSettings.showOperator !== false && (
+                            <div>{posSettings.operatorFormat?.replace('{nome}', 'Carlos Silva').replace('{id}', '1234') || 'Atendente: Carlos Silva (ID: 1234)'}</div>
+                          )}
                           <div>Mesa: 08 | Comanda: 4567</div>
                         </div>
                         
+                        {/* Items com layout baseado nas configurações de coluna */}
+                        {posSettings.showItems !== false && (
+                          <div className="my-3 text-xs">
+                            <div className="flex justify-between mb-1 font-bold">
+                              <span style={{ width: `${posSettings.columnWidthDescription || 50}%` }}>DESCRIÇÃO</span>
+                              <span style={{ width: `${posSettings.columnWidthQuantity || 20}%` }} className="text-center">QTD</span>
+                              <span style={{ width: `${posSettings.columnWidthPrice || 30}%` }} className="text-right">VALOR</span>
+                            </div>
+                            
+                            <div className="flex justify-between py-1 border-b border-gray-300 border-dotted" style={{ marginBottom: `${posSettings.itemSpacing || 1}px` }}>
+                              <span style={{ width: `${posSettings.columnWidthDescription || 50}%` }}>Feijoada Completa</span>
+                              <span style={{ width: `${posSettings.columnWidthQuantity || 20}%` }} className="text-center">1</span>
+                              <span style={{ width: `${posSettings.columnWidthPrice || 30}%` }} className="text-right">R$ 45,90</span>
+                            </div>
+                            
+                            <div className="flex justify-between py-1 border-b border-gray-300 border-dotted" style={{ marginBottom: `${posSettings.itemSpacing || 1}px` }}>
+                              <span style={{ width: `${posSettings.columnWidthDescription || 50}%` }}>Caipirinha de Limão</span>
+                              <span style={{ width: `${posSettings.columnWidthQuantity || 20}%` }} className="text-center">2</span>
+                              <span style={{ width: `${posSettings.columnWidthPrice || 30}%` }} className="text-right">R$ 29,80</span>
+                            </div>
+                            
+                            <div className="flex justify-between py-1 border-b border-gray-300 border-dotted" style={{ marginBottom: `${posSettings.itemSpacing || 1}px` }}>
+                              <span style={{ width: `${posSettings.columnWidthDescription || 50}%` }}>Pudim de Leite</span>
+                              <span style={{ width: `${posSettings.columnWidthQuantity || 20}%` }} className="text-center">1</span>
+                              <span style={{ width: `${posSettings.columnWidthPrice || 30}%` }} className="text-right">R$ 15,90</span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Totais baseados nas configurações */}
                         <div className="my-3 text-xs">
-                          <div className="flex justify-between mb-1 font-bold">
-                            <span style={{ width: '50%' }}>DESCRIÇÃO</span>
-                            <span style={{ width: '20%' }} className="text-center">QTD</span>
-                            <span style={{ width: '30%' }} className="text-right">VALOR</span>
-                          </div>
-                          
-                          <div className="flex justify-between py-1 border-b border-gray-300 border-dotted">
-                            <span style={{ width: '50%' }}>Feijoada Completa</span>
-                            <span style={{ width: '20%' }} className="text-center">1</span>
-                            <span style={{ width: '30%' }} className="text-right">R$ 45,90</span>
-                          </div>
-                          
-                          <div className="flex justify-between py-1 border-b border-gray-300 border-dotted">
-                            <span style={{ width: '50%' }}>Caipirinha de Limão</span>
-                            <span style={{ width: '20%' }} className="text-center">2</span>
-                            <span style={{ width: '30%' }} className="text-right">R$ 29,80</span>
-                          </div>
-                          
-                          <div className="flex justify-between py-1 border-b border-gray-300 border-dotted">
-                            <span style={{ width: '50%' }}>Pudim de Leite</span>
-                            <span style={{ width: '20%' }} className="text-center">1</span>
-                            <span style={{ width: '30%' }} className="text-right">R$ 15,90</span>
-                          </div>
+                          {posSettings.showSubtotal !== false && (
+                            <div className="flex justify-between py-1">
+                              <span>Subtotal:</span>
+                              <span>R$ 91,60</span>
+                            </div>
+                          )}
+                          {posSettings.showTaxes !== false && (
+                            <div className="flex justify-between py-1">
+                              <span>Taxa de Serviço (10%):</span>
+                              <span>R$ 9,16</span>
+                            </div>
+                          )}
+                          {posSettings.showTotal !== false && (
+                            <div className="flex justify-between py-1 font-bold">
+                              <span>TOTAL:</span>
+                              <span>R$ 100,76</span>
+                            </div>
+                          )}
                         </div>
                         
-                        <div className="my-3 text-xs">
-                          <div className="flex justify-between py-1">
-                            <span>Subtotal:</span>
-                            <span>R$ 91,60</span>
+                        {/* Informações de pagamento */}
+                        {posSettings.showPaymentMethod !== false && (
+                          <div className="py-2 my-2 text-xs border-t border-b border-gray-400 border-dashed">
+                            <div>Forma de Pagamento: Cartão de Crédito</div>
+                            <div>Valor Pago: R$ 100,76</div>
                           </div>
-                          <div className="flex justify-between py-1">
-                            <span>Taxa de Serviço (10%):</span>
-                            <span>R$ 9,16</span>
-                          </div>
-                          <div className="flex justify-between py-1 font-bold">
-                            <span>TOTAL:</span>
-                            <span>R$ 100,76</span>
-                          </div>
-                        </div>
+                        )}
                         
-                        <div className="py-2 my-2 text-xs border-t border-b border-gray-400 border-dashed">
-                          <div>Forma de Pagamento: Cartão de Crédito</div>
-                          <div>Valor Pago: R$ 100,76</div>
-                        </div>
-                        
+                        {/* Mensagens personalizáveis */}
                         <div className="my-3 text-xs text-center">
-                          <div className="mb-2">OBRIGADO PELA PREFERÊNCIA!</div>
-                          <div className="mb-2">Volte sempre! Siga-nos no Instagram @opaquedelicia</div>
-                          <div className="mx-auto my-2 bg-gray-200" style={{ width: '100px', height: '100px' }}></div>
+                          {posSettings.thankYouMessage !== false && <div className="mb-2">OBRIGADO PELA PREFERÊNCIA!</div>}
+                          <div className="mb-2">{posSettings.promoMessage || 'Volte sempre! Siga-nos no Instagram @opaquedelicia'}</div>
+                          {posSettings.qrcodeEnabled && (
+                            <div 
+                              className="mx-auto my-2 bg-gray-200" 
+                              style={{ 
+                                width: `${posSettings.qrcodeSize || 100}px`, 
+                                height: `${posSettings.qrcodeSize || 100}px`,
+                                margin: `${posSettings.qrcodeMargin || 2}px auto`
+                              }}
+                            ></div>
+                          )}
                           <div>Avalie nosso atendimento</div>
+                          {posSettings.customMessageEnabled && posSettings.customMessage && (
+                            <div className="mt-2 font-medium">{posSettings.customMessage}</div>
+                          )}
                         </div>
                         
                         <div className="pt-2 mt-4 text-xs text-center border-t border-gray-300">
                           <div>www.opaquedelicia.com</div>
-                          <div>*** DOCUMENTO SEM VALOR FISCAL ***</div>
+                          {posSettings.nonFiscalMessage !== false && <div>*** DOCUMENTO SEM VALOR FISCAL ***</div>}
                         </div>
                       </div>
                     </div>

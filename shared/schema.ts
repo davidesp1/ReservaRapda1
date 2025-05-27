@@ -309,3 +309,88 @@ export const insertSettingsSchema = createInsertSchema(settings).omit({
 
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingsSchema>;
+
+// POS Settings
+export const posSettings = pgTable("pos_settings", {
+  id: serial("id").primaryKey(),
+  // Printer Configuration
+  selectedPrinter: text("selected_printer"),
+  connectionType: text("connection_type").default("usb"),
+  connectionTimeout: integer("connection_timeout").default(5000),
+  connectionRetries: integer("connection_retries").default(3),
+  
+  // Print Parameters
+  printIntensity: integer("print_intensity").default(70),
+  printSpeed: integer("print_speed").default(100),
+  paperFeed: integer("paper_feed").default(3),
+  autoCutterEnabled: boolean("auto_cutter_enabled").default(true),
+  cutType: text("cut_type").default("partial"),
+  cashDrawerKick: boolean("cash_drawer_kick").default(true),
+  
+  // Layout and Formatting
+  numberOfCopies: integer("number_of_copies").default(1),
+  globalAlignment: text("global_alignment").default("center"),
+  columnWidthDescription: integer("column_width_description").default(50),
+  columnWidthQuantity: integer("column_width_quantity").default(20),
+  columnWidthPrice: integer("column_width_price").default(30),
+  itemSpacing: integer("item_spacing").default(1),
+  highlightStyle: text("highlight_style").default("border"),
+  
+  // Font and Charset
+  charset: text("charset").default("CP850"),
+  fontSize: text("font_size").default("medium"),
+  accentedChars: boolean("accented_chars").default(true),
+  fontFallback: boolean("font_fallback").default(true),
+  
+  // Images and Graphics
+  logoPosition: text("logo_position").default("top-center"),
+  logoScale: integer("logo_scale").default(100),
+  barcodeType: text("barcode_type").default("EAN13"),
+  qrcodeEnabled: boolean("qrcode_enabled").default(true),
+  qrcodeSize: integer("qrcode_size").default(120),
+  qrcodeMargin: integer("qrcode_margin").default(2),
+  qrcodeErrorLevel: text("qrcode_error_level").default("M"),
+  
+  // Header and Footer
+  timestampFormat: text("timestamp_format").default("medium"),
+  showOperator: boolean("show_operator").default(true),
+  operatorFormat: text("operator_format").default("Atendente: {nome} ({id})"),
+  promoMessage: text("promo_message").default("Volte sempre! Siga-nos no Instagram @opaquedelicia"),
+  customFooter: text("custom_footer").default("Opa que delicia - CNPJ: 12.345.678/0001-99\nRua da Gastronomia, 123 - São Paulo, SP\nTel: (11) 98765-4321 | www.opaquedelicia.com"),
+  
+  // Custom Receipt Fields
+  showItems: boolean("show_items").default(true),
+  showDiscounts: boolean("show_discounts").default(true),
+  showTaxes: boolean("show_taxes").default(true),
+  showSubtotal: boolean("show_subtotal").default(true),
+  showTotal: boolean("show_total").default(true),
+  showPaymentMethod: boolean("show_payment_method").default(true),
+  thankYouMessage: boolean("thank_you_message").default(true),
+  nonFiscalMessage: boolean("non_fiscal_message").default(true),
+  customMessage: text("custom_message"),
+  customMessageEnabled: boolean("custom_message_enabled").default(false),
+  
+  // Post-Print Actions
+  beepAfterPrint: boolean("beep_after_print").default(false),
+  sendPdfEmail: boolean("send_pdf_email").default(false),
+  cashDrawerTiming: text("cash_drawer_timing").default("after"),
+  
+  // Security and Audit
+  requireAuth: boolean("require_auth").default(true),
+  adminPassword: text("admin_password"),
+  enableAudit: boolean("enable_audit").default(true),
+  logRetention: integer("log_retention").default(90),
+  
+  // Profile Configuration
+  activeProfile: text("active_profile").default("default"),
+  
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertPosSettingsSchema = createInsertSchema(posSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type PosSettings = typeof posSettings.$inferSelect;
+export type InsertPosSettings = z.infer<typeof insertPosSettingsSchema>;
