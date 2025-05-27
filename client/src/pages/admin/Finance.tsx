@@ -35,7 +35,7 @@ interface PaymentWithUser extends Payment {
 
 const Finance: React.FC = () => {
   const { t } = useTranslation();
-  const { isAuthenticated, isAdmin, isFinanceiro, user } = useAuth();
+  const { isAuthenticated, isAdmin, user } = useAuth();
   const [currentTab, setCurrentTab] = useState('pagamentos');
   const [searchText, setSearchText] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -48,7 +48,7 @@ const Finance: React.FC = () => {
   // Fetch payments com atualização em tempo real
   const { data: payments, isLoading: paymentsLoading, refetch } = useQuery<PaymentWithUser[]>({
     queryKey: ['/api/payments'],
-    enabled: isAuthenticated && (isAdmin || isFinanceiro),
+    enabled: isAuthenticated && isAdmin,
     refetchInterval: 10000, // Atualiza a cada 10 segundos para realtime
     refetchIntervalInBackground: true,
   });

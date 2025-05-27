@@ -1,17 +1,0 @@
-Atualmente esse pedaço não funciona porque, do jeito que está, o browser não tem como “ver” as impressoras do sistema operacional — ele só está chamando um endpoint REST (/api/settings/pos/printers) que ainda não existe ou não retorna nada de útil. Em resumo:
-1. Nenhuma API de listagem de impressoras no servidor O useQuery({ queryKey: ['/api/settings/pos/printers'], … }) só dispara uma requisição a esse URL, mas se você não implementou no seu backend (por exemplo, em pages/api/settings/pos/printers.ts do Next.js) uma rota que realmente invoque alguma biblioteca Node capaz de listar as impressoras instaladas (como printer ou node-printer), o front-end vai receber sempre um array vazio ou um erro silencioso. 
-2. React no browser não enxerga impressoras do SO Bibliotecas que acessam recursos nativos do sistema (como impressoras) só funcionam em ambiente Node/Electron/Tauri. Se a sua aplicação for puramente web, você precisa mesmo de um micro-serviço no servidor onde roda Node.js que, ao receber a chamada, invoque algo como:    import printer from 'printer';
-3. export default function handler(req, res) {
-4.   const lista = printer.getPrinters();    // ou printer.getInstalledPrinters()
-5.   res.status(200).json(lista);
-6. }
-7.    Sem isso, o navegador não consegue “puxar” por conta própria nenhuma impressora. 
-8. Refetch não lança erro por padrão Quando você clica em “Atualizar Lista” e chama await refetchPrinters(), o TanStack Query retorna um objeto { data, error } sem lançar exceção, então seu catch nunca roda e o toast de sucesso aparece mesmo se a chamada tiver falhado ou retornado vazio. Se quiser capturar falhas, use refetchPrinters({ throwOnError: true }) ou cheque error no resultado de refetchPrinters(). 
-9. Habilitação condicionada ao activeTab === 6 A query só roda quando activeTab for exatamente 6. Se o usuário ainda não tiver clicado na aba, availablePrinters fica sempre []. Você pode disparar um refetchPrinters() logo ao entrar na aba (num useEffect dependente de activeTab) para garantir que a lista seja buscada imediatamente. 
-
-O que fazer para funcionar
-1. Criar/implementar no back-end a rota /api/settings/pos/printers usando uma biblioteca Node que liste impressoras. 
-2. Garantir que o front-end chame esse endpoint — seu useQuery precisa de um queryFn ou de uma configuração global de fetcher (apiRequest) que aponte para esse URL. 
-3. Ajustar o refetch para lançar erros ou verificar error, e opcionalmente mover o refetchPrinters() para um useEffect que escute activeTab. 
-4. (Opcional) Definir type="button" no <button> de “Atualizar Lista” para evitar comportamento indesejado caso ele esteja dentro de um formulário. 
-Com esses ajustes, ao clicar em “Atualizar Lista” o front-end irá chamar seu servidor Node, que por sua vez vai consultar o SO e devolver a lista de impressoras reais para o React renderizar.

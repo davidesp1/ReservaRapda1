@@ -19,16 +19,16 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   title = 'Admin Panel' 
 }) => {
   const { t } = useTranslation();
-  const { user, isAuthenticated, isAdmin, isFinanceiro, isLoading } = useAuth();
+  const { user, isAuthenticated, isAdmin, isLoading } = useAuth();
   const [_, setLocation] = useLocation();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   
-  // Redirect to home if not authenticated or not admin/financeiro
+  // Redirect to home if not authenticated or not admin
   React.useEffect(() => {
-    if (!isLoading && (!isAuthenticated || (!isAdmin && !isFinanceiro))) {
+    if (!isLoading && (!isAuthenticated || !isAdmin)) {
       setLocation('/');
     }
-  }, [isAuthenticated, isAdmin, isFinanceiro, isLoading, setLocation]);
+  }, [isAuthenticated, isAdmin, isLoading, setLocation]);
   
   if (isLoading) {
     return (
@@ -38,7 +38,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     );
   }
   
-  if (!isAuthenticated || (!isAdmin && !isFinanceiro)) {
+  if (!isAuthenticated || !isAdmin) {
     return null;
   }
 

@@ -12,8 +12,6 @@ import CustomerDashboard from "@/pages/CustomerDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import CollaboratorDashboard from "@/pages/CollaboratorDashboard";
 import CollaboratorProfile from "@/pages/CollaboratorProfile";
-import FinanceiroProfile from "@/pages/FinanceiroProfile";
-import FinanceiroDashboard from "@/pages/financeiro/FinanceiroDashboard";
 import POSWrapper from "@/pages/POSWrapper";
 import Reservations from "@/pages/Reservations";
 import { ThemeProvider } from "next-themes";
@@ -117,11 +115,6 @@ function Router() {
       <Route path="/collaborator" component={CollaboratorDashboard} />
       <Route path="/collaborator/pos" component={POSWrapper} />
       <Route path="/collaborator/profile" component={CollaboratorProfile} />
-      
-      {/* Financeiro routes */}
-      <Route path="/financeiro" component={FinanceiroProfile} />
-      <Route path="/financeiro/profile" component={FinanceiroProfile} />
-      <Route path="/financeiro/dashboard" component={FinanceiroDashboard} />
       <Route path="/admin/dashboard" component={Dashboard} />
       <Route path="/admin/customers" component={Customers} />
       <Route path="/admin/customers/add" component={CustomersAdd} />

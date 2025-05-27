@@ -15,7 +15,7 @@ const Logo: React.FC<LogoProps> = ({ textSize = 'text-4xl', withLink = true }) =
   );
 
   if (withLink) {
-    return <Link href="/" className="hover:opacity-90 transition-opacity">{content}</Link>;
+    return <Link href="/"><a className="hover:opacity-90 transition-opacity">{content}</a></Link>;
   }
 
   return content;
