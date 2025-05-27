@@ -1,0 +1,860 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>::-webkit-scrollbar { display: none;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brazil-green': '#009c3b',
+                        'brazil-yellow': '#ffdf00',
+                        'brazil-blue': '#002776',
+                        'brazil-red': '#c8102e'
+                    },
+                    fontFamily: {
+                        'montserrat': ['Montserrat', 'sans-serif'],
+                        'opensans': ['Open Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" /><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap" /><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="bg-gray-100 font-opensans">
+
+<div id="admin-dashboard" class="flex h-[900px]">
+    <div id="sidebar" class="fixed top-0 left-0 flex flex-col w-64 h-full bg-brazil-blue">
+        <div class="p-6">
+            <div class="flex items-center">
+                <div class="flex items-center justify-center w-10 h-10 mr-2 rounded-full bg-brazil-yellow">
+                    <i class="fa-solid fa-utensils text-brazil-blue"></i>
+                </div>
+                <span class="text-xl font-semibold text-white font-montserrat">
+                    Opa que delicia
+                </span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <ul>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-chart-line text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Dashboard</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-users text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Gestão de Clientes</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-book-open text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Gestão do Menu</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-chair text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Gestão das Mesas</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-coins text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Gestão Financeira</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-credit-card text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Pagamentos</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-calendar-check text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Reservas</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+        <div class="p-4 mt-auto border-t border-blue-400">
+            <span class="flex items-center p-2 text-white rounded-lg cursor-pointer bg-brazil-blue bg-opacity-40">
+                <i class="w-6 fa-solid fa-gear text-brazil-yellow"></i>
+                <span class="ml-2 font-medium">Configurações</span>
+            </span>
+            <span class="flex items-center p-2 mt-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                <i class="w-6 fa-solid fa-right-from-bracket text-brazil-yellow"></i>
+                <span class="ml-2 font-medium">Sair</span>
+            </span>
+        </div>
+    </div>
+
+    <div id="main-content" class="flex-1 p-8 ml-64">
+        <div id="header" class="flex items-center justify-between mb-8">
+            <h1 class="text-2xl font-bold text-gray-800 font-montserrat">Configurações</h1>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="relative">
+                        <i class="text-xl text-gray-600 fa-regular fa-bell"></i>
+                        <span class="absolute flex items-center justify-center w-4 h-4 text-xs text-white rounded-full -top-1 -right-1 bg-brazil-red">3</span>
+                    </button>
+                </div>
+                <div class="flex items-center">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User Avatar" class="w-10 h-10 border-2 rounded-full border-brazil-yellow" />
+                    <div class="ml-2">
+                        <p class="text-sm font-medium text-gray-800">Carlos Silva</p>
+                        <p class="text-xs text-gray-500">Administrador</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-tabs-section" class="p-8 bg-white shadow-md rounded-xl">
+            <div id="settings-tabs" class="flex mb-8 space-x-2 overflow-x-auto border-b border-gray-200">
+                <button id="tab-1" class="px-5 py-3 -mb-px font-medium text-gray-600 border-b-4 border-transparent tab-btn hover:text-brazil-blue bg-gray-50 rounded-t-md font-montserrat" onclick="switchTab(1)">
+                    <i class="mr-2 fa-solid fa-building text-brazil-green"></i>Configurações Gerais
+                </button>
+                <button id="tab-2" class="px-5 py-3 -mb-px font-medium text-gray-600 border-b-4 border-transparent tab-btn hover:text-brazil-blue bg-gray-50 rounded-t-md font-montserrat" onclick="switchTab(2)">
+                    <i class="mr-2 fa-solid fa-globe text-brazil-yellow"></i>Configurações de Página
+                </button>
+                <button id="tab-3" class="px-5 py-3 -mb-px font-medium text-gray-600 border-b-4 border-transparent tab-btn hover:text-brazil-blue bg-gray-50 rounded-t-md font-montserrat" onclick="switchTab(3)">
+                    <i class="mr-2 fa-solid fa-calendar-check text-brazil-blue"></i>Configurações de Reservas
+                </button>
+                <button id="tab-4" class="px-5 py-3 -mb-px font-medium text-gray-600 border-b-4 border-transparent tab-btn hover:text-brazil-blue bg-gray-50 rounded-t-md font-montserrat" onclick="switchTab(4)">
+                    <i class="mr-2 fa-solid fa-credit-card text-brazil-green"></i>Configurações de Pagamento
+                </button>
+                <button id="tab-5" class="px-5 py-3 -mb-px font-medium text-gray-600 border-b-4 border-transparent tab-btn hover:text-brazil-blue bg-gray-50 rounded-t-md font-montserrat" onclick="switchTab(5)">
+                    <i class="mr-2 fa-solid fa-bell text-brazil-yellow"></i>Configuração de Notificações
+                </button>
+                <button id="tab-6" class="px-5 py-3 -mb-px font-semibold border-b-4 tab-btn text-brazil-blue border-brazil-blue bg-gray-50 rounded-t-md font-montserrat" onclick="switchTab(6)">
+                    <i class="mr-2 fa-solid fa-cash-register text-brazil-blue"></i>Configurações POS
+                </button>
+            </div>
+
+            <div id="tab-content-6" class="tab-content">
+                <div class="grid grid-cols-12 gap-6">
+                    <!-- Left side: Configuration panels -->
+                    <div class="col-span-12 lg:col-span-7">
+                        <!-- 1. Seleção de Impressora / Porta / Conexão -->
+                        <div id="printer-selection" class="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <h2 class="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                                <i class="mr-2 fa-solid fa-print text-brazil-blue"></i>
+                                Seleção de Impressora
+                            </h2>
+                            
+                            <div class="mb-4">
+                                <label class="block mb-2 text-sm font-medium text-gray-700">Impressoras Disponíveis</label>
+                                <select id="printer-select" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                    <option value="" disabled="" selected="">Selecione uma impressora</option>
+                                    <option value="printer1">EPSON TM-T20 (USB)</option>
+                                    <option value="printer2">BEMATECH MP-4200 TH (USB)</option>
+                                    <option value="printer3">DARUMA DR700 (Rede)</option>
+                                    <option value="printer4">ELGIN i9 (Bluetooth)</option>
+                                </select>
+                                <button id="refresh-printers" class="flex items-center px-3 py-1 mt-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                                    <i class="mr-1 fa-solid fa-sync-alt"></i> Atualizar Lista
+                                </button>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Tipo de Conexão</label>
+                                    <select id="connection-type" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                        <option value="usb">USB</option>
+                                        <option value="bluetooth">Bluetooth</option>
+                                        <option value="network">Rede (TCP/IP)</option>
+                                        <option value="serial">Serial (COM)</option>
+                                    </select>
+                                </div>
+                                
+                                <div id="connection-details" class="hidden">
+                                    <!-- Estes campos mudam conforme o tipo de conexão -->
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Timeout (ms)</label>
+                                    <input type="number" id="connection-timeout" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" value="5000" />
+                                </div>
+                                
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Tentativas de Reconexão</label>
+                                    <input type="number" id="connection-retries" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" value="3" />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 2. Parâmetros de Impressão -->
+                        <div id="print-parameters" class="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <h2 class="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                                <i class="mr-2 fa-solid fa-sliders text-brazil-green"></i>
+                                Parâmetros de Impressão
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Intensidade (Darkness)</label>
+                                    <div class="flex items-center">
+                                        <input type="range" id="darkness-slider" min="0" max="100" value="70" class="w-full accent-brazil-blue" />
+                                        <span id="darkness-value" class="w-8 ml-2 text-sm font-medium">70%</span>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Velocidade (mm/s)</label>
+                                    <select id="print-speed" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                        <option value="50">50 mm/s</option>
+                                        <option value="80">80 mm/s</option>
+                                        <option value="100" selected="">100 mm/s</option>
+                                        <option value="150">150 mm/s</option>
+                                        <option value="200">200 mm/s</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Avanço de Papel (mm)</label>
+                                    <input type="number" id="paper-feed" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" value="3" min="0" max="50" />
+                                </div>
+                                
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Guilhotina Automática</label>
+                                    <div class="flex items-center space-x-4">
+                                        <div class="flex items-center">
+                                            <input type="checkbox" id="auto-cutter-enabled" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                            <label for="auto-cutter-enabled" class="ml-2 text-sm text-gray-700">Ativar</label>
+                                        </div>
+                                        
+                                        <select id="cut-type" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                            <option value="full">Corte Total</option>
+                                            <option value="partial" selected="">Corte Parcial</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-700">Gaveta de Dinheiro</label>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="cash-drawer-kick" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                    <label for="cash-drawer-kick" class="ml-2 text-sm text-gray-700">Acionar gaveta após impressão</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 3. Layout e Formatação -->
+                        <div id="layout-formatting" class="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <h2 class="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                                <i class="mr-2 fa-solid fa-table-columns text-brazil-yellow"></i>
+                                Layout e Formatação
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Número de Cópias</label>
+                                    <input type="number" id="copies-number" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" value="1" min="1" max="10" />
+                                </div>
+                                
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Alinhamento Global</label>
+                                    <div class="flex space-x-2">
+                                        <button type="button" id="align-left" class="flex-1 px-3 py-2 bg-gray-100 border border-gray-300 rounded-l-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                            <i class="fa-solid fa-align-left"></i>
+                                        </button>
+                                        <button type="button" id="align-center" class="flex-1 px-3 py-2 text-white border rounded-none bg-brazil-blue border-brazil-blue focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                            <i class="fa-solid fa-align-center"></i>
+                                        </button>
+                                        <button type="button" id="align-right" class="flex-1 px-3 py-2 bg-gray-100 border border-gray-300 rounded-r-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                            <i class="fa-solid fa-align-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block mb-2 text-sm font-medium text-gray-700">Largura das Colunas</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label class="block mb-1 text-xs text-gray-500">Descrição</label>
+                                        <div class="flex items-center">
+                                            <input type="range" id="col-desc-width" min="20" max="70" value="50" class="w-full accent-brazil-blue" />
+                                            <span id="col-desc-value" class="w-8 ml-2 text-sm font-medium">50%</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block mb-1 text-xs text-gray-500">Quantidade</label>
+                                        <div class="flex items-center">
+                                            <input type="range" id="col-qty-width" min="10" max="40" value="20" class="w-full accent-brazil-blue" />
+                                            <span id="col-qty-value" class="w-8 ml-2 text-sm font-medium">20%</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block mb-1 text-xs text-gray-500">Preço</label>
+                                        <div class="flex items-center">
+                                            <input type="range" id="col-price-width" min="10" max="40" value="30" class="w-full accent-brazil-blue" />
+                                            <span id="col-price-value" class="w-8 ml-2 text-sm font-medium">30%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Espaçamento entre Itens (mm)</label>
+                                    <input type="number" id="item-spacing" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" value="1" min="0" max="10" step="0.5" />
+                                </div>
+                                
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Linhas de Destaque</label>
+                                    <select id="highlight-style" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                        <option value="none">Nenhum</option>
+                                        <option value="border" selected="">Borda</option>
+                                        <option value="shade">Sombreado</option>
+                                        <option value="dashed">Linha Pontilhada</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 4. Fonte e Charset -->
+                        <div id="font-charset" class="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <h2 class="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                                <i class="mr-2 fa-solid fa-font text-brazil-blue"></i>
+                                Fonte e Charset
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Charset</label>
+                                    <select id="charset-select" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                        <option value="CP437">CP437 (US/Internacional)</option>
+                                        <option value="CP850" selected="">CP850 (Multilíngue)</option>
+                                        <option value="CP860">CP860 (Português)</option>
+                                        <option value="CP863">CP863 (Canadense-Francês)</option>
+                                        <option value="CP865">CP865 (Nórdico)</option>
+                                        <option value="UTF8">UTF-8 (Unicode)</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Tamanho da Fonte</label>
+                                    <select id="font-size" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                        <option value="small">Pequeno</option>
+                                        <option value="medium" selected="">Médio</option>
+                                        <option value="large">Grande</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <input type="checkbox" id="accented-chars" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                    <label for="accented-chars" class="ml-2 text-sm font-medium text-gray-700">Suporte a caracteres acentuados</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="font-fallback" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                    <label for="font-fallback" class="ml-2 text-sm font-medium text-gray-700">Usar fonte secundária para caracteres não suportados</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 5. Imagens e Gráficos -->
+                        <div id="images-graphics" class="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <h2 class="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                                <i class="mr-2 fa-solid fa-image text-brazil-green"></i>
+                                Imagens e Gráficos
+                            </h2>
+                            
+                            <div class="mb-4">
+                                <label class="block mb-2 text-sm font-medium text-gray-700">Logo</label>
+                                <div class="flex flex-col space-y-2 md:flex-row md:items-center md:space-y-0 md:space-x-4">
+                                    <input type="file" id="logo-upload" class="hidden" accept="image/*" />
+                                    <label for="logo-upload" class="inline-flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-md cursor-pointer hover:bg-gray-200">
+                                        <i class="mr-2 fa-solid fa-upload"></i> Carregar Logo
+                                    </label>
+                                    <span id="logo-filename" class="text-sm text-gray-500">Nenhum arquivo selecionado</span>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Posição da Logo</label>
+                                    <select id="logo-position" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                        <option value="top-left">Superior Esquerdo</option>
+                                        <option value="top-center" selected="">Superior Centro</option>
+                                        <option value="top-right">Superior Direito</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Escala da Logo (%)</label>
+                                    <input type="number" id="logo-scale" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" value="100" min="10" max="200" />
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Código de Barras</label>
+                                    <select id="barcode-type" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                        <option value="none">Nenhum</option>
+                                        <option value="EAN13" selected="">EAN-13</option>
+                                        <option value="CODE128">CODE-128</option>
+                                        <option value="CODE39">CODE-39</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">QR Code de Opinião</label>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="qrcode-enabled" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                        <label for="qrcode-enabled" class="ml-2 text-sm text-gray-700">Incluir QR Code</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="qrcode-settings" class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Tamanho QR (px)</label>
+                                    <input type="number" id="qrcode-size" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" value="120" min="80" max="200" />
+                                </div>
+                                
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Margem QR (px)</label>
+                                    <input type="number" id="qrcode-margin" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" value="2" min="0" max="10" />
+                                </div>
+                                
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Correção de Erros</label>
+                                    <select id="qrcode-error-level" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                        <option value="L">Baixa (7%)</option>
+                                        <option value="M" selected="">Média (15%)</option>
+                                        <option value="Q">Alta (25%)</option>
+                                        <option value="H">Máxima (30%)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 6. Cabeçalho e Rodapé -->
+                        <div id="header-footer" class="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <h2 class="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                                <i class="mr-2 fa-solid fa-file-lines text-brazil-yellow"></i>
+                                Cabeçalho e Rodapé
+                            </h2>
+                            
+                            <div class="mb-4">
+                                <label class="block mb-2 text-sm font-medium text-gray-700">Formato de Data/Hora</label>
+                                <select id="timestamp-format" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                    <option value="short">DD/MM/YYYY HH:MM</option>
+                                    <option value="medium" selected="">DD de Mês de YYYY às HH:MM</option>
+                                    <option value="long">Dia da semana, DD de Mês de YYYY às HH:MM</option>
+                                </select>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                                <div>
+                                    <div class="flex items-center mb-2">
+                                        <input type="checkbox" id="show-operator" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                        <label for="show-operator" class="ml-2 text-sm font-medium text-gray-700">Exibir Dados do Operador</label>
+                                    </div>
+                                    <input type="text" id="operator-format" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" value="Atendente: {nome} ({id})" />
+                                </div>
+                                
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Mensagem Promocional</label>
+                                    <input type="text" id="promo-message" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" value="Volte sempre! Siga-nos no Instagram @opaquedelicia" />
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-700">Rodapé Customizado</label>
+                                <textarea id="custom-footer" class="w-full h-20 px-4 py-2 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-brazil-blue focus:outline-none" placeholder="Digite o texto para o rodapé personalizado">Opa que delicia - CNPJ: 12.345.678/0001-99
+Rua da Gastronomia, 123 - São Paulo, SP
+Tel: (11) 98765-4321 | www.opaquedelicia.com</textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- 7. Campos Personalizados de Recibo -->
+                        <div id="custom-receipt-fields" class="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <h2 class="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                                <i class="mr-2 fa-solid fa-list-check text-brazil-blue"></i>
+                                Campos Personalizados de Recibo
+                            </h2>
+                            
+                            <div class="mb-4">
+                                <label class="block mb-2 text-sm font-medium text-gray-700">Campos a Exibir</label>
+                                <div class="grid grid-cols-2 gap-3 md:grid-cols-3">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="field-items" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                        <label for="field-items" class="ml-2 text-sm text-gray-700">Itens</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="field-discounts" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                        <label for="field-discounts" class="ml-2 text-sm text-gray-700">Descontos</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="field-taxes" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                        <label for="field-taxes" class="ml-2 text-sm text-gray-700">Taxas</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="field-subtotal" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                        <label for="field-subtotal" class="ml-2 text-sm text-gray-700">Subtotal</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="field-total" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                        <label for="field-total" class="ml-2 text-sm text-gray-700">Total</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="field-payment" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                        <label for="field-payment" class="ml-2 text-sm text-gray-700">Forma de Pagamento</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block mb-2 text-sm font-medium text-gray-700">Mensagens Fixas</label>
+                                <div class="grid grid-cols-1 gap-3">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="msg-thanks" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                        <label for="msg-thanks" class="ml-2 text-sm text-gray-700">Obrigado pela preferência!</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="msg-nf" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                        <label for="msg-nf" class="ml-2 text-sm text-gray-700">Não é documento fiscal</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="msg-custom" class="w-5 h-5 rounded form-checkbox text-brazil-blue" />
+                                        <label for="msg-custom" class="ml-2 text-sm text-gray-700">Mensagem personalizada:</label>
+                                    </div>
+                                    <input type="text" id="custom-message" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" placeholder="Digite sua mensagem personalizada" />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 8. Testes e Diagnósticos -->
+                        <div id="tests-diagnostics" class="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <h2 class="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                                <i class="mr-2 fa-solid fa-vial text-brazil-red"></i>
+                                Testes e Diagnósticos
+                            </h2>
+                            
+                            <div class="flex flex-col space-y-3 md:flex-row md:items-center md:space-y-0 md:space-x-4">
+                                <button id="print-test" class="flex items-center px-4 py-2 text-white rounded-md bg-brazil-blue hover:bg-blue-700">
+                                    <i class="mr-2 fa-solid fa-print"></i> Imprimir Página de Teste
+                                </button>
+                                
+                                <button id="print-status" class="flex items-center px-4 py-2 text-white rounded-md bg-brazil-green hover:bg-green-700">
+                                    <i class="mr-2 fa-solid fa-circle-info"></i> Relatório de Status ESC/POS
+                                </button>
+                                
+                                <button id="check-connection" class="flex items-center px-4 py-2 font-medium rounded-md bg-brazil-yellow text-brazil-blue hover:bg-yellow-400">
+                                    <i class="mr-2 fa-solid fa-plug"></i> Verificar Conexão
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 9. Ações Pós-Impressão -->
+                        <div id="post-print-actions" class="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <h2 class="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                                <i class="mr-2 fa-solid fa-right-long text-brazil-green"></i>
+                                Ações Pós-Impressão
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                                <div>
+                                    <div class="flex items-center mb-2">
+                                        <input type="checkbox" id="beep-after-print" class="w-5 h-5 rounded form-checkbox text-brazil-blue" />
+                                        <label for="beep-after-print" class="ml-2 text-sm font-medium text-gray-700">Beep ao fim da impressão</label>
+                                    </div>
+                                    
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="send-pdf-email" class="w-5 h-5 rounded form-checkbox text-brazil-blue" />
+                                        <label for="send-pdf-email" class="ml-2 text-sm font-medium text-gray-700">Enviar PDF por e-mail</label>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium text-gray-700">Gaveta de Dinheiro</label>
+                                    <select id="cash-drawer-timing" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                        <option value="before">Abrir antes do corte</option>
+                                        <option value="after" selected="">Abrir depois do corte</option>
+                                        <option value="none">Não abrir automaticamente</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 10. Segurança e Auditoria -->
+                        <div id="security-audit" class="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <h2 class="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                                <i class="mr-2 fa-solid fa-shield-halved text-brazil-blue"></i>
+                                Segurança e Auditoria
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                                <div>
+                                    <div class="flex items-center mb-2">
+                                        <input type="checkbox" id="require-auth" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                        <label for="require-auth" class="ml-2 text-sm font-medium text-gray-700">Exigir autenticação para alterações</label>
+                                    </div>
+                                    
+                                    <div id="auth-password-field" class="mt-2">
+                                        <label class="block mb-1 text-sm font-medium text-gray-700">Senha de Administrador</label>
+                                        <input type="password" id="admin-password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" placeholder="********" />
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex items-center mb-2">
+                                        <input type="checkbox" id="enable-audit" class="w-5 h-5 rounded form-checkbox text-brazil-blue" checked="" />
+                                        <label for="enable-audit" class="ml-2 text-sm font-medium text-gray-700">Registrar logs de auditoria</label>
+                                    </div>
+                                    
+                                    <div id="audit-retention" class="mt-2">
+                                        <label class="block mb-1 text-sm font-medium text-gray-700">Retenção de Logs (dias)</label>
+                                        <input type="number" id="log-retention" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" value="90" min="30" max="365" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 11. Perfis de Configuração -->
+                        <div id="config-profiles" class="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <h2 class="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                                <i class="mr-2 fa-solid fa-user-gear text-brazil-yellow"></i>
+                                Perfis de Configuração
+                            </h2>
+                            
+                            <div class="flex flex-col mb-4 space-y-3 md:flex-row md:items-center md:space-y-0 md:space-x-4">
+                                <button id="export-profile" class="flex items-center px-4 py-2 text-white rounded-md bg-brazil-blue hover:bg-blue-700">
+                                    <i class="mr-2 fa-solid fa-file-export"></i> Exportar Perfil
+                                </button>
+                                
+                                <button id="import-profile" class="flex items-center px-4 py-2 text-white rounded-md bg-brazil-green hover:bg-green-700">
+                                    <i class="mr-2 fa-solid fa-file-import"></i> Importar Perfil
+                                </button>
+                                
+                                <input type="file" id="profile-upload" class="hidden" accept=".json" />
+                            </div>
+                            
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-700">Perfis Salvos</label>
+                                <select id="saved-profiles" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none">
+                                    <option value="default" selected="">Perfil Padrão</option>
+                                    <option value="compact">Recibo Compacto</option>
+                                    <option value="detailed">Recibo Detalhado</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Salvar Configurações -->
+                        <div class="flex justify-end">
+                            <button id="save-settings" class="flex items-center px-6 py-3 font-bold text-white transition-colors rounded-lg shadow-md bg-brazil-green hover:bg-green-700">
+                                <i class="mr-2 fa-solid fa-floppy-disk"></i> Salvar Configurações
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Right side: Preview Panel -->
+                    <div class="col-span-12 lg:col-span-5">
+                        <div id="preview-panel" class="sticky top-4">
+                            <div class="p-5 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                                <h2 class="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                                    <i class="mr-2 fa-solid fa-eye text-brazil-blue"></i>
+                                    Pré-visualização em Tempo Real
+                                </h2>
+                                
+                                <div id="receipt-preview" class="p-4 mx-auto bg-white border border-gray-300 rounded-lg" style="width: 300px; height: 500px; overflow-y: auto; font-family: 'Courier New', monospace;">
+                                    <div class="mb-4 text-center">
+                                        <div class="mb-1 text-xs">LOGO</div>
+                                        <div class="font-bold">OPA QUE DELICIA</div>
+                                        <div class="text-xs">CNPJ: 12.345.678/0001-99</div>
+                                        <div class="text-xs">Rua da Gastronomia, 123 - São Paulo, SP</div>
+                                        <div class="text-xs">Tel: (11) 98765-4321</div>
+                                    </div>
+                                    
+                                    <div class="py-2 my-2 text-xs border-t border-b border-gray-400 border-dashed">
+                                        <div>CUPOM NÃO FISCAL</div>
+                                        <div>Data: 25/05/2023 15:30:45</div>
+                                        <div>Atendente: Carlos Silva (ID: 1234)</div>
+                                        <div>Mesa: 08 | Comanda: 4567</div>
+                                    </div>
+                                    
+                                    <div class="my-3 text-xs">
+                                        <div class="flex justify-between mb-1 font-bold">
+                                            <span style="width: 50%">DESCRIÇÃO</span>
+                                            <span style="width: 20%" class="text-center">QTD</span>
+                                            <span style="width: 30%" class="text-right">VALOR</span>
+                                        </div>
+                                        
+                                        <div class="flex justify-between py-1 border-b border-gray-300 border-dotted">
+                                            <span style="width: 50%">Feijoada Completa</span>
+                                            <span style="width: 20%" class="text-center">1</span>
+                                            <span style="width: 30%" class="text-right">R$ 45,90</span>
+                                        </div>
+                                        
+                                        <div class="flex justify-between py-1 border-b border-gray-300 border-dotted">
+                                            <span style="width: 50%">Caipirinha de Limão</span>
+                                            <span style="width: 20%" class="text-center">2</span>
+                                            <span style="width: 30%" class="text-right">R$ 29,80</span>
+                                        </div>
+                                        
+                                        <div class="flex justify-between py-1 border-b border-gray-300 border-dotted">
+                                            <span style="width: 50%">Pudim de Leite</span>
+                                            <span style="width: 20%" class="text-center">1</span>
+                                            <span style="width: 30%" class="text-right">R$ 15,90</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="my-3 text-xs">
+                                        <div class="flex justify-between py-1">
+                                            <span>Subtotal:</span>
+                                            <span>R$ 91,60</span>
+                                        </div>
+                                        <div class="flex justify-between py-1">
+                                            <span>Taxa de Serviço (10%):</span>
+                                            <span>R$ 9,16</span>
+                                        </div>
+                                        <div class="flex justify-between py-1 font-bold">
+                                            <span>TOTAL:</span>
+                                            <span>R$ 100,76</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="py-2 my-2 text-xs border-t border-b border-gray-400 border-dashed">
+                                        <div>Forma de Pagamento: Cartão de Crédito</div>
+                                        <div>Valor Pago: R$ 100,76</div>
+                                    </div>
+                                    
+                                    <div class="my-3 text-xs text-center">
+                                        <div class="mb-2">OBRIGADO PELA PREFERÊNCIA!</div>
+                                        <div class="mb-2">Volte sempre! Siga-nos no Instagram @opaquedelicia</div>
+                                        <div id="qrcode-preview" class="mx-auto my-2" style="width: 100px; height: 100px;"></div>
+                                        <div>Avalie nosso atendimento</div>
+                                    </div>
+                                    
+                                    <div class="pt-2 mt-4 text-xs text-center border-t border-gray-300">
+                                        <div>www.opaquedelicia.com</div>
+                                        <div>*** DOCUMENTO SEM VALOR FISCAL ***</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start px-4 py-3 border-l-4 rounded-lg bg-brazil-yellow/20 border-brazil-yellow">
+                                <i class="mt-1 mr-3 fa-solid fa-lightbulb text-brazil-yellow"></i>
+                                <div>
+                                    <p class="mb-1 text-sm font-semibold text-gray-800">Dica:</p>
+                                    <p class="text-sm text-gray-700">As alterações feitas nas configurações são refletidas automaticamente na pré-visualização. Experimente ajustar as configurações para ver como ficará seu recibo antes de imprimir.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Funções para alternar entre as abas
+    function switchTab(tabNumber) {
+        // Ocultar todos os conteúdos
+        document.querySelectorAll('.tab-content').forEach(content =&gt; {
+            content.classList.add('hidden');
+        });
+        
+        // Remover estilo ativo de todas as abas
+        document.querySelectorAll('.tab-btn').forEach(tab =&gt; {
+            tab.classList.remove('text-brazil-blue', 'border-brazil-blue', 'font-semibold');
+            tab.classList.add('text-gray-600', 'border-transparent', 'font-medium');
+        });
+        
+        // Mostrar o conteúdo da aba selecionada
+        document.getElementById(`tab-content-${tabNumber}`).classList.remove('hidden');
+        
+        // Adicionar estilo ativo à aba selecionada
+        document.getElementById(`tab-${tabNumber}`).classList.remove('text-gray-600', 'border-transparent', 'font-medium');
+        document.getElementById(`tab-${tabNumber}`).classList.add('text-brazil-blue', 'border-brazil-blue', 'font-semibold');
+    }
+    
+    // Código para gerenciar o tipo de conexão
+    document.getElementById('connection-type').addEventListener('change', function() {
+        const connectionDetails = document.getElementById('connection-details');
+        connectionDetails.innerHTML = '';
+        connectionDetails.classList.remove('hidden');
+        
+        switch(this.value) {
+            case 'usb':
+                connectionDetails.innerHTML = `
+                    &lt;label class="block mb-2 text-sm font-medium text-gray-700"&gt;Porta USB&lt;/label&gt;
+                    &lt;select class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none"&gt;
+                        &lt;option value="auto" selected&gt;Detectar automaticamente&lt;/option&gt;
+                        &lt;option value="usb1"&gt;USB001&lt;/option&gt;
+                        &lt;option value="usb2"&gt;USB002&lt;/option&gt;
+                    &lt;/select&gt;
+                `;
+                break;
+            case 'bluetooth':
+                connectionDetails.innerHTML = `
+                    &lt;label class="block mb-2 text-sm font-medium text-gray-700"&gt;Dispositivo Bluetooth&lt;/label&gt;
+                    &lt;select class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none"&gt;
+                        &lt;option value="" disabled selected&gt;Selecione um dispositivo&lt;/option&gt;
+                    &lt;/select&gt;
+                    &lt;button class="flex items-center px-3 py-1 mt-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"&gt;
+                        &lt;i class="mr-1 fa-solid fa-magnifying-glass"&gt;&lt;/i&gt; Buscar dispositivos
+                    &lt;/button&gt;
+                `;
+                break;
+            case 'network':
+                connectionDetails.innerHTML = `
+                    &lt;label class="block mb-2 text-sm font-medium text-gray-700"&gt;Endereço IP&lt;/label&gt;
+                    &lt;input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" placeholder="192.168.1.100"&gt;
+                    &lt;div class="mt-2"&gt;
+                        &lt;label class="block mb-2 text-sm font-medium text-gray-700"&gt;Porta&lt;/label&gt;
+                        &lt;input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brazil-blue focus:outline-none" value="9100"&gt;
+                    &lt;/div&gt;
+                `;
+                break;
+            case 'serial':
+                connectionDetails.innerHTML = `
+                    &lt;label class="block mb-2 text-sm font-medium text-gray-700"&gt;Porta COM&lt;/label&gt;
+                    &lt;select class="w-full px-4 py-2 border border-gray</script></body></html>

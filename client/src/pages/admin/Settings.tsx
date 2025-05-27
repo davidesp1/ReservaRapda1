@@ -805,122 +805,274 @@ const Settings: React.FC = () => {
             )}
 
             {activeTab === 6 && (
-              <div>
-                <form id="pos-settings-form" className="space-y-8" onSubmit={handleSaveSettings}>
-                  <div className="px-6 py-4 mb-4 border-l-4 rounded-lg" style={{ backgroundColor: 'rgba(0, 39, 118, 0.05)', borderColor: '#002776' }}>
-                    <div className="flex items-center mb-4">
-                      <i className="mr-3 text-lg fa-solid fa-print" style={{ color: '#002776' }}></i>
-                      <span className="text-lg font-semibold font-montserrat" style={{ color: '#002776' }}>Configurações de Impressora</span>
+              <div className="grid grid-cols-12 gap-6">
+                {/* Left side: Configuration panels */}
+                <div className="col-span-12 lg:col-span-7">
+                  {/* 1. Seleção de Impressora / Porta / Conexão */}
+                  <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                      <i className="mr-2 fa-solid fa-print" style={{ color: '#002776' }}></i>
+                      Seleção de Impressora
+                    </h2>
+                    
+                    <div className="mb-4">
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Impressoras Disponíveis</label>
+                      <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                        <option value="" disabled selected>Selecione uma impressora</option>
+                        <option value="printer1">EPSON TM-T20 (USB)</option>
+                        <option value="printer2">BEMATECH MP-4200 TH (USB)</option>
+                        <option value="printer3">DARUMA DR700 (Rede)</option>
+                        <option value="printer4">ELGIN i9 (Bluetooth)</option>
+                      </select>
+                      <button className="flex items-center px-3 py-1 mt-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                        <i className="mr-1 fa-solid fa-sync-alt"></i> Atualizar Lista
+                      </button>
                     </div>
-                    <div className="grid items-end grid-cols-1 gap-8 md:grid-cols-3">
+                    
+                    <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
                       <div>
-                        <label htmlFor="printer-select" className="block mb-2 text-sm font-semibold text-gray-700 font-montserrat">Selecionar Impressora</label>
-                        <select 
-                          id="printer-select" 
-                          className="w-full px-4 py-3 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:outline-none bg-gray-50"
-                        >
-                          <option value="">Selecione...</option>
-                          <option value="printer1">Impressora 1</option>
-                          <option value="printer2">Impressora 2</option>
-                          <option value="printer3">Impressora 3</option>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Tipo de Conexão</label>
+                        <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                          <option value="usb">USB</option>
+                          <option value="bluetooth">Bluetooth</option>
+                          <option value="network">Rede (TCP/IP)</option>
+                          <option value="serial">Serial (COM)</option>
                         </select>
                       </div>
-                      <div className="flex gap-4 mt-6 md:mt-0">
-                        <button 
-                          type="button" 
-                          className="flex items-center px-4 py-2 text-base font-bold text-white transition-colors rounded-lg shadow hover:bg-green-700 font-montserrat"
-                          style={{ backgroundColor: '#009c3b' }}
-                        >
-                          <i className="mr-2 fa-solid fa-print"></i>
-                          Testar Impressão
-                        </button>
-                        <button 
-                          type="button" 
-                          className="flex items-center px-4 py-2 text-base font-bold transition-colors rounded-lg shadow hover:bg-yellow-400 font-montserrat"
-                          style={{ backgroundColor: '#ffdf00', color: '#002776' }}
-                        >
-                          <i className="mr-2 fa-solid fa-floppy-disk"></i>
-                          Salvar Impressora
-                        </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Timeout (ms)</label>
+                        <input type="number" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" defaultValue="5000" />
+                      </div>
+                      
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Tentativas de Reconexão</label>
+                        <input type="number" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" defaultValue="3" />
                       </div>
                     </div>
                   </div>
                   
-                  <div className="px-6 py-4 mb-4 border-l-4 rounded-lg" style={{ backgroundColor: 'rgba(255, 223, 0, 0.1)', borderColor: '#ffdf00' }}>
-                    <div className="flex items-center mb-4">
-                      <i className="mr-3 text-lg fa-solid fa-receipt" style={{ color: '#ffdf00' }}></i>
-                      <span className="text-lg font-semibold font-montserrat" style={{ color: '#ffdf00' }}>Conteúdo do Recibo</span>
+                  {/* 2. Parâmetros de Impressão */}
+                  <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                      <i className="mr-2 fa-solid fa-sliders" style={{ color: '#009c3b' }}></i>
+                      Parâmetros de Impressão
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Intensidade (Darkness)</label>
+                        <div className="flex items-center">
+                          <input type="range" min="0" max="100" defaultValue="70" className="w-full" style={{ accentColor: '#002776' }} />
+                          <span className="w-8 ml-2 text-sm font-medium">70%</span>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Velocidade (mm/s)</label>
+                        <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                          <option value="50">50 mm/s</option>
+                          <option value="80">80 mm/s</option>
+                          <option value="100" selected>100 mm/s</option>
+                          <option value="150">150 mm/s</option>
+                          <option value="200">200 mm/s</option>
+                        </select>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
-                      <div className="flex items-center space-x-2">
-                        <input 
-                          type="checkbox" 
-                          id="recibo-itens" 
-                          className="w-5 h-5 border border-gray-300 rounded-md"
-                          style={{ accentColor: '#009c3b' }}
-                        />
-                        <label htmlFor="recibo-itens" className="text-sm font-semibold text-gray-700 font-montserrat">Itens do pedido</label>
+                    
+                    <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Avanço de Papel (mm)</label>
+                        <input type="number" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" defaultValue="3" min="0" max="50" />
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <input 
-                          type="checkbox" 
-                          id="recibo-totais" 
-                          className="w-5 h-5 border border-gray-300 rounded-md"
-                          style={{ accentColor: '#ffdf00' }}
-                        />
-                        <label htmlFor="recibo-totais" className="text-sm font-semibold text-gray-700 font-montserrat">Totais</label>
+                      
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Guilhotina Automática</label>
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center">
+                            <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                            <label className="ml-2 text-sm text-gray-700">Ativar</label>
+                          </div>
+                          
+                          <select className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                            <option value="full">Corte Total</option>
+                            <option value="partial" selected>Corte Parcial</option>
+                          </select>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <input 
-                          type="checkbox" 
-                          id="recibo-forma" 
-                          className="w-5 h-5 border border-gray-300 rounded-md"
-                          style={{ accentColor: '#002776' }}
-                        />
-                        <label htmlFor="recibo-forma" className="text-sm font-semibold text-gray-700 font-montserrat">Forma de pagamento</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input 
-                          type="checkbox" 
-                          id="recibo-cliente" 
-                          className="w-5 h-5 border border-gray-300 rounded-md"
-                          style={{ accentColor: '#009c3b' }}
-                        />
-                        <label htmlFor="recibo-cliente" className="text-sm font-semibold text-gray-700 font-montserrat">Dados do cliente</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input 
-                          type="checkbox" 
-                          id="recibo-restaurante" 
-                          className="w-5 h-5 border border-gray-300 rounded-md"
-                          style={{ accentColor: '#ffdf00' }}
-                        />
-                        <label htmlFor="recibo-restaurante" className="text-sm font-semibold text-gray-700 font-montserrat">Dados do restaurante</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input 
-                          type="checkbox" 
-                          id="recibo-datahora" 
-                          className="w-5 h-5 border border-gray-300 rounded-md"
-                          style={{ accentColor: '#002776' }}
-                        />
-                        <label htmlFor="recibo-datahora" className="text-sm font-semibold text-gray-700 font-montserrat">Data e hora</label>
+                    </div>
+                    
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Gaveta de Dinheiro</label>
+                      <div className="flex items-center">
+                        <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                        <label className="ml-2 text-sm text-gray-700">Acionar gaveta após impressão</label>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex justify-end pt-4">
+                  {/* 3. Layout e Formatação */}
+                  <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                      <i className="mr-2 fa-solid fa-table-columns" style={{ color: '#ffdf00' }}></i>
+                      Layout e Formatação
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Número de Cópias</label>
+                        <input type="number" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" defaultValue="1" min="1" max="10" />
+                      </div>
+                      
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Alinhamento Global</label>
+                        <div className="flex space-x-2">
+                          <button type="button" className="flex-1 px-3 py-2 bg-gray-100 border border-gray-300 rounded-l-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                            <i className="fa-solid fa-align-left"></i>
+                          </button>
+                          <button type="button" className="flex-1 px-3 py-2 text-white rounded-none border" style={{ backgroundColor: '#002776', borderColor: '#002776' }}>
+                            <i className="fa-solid fa-align-center"></i>
+                          </button>
+                          <button type="button" className="flex-1 px-3 py-2 bg-gray-100 border border-gray-300 rounded-r-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                            <i className="fa-solid fa-align-right"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 4. Testes e Diagnósticos */}
+                  <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                      <i className="mr-2 fa-solid fa-vial" style={{ color: '#c8102e' }}></i>
+                      Testes e Diagnósticos
+                    </h2>
+                    
+                    <div className="flex flex-col space-y-3 md:flex-row md:items-center md:space-y-0 md:space-x-4">
+                      <button className="flex items-center px-4 py-2 text-white rounded-md hover:bg-blue-700" style={{ backgroundColor: '#002776' }}>
+                        <i className="mr-2 fa-solid fa-print"></i> Imprimir Página de Teste
+                      </button>
+                      
+                      <button className="flex items-center px-4 py-2 text-white rounded-md hover:bg-green-700" style={{ backgroundColor: '#009c3b' }}>
+                        <i className="mr-2 fa-solid fa-circle-info"></i> Relatório de Status ESC/POS
+                      </button>
+                      
+                      <button className="flex items-center px-4 py-2 font-medium rounded-md hover:bg-yellow-400" style={{ backgroundColor: '#ffdf00', color: '#002776' }}>
+                        <i className="mr-2 fa-solid fa-plug"></i> Verificar Conexão
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Salvar Configurações */}
+                  <div className="flex justify-end">
                     <button 
-                      type="submit" 
-                      className="flex items-center px-6 py-3 text-base font-bold text-white transition-colors rounded-lg shadow hover:bg-green-700 font-montserrat"
+                      className="flex items-center px-6 py-3 font-bold text-white transition-colors rounded-lg shadow-md hover:bg-green-700" 
                       style={{ backgroundColor: '#009c3b' }}
+                      onClick={handleSaveSettings}
                       disabled={isSubmitting}
                     >
-                      <i className="mr-2 fa-solid fa-floppy-disk"></i>
+                      <i className="mr-2 fa-solid fa-floppy-disk"></i> 
                       {isSubmitting ? 'Salvando...' : 'Salvar Configurações'}
                     </button>
                   </div>
-                </form>
+                </div>
+                
+                {/* Right side: Preview Panel */}
+                <div className="col-span-12 lg:col-span-5">
+                  <div className="sticky top-4">
+                    <div className="p-5 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                      <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                        <i className="mr-2 fa-solid fa-eye" style={{ color: '#002776' }}></i>
+                        Pré-visualização em Tempo Real
+                      </h2>
+                      
+                      <div className="p-4 mx-auto bg-white border border-gray-300 rounded-lg" style={{ width: '300px', height: '500px', overflowY: 'auto', fontFamily: 'Courier New, monospace' }}>
+                        <div className="mb-4 text-center">
+                          <div className="mb-1 text-xs">LOGO</div>
+                          <div className="font-bold">OPA QUE DELICIA</div>
+                          <div className="text-xs">CNPJ: 12.345.678/0001-99</div>
+                          <div className="text-xs">Rua da Gastronomia, 123 - São Paulo, SP</div>
+                          <div className="text-xs">Tel: (11) 98765-4321</div>
+                        </div>
+                        
+                        <div className="py-2 my-2 text-xs border-t border-b border-gray-400 border-dashed">
+                          <div>CUPOM NÃO FISCAL</div>
+                          <div>Data: 27/05/2025 15:30:45</div>
+                          <div>Atendente: Carlos Silva (ID: 1234)</div>
+                          <div>Mesa: 08 | Comanda: 4567</div>
+                        </div>
+                        
+                        <div className="my-3 text-xs">
+                          <div className="flex justify-between mb-1 font-bold">
+                            <span style={{ width: '50%' }}>DESCRIÇÃO</span>
+                            <span style={{ width: '20%' }} className="text-center">QTD</span>
+                            <span style={{ width: '30%' }} className="text-right">VALOR</span>
+                          </div>
+                          
+                          <div className="flex justify-between py-1 border-b border-gray-300 border-dotted">
+                            <span style={{ width: '50%' }}>Feijoada Completa</span>
+                            <span style={{ width: '20%' }} className="text-center">1</span>
+                            <span style={{ width: '30%' }} className="text-right">R$ 45,90</span>
+                          </div>
+                          
+                          <div className="flex justify-between py-1 border-b border-gray-300 border-dotted">
+                            <span style={{ width: '50%' }}>Caipirinha de Limão</span>
+                            <span style={{ width: '20%' }} className="text-center">2</span>
+                            <span style={{ width: '30%' }} className="text-right">R$ 29,80</span>
+                          </div>
+                          
+                          <div className="flex justify-between py-1 border-b border-gray-300 border-dotted">
+                            <span style={{ width: '50%' }}>Pudim de Leite</span>
+                            <span style={{ width: '20%' }} className="text-center">1</span>
+                            <span style={{ width: '30%' }} className="text-right">R$ 15,90</span>
+                          </div>
+                        </div>
+                        
+                        <div className="my-3 text-xs">
+                          <div className="flex justify-between py-1">
+                            <span>Subtotal:</span>
+                            <span>R$ 91,60</span>
+                          </div>
+                          <div className="flex justify-between py-1">
+                            <span>Taxa de Serviço (10%):</span>
+                            <span>R$ 9,16</span>
+                          </div>
+                          <div className="flex justify-between py-1 font-bold">
+                            <span>TOTAL:</span>
+                            <span>R$ 100,76</span>
+                          </div>
+                        </div>
+                        
+                        <div className="py-2 my-2 text-xs border-t border-b border-gray-400 border-dashed">
+                          <div>Forma de Pagamento: Cartão de Crédito</div>
+                          <div>Valor Pago: R$ 100,76</div>
+                        </div>
+                        
+                        <div className="my-3 text-xs text-center">
+                          <div className="mb-2">OBRIGADO PELA PREFERÊNCIA!</div>
+                          <div className="mb-2">Volte sempre! Siga-nos no Instagram @opaquedelicia</div>
+                          <div className="mx-auto my-2 bg-gray-200" style={{ width: '100px', height: '100px' }}></div>
+                          <div>Avalie nosso atendimento</div>
+                        </div>
+                        
+                        <div className="pt-2 mt-4 text-xs text-center border-t border-gray-300">
+                          <div>www.opaquedelicia.com</div>
+                          <div>*** DOCUMENTO SEM VALOR FISCAL ***</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start px-4 py-3 border-l-4 rounded-lg" style={{ backgroundColor: 'rgba(255, 223, 0, 0.2)', borderColor: '#ffdf00' }}>
+                      <i className="mt-1 mr-3 fa-solid fa-lightbulb" style={{ color: '#ffdf00' }}></i>
+                      <div>
+                        <p className="mb-1 text-sm font-semibold text-gray-800">Dica:</p>
+                        <p className="text-sm text-gray-700">As alterações feitas nas configurações são refletidas automaticamente na pré-visualização. Experimente ajustar as configurações para ver como ficará seu recibo antes de imprimir.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
