@@ -1883,129 +1883,136 @@ router.get("/api/settings/pos/export-profile", isAuthenticated, async (req, res)
 
 // Rota para listar impressoras disponíveis no sistema
 router.get("/api/settings/pos/printers", isAuthenticated, async (req, res) => {
+  console.log("🖨️ [VARREDURA] INICIANDO DETECÇÃO DE IMPRESSORAS");
+  
   try {
-    console.log("🖨️ [VARREDURA] Iniciando detecção de impressoras do sistema...");
-    
     const platform = process.platform;
-    console.log(`🔍 Sistema detectado: ${platform}`);
+    console.log(`🔍 [SISTEMA] Plataforma detectada: ${platform}`);
     
-    let availablePrinters: any[] = [];
+    let detectedPrinters: any[] = [];
+    const { exec } = require('child_process');
     
-    // Detectar impressoras reais do sistema operacional
-    console.log("🔍 [DETECÇÃO] Executando varredura completa do sistema...");
-    
-    try {
-      const { exec } = require('child_process');
-      const { promisify } = require('util');
-      const execAsync = promisify(exec);
-      
-      // Comandos específicos para detectar impressoras por plataforma
-      let detectionCommands: string[] = [];
-      
-      if (platform === 'linux') {
-        detectionCommands = [
-          'lpstat -p -d', // Lista impressoras CUPS
-          'lpstat -v', // Lista dispositivos de impressora
-          'cat /proc/sys/dev/parport/*/name 2>/dev/null || echo "No parallel printers"', // Impressoras paralelas
-          'ls /dev/usb/lp* 2>/dev/null || echo "No USB printers"', // Impressoras USB
-          'lsusb | grep -i printer || echo "No USB printer devices"', // Dispositivos USB de impressão
-        ];
-      } else if (platform === 'darwin') {
-        detectionCommands = [
-          'lpstat -p', // Lista impressoras macOS
-          'system_profiler SPPrintersDataType', // Informações detalhadas das impressoras
-        ];
-      } else if (platform === 'win32') {
-        detectionCommands = [
-          'wmic printer get name,status,drivername,portname /format:table',
-          'powershell "Get-Printer | Select-Object Name,DriverName,PortName,PrinterStatus"'
-        ];
-      }
-      
-      console.log(`📋 [DETECÇÃO] Executando ${detectionCommands.length} comandos de detecção...`);
-      
-      for (let i = 0; i < detectionCommands.length; i++) {
-        const command = detectionCommands[i];
-        try {
-          console.log(`🔧 [CMD ${i+1}] Executando: ${command}`);
-          const { stdout, stderr } = await execAsync(command);
-          
-          console.log(`✅ [CMD ${i+1}] Saída:`, stdout.trim().substring(0, 200));
-          if (stderr) console.log(`⚠️ [CMD ${i+1}] Erro:`, stderr.trim());
-          
-          // Processar resultados específicos por comando
-          if (stdout && stdout.trim() && !stdout.includes('No ') && !stdout.includes('not found')) {
-            const lines = stdout.split('\n').filter((line: string) => line.trim());
-            
-            lines.forEach((line: string, index: number) => {
-              let printerInfo = null;
-              
-              // Parsing para lpstat -p
-              if (line.includes('printer ') && platform !== 'win32') {
-                const match = line.match(/printer\s+([^\s]+)\s+(.+)/);
-                if (match) {
-                  printerInfo = {
-                    id: `system_${match[1]}_${Date.now()}`,
-                    name: match[1],
-                    status: match[2].includes('disabled') ? 'offline' : 'online',
-                    description: match[2]
-                  };
-                }
-              }
-              
-              // Parsing para lpstat -v
-              else if (line.includes('device for ')) {
-                const match = line.match(/device for ([^:]+):\s*(.+)/);
-                if (match) {
-                  printerInfo = {
-                    id: `device_${match[1]}_${Date.now()}`,
-                    name: `${match[1]} (${match[2]})`,
-                    status: 'online',
-                    device: match[2]
-                  };
-                }
-              }
-              
-              // Parsing para Windows WMIC
-              else if (platform === 'win32' && line.includes('Name') && !line.includes('DriverName')) {
-                // Skip header
-              } else if (platform === 'win32' && line.trim() && !line.includes('No Instance')) {
-                const parts = line.split(/\s{2,}/); // Split por múltiplos espaços
-                if (parts.length >= 2) {
-                  printerInfo = {
-                    id: `windows_${index}_${Date.now()}`,
-                    name: parts[0] || `Impressora ${index}`,
-                    status: 'online',
-                    driver: parts[1] || 'Desconhecido'
-                  };
-                }
-              }
-              
-              // Adicionar impressora detectada
-              if (printerInfo) {
-                availablePrinters.push({
-                  ...printerInfo,
-                  type: 'system',
-                  connection: 'system',
-                  platform: platform,
-                  source: `cmd_${i+1}`,
-                  detected: true
-                });
-                console.log(`🖨️ [DETECTADA] ${printerInfo.name}`);
-              }
-            });
+    // Executar detecção síncrona com timeout
+    const executeCommand = (command: string): Promise<string> => {
+      return new Promise((resolve) => {
+        console.log(`🔧 [EXEC] Executando: ${command}`);
+        exec(command, { timeout: 5000 }, (error: any, stdout: any, stderr: any) => {
+          if (error) {
+            console.log(`❌ [EXEC] Erro: ${error.message}`);
+            resolve('');
+          } else {
+            console.log(`✅ [EXEC] Sucesso: ${stdout.trim().substring(0, 100)}...`);
+            resolve(stdout || '');
           }
-        } catch (cmdError: any) {
-          console.log(`❌ [CMD ${i+1}] Falhou:`, cmdError.message);
-        }
-      }
-      
-    } catch (detectionError: any) {
-      console.log("❌ [DETECÇÃO] Erro geral:", detectionError.message);
-    }
+        });
+      });
+    };
+
+    // Comandos de detecção por plataforma
+    let commands: string[] = [];
     
-    // Sempre adicionar impressoras padrão do sistema
-    const systemPrinters = [
+    if (platform === 'linux') {
+      commands = [
+        'lpstat -p 2>/dev/null',
+        'lpstat -v 2>/dev/null', 
+        'ls /dev/usb/lp* 2>/dev/null',
+        'lsusb 2>/dev/null | grep -i printer'
+      ];
+    } else if (platform === 'darwin') {
+      commands = [
+        'lpstat -p 2>/dev/null',
+        'system_profiler SPPrintersDataType 2>/dev/null'
+      ];
+    } else if (platform === 'win32') {
+      commands = [
+        'wmic printer get name,status /format:table 2>nul',
+        'powershell "Get-Printer | Select-Object Name,PrinterStatus" 2>nul'
+      ];
+    }
+
+    console.log(`📋 [VARREDURA] Executando ${commands.length} comandos de detecção`);
+
+    // Executar todos os comandos
+    for (let i = 0; i < commands.length; i++) {
+      try {
+        const output = await executeCommand(commands[i]);
+        
+        if (output && output.trim()) {
+          const lines = output.split('\n').filter(line => line.trim());
+          
+          lines.forEach((line, lineIndex) => {
+            let printer = null;
+            
+            // Parsing para lpstat -p (Linux/macOS)
+            if (line.includes('printer ')) {
+              const match = line.match(/printer\s+([^\s]+)/);
+              if (match) {
+                printer = {
+                  id: `lpstat_${match[1]}_${Date.now()}`,
+                  name: match[1],
+                  type: 'cups',
+                  status: line.includes('disabled') ? 'offline' : 'online'
+                };
+              }
+            }
+            
+            // Parsing para lpstat -v (dispositivos)
+            else if (line.includes('device for ')) {
+              const match = line.match(/device for ([^:]+):\s*(.+)/);
+              if (match) {
+                printer = {
+                  id: `device_${match[1]}_${Date.now()}`,
+                  name: `${match[1]} (${match[2].substring(0, 20)})`,
+                  type: 'device',
+                  status: 'online'
+                };
+              }
+            }
+            
+            // Parsing para lsusb
+            else if (line.includes('Printer') || line.includes('printer')) {
+              printer = {
+                id: `usb_printer_${lineIndex}_${Date.now()}`,
+                name: `Impressora USB ${lineIndex + 1}`,
+                type: 'usb',
+                status: 'online'
+              };
+            }
+            
+            // Parsing para Windows
+            else if (platform === 'win32' && line.trim() && !line.includes('Name') && !line.includes('---')) {
+              const parts = line.split(/\s{2,}/);
+              if (parts.length >= 1 && parts[0].trim()) {
+                printer = {
+                  id: `win_${lineIndex}_${Date.now()}`,
+                  name: parts[0].trim(),
+                  type: 'windows',
+                  status: parts[1]?.includes('Error') ? 'offline' : 'online'
+                };
+              }
+            }
+            
+            if (printer) {
+              detectedPrinters.push({
+                ...printer,
+                connection: 'system',
+                platform: platform,
+                detected: true,
+                source: `cmd_${i + 1}`
+              });
+              console.log(`🖨️ [ENCONTRADA] ${printer.name} (${printer.type})`);
+            }
+          });
+        }
+      } catch (error) {
+        console.log(`❌ [CMD ${i + 1}] Falhou:`, error);
+      }
+    }
+
+    console.log(`📊 [RESULTADO] Detectadas ${detectedPrinters.length} impressoras do sistema`);
+    
+    // Sempre adicionar impressoras padrão e virtuais
+    const defaultPrinters = [
       {
         id: "system_default",
         name: "Impressora Padrão do Sistema",
@@ -2013,16 +2020,7 @@ router.get("/api/settings/pos/printers", isAuthenticated, async (req, res) => {
         connection: "system",
         status: "online",
         platform: platform,
-        description: "Impressora configurada como padrão no sistema operacional"
-      },
-      {
-        id: "cups_default",
-        name: "CUPS - Impressora de Rede",
-        type: "network",
-        connection: "network",
-        status: "online",
-        platform: platform,
-        description: "Impressora gerenciada pelo sistema CUPS"
+        description: "Impressora configurada como padrão no SO"
       },
       {
         id: "thermal_pos",
@@ -2031,12 +2029,8 @@ router.get("/api/settings/pos/printers", isAuthenticated, async (req, res) => {
         connection: "usb",
         status: "online",
         platform: platform,
-        description: "Impressora térmica para recibos (TM-T20, MP-4200 TH)"
-      }
-    ];
-    
-    // Adicionar impressoras virtuais sempre disponíveis
-    const virtualPrinters = [
+        description: "Impressora térmica para recibos"
+      },
       {
         id: "virtual_pdf",
         name: "Salvar como PDF",
@@ -2049,52 +2043,35 @@ router.get("/api/settings/pos/printers", isAuthenticated, async (req, res) => {
       {
         id: "virtual_preview",
         name: "Visualizar (Pré-visualização)",
-        type: "virtual", 
-        connection: "virtual",
-        status: "online",
-        platform: "virtual",
-        description: "Mostrar pré-visualização na tela"
-      },
-      {
-        id: "virtual_email",
-        name: "Enviar por Email",
         type: "virtual",
         connection: "virtual",
         status: "online",
         platform: "virtual",
-        description: "Enviar recibo por email"
+        description: "Mostrar pré-visualização na tela"
       }
     ];
+
+    // Combinar impressoras detectadas + padrão + virtuais
+    const allPrinters = [...detectedPrinters, ...defaultPrinters];
     
-    // Combinar todas as impressoras
-    availablePrinters = [...availablePrinters, ...systemPrinters, ...virtualPrinters];
-    
-    // Remover duplicatas baseadas no nome
-    const uniquePrinters = availablePrinters.filter((printer, index, self) => 
+    // Remover duplicatas por nome
+    const uniquePrinters = allPrinters.filter((printer, index, self) => 
       index === self.findIndex(p => p.name === printer.name)
     );
-    
-    console.log(`✅ Total de ${uniquePrinters.length} impressoras disponíveis:`);
+
+    console.log(`✅ [FINAL] Total de ${uniquePrinters.length} impressoras disponíveis:`);
     uniquePrinters.forEach(p => console.log(`  📱 ${p.name} (${p.type}) - ${p.status}`));
-    
+
     res.json(uniquePrinters);
+
   } catch (err: any) {
-    console.error("❌ Erro ao buscar impressoras:", err);
+    console.error("❌ [ERRO] Falha na detecção de impressoras:", err);
     
-    // Fallback garantido - sempre retornar pelo menos as impressoras básicas
-    const fallbackPrinters = [
-      {
-        id: "emergency_thermal",
-        name: "Impressora Térmica (Emergência)",
-        type: "thermal",
-        connection: "usb",
-        status: "online",
-        platform: process.platform,
-        fallback: true
-      },
+    // Fallback garantido
+    const emergencyPrinters = [
       {
         id: "emergency_system",
-        name: "Impressora do Sistema (Emergência)",
+        name: "Impressora do Sistema (Fallback)",
         type: "system",
         connection: "system",
         status: "online",
@@ -2112,8 +2089,8 @@ router.get("/api/settings/pos/printers", isAuthenticated, async (req, res) => {
       }
     ];
     
-    console.log("🚨 Usando impressoras de emergência:", fallbackPrinters.length);
-    res.json(fallbackPrinters);
+    console.log("🚨 [FALLBACK] Usando impressoras de emergência");
+    res.json(emergencyPrinters);
   }
 });
 
