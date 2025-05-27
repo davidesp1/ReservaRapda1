@@ -1984,7 +1984,7 @@ router.post("/api/settings/pos/test-communication", isAuthenticated, async (req,
       }
       
       // Teste especial para impressoras virtuais
-      if (printerName === 'Salvar como PDF' || printerId.includes('virtual')) {
+      if (printerName === 'Salvar como PDF' || (printerId && printerId.includes('virtual'))) {
         testResult = {
           success: true,
           status: 'online',
@@ -2037,6 +2037,16 @@ router.post("/api/settings/pos/test-communication", isAuthenticated, async (req,
 router.post("/api/settings/pos/test-print", isAuthenticated, async (req, res) => {
   try {
     const { printerId, printerName } = req.body;
+    
+    // Validar dados de entrada
+    if (!printerId || !printerName) {
+      return res.status(400).json({
+        success: false,
+        error: "Dados de impressora inválidos",
+        message: "printerId e printerName são obrigatórios"
+      });
+    }
+    
     console.log(`🖨️ [TESTE] Enviando página de teste para: ${printerName}`);
     
     const { exec } = await import('child_process');
@@ -2087,7 +2097,7 @@ está funcionando corretamente.
     };
     
     try {
-      if (printerName === 'Salvar como PDF' || printerId.includes('virtual_pdf')) {
+      if (printerName === 'Salvar como PDF' || (printerId && printerId.includes('virtual_pdf'))) {
         // Simular salvamento como PDF
         printResult = {
           success: true,
@@ -2095,7 +2105,7 @@ está funcionando corretamente.
           timestamp: new Date().toISOString()
         };
         
-      } else if (printerId.includes('virtual_preview')) {
+      } else if (printerId && printerId.includes('virtual_preview')) {
         // Pré-visualização
         printResult = {
           success: true,
