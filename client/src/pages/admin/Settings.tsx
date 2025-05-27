@@ -1178,7 +1178,7 @@ const Settings: React.FC = () => {
                     </div>
                   </div>
                   
-                  {/* 4. Testes e Diagnósticos */}
+                  {/* 8. Testes e Diagnósticos */}
                   <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
                     <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
                       <i className="mr-2 fa-solid fa-vial" style={{ color: '#c8102e' }}></i>
@@ -1197,6 +1197,100 @@ const Settings: React.FC = () => {
                       <button className="flex items-center px-4 py-2 font-medium rounded-md hover:bg-yellow-400" style={{ backgroundColor: '#ffdf00', color: '#002776' }}>
                         <i className="mr-2 fa-solid fa-plug"></i> Verificar Conexão
                       </button>
+                    </div>
+                  </div>
+                  
+                  {/* 9. Ações Pós-Impressão */}
+                  <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                      <i className="mr-2 fa-solid fa-gear" style={{ color: '#009c3b' }}></i>
+                      Ações Pós-Impressão
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                      <div>
+                        <div className="flex items-center mb-2">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} />
+                          <label className="ml-2 text-sm font-medium text-gray-700">Beep ao fim da impressão</label>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} />
+                          <label className="ml-2 text-sm font-medium text-gray-700">Enviar PDF por e-mail</label>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Gaveta de Dinheiro</label>
+                        <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                          <option value="before">Abrir antes do corte</option>
+                          <option value="after" selected>Abrir depois do corte</option>
+                          <option value="none">Não abrir automaticamente</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 10. Segurança e Auditoria */}
+                  <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                      <i className="mr-2 fa-solid fa-shield-halved" style={{ color: '#002776' }}></i>
+                      Segurança e Auditoria
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                      <div>
+                        <div className="flex items-center mb-2">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                          <label className="ml-2 text-sm font-medium text-gray-700">Exigir autenticação para alterações</label>
+                        </div>
+                        
+                        <div className="mt-2">
+                          <label className="block mb-1 text-sm font-medium text-gray-700">Senha de Administrador</label>
+                          <input type="password" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" placeholder="********" />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <div className="flex items-center mb-2">
+                          <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                          <label className="ml-2 text-sm font-medium text-gray-700">Registrar logs de auditoria</label>
+                        </div>
+                        
+                        <div className="mt-2">
+                          <label className="block mb-1 text-sm font-medium text-gray-700">Retenção de Logs (dias)</label>
+                          <input type="number" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" defaultValue="90" min="30" max="365" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 11. Perfis de Configuração */}
+                  <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                      <i className="mr-2 fa-solid fa-user-gear" style={{ color: '#ffdf00' }}></i>
+                      Perfis de Configuração
+                    </h2>
+                    
+                    <div className="flex flex-col mb-4 space-y-3 md:flex-row md:items-center md:space-y-0 md:space-x-4">
+                      <button className="flex items-center px-4 py-2 text-white rounded-md hover:bg-blue-700" style={{ backgroundColor: '#002776' }}>
+                        <i className="mr-2 fa-solid fa-file-export"></i> Exportar Perfil
+                      </button>
+                      
+                      <button className="flex items-center px-4 py-2 text-white rounded-md hover:bg-green-700" style={{ backgroundColor: '#009c3b' }}>
+                        <i className="mr-2 fa-solid fa-file-import"></i> Importar Perfil
+                      </button>
+                      
+                      <input type="file" className="hidden" accept=".json" />
+                    </div>
+                    
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Perfis Salvos</label>
+                      <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                        <option value="default" selected>Perfil Padrão</option>
+                        <option value="compact">Recibo Compacto</option>
+                        <option value="detailed">Recibo Detalhado</option>
+                      </select>
                     </div>
                   </div>
                   
