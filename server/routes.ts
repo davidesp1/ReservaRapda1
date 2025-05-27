@@ -1849,9 +1849,9 @@ router.post("/api/settings/pos/test-communication", isAuthenticated, async (req,
     const { printerId, printerName } = req.body;
     console.log(`🧪 [TESTE] Testando comunicação com impressora: ${printerName} (ID: ${printerId})`);
     
-    const { exec } = require('child_process');
-    const util = require('util');
-    const execAsync = util.promisify(exec);
+    const { exec } = await import('child_process');
+    const { promisify } = await import('util');
+    const execAsync = promisify(exec);
     const platform = process.platform;
     
     let testResult = {
@@ -2024,9 +2024,9 @@ router.post("/api/settings/pos/test-print", isAuthenticated, async (req, res) =>
     const { printerId, printerName } = req.body;
     console.log(`🖨️ [TESTE] Enviando página de teste para: ${printerName}`);
     
-    const { exec } = require('child_process');
-    const util = require('util');
-    const execAsync = util.promisify(exec);
+    const { exec } = await import('child_process');
+    const { promisify } = await import('util');
+    const execAsync = promisify(exec);
     const platform = process.platform;
     
     // Conteúdo da página de teste
@@ -2206,8 +2206,8 @@ router.get("/api/settings/pos/printers", isAuthenticated, async (req, res) => {
       console.log("🔍 [DETECÇÃO] Executando varredura REAL do sistema...");
       
       const { exec } = await import('child_process');
-      const util = await import('util');
-      const execAsync = util.promisify(exec);
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
       
       const systemPrinters = [];
       
