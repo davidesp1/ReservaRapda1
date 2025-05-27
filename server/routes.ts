@@ -1881,4 +1881,46 @@ router.get("/api/settings/pos/export-profile", isAuthenticated, async (req, res)
   }
 });
 
+// Rota para listar impressoras disponíveis no sistema
+router.get("/api/settings/pos/printers", isAuthenticated, async (req, res) => {
+  try {
+    // Simular impressoras disponíveis no sistema
+    const availablePrinters = [
+      {
+        id: "usb_thermal_printer",
+        name: "Impressora Térmica USB (TM-T20)",
+        type: "thermal",
+        connection: "usb",
+        status: "online"
+      },
+      {
+        id: "network_printer_1",
+        name: "Impressora de Rede (192.168.1.100)",
+        type: "inkjet",
+        connection: "network",
+        status: "online"
+      },
+      {
+        id: "bluetooth_printer",
+        name: "Impressora Bluetooth (BT-P300)",
+        type: "thermal",
+        connection: "bluetooth",
+        status: "offline"
+      },
+      {
+        id: "default_system_printer",
+        name: "Impressora Padrão do Sistema",
+        type: "laser",
+        connection: "usb",
+        status: "online"
+      }
+    ];
+    
+    res.json(availablePrinters);
+  } catch (err: any) {
+    console.error("Erro ao buscar impressoras:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

@@ -36,6 +36,12 @@ const Settings: React.FC = () => {
     enabled: activeTab === 6,
   });
 
+  // Query para carregar impressoras disponíveis
+  const { data: availablePrinters = [] } = useQuery<any[]>({
+    queryKey: ['/api/settings/pos/printers'],
+    enabled: activeTab === 6,
+  });
+
   // Mutation para salvar configurações POS
   const savePosSettingsMutation = useMutation({
     mutationFn: async (settings: any) => {
@@ -954,14 +960,22 @@ const Settings: React.FC = () => {
                     
                     <div className="mb-4">
                       <label className="block mb-2 text-sm font-medium text-gray-700">Impressoras Disponíveis</label>
-                      <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
-                        <option value="" disabled selected>Selecione uma impressora</option>
-                        <option value="printer1">EPSON TM-T20 (USB)</option>
-                        <option value="printer2">BEMATECH MP-4200 TH (USB)</option>
-                        <option value="printer3">DARUMA DR700 (Rede)</option>
-                        <option value="printer4">ELGIN i9 (Bluetooth)</option>
+                      <select 
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none"
+                        value={posSettings.selectedPrinter || ''}
+                        onChange={(e) => handlePosSettingChange('selectedPrinter', e.target.value)}
+                      >
+                        <option value="">Selecione uma impressora</option>
+                        {availablePrinters.map((printer: any) => (
+                          <option key={printer.id} value={printer.id}>
+                            {printer.name} {printer.status === 'offline' ? '(Offline)' : ''}
+                          </option>
+                        ))}
                       </select>
-                      <button className="flex items-center px-3 py-1 mt-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                      <button 
+                        className="flex items-center px-3 py-1 mt-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                        onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/settings/pos/printers'] })}
+                      >
                         <i className="mr-1 fa-solid fa-sync-alt"></i> Atualizar Lista
                       </button>
                     </div>
@@ -969,7 +983,11 @@ const Settings: React.FC = () => {
                     <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">Tipo de Conexão</label>
-                        <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                        <select 
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none"
+                          value={posSettings.connectionType || 'usb'}
+                          onChange={(e) => handlePosSettingChange('connectionType', e.target.value)}
+                        >
                           <option value="usb">USB</option>
                           <option value="bluetooth">Bluetooth</option>
                           <option value="network">Rede (TCP/IP)</option>
@@ -1002,17 +1020,29 @@ const Settings: React.FC = () => {
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">Intensidade (Darkness)</label>
                         <div className="flex items-center">
-                          <input type="range" min="0" max="100" defaultValue="70" className="w-full" style={{ accentColor: '#002776' }} />
-                          <span className="w-8 ml-2 text-sm font-medium">70%</span>
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="100" 
+                            value={posSettings.printIntensity || 70}
+                            onChange={(e) => handlePosSettingChange('printIntensity', parseInt(e.target.value))}
+                            className="w-full" 
+                            style={{ accentColor: '#002776' }} 
+                          />
+                          <span className="w-8 ml-2 text-sm font-medium">{posSettings.printIntensity || 70}%</span>
                         </div>
                       </div>
                       
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">Velocidade (mm/s)</label>
-                        <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
+                        <select 
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none"
+                          value={posSettings.printSpeed || 100}
+                          onChange={(e) => handlePosSettingChange('printSpeed', parseInt(e.target.value))}
+                        >
                           <option value="50">50 mm/s</option>
                           <option value="80">80 mm/s</option>
-                          <option value="100" selected>100 mm/s</option>
+                          <option value="100">100 mm/s</option>
                           <option value="150">150 mm/s</option>
                           <option value="200">200 mm/s</option>
                         </select>
@@ -1022,14 +1052,27 @@ const Settings: React.FC = () => {
                     <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">Avanço de Papel (mm)</label>
-                        <input type="number" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" defaultValue="3" min="0" max="50" />
+                        <input 
+                          type="number" 
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" 
+                          value={posSettings.paperFeed || 3}
+                          onChange={(e) => handlePosSettingChange('paperFeed', parseInt(e.target.value))}
+                          min="0" 
+                          max="50" 
+                        />
                       </div>
                       
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">Guilhotina Automática</label>
                         <div className="flex items-center space-x-4">
                           <div className="flex items-center">
-                            <input type="checkbox" className="w-5 h-5 rounded" style={{ accentColor: '#002776' }} defaultChecked />
+                            <input 
+                              type="checkbox" 
+                              className="w-5 h-5 rounded" 
+                              style={{ accentColor: '#002776' }} 
+                              checked={posSettings.autoCutterEnabled !== undefined ? posSettings.autoCutterEnabled : true}
+                              onChange={(e) => handlePosSettingChange('autoCutterEnabled', e.target.checked)}
+                            />
                             <label className="ml-2 text-sm text-gray-700">Ativar</label>
                           </div>
                           
