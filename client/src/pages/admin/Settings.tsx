@@ -6,6 +6,150 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
+interface PrinterInfo {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  type: string;
+  location?: string;
+}
+
+const PrinterSelector = () => {
+  const { toast } = useToast();
+  const [selectedPrinter, setSelectedPrinter] = useState('');
+  
+  // Query para buscar impressoras disponíveis
+  const { data: printers = [], isLoading: printersLoading, refetch: refetchPrinters } = useQuery({
+    queryKey: ['/api/printers']
+  });
+  
+  // Mutation para testar impressora
+  const testPrinterMutation = useMutation({
+    mutationFn: async (printerId: string) => {
+      return await apiRequest(`/api/printers/${printerId}/test`, 'POST');
+    },
+    onSuccess: (data) => {
+      toast({
+        title: data.success ? "Conexão Testada" : "Problema Detectado",
+        description: data.message,
+        variant: data.success ? "default" : "destructive",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro no Teste",
+        description: error.message || "Erro ao testar impressora",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutation para imprimir página de teste
+  const printTestMutation = useMutation({
+    mutationFn: async (printerId: string) => {
+      return await apiRequest(`/api/printers/${printerId}/print-test`, 'POST');
+    },
+    onSuccess: (data) => {
+      toast({
+        title: data.success ? "Teste Enviado" : "Problema na Impressão",
+        description: data.message,
+        variant: data.success ? "default" : "destructive",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro na Impressão",
+        description: error.message || "Erro ao imprimir teste",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleRefreshPrinters = async () => {
+    await refetchPrinters();
+    toast({
+      title: "Atualizado",
+      description: "Lista de impressoras atualizada com sucesso",
+    });
+  };
+
+  const handleTestConnection = () => {
+    if (!selectedPrinter) {
+      toast({
+        title: "Seleção Necessária",
+        description: "Por favor, selecione uma impressora primeiro",
+        variant: "destructive",
+      });
+      return;
+    }
+    testPrinterMutation.mutate(selectedPrinter);
+  };
+
+  const handlePrintTest = () => {
+    if (!selectedPrinter) {
+      toast({
+        title: "Seleção Necessária",
+        description: "Por favor, selecione uma impressora primeiro",
+        variant: "destructive",
+      });
+      return;
+    }
+    printTestMutation.mutate(selectedPrinter);
+  };
+
+  return (
+    <>
+      <select 
+        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none"
+        value={selectedPrinter}
+        onChange={(e) => setSelectedPrinter(e.target.value)}
+        disabled={printersLoading}
+      >
+        <option value="">
+          {printersLoading ? "Carregando impressoras..." : "Selecione uma impressora"}
+        </option>
+        {printers.map((printer: PrinterInfo) => (
+          <option key={printer.id} value={printer.id}>
+            {printer.name} - {printer.location} ({printer.status})
+          </option>
+        ))}
+      </select>
+      
+      <div className="flex gap-2 mt-2">
+        <button 
+          className="flex items-center px-3 py-1 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50"
+          onClick={handleRefreshPrinters}
+          disabled={printersLoading}
+        >
+          <i className={`mr-1 fa-solid fa-sync-alt ${printersLoading ? 'animate-spin' : ''}`}></i> 
+          Atualizar Lista
+        </button>
+        
+        <button 
+          className="flex items-center px-3 py-1 text-sm text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+          style={{ backgroundColor: '#002776' }}
+          onClick={handleTestConnection}
+          disabled={!selectedPrinter || testPrinterMutation.isPending}
+        >
+          <i className="mr-1 fa-solid fa-plug"></i> 
+          {testPrinterMutation.isPending ? 'Testando...' : 'Testar Conexão'}
+        </button>
+        
+        <button 
+          className="flex items-center px-3 py-1 text-sm text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+          style={{ backgroundColor: '#009c3b' }}
+          onClick={handlePrintTest}
+          disabled={!selectedPrinter || printTestMutation.isPending}
+        >
+          <i className="mr-1 fa-solid fa-print"></i> 
+          {printTestMutation.isPending ? 'Imprimindo...' : 'Teste de Impressão'}
+        </button>
+      </div>
+    </>
+  );
+};
+
 // Schema para configurações gerais
 const generalSettingsSchema = {
   restaurantName: '',
@@ -817,16 +961,7 @@ const Settings: React.FC = () => {
                     
                     <div className="mb-4">
                       <label className="block mb-2 text-sm font-medium text-gray-700">Impressoras Disponíveis</label>
-                      <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none">
-                        <option value="" disabled selected>Selecione uma impressora</option>
-                        <option value="printer1">EPSON TM-T20 (USB)</option>
-                        <option value="printer2">BEMATECH MP-4200 TH (USB)</option>
-                        <option value="printer3">DARUMA DR700 (Rede)</option>
-                        <option value="printer4">ELGIN i9 (Bluetooth)</option>
-                      </select>
-                      <button className="flex items-center px-3 py-1 mt-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
-                        <i className="mr-1 fa-solid fa-sync-alt"></i> Atualizar Lista
-                      </button>
+                      <PrinterSelector />
                     </div>
                     
                     <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
