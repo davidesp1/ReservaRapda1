@@ -27,6 +27,44 @@ const Settings: React.FC = () => {
   // Estado para controlar a aba ativa
   const [activeTab, setActiveTab] = useState(1);
   
+  // Estado para configurações POS
+  const [posSettings, setPosSettings] = useState<any>({});
+  
+  // Query para carregar configurações POS
+  const { data: posData, isLoading: posLoading } = useQuery({
+    queryKey: ['/api/settings/pos'],
+    enabled: activeTab === 6,
+  });
+
+  // Mutation para salvar configurações POS
+  const savePosSettingsMutation = useMutation({
+    mutationFn: (settings: any) => apiRequest('/api/settings/pos', {
+      method: 'POST',
+      body: settings,
+    }),
+    onSuccess: () => {
+      toast({
+        title: "Configurações POS salvas",
+        description: "As configurações foram salvas com sucesso!",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/pos'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao salvar",
+        description: error.message || "Erro ao salvar configurações POS",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Carregar dados do POS quando a aba for ativada
+  useEffect(() => {
+    if (posData && activeTab === 6) {
+      setPosSettings(posData);
+    }
+  }, [posData, activeTab]);
+  
   // Estado para o formulário de configurações gerais
   const [generalSettings, setGeneralSettings] = useState(generalSettingsSchema);
   const [isSubmitting, setIsSubmitting] = useState(false);

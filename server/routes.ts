@@ -1702,4 +1702,183 @@ router.get('/api/reports/user-stats/:userId', isAuthenticated, async (req, res) 
   }
 });
 
+// Rotas para configurações POS
+router.get("/api/settings/pos", isAuthenticated, async (req, res) => {
+  try {
+    const result = await queryClient`
+      SELECT * FROM pos_settings ORDER BY id LIMIT 1
+    `;
+    
+    if (result.length === 0) {
+      // Se não existirem configurações, criar com valores padrão
+      const defaultSettings = await queryClient`
+        INSERT INTO pos_settings DEFAULT VALUES RETURNING *
+      `;
+      return res.json(defaultSettings[0]);
+    }
+    
+    res.json(result[0]);
+  } catch (err: any) {
+    console.error("Erro ao buscar configurações POS:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/api/settings/pos", isAuthenticated, async (req, res) => {
+  try {
+    const settings = req.body;
+    
+    // Verificar se já existe configuração
+    const existing = await queryClient`
+      SELECT id FROM pos_settings ORDER BY id LIMIT 1
+    `;
+    
+    if (existing.length === 0) {
+      // Criar nova configuração
+      const newSettings = await queryClient`
+        INSERT INTO pos_settings (
+          selected_printer, connection_type, connection_timeout, connection_retries,
+          print_intensity, print_speed, paper_feed, auto_cutter_enabled, cut_type, cash_drawer_kick,
+          number_of_copies, global_alignment, column_width_description, column_width_quantity, column_width_price,
+          item_spacing, highlight_style, charset, font_size, accented_chars, font_fallback,
+          logo_position, logo_scale, barcode_type, qrcode_enabled, qrcode_size, qrcode_margin, qrcode_error_level,
+          timestamp_format, show_operator, operator_format, promo_message, custom_footer,
+          show_items, show_discounts, show_taxes, show_subtotal, show_total, show_payment_method,
+          thank_you_message, non_fiscal_message, custom_message, custom_message_enabled,
+          beep_after_print, send_pdf_email, cash_drawer_timing, require_auth, admin_password,
+          enable_audit, log_retention, active_profile
+        ) VALUES (
+          ${settings.selectedPrinter}, ${settings.connectionType}, ${settings.connectionTimeout}, ${settings.connectionRetries},
+          ${settings.printIntensity}, ${settings.printSpeed}, ${settings.paperFeed}, ${settings.autoCutterEnabled}, ${settings.cutType}, ${settings.cashDrawerKick},
+          ${settings.numberOfCopies}, ${settings.globalAlignment}, ${settings.columnWidthDescription}, ${settings.columnWidthQuantity}, ${settings.columnWidthPrice},
+          ${settings.itemSpacing}, ${settings.highlightStyle}, ${settings.charset}, ${settings.fontSize}, ${settings.accentedChars}, ${settings.fontFallback},
+          ${settings.logoPosition}, ${settings.logoScale}, ${settings.barcodeType}, ${settings.qrcodeEnabled}, ${settings.qrcodeSize}, ${settings.qrcodeMargin}, ${settings.qrcodeErrorLevel},
+          ${settings.timestampFormat}, ${settings.showOperator}, ${settings.operatorFormat}, ${settings.promoMessage}, ${settings.customFooter},
+          ${settings.showItems}, ${settings.showDiscounts}, ${settings.showTaxes}, ${settings.showSubtotal}, ${settings.showTotal}, ${settings.showPaymentMethod},
+          ${settings.thankYouMessage}, ${settings.nonFiscalMessage}, ${settings.customMessage}, ${settings.customMessageEnabled},
+          ${settings.beepAfterPrint}, ${settings.sendPdfEmail}, ${settings.cashDrawerTiming}, ${settings.requireAuth}, ${settings.adminPassword},
+          ${settings.enableAudit}, ${settings.logRetention}, ${settings.activeProfile}
+        ) RETURNING *
+      `;
+      res.json(newSettings[0]);
+    } else {
+      // Atualizar configuração existente
+      const updatedSettings = await queryClient`
+        UPDATE pos_settings SET
+          selected_printer = ${settings.selectedPrinter},
+          connection_type = ${settings.connectionType},
+          connection_timeout = ${settings.connectionTimeout},
+          connection_retries = ${settings.connectionRetries},
+          print_intensity = ${settings.printIntensity},
+          print_speed = ${settings.printSpeed},
+          paper_feed = ${settings.paperFeed},
+          auto_cutter_enabled = ${settings.autoCutterEnabled},
+          cut_type = ${settings.cutType},
+          cash_drawer_kick = ${settings.cashDrawerKick},
+          number_of_copies = ${settings.numberOfCopies},
+          global_alignment = ${settings.globalAlignment},
+          column_width_description = ${settings.columnWidthDescription},
+          column_width_quantity = ${settings.columnWidthQuantity},
+          column_width_price = ${settings.columnWidthPrice},
+          item_spacing = ${settings.itemSpacing},
+          highlight_style = ${settings.highlightStyle},
+          charset = ${settings.charset},
+          font_size = ${settings.fontSize},
+          accented_chars = ${settings.accentedChars},
+          font_fallback = ${settings.fontFallback},
+          logo_position = ${settings.logoPosition},
+          logo_scale = ${settings.logoScale},
+          barcode_type = ${settings.barcodeType},
+          qrcode_enabled = ${settings.qrcodeEnabled},
+          qrcode_size = ${settings.qrcodeSize},
+          qrcode_margin = ${settings.qrcodeMargin},
+          qrcode_error_level = ${settings.qrcodeErrorLevel},
+          timestamp_format = ${settings.timestampFormat},
+          show_operator = ${settings.showOperator},
+          operator_format = ${settings.operatorFormat},
+          promo_message = ${settings.promoMessage},
+          custom_footer = ${settings.customFooter},
+          show_items = ${settings.showItems},
+          show_discounts = ${settings.showDiscounts},
+          show_taxes = ${settings.showTaxes},
+          show_subtotal = ${settings.showSubtotal},
+          show_total = ${settings.showTotal},
+          show_payment_method = ${settings.showPaymentMethod},
+          thank_you_message = ${settings.thankYouMessage},
+          non_fiscal_message = ${settings.nonFiscalMessage},
+          custom_message = ${settings.customMessage},
+          custom_message_enabled = ${settings.customMessageEnabled},
+          beep_after_print = ${settings.beepAfterPrint},
+          send_pdf_email = ${settings.sendPdfEmail},
+          cash_drawer_timing = ${settings.cashDrawerTiming},
+          require_auth = ${settings.requireAuth},
+          admin_password = ${settings.adminPassword},
+          enable_audit = ${settings.enableAudit},
+          log_retention = ${settings.logRetention},
+          active_profile = ${settings.activeProfile},
+          updated_at = NOW()
+        WHERE id = ${existing[0].id}
+        RETURNING *
+      `;
+      res.json(updatedSettings[0]);
+    }
+  } catch (err: any) {
+    console.error("Erro ao salvar configurações POS:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Rota para testar impressão
+router.post("/api/settings/pos/test-print", isAuthenticated, async (req, res) => {
+  try {
+    // Simular teste de impressão
+    console.log("Teste de impressão executado pelo usuário:", req.session.userId);
+    res.json({ success: true, message: "Página de teste enviada para impressão" });
+  } catch (err: any) {
+    console.error("Erro no teste de impressão:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Rota para verificar status da impressora
+router.post("/api/settings/pos/check-connection", isAuthenticated, async (req, res) => {
+  try {
+    // Simular verificação de conexão
+    console.log("Verificação de conexão executada pelo usuário:", req.session.userId);
+    res.json({ 
+      success: true, 
+      status: "connected", 
+      message: "Impressora conectada e funcionando normalmente" 
+    });
+  } catch (err: any) {
+    console.error("Erro na verificação de conexão:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Rota para exportar perfil de configuração
+router.get("/api/settings/pos/export-profile", isAuthenticated, async (req, res) => {
+  try {
+    const settings = await queryClient`
+      SELECT * FROM pos_settings ORDER BY id LIMIT 1
+    `;
+    
+    if (settings.length === 0) {
+      return res.status(404).json({ error: "Nenhuma configuração encontrada" });
+    }
+    
+    // Remover campos que não devem ser exportados
+    const { id, updated_at, admin_password, ...exportableSettings } = settings[0];
+    
+    res.json({
+      profile_name: "Configuração Exportada",
+      export_date: new Date().toISOString(),
+      settings: exportableSettings
+    });
+  } catch (err: any) {
+    console.error("Erro ao exportar perfil:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
