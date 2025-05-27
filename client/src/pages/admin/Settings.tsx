@@ -38,10 +38,21 @@ const Settings: React.FC = () => {
 
   // Mutation para salvar configurações POS
   const savePosSettingsMutation = useMutation({
-    mutationFn: (settings: any) => apiRequest('/api/settings/pos', {
-      method: 'POST',
-      body: settings,
-    }),
+    mutationFn: async (settings: any) => {
+      const response = await fetch('/api/settings/pos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erro ao salvar configurações POS');
+      }
+      
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Configurações POS salvas",
@@ -89,9 +100,97 @@ const Settings: React.FC = () => {
     }));
   };
 
-  // Função para salvar configurações
+  // Função para atualizar configurações POS
+  const handlePosSettingChange = (field: string, value: any) => {
+    setPosSettings((prev: any) => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Função para salvar configurações POS
+  const handleSavePosSettings = async () => {
+    setIsSubmitting(true);
+    try {
+      await savePosSettingsMutation.mutateAsync(posSettings);
+      
+      // Feedback visual no botão
+      const submitBtn = document.querySelector('#submit-btn') as HTMLButtonElement;
+      if (submitBtn) {
+        submitBtn.innerHTML = '<i class="mr-2 fa-solid fa-circle-check"></i>Salvo!';
+        submitBtn.classList.add('bg-blue-600');
+        setTimeout(() => {
+          submitBtn.innerHTML = '<i class="mr-2 fa-solid fa-floppy-disk"></i>Salvar Configurações';
+          submitBtn.classList.remove('bg-blue-600');
+        }, 1600);
+      }
+    } catch (error) {
+      console.error('Erro ao salvar configurações POS:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Função para testar impressão
+  const handleTestPrint = async () => {
+    try {
+      const response = await fetch('/api/settings/pos/test-print', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      
+      toast({
+        title: "Teste de impressão",
+        description: data.message || "Página de teste enviada para impressão",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro no teste",
+        description: error.message || "Erro ao testar impressão",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Função para verificar conexão
+  const handleCheckConnection = async () => {
+    try {
+      const response = await fetch('/api/settings/pos/check-connection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      
+      toast({
+        title: "Status da conexão",
+        description: data.message || "Impressora conectada",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro na conexão",
+        description: error.message || "Erro ao verificar conexão",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Função para salvar configurações gerais
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Se estamos na aba POS, usar função específica
+    if (activeTab === 6) {
+      await handleSavePosSettings();
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -1232,7 +1331,11 @@ const Settings: React.FC = () => {
                         <i className="mr-2 fa-solid fa-circle-info"></i> Relatório de Status ESC/POS
                       </button>
                       
-                      <button className="flex items-center px-4 py-2 font-medium rounded-md hover:bg-yellow-400" style={{ backgroundColor: '#ffdf00', color: '#002776' }}>
+                      <button 
+                        onClick={handleCheckConnection}
+                        className="flex items-center px-4 py-2 font-medium rounded-md hover:bg-yellow-400" 
+                        style={{ backgroundColor: '#ffdf00', color: '#002776' }}
+                      >
                         <i className="mr-2 fa-solid fa-plug"></i> Verificar Conexão
                       </button>
                     </div>
