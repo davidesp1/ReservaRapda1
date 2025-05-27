@@ -37,9 +37,11 @@ const Settings: React.FC = () => {
   });
 
   // Query para carregar impressoras disponíveis
-  const { data: availablePrinters = [] } = useQuery<any[]>({
+  const { data: availablePrinters = [], refetch: refetchPrinters } = useQuery<any[]>({
     queryKey: ['/api/settings/pos/printers'],
     enabled: activeTab === 6,
+    staleTime: 30000, // Cache por 30 segundos para evitar múltiplas chamadas
+    refetchOnWindowFocus: false,
   });
 
   // Mutation para salvar configurações POS
@@ -79,8 +81,21 @@ const Settings: React.FC = () => {
   useEffect(() => {
     if (posData && activeTab === 6) {
       setPosSettings(posData);
+      console.log("📋 Configurações POS carregadas:", posData);
     }
   }, [posData, activeTab]);
+
+  // Auto-salvar configurações quando mudarem (debounced)
+  useEffect(() => {
+    if (Object.keys(posSettings).length > 0) {
+      const timeoutId = setTimeout(() => {
+        console.log("💾 Auto-salvando configurações POS...");
+        savePosSettingsMutation.mutate(posSettings);
+      }, 1000); // Salvar após 1 segundo de inatividade
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [posSettings]);
   
   // Estado para o formulário de configurações gerais
   const [generalSettings, setGeneralSettings] = useState(generalSettingsSchema);
@@ -975,12 +990,20 @@ const Settings: React.FC = () => {
                       <button 
                         className="flex items-center px-3 py-1 mt-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
                         onClick={async () => {
-                          console.log("🔄 Atualizando lista de impressoras...");
-                          await queryClient.invalidateQueries({ queryKey: ['/api/settings/pos/printers'] });
-                          toast({
-                            title: "Lista atualizada",
-                            description: "A lista de impressoras foi atualizada com sucesso!",
-                          });
+                          console.log("🔄 Executando varredura de impressoras...");
+                          try {
+                            await refetchPrinters();
+                            toast({
+                              title: "Varredura concluída",
+                              description: "Lista de impressoras atualizada com sucesso!",
+                            });
+                          } catch (error) {
+                            toast({
+                              title: "Erro na varredura",
+                              description: "Erro ao atualizar lista de impressoras",
+                              variant: "destructive",
+                            });
+                          }
                         }}
                       >
                         <i className="mr-1 fa-solid fa-sync-alt"></i> Atualizar Lista
