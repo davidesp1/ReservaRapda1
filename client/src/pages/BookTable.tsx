@@ -35,6 +35,7 @@ export default function BookTable() {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
+  const [activeCategory, setActiveCategory] = useState('entradas');
 
   // Form setup
   const form = useForm<ReservationForm>({
@@ -53,10 +54,73 @@ export default function BookTable() {
     queryKey: ['/api/tables'],
   });
 
-  // Buscar itens do menu
-  const { data: menuItems = [] } = useQuery({
-    queryKey: ['/api/menu'],
-  });
+  // Dados do menu por categoria (em euros)
+  const menuData = {
+    entradas: [
+      {
+        id: 1,
+        name: 'Empada de Frango',
+        price: 12.50,
+        description: 'Clássica empada cremosa, massa leve e recheio suculento.',
+        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/empada.jpg'
+      },
+      {
+        id: 2,
+        name: 'Bolinho de Bacalhau (6un)',
+        price: 18.00,
+        description: 'Tradicionais bolinhos de bacalhau fritos, crocantes e saborosos.',
+        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/bolinho-bacalhau.jpg'
+      }
+    ],
+    principais: [
+      {
+        id: 3,
+        name: 'Moqueca de Camarão',
+        price: 65.90,
+        description: 'Deliciosa moqueca com camarões frescos.',
+        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/14db3df368-c5ada7c592c7a6a484df.png'
+      },
+      {
+        id: 4,
+        name: 'Picanha Grelhada',
+        price: 75.00,
+        description: 'Suculenta picanha grelhada com acompanhamentos.',
+        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/picanha.jpg'
+      }
+    ],
+    sobremesas: [
+      {
+        id: 5,
+        name: 'Pudim de Leite',
+        price: 8.50,
+        description: 'Tradicional pudim de leite condensado.',
+        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/pudim.jpg'
+      },
+      {
+        id: 6,
+        name: 'Brigadeiro Gourmet',
+        price: 15.00,
+        description: 'Brigadeiros artesanais com diversos sabores.',
+        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/brigadeiro.jpg'
+      }
+    ],
+    bebidas: [
+      {
+        id: 7,
+        name: 'Caipirinha',
+        price: 12.00,
+        description: 'Tradicional caipirinha brasileira.',
+        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/caipirinha.jpg'
+      },
+      {
+        id: 8,
+        name: 'Suco Natural',
+        price: 6.50,
+        description: 'Suco natural de frutas da estação.',
+        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/suco.jpg'
+      }
+    ]
+  };
 
   // Mutation para criar reserva
   const createReservationMutation = useMutation({
@@ -368,21 +432,134 @@ export default function BookTable() {
 
               {/* Step 2: Menu */}
               {currentStep === 2 && (
-                <div className="flex-1">
+                <div className="flex-1 flex flex-col">
                   <h2 className="mb-6 text-xl font-bold font-montserrat text-brasil-yellow flex items-center gap-2">
                     <Utensils className="h-5 w-5" />
-                    Selecione os Pratos (Opcional)
+                    Selecione os Pratos do Cardápio
                   </h2>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    {/* Menu items would go here */}
-                    <div className="text-center text-gray-500 col-span-full">
-                      <p>Você pode adicionar pratos do nosso cardápio ou prosseguir sem seleção.</p>
-                      <p className="text-sm">Esta etapa é opcional.</p>
+                  {/* Navegação por categorias */}
+                  <nav className="flex flex-wrap gap-4 mb-8">
+                    {Object.entries(menuData).map(([category, items]) => (
+                      <Button
+                        key={category}
+                        type="button"
+                        onClick={() => setActiveCategory(category)}
+                        className={`px-5 py-2 rounded-lg font-bold shadow transition ${
+                          activeCategory === category
+                            ? 'bg-brasil-green text-white'
+                            : 'bg-gray-100 text-brasil-blue hover:bg-brasil-yellow hover:text-brasil-blue'
+                        }`}
+                      >
+                        {category === 'entradas' && 'Entradas'}
+                        {category === 'principais' && 'Pratos Principais'}
+                        {category === 'sobremesas' && 'Sobremesas'}
+                        {category === 'bebidas' && 'Bebidas'}
+                      </Button>
+                    ))}
+                  </nav>
+
+                  {/* Lista de itens da categoria ativa */}
+                  <div className="flex-1 mb-8">
+                    <h3 className="text-lg font-bold font-montserrat text-brasil-green mb-4 flex items-center gap-2">
+                      {activeCategory === 'entradas' && <><i className="fa-solid fa-seedling"></i> Entradas</>}
+                      {activeCategory === 'principais' && <><i className="fa-solid fa-drumstick-bite"></i> Pratos Principais</>}
+                      {activeCategory === 'sobremesas' && <><i className="fa-solid fa-ice-cream"></i> Sobremesas</>}
+                      {activeCategory === 'bebidas' && <><i className="fa-solid fa-wine-glass"></i> Bebidas</>}
+                    </h3>
+                    
+                    <div className="grid sm:grid-cols-2 gap-5 mb-6">
+                      {menuData[activeCategory as keyof typeof menuData]?.map((item) => (
+                        <div
+                          key={item.id}
+                          className="bg-white rounded-xl p-4 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group"
+                        >
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-16 h-16 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
+                          />
+                          <div className="flex-1">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-bold text-gray-800">{item.name}</span>
+                              <span className="font-bold text-brasil-green">€{item.price.toFixed(2)}</span>
+                            </div>
+                            <p className="text-xs text-gray-600">{item.description}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              {selectedItems.find(selected => selected.id === item.id) ? (
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => updateQuantity(item.id, (selectedItems.find(s => s.id === item.id)?.quantity || 1) - 1)}
+                                    className="h-6 w-6 p-0"
+                                  >
+                                    -
+                                  </Button>
+                                  <span className="text-sm font-bold min-w-[20px] text-center">
+                                    {selectedItems.find(s => s.id === item.id)?.quantity || 0}
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => updateQuantity(item.id, (selectedItems.find(s => s.id === item.id)?.quantity || 0) + 1)}
+                                    className="h-6 w-6 p-0"
+                                  >
+                                    +
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  type="button"
+                                  onClick={() => addMenuItem(item)}
+                                  className="bg-brasil-yellow px-3 py-1 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90"
+                                >
+                                  <i className="fa-solid fa-plus mr-1"></i>
+                                  Adicionar
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
-                  <div className="flex justify-between mt-10">
+                  {/* Resumo dos itens selecionados */}
+                  {selectedItems.length > 0 && (
+                    <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                      <h4 className="font-bold text-gray-800 mb-3">Itens Selecionados:</h4>
+                      <div className="space-y-2 mb-3">
+                        {selectedItems.map((item) => (
+                          <div key={item.id} className="flex justify-between items-center text-sm">
+                            <span>{item.name} x{item.quantity}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold">€{(item.price * item.quantity).toFixed(2)}</span>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => removeMenuItem(item.id)}
+                                className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                              >
+                                ×
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-t pt-2">
+                        <div className="flex justify-between items-center font-bold">
+                          <span>Total:</span>
+                          <span className="text-brasil-green">€{total.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between mt-auto">
                     <Button
                       type="button"
                       onClick={prevStep}
