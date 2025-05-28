@@ -1,19 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'wouter';
 import CustomerLayout from '@/components/layouts/CustomerLayout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Eye,
-  Edit,
-  X,
-  Search,
-  Plus
-} from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Eye, Search, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Payment {
@@ -332,23 +322,19 @@ const PaymentsPage = () => {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
+                            <button
                               className="text-brasil-yellow hover:text-brasil-blue transition p-1"
                               title="Baixar Recibo"
                             >
-                              <i className="fa-solid fa-download h-4 w-4"></i>
-                            </Button>
+                              <i className="fa-solid fa-download text-sm"></i>
+                            </button>
                             {payment.status === 'failed' && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
+                              <button
                                 className="text-brasil-green hover:text-green-700 transition p-1"
                                 title="Tentar Novamente"
                               >
-                                <i className="fa-solid fa-retry h-4 w-4"></i>
-                              </Button>
+                                <i className="fa-solid fa-redo text-sm"></i>
+                              </button>
                             )}
                           </div>
                         </td>
