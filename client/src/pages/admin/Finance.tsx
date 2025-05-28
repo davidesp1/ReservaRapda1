@@ -444,19 +444,25 @@ const Finance: React.FC = () => {
       doc.setFont('helvetica', 'bold');
       
       // Data de emissão
-      doc.text('📅', 25, yPos + 8);
-      doc.text(`Data de Emissão: ${currentDate}`, 35, yPos + 8);
+      doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Data de Emissao:', 25, yPos + 8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(currentDate, 75, yPos + 8);
       
       // Total de registros
-      doc.text('📊', 25, yPos + 18);
-      doc.text(`Total de Registros: ${filteredPayments.length}`, 35, yPos + 18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Total de Registros:', 25, yPos + 18);
+      doc.setFont('helvetica', 'normal');
+      doc.text(filteredPayments.length.toString(), 85, yPos + 18);
       
       // Valor total destacado
       doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text('💰', 120, yPos + 13);
-      doc.text(`Valor Total: ${formatPrice(totalAmount)}`, 130, yPos + 13);
+      doc.text('Valor Total:', 120, yPos + 13);
+      doc.text(formatPrice(totalAmount), 165, yPos + 13);
       
       yPos += 45;
       
@@ -477,12 +483,12 @@ const Finance: React.FC = () => {
         doc.setTextColor(textDark[0], textDark[1], textDark[2]);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text('🔍 FILTROS APLICADOS:', 20, yPos);
+        doc.text('FILTROS APLICADOS:', 20, yPos);
         
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(textLight[0], textLight[1], textLight[2]);
         filtersApplied.forEach((filter, index) => {
-          doc.text(`• ${filter}`, 25, yPos + 10 + (index * 7));
+          doc.text(`- ${filter}`, 25, yPos + 10 + (index * 7));
         });
         yPos += 15 + (filtersApplied.length * 7);
       }
@@ -523,13 +529,13 @@ const Finance: React.FC = () => {
             
             // Estilos das colunas
             columnStyles: {
-              0: { cellWidth: 22, halign: 'center' }, // Data
-              1: { cellWidth: 32, halign: 'left' },   // Transação
-              2: { cellWidth: 24, halign: 'center' }, // Referência
-              3: { cellWidth: 26, halign: 'right', fontStyle: 'bold', textColor: accentColor }, // Valor
-              4: { cellWidth: 28, halign: 'center' }, // Método
-              5: { cellWidth: 32, halign: 'left' },   // Usuário
-              6: { cellWidth: 20, halign: 'center' }  // Status
+              0: { cellWidth: 25, halign: 'center' }, // Data
+              1: { cellWidth: 35, halign: 'left' },   // Transação
+              2: { cellWidth: 22, halign: 'center' }, // Referência
+              3: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: accentColor }, // Valor
+              4: { cellWidth: 30, halign: 'center' }, // Método
+              5: { cellWidth: 35, halign: 'left' },   // Usuário
+              6: { cellWidth: 25, halign: 'center' }  // Status
             },
             
             // Linhas alternadas elegantes
@@ -618,7 +624,7 @@ const Finance: React.FC = () => {
           doc.setTextColor(textDark[0], textDark[1], textDark[2]);
           doc.setFontSize(12);
           doc.setFont('helvetica', 'bold');
-          doc.text('📋 DADOS DO RELATÓRIO', 20, yPos + 20);
+          doc.text('DADOS DO RELATORIO', 20, yPos + 20);
           
           filteredPayments.slice(0, 15).forEach((payment, index) => {
             const y = yPos + 40 + (index * 12);
