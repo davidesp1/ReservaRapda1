@@ -813,14 +813,14 @@ Status: PAGO
                 {paymentSettings?.acceptMultibancoTPA && (
                   <div 
                     className={`p-3 border rounded-lg cursor-pointer flex items-center ${
-                      selectedPaymentMethod === 'multibanco_tpa' ? 'border-primary bg-primary/5' : 'border-gray-300'
+                      selectedPaymentMethod === 'multibanco_TPA' ? 'border-primary bg-primary/5' : 'border-gray-300'
                     }`}
-                    onClick={() => setSelectedPaymentMethod('multibanco_tpa')}
+                    onClick={() => setSelectedPaymentMethod('multibanco_TPA')}
                   >
                     <div className={`w-6 h-6 rounded-full border mr-3 flex items-center justify-center ${
-                      selectedPaymentMethod === 'multibanco_tpa' ? 'border-primary' : 'border-gray-300'
+                      selectedPaymentMethod === 'multibanco_TPA' ? 'border-primary' : 'border-gray-300'
                     }`}>
-                      {selectedPaymentMethod === 'multibanco_tpa' && <Check className="h-4 w-4 text-primary" />}
+                      {selectedPaymentMethod === 'multibanco_TPA' && <Check className="h-4 w-4 text-primary" />}
                     </div>
                     <div>
                       <div className="font-medium">{t('Multibanco (TPA)')}</div>

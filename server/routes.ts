@@ -1228,7 +1228,7 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
       status: 'completed',
       items: validatedItems,
       totalAmount: calculatedTotal,
-      paymentMethod: orderData.paymentMethod === 'multibanco_tpa' ? 'multibanco' : (orderData.paymentMethod || 'cash'),
+      paymentMethod: orderData.paymentMethod || 'cash',
       paymentStatus: 'completed',
       discount: orderData.discount || 0,
       tax: orderData.tax || 0,
@@ -1248,16 +1248,13 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
       // Normalizar o método de pagamento
       let normalizedMethod = orderData.paymentMethod || 'cash';
       
-      // Converter métodos não padrão para valores válidos no enum
-      if (normalizedMethod === 'multibanco_tpa') {
-        console.log('✅ POS - Convertendo multibanco_tpa para multibanco');
-        normalizedMethod = 'multibanco';
-      }
+      // Manter métodos específicos sem conversão
+      // multibanco_tpa deve ser mantido como está
       
       console.log('📝 POS - Método normalizado:', normalizedMethod);
       
       // Garantir que o método é um dos valores aceitos
-      if (!['cash', 'card', 'mbway', 'multibanco', 'transfer'].includes(normalizedMethod)) {
+      if (!['cash', 'card', 'mbway', 'multibanco', 'transfer', 'multibanco_TPA'].includes(normalizedMethod)) {
         normalizedMethod = 'cash';
       }
       
