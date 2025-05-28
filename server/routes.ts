@@ -1156,6 +1156,12 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
     console.log('🎯 POS ORDER - Método de pagamento recebido:', orderData.paymentMethod);
     console.log('🎯 POS ORDER - Dados completos:', JSON.stringify(orderData, null, 2));
     
+    // CORREÇÃO IMEDIATA: Forçar o método correto se for multibanco_TPA
+    if (orderData.paymentMethod === 'multibanco_TPA') {
+      console.log('✅ FORÇANDO multibanco_TPA como método de pagamento');
+      orderData.paymentMethod = 'multibanco_TPA';
+    }
+    
     // Validação de autenticação
     if (!userId) {
       return res.status(401).json({ error: 'Usuário não autenticado' });
