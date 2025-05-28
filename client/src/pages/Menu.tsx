@@ -64,6 +64,18 @@ const MenuPage = () => {
   const { data: menuByCategory, isLoading: itemsLoading, error: itemsError } = useQuery<MenuByCategory[]>({
     queryKey: ['/api/menu-items'],
   });
+
+  // Debug logs
+  console.log('🐛 Debug Menu Page:', {
+    categoriesLoading,
+    itemsLoading,
+    categoriesError,
+    itemsError,
+    categoriesCount: categories?.length || 0,
+    menuByCategoryCount: menuByCategory?.length || 0,
+    categories,
+    menuByCategory
+  });
   
   // Função para obter todos os itens a partir da resposta organizada por categoria
   const getAllItems = () => {
