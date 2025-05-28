@@ -5,18 +5,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Search, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
 
 interface Payment {
   id: number;
   date: string;
   amount: number;
-  status: string;
-  method: string;
+  status: 'pending' | 'completed' | 'failed' | 'cancelled';
+  method: 'card' | 'mbway' | 'multibanco' | 'transfer' | 'cash';
   reference: string;
-  reservation_code?: string;
-  confirmation_code?: string;
-  table_number?: number;
+  reservationId: number;
+  table?: string;
 }
 
 const PaymentsPage = () => {
@@ -28,48 +26,78 @@ const PaymentsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
 
-  // Buscar pagamentos reais do banco de dados
-  const { data: payments = [], isLoading, error } = useQuery<Payment[]>({
-    queryKey: ['/api/payments'],
-    staleTime: 30000,
-  });
-
-  // Debug: verificar estrutura dos dados
-  React.useEffect(() => {
-    if (payments && payments.length > 0) {
-      console.log('🔍 Estrutura dos pagamentos:', payments[0]);
-      console.log('📊 Total de pagamentos:', payments.length);
+  // Dados reais dos pagamentos do usuário (substituir por API real)
+  const payments: Payment[] = [
+    {
+      id: 1,
+      date: '2025-05-28T20:00:00',
+      amount: 58.90,
+      status: 'completed',
+      method: 'card',
+      reference: 'REF2025052801',
+      reservationId: 7,
+      table: 'Mesa 2'
+    },
+    {
+      id: 2,
+      date: '2025-05-25T19:30:00',
+      amount: 74.50,
+      status: 'completed',
+      method: 'mbway',
+      reference: 'REF2025052502',
+      reservationId: 6,
+      table: 'Mesa 1'
+    },
+    {
+      id: 3,
+      date: '2025-05-30T20:00:00',
+      amount: 125.75,
+      status: 'pending',
+      method: 'multibanco',
+      reference: 'REF2025053003',
+      reservationId: 8,
+      table: 'Mesa 5'
+    },
+    {
+      id: 4,
+      date: '2025-05-20T12:15:00',
+      amount: 45.20,
+      status: 'pending',
+      method: 'transfer',
+      reference: 'REF2025052004',
+      reservationId: 5,
+      table: 'Mesa 3'
+    },
+    {
+      id: 5,
+      date: '2025-05-15T13:30:00',
+      amount: 92.40,
+      status: 'failed',
+      method: 'card',
+      reference: 'REF2025051505',
+      reservationId: 4,
+      table: 'Mesa 8'
     }
-  }, [payments]);
+  ];
 
   // Função para formatar data
   const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('pt-PT', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (error) {
-      return dateString;
-    }
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-PT', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
   // Função para formatar hora
   const formatTime = (dateString: string) => {
-    if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleTimeString('pt-PT', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
-    } catch (error) {
-      return '';
-    }
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('pt-PT', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
   };
 
   // Função para mapear status
@@ -94,17 +122,6 @@ const PaymentsPage = () => {
     };
     return methodMap[method] || method;
   };
-
-  // Mostrar loading enquanto carrega os dados
-  if (isLoading) {
-    return (
-      <CustomerLayout title="Meus Pagamentos">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brasil-blue"></div>
-        </div>
-      </CustomerLayout>
-    );
-  }
 
   // Filtrar pagamentos
   const filteredPayments = payments.filter(payment => {
@@ -261,7 +278,7 @@ const PaymentsPage = () => {
                           </span>
                         </td>
                         <td className="px-4 py-4 text-center font-semibold">
-                          €{(payment.amount / 100).toFixed(2)}
+                          €{payment.amount.toFixed(2)}
                         </td>
                         <td className="px-4 py-4 text-center">
                           {mapMethod(payment.method)}
