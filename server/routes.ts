@@ -553,6 +553,8 @@ router.get("/api/payments", isAuthenticated, async (req, res) => {
     const userId = req.session.userId;
     const safeUserId = userId ? Number(userId) : 0;
     
+    console.log(`Buscando pagamentos para usuário ${safeUserId}`);
+    
     // Buscar pagamentos relacionados às reservas do usuário
     const payments = await queryClient`
       SELECT 
@@ -571,6 +573,11 @@ router.get("/api/payments", isAuthenticated, async (req, res) => {
         AND r.total > 0
       ORDER BY r.date DESC
     `;
+    
+    console.log(`Encontrados ${payments.length} pagamentos para usuário ${safeUserId}`);
+    if (payments.length > 0) {
+      console.log('Primeiro pagamento:', payments[0]);
+    }
     
     res.json(payments);
   } catch (err: any) {
