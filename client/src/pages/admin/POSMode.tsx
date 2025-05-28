@@ -137,6 +137,7 @@ const POSMode = () => {
   
   // Abrir o modal de seleção de método de pagamento
   const handleFinalizeOrder = () => {
+    console.log('🔍 DEBUG - Abrindo modal, método atual:', selectedPaymentMethod);
     setIsPaymentModalOpen(true);
   };
   
@@ -268,6 +269,7 @@ Status: PAGO
   };
 
   const handleProcessOrder = () => {
+    console.log('🔍 DEBUG - Processando pedido com método:', selectedPaymentMethod);
     setIsPaymentModalOpen(false);
     
     // Usar SweetAlert2 para confirmar a finalização
@@ -759,7 +761,10 @@ Status: PAGO
                     className={`p-3 border rounded-lg cursor-pointer flex items-center ${
                       selectedPaymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-gray-300'
                     }`}
-                    onClick={() => setSelectedPaymentMethod('card')}
+                    onClick={() => {
+                      console.log('🔍 DEBUG - Selecionando Cartão');
+                      setSelectedPaymentMethod('card');
+                    }}
                   >
                     <div className={`w-6 h-6 rounded-full border mr-3 flex items-center justify-center ${
                       selectedPaymentMethod === 'card' ? 'border-primary' : 'border-gray-300'
@@ -779,7 +784,10 @@ Status: PAGO
                     className={`p-3 border rounded-lg cursor-pointer flex items-center ${
                       selectedPaymentMethod === 'multibanco' ? 'border-primary bg-primary/5' : 'border-gray-300'
                     }`}
-                    onClick={() => setSelectedPaymentMethod('multibanco')}
+                    onClick={() => {
+                      console.log('🔍 DEBUG - Selecionando Multibanco');
+                      setSelectedPaymentMethod('multibanco');
+                    }}
                   >
                     <div className={`w-6 h-6 rounded-full border mr-3 flex items-center justify-center ${
                       selectedPaymentMethod === 'multibanco' ? 'border-primary' : 'border-gray-300'
@@ -799,7 +807,10 @@ Status: PAGO
                     className={`p-3 border rounded-lg cursor-pointer flex items-center ${
                       selectedPaymentMethod === 'mbway' ? 'border-primary bg-primary/5' : 'border-gray-300'
                     }`}
-                    onClick={() => setSelectedPaymentMethod('mbway')}
+                    onClick={() => {
+                      console.log('🔍 DEBUG - Selecionando MBWay');
+                      setSelectedPaymentMethod('mbway');
+                    }}
                   >
                     <div className={`w-6 h-6 rounded-full border mr-3 flex items-center justify-center ${
                       selectedPaymentMethod === 'mbway' ? 'border-primary' : 'border-gray-300'
@@ -819,7 +830,10 @@ Status: PAGO
                     className={`p-3 border rounded-lg cursor-pointer flex items-center ${
                       selectedPaymentMethod === 'multibanco_TPA' ? 'border-primary bg-primary/5' : 'border-gray-300'
                     }`}
-                    onClick={() => setSelectedPaymentMethod('multibanco_TPA')}
+                    onClick={() => {
+                      console.log('🔍 DEBUG - Selecionando Multibanco TPA');
+                      setSelectedPaymentMethod('multibanco_TPA');
+                    }}
                   >
                     <div className={`w-6 h-6 rounded-full border mr-3 flex items-center justify-center ${
                       selectedPaymentMethod === 'multibanco_TPA' ? 'border-primary' : 'border-gray-300'
