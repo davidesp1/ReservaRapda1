@@ -11,6 +11,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -27,6 +36,8 @@ import {
   Smartphone,
   Building,
   ArrowLeftRight,
+  FileText,
+  FileSpreadsheet,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -61,6 +72,7 @@ const Finance: React.FC = () => {
   const [filteredPayments, setFilteredPayments] = useState<PaymentWithUser[]>(
     [],
   );
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const { toast } = useToast();
 
   // Fetch payments com atualização em tempo real
@@ -255,47 +267,83 @@ const Finance: React.FC = () => {
     }
   };
 
-  // Exportar dados para PDF
-  const handleExport = async () => {
-    if (filteredPayments.length === 0) {
+  // Preparar dados para exportação
+  const prepareExportData = () => {
+    const currentDate = new Date().toLocaleDateString('pt-PT');
+    const totalAmount = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
+    
+    const headers = ['Data', 'Transação', 'Referência', 'Valor', 'Método', 'Usuário', 'Status'];
+    
+    const data = filteredPayments.map(payment => [
+      format(new Date(payment.payment_date), 'dd/MM/yyyy'),
+      payment.transaction_id,
+      payment.reference,
+      formatPrice(payment.amount),
+      payment.method === 'cash' ? 'Dinheiro' :
+      payment.method === 'card' ? 'Cartão' :
+      payment.method === 'mbway' ? 'MB Way' :
+      payment.method === 'multibanco' ? 'Multibanco' :
+      payment.method === 'multibanco_TPA' ? 'Multibanco (TPA)' :
+      payment.method === 'transfer' ? 'Transferência' : payment.method,
+      `${payment.first_name || ''} ${payment.last_name || ''}`.trim() || payment.username || 'N/A',
+      payment.status === 'completed' ? 'Concluído' :
+      payment.status === 'pending' ? 'Pendente' :
+      payment.status === 'failed' ? 'Falhado' : payment.status
+    ]);
+
+    return { headers, data, currentDate, totalAmount };
+  };
+
+  // Exportar para Excel
+  const exportToExcel = async () => {
+    try {
+      const XLSX = await import('xlsx');
+      const { headers, data, currentDate, totalAmount } = prepareExportData();
+
+      // Criar workbook
+      const workbook = XLSX.utils.book_new();
+      
+      // Criar dados da planilha com cabeçalho informativo
+      const worksheetData = [
+        ['Relatório de Pagamentos'],
+        [`Data de emissão: ${currentDate}`],
+        [`Total de registros: ${filteredPayments.length}`],
+        [`Valor total: ${formatPrice(totalAmount)}`],
+        [], // Linha vazia
+        headers,
+        ...data
+      ];
+
+      // Criar worksheet
+      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+      
+      // Adicionar worksheet ao workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Pagamentos');
+
+      // Salvar arquivo
+      const fileName = `pagamentos_${currentDate.replace(/\//g, '-')}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+
       toast({
-        title: "Nenhum dado para exportar",
-        description: "Não há pagamentos para exportar com os filtros aplicados.",
+        title: "Exportação concluída",
+        description: `Arquivo Excel ${fileName} foi baixado com sucesso.`,
+      });
+
+      setIsExportModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao exportar Excel:', error);
+      toast({
+        title: "Erro na exportação",
+        description: "Ocorreu um erro ao gerar o arquivo Excel.",
         variant: "destructive"
       });
-      return;
     }
+  };
 
+  // Exportar para CSV
+  const exportToCSV = () => {
     try {
-      toast({
-        title: "Gerando PDF...",
-        description: "Preparando arquivo para download...",
-      });
-
-      // Gerar dados CSV como fallback simples
-      const currentDate = new Date().toLocaleDateString('pt-PT');
-      const totalAmount = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
-      
-      // Cabeçalho CSV
-      const headers = ['Data', 'Transação', 'Referência', 'Valor', 'Método', 'Usuário', 'Status'];
-      
-      // Dados CSV
-      const csvData = filteredPayments.map(payment => [
-        format(new Date(payment.payment_date), 'dd/MM/yyyy'),
-        payment.transaction_id,
-        payment.reference,
-        formatPrice(payment.amount),
-        payment.method === 'cash' ? 'Dinheiro' :
-        payment.method === 'card' ? 'Cartão' :
-        payment.method === 'mbway' ? 'MB Way' :
-        payment.method === 'multibanco' ? 'Multibanco' :
-        payment.method === 'multibanco_TPA' ? 'Multibanco (TPA)' :
-        payment.method === 'transfer' ? 'Transferência' : payment.method,
-        `${payment.first_name || ''} ${payment.last_name || ''}`.trim() || payment.username || 'N/A',
-        payment.status === 'completed' ? 'Concluído' :
-        payment.status === 'pending' ? 'Pendente' :
-        payment.status === 'failed' ? 'Falhado' : payment.status
-      ]);
+      const { headers, data, currentDate, totalAmount } = prepareExportData();
 
       // Criar conteúdo CSV
       const csvContent = [
@@ -304,7 +352,7 @@ const Finance: React.FC = () => {
         `Valor total: ${formatPrice(totalAmount)}`,
         '',
         headers.join(','),
-        ...csvData.map(row => row.join(','))
+        ...data.map(row => row.join(','))
       ].join('\n');
 
       // Criar e baixar arquivo
@@ -323,11 +371,12 @@ const Finance: React.FC = () => {
         description: "Arquivo CSV baixado com sucesso.",
       });
 
+      setIsExportModalOpen(false);
     } catch (error) {
-      console.error('Erro ao exportar:', error);
+      console.error('Erro ao exportar CSV:', error);
       toast({
         title: "Erro na exportação",
-        description: "Ocorreu um erro ao gerar o arquivo. Tente novamente.",
+        description: "Ocorreu um erro ao gerar o arquivo CSV.",
         variant: "destructive"
       });
     }
@@ -588,13 +637,58 @@ const Finance: React.FC = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button
-                    onClick={handleExport}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-blue-900"
-                  >
-                    <FileDown className="w-4 h-4 mr-2" />
-                    Exportar
-                  </Button>
+                  <Dialog open={isExportModalOpen} onOpenChange={setIsExportModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-yellow-500 hover:bg-yellow-600 text-blue-900">
+                        <FileDown className="w-4 h-4 mr-2" />
+                        Exportar
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Exportar Pagamentos</DialogTitle>
+                        <DialogDescription>
+                          Escolha o formato para exportar os dados filtrados ({filteredPayments.length} registros)
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex flex-col gap-3 py-4">
+                        <Button
+                          onClick={exportToExcel}
+                          className="w-full justify-start bg-green-600 hover:bg-green-700 text-white"
+                          disabled={filteredPayments.length === 0}
+                        >
+                          <FileSpreadsheet className="w-5 h-5 mr-3" />
+                          <div className="text-left">
+                            <div className="font-semibold">Excel (XLSX)</div>
+                            <div className="text-sm opacity-90">Planilha do Excel com formatação</div>
+                          </div>
+                        </Button>
+                        
+                        <Button
+                          onClick={exportToCSV}
+                          className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
+                          disabled={filteredPayments.length === 0}
+                        >
+                          <FileText className="w-5 h-5 mr-3" />
+                          <div className="text-left">
+                            <div className="font-semibold">CSV</div>
+                            <div className="text-sm opacity-90">Arquivo de texto separado por vírgulas</div>
+                          </div>
+                        </Button>
+                      </div>
+                      {filteredPayments.length === 0 && (
+                        <div className="text-center text-sm text-gray-500 py-2">
+                          Nenhum dado disponível para exportação com os filtros aplicados.
+                        </div>
+                      )}
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsExportModalOpen(false)}>
+                          Cancelar
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                  
                   <Button onClick={applyFilters} variant="outline">
                     <Filter className="w-4 h-4 mr-2" />
                     Aplicar
