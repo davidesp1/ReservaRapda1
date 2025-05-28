@@ -10,6 +10,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isCollaborator: boolean;
   isFinanceiro: boolean;
+  isStaff: boolean;
   login: (username: string, password: string) => Promise<User>;
   loginWithPin: (credentials: { userId: string; pin: string }) => Promise<User>;
   register: (userData: RegisterData) => Promise<void>;
@@ -271,6 +272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = isAuthenticated && user?.role === 'admin';
   const isCollaborator = isAuthenticated && user?.role === 'collaborator';
   const isFinanceiro = isAuthenticated && user?.role === 'financeiro';
+  const isStaff = isAuthenticated && user?.role === 'staff';
 
   return (
     <AuthContext.Provider
