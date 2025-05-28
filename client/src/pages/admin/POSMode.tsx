@@ -270,6 +270,7 @@ Status: PAGO
 
   const handleProcessOrder = () => {
     console.log('🔍 DEBUG - Processando pedido com método:', selectedPaymentMethod);
+    console.log('🔍 DEBUG - Fechando modal...');
     setIsPaymentModalOpen(false);
     
     // Usar SweetAlert2 para confirmar a finalização
@@ -310,6 +311,15 @@ Status: PAGO
           // Log para debug do método selecionado
           console.log('🔍 FRONTEND - Método selecionado:', selectedPaymentMethod);
           console.log('🔍 FRONTEND - Dados enviados:', orderData);
+          console.log('🔍 FRONTEND - PaymentMethod no objeto:', orderData.paymentMethod);
+          
+          // Verificação adicional
+          if (orderData.paymentMethod !== selectedPaymentMethod) {
+            console.error('❌ ERRO: PaymentMethod diferente!', {
+              selected: selectedPaymentMethod,
+              inData: orderData.paymentMethod
+            });
+          }
           
           // Enviar os dados para a API
           fetch('/api/pos/orders', {
