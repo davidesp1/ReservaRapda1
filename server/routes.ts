@@ -547,6 +547,38 @@ router.get("/api/reservations", isAuthenticated, async (req, res) => {
   }
 });
 
+// Rota para buscar pagamentos do usuário
+router.get("/api/payments", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const safeUserId = userId ? Number(userId) : 0;
+    
+    // Buscar pagamentos relacionados às reservas do usuário
+    const payments = await queryClient`
+      SELECT 
+        r.id,
+        r.date,
+        r.total as amount,
+        r.payment_status as status,
+        r.payment_method as method,
+        r.reservation_code,
+        r.confirmation_code,
+        t.number as table_number,
+        CONCAT('REF', LPAD(r.id::text, 10, '0')) as reference
+      FROM reservations r
+      JOIN tables t ON r.table_id = t.id
+      WHERE r.user_id = ${safeUserId}
+        AND r.total > 0
+      ORDER BY r.date DESC
+    `;
+    
+    res.json(payments);
+  } catch (err: any) {
+    console.error("Erro ao buscar pagamentos:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Rota para buscar TODAS as reservas (área admin)
 router.get("/api/admin/reservations", isAuthenticated, async (req, res) => {
   try {

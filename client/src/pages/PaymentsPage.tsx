@@ -5,16 +5,18 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Search, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 
 interface Payment {
   id: number;
   date: string;
   amount: number;
-  status: 'pending' | 'completed' | 'failed' | 'cancelled';
-  method: 'card' | 'mbway' | 'multibanco' | 'transfer' | 'cash';
+  status: string;
+  method: string;
   reference: string;
-  reservationId: number;
-  table?: string;
+  reservation_code?: string;
+  confirmation_code?: string;
+  table_number?: number;
 }
 
 const PaymentsPage = () => {
@@ -26,59 +28,11 @@ const PaymentsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
 
-  // Dados reais dos pagamentos do usuário (substituir por API real)
-  const payments: Payment[] = [
-    {
-      id: 1,
-      date: '2025-05-28T20:00:00',
-      amount: 58.90,
-      status: 'completed',
-      method: 'card',
-      reference: 'REF2025052801',
-      reservationId: 7,
-      table: 'Mesa 2'
-    },
-    {
-      id: 2,
-      date: '2025-05-25T19:30:00',
-      amount: 74.50,
-      status: 'completed',
-      method: 'mbway',
-      reference: 'REF2025052502',
-      reservationId: 6,
-      table: 'Mesa 1'
-    },
-    {
-      id: 3,
-      date: '2025-05-30T20:00:00',
-      amount: 125.75,
-      status: 'pending',
-      method: 'multibanco',
-      reference: 'REF2025053003',
-      reservationId: 8,
-      table: 'Mesa 5'
-    },
-    {
-      id: 4,
-      date: '2025-05-20T12:15:00',
-      amount: 45.20,
-      status: 'pending',
-      method: 'transfer',
-      reference: 'REF2025052004',
-      reservationId: 5,
-      table: 'Mesa 3'
-    },
-    {
-      id: 5,
-      date: '2025-05-15T13:30:00',
-      amount: 92.40,
-      status: 'failed',
-      method: 'card',
-      reference: 'REF2025051505',
-      reservationId: 4,
-      table: 'Mesa 8'
-    }
-  ];
+  // Buscar pagamentos reais do banco de dados
+  const { data: payments = [], isLoading, error } = useQuery<Payment[]>({
+    queryKey: ['/api/payments'],
+    staleTime: 30000,
+  });
 
   // Função para formatar data
   const formatDate = (dateString: string) => {
@@ -122,6 +76,17 @@ const PaymentsPage = () => {
     };
     return methodMap[method] || method;
   };
+
+  // Mostrar loading enquanto carrega os dados
+  if (isLoading) {
+    return (
+      <CustomerLayout title="Meus Pagamentos">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brasil-blue"></div>
+        </div>
+      </CustomerLayout>
+    );
+  }
 
   // Filtrar pagamentos
   const filteredPayments = payments.filter(payment => {
@@ -278,7 +243,7 @@ const PaymentsPage = () => {
                           </span>
                         </td>
                         <td className="px-4 py-4 text-center font-semibold">
-                          €{payment.amount.toFixed(2)}
+                          €{(payment.amount / 100).toFixed(2)}
                         </td>
                         <td className="px-4 py-4 text-center">
                           {mapMethod(payment.method)}
