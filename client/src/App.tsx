@@ -27,6 +27,7 @@ const Menu = lazy(() => import("@/pages/Menu"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const Support = lazy(() => import("@/pages/Support"));
 const Payments = lazy(() => import("@/pages/Payments"));
+const PaymentsPage = lazy(() => import("@/pages/PaymentsPage"));
 
 // Admin pages
 import Dashboard from "@/pages/admin/Dashboard";
@@ -84,7 +85,7 @@ function Router() {
       <Route path="/payments">
         {() => (
           <Suspense fallback={<LoadingSpinner />}>
-            <Payments />
+            <PaymentsPage />
           </Suspense>
         )}
       </Route>
