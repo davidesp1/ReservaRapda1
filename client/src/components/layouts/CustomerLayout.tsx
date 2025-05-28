@@ -20,7 +20,7 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
   title = 'Dashboard' 
 }) => {
   const { t } = useTranslation();
-  const { isAuthenticated, isLoading, user, isCollaborator, isFinanceiro } = useAuth();
+  const { isAuthenticated, isLoading, user, isCollaborator, isFinanceiro, isStaff } = useAuth();
   const [_, setLocation] = useLocation();
   // Estado para o menu móvel foi removido pois é gerenciado pelo componente Sheet
   
