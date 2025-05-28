@@ -419,12 +419,11 @@ const Finance: React.FC = () => {
       doc.setTextColor(textWhite[0], textWhite[1], textWhite[2]);
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
-      doc.text('RESTAURANTE OPA QUE DELICIA', 20, 18);
+      doc.text('RESTAURANTE OPA QUE DELICIA', 20, 20);
       
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text('SISTEMA DE GESTAO FINANCEIRA', 20, 28);
-      doc.text('Rua das Delicias, 456 - Centro', 20, 38);
+      doc.text('SISTEMA DE GESTAO FINANCEIRA', 20, 32);
       
       // Título principal (lado direito)
       doc.setTextColor(accentGreen[0], accentGreen[1], accentGreen[2]);
@@ -432,12 +431,6 @@ const Finance: React.FC = () => {
       doc.setFont('helvetica', 'bold');
       doc.text('CONTROLE', pageWidth - 20, 20, { align: 'right' });
       doc.text('FINANCEIRO', pageWidth - 20, 32, { align: 'right' });
-      
-      // Informações de contato
-      doc.setTextColor(textWhite[0], textWhite[1], textWhite[2]);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text('Telefone: (11) 1234-5678', pageWidth - 20, 42, { align: 'right' });
       
       // =================== INFORMAÇÕES DO RELATÓRIO ===================
       let yPos = 65;
@@ -568,7 +561,7 @@ const Finance: React.FC = () => {
         });
         
         // =================== RODAPÉ CORPORATIVO ===================
-        const finalY = (doc as any).lastAutoTable.finalY + 30;
+        const finalY = (doc as any).lastAutoTable.finalY + 50;
         
         // Linha de assinatura
         doc.setDrawColor(31, 41, 55);
