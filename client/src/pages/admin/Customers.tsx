@@ -44,8 +44,8 @@ const Customers: React.FC = () => {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
   const [_, setLocation] = useLocation();
   const [searchText, setSearchText] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [viewCustomerInfo, setViewCustomerInfo] = useState<Customer | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -97,8 +97,8 @@ const Customers: React.FC = () => {
         (customer.username && customer.username.toLowerCase().includes(searchLower)) ||
         (customer.phone && customer.phone.toLowerCase().includes(searchLower));
 
-      const matchesRole = !roleFilter || customer.role === roleFilter;
-      const matchesStatus = !statusFilter || customer.status === statusFilter;
+      const matchesRole = !roleFilter || roleFilter === 'all' || customer.role === roleFilter;
+      const matchesStatus = !statusFilter || statusFilter === 'all' || customer.status === statusFilter;
 
       return matchesSearch && matchesRole && matchesStatus;
     });
@@ -230,8 +230,8 @@ const Customers: React.FC = () => {
   // Clear filters
   const clearFilters = () => {
     setSearchText('');
-    setRoleFilter('');
-    setStatusFilter('');
+    setRoleFilter('all');
+    setStatusFilter('all');
   };
 
   if (customersLoading) {
@@ -277,7 +277,7 @@ const Customers: React.FC = () => {
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
+                  <SelectItem value="all">Todas</SelectItem>
                   <SelectItem value="admin">Master</SelectItem>
                   <SelectItem value="financeiro">Financeiro</SelectItem>
                   <SelectItem value="collaborator">Colaborador</SelectItem>
@@ -295,7 +295,7 @@ const Customers: React.FC = () => {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="active">Ativo</SelectItem>
                   <SelectItem value="suspended">Suspenso</SelectItem>
                   <SelectItem value="inactive">Inativo</SelectItem>
