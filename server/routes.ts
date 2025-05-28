@@ -1244,19 +1244,24 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
     try {
       // Log para debug do método de pagamento recebido
       console.log('🔍 POS - Método de pagamento recebido:', orderData.paymentMethod);
+      console.log('🔍 POS - Tipo do paymentMethod:', typeof orderData.paymentMethod);
       
       // Normalizar o método de pagamento
       let normalizedMethod = orderData.paymentMethod || 'cash';
       
-      // Manter métodos específicos sem conversão
-      // multibanco_tpa deve ser mantido como está
-      
-      console.log('📝 POS - Método normalizado:', normalizedMethod);
+      console.log('📝 POS - Método antes da validação:', normalizedMethod);
       
       // Garantir que o método é um dos valores aceitos
-      if (!['cash', 'card', 'mbway', 'multibanco', 'transfer', 'multibanco_TPA'].includes(normalizedMethod)) {
+      const validMethods = ['cash', 'card', 'mbway', 'multibanco', 'transfer', 'multibanco_TPA'];
+      console.log('📝 POS - Métodos válidos:', validMethods);
+      console.log('📝 POS - Método está na lista?', validMethods.includes(normalizedMethod));
+      
+      if (!validMethods.includes(normalizedMethod)) {
+        console.log('❌ POS - Método inválido detectado, mudando para cash. Método era:', normalizedMethod);
         normalizedMethod = 'cash';
       }
+      
+      console.log('📝 POS - Método final a ser salvo:', normalizedMethod);
       
       // Usar o valor exato como está, sem multiplicar novamente
       // O valor já está na unidade monetária correta
