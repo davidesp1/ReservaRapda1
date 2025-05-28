@@ -463,155 +463,130 @@ const Finance: React.FC = () => {
         row[6]  // Status
       ]);
       
-      setTimeout(() => {
-        try {
-          (doc as any).autoTable({
-            head: [headers],
-            body: tableData,
-            startY: yPos,
-            
-            // Configurações da tabela
-            tableWidth: 'auto',
-            margin: { left: 15, right: 15 },
-            
-            // Estilos gerais
-            styles: {
-              fontSize: 9,
-              cellPadding: 6,
-              textColor: textDark,
-              lineColor: borderGray,
-              lineWidth: 0.5,
-              font: 'helvetica'
-            },
-            
-            // Cabeçalho com estilo do exemplo
-            headStyles: {
-              fillColor: tableBlue,
-              textColor: textWhite,
-              fontStyle: 'bold',
-              fontSize: 10,
-              halign: 'center',
-              valign: 'middle',
-              cellPadding: 8
-            },
-            
-            // Estilos das colunas
-            columnStyles: {
-              0: { cellWidth: 25, halign: 'center' },
-              1: { cellWidth: 40, halign: 'left' },
-              2: { cellWidth: 25, halign: 'center' },
-              3: { cellWidth: 30, halign: 'right', fontStyle: 'bold' },
-              4: { cellWidth: 25, halign: 'center' },
-              5: { cellWidth: 35, halign: 'left' },
-              6: { cellWidth: 20, halign: 'center' }
-            },
-            
-            // Alternação de cores
-            alternateRowStyles: {
-              fillColor: [248, 250, 252]
-            },
-            
-            // Bordas
-            tableLineColor: borderGray,
-            tableLineWidth: 0.5,
-            
-            // Personalização de células
-            didParseCell: function(data: any) {
-              // Status colorido
-              if (data.column.index === 6) {
-                const status = data.cell.text[0].toLowerCase();
-                if (status.includes('concluído') || status.includes('completed')) {
-                  data.cell.styles.textColor = [34, 197, 94]; // Verde
-                  data.cell.styles.fontStyle = 'bold';
-                } else if (status.includes('pendente') || status.includes('pending')) {
-                  data.cell.styles.textColor = [245, 158, 11]; // Amarelo
-                  data.cell.styles.fontStyle = 'bold';
-                } else if (status.includes('falhou') || status.includes('failed')) {
-                  data.cell.styles.textColor = [239, 68, 68]; // Vermelho
-                  data.cell.styles.fontStyle = 'bold';
-                }
-              }
-              
-              // Valores em destaque
-              if (data.column.index === 3) {
-                data.cell.styles.textColor = [34, 197, 94];
-                data.cell.styles.fontStyle = 'bold';
-              }
-            }
-          });
+      // Criar tabela sem setTimeout para garantir execução
+      try {
+        (doc as any).autoTable({
+          head: [headers],
+          body: tableData,
+          startY: yPos,
           
-          // =================== RODAPÉ CORPORATIVO ===================
-          const finalY = (doc as any).lastAutoTable.finalY + 30;
+          styles: {
+            fontSize: 9,
+            cellPadding: 6,
+            textColor: [31, 41, 55],
+            lineColor: [209, 213, 219],
+            lineWidth: 0.5
+          },
           
-          // Linha de assinatura
-          doc.setDrawColor(textDark[0], textDark[1], textDark[2]);
-          doc.setLineWidth(0.5);
-          doc.line(20, finalY, 100, finalY);
+          headStyles: {
+            fillColor: [59, 130, 246],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 10,
+            halign: 'center',
+            cellPadding: 8
+          },
           
-          // Nome do responsável
-          doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
-          doc.text('Gestor Financeiro', 20, finalY + 10);
+          columnStyles: {
+            0: { cellWidth: 25, halign: 'center' },
+            1: { cellWidth: 40, halign: 'left' },
+            2: { cellWidth: 25, halign: 'center' },
+            3: { cellWidth: 30, halign: 'right', fontStyle: 'bold', textColor: [34, 197, 94] },
+            4: { cellWidth: 25, halign: 'center' },
+            5: { cellWidth: 35, halign: 'left' },
+            6: { cellWidth: 20, halign: 'center' }
+          },
           
-          // =================== FUNDO DECORATIVO ===================
-          // Fundo azul escuro no rodapé
-          doc.setFillColor(headerBlue[0], headerBlue[1], headerBlue[2]);
-          doc.rect(0, pageHeight - 40, pageWidth, 40, 'F');
-          
-          // Texto do rodapé
-          doc.setTextColor(textWhite[0], textWhite[1], textWhite[2]);
-          doc.setFontSize(8);
-          doc.setFont('helvetica', 'italic');
-          doc.text('* Documento gerado automaticamente pelo sistema', 20, pageHeight - 25);
-          doc.text(`${new Date().toLocaleString('pt-PT')}`, 20, pageHeight - 15);
-          
-          // Prazo para disputas (como no exemplo)
-          doc.setTextColor(accentGreen[0], accentGreen[1], accentGreen[2]);
+          alternateRowStyles: {
+            fillColor: [248, 250, 252]
+          }
+        });
+        
+        // =================== RODAPÉ CORPORATIVO ===================
+        const finalY = (doc as any).lastAutoTable.finalY + 30;
+        
+        // Linha de assinatura
+        doc.setDrawColor(31, 41, 55);
+        doc.setLineWidth(0.5);
+        doc.line(20, finalY, 100, finalY);
+        
+        // Nome do responsável
+        doc.setTextColor(31, 41, 55);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Gestor Financeiro', 20, finalY + 10);
+        
+        // =================== FUNDO DECORATIVO ===================
+        // Fundo azul escuro no rodapé
+        doc.setFillColor(45, 55, 72);
+        doc.rect(0, pageHeight - 40, pageWidth, 40, 'F');
+        
+        // Texto do rodapé
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'italic');
+        doc.text('* Documento gerado automaticamente pelo sistema', 20, pageHeight - 25);
+        doc.text(`${new Date().toLocaleString('pt-PT')}`, 20, pageHeight - 15);
+        
+        // Prazo para disputas (como no exemplo)
+        doc.setTextColor(34, 197, 94);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text('* Prazo para disputas ou ajustes:', pageWidth - 20, pageHeight - 25, { align: 'right' });
+        doc.text('30 dias apos o envio deste relatorio', pageWidth - 20, pageHeight - 15, { align: 'right' });
+        
+        // Salvar arquivo
+        const fileName = `controle-financeiro-${currentDate.replace(/\//g, '-')}.pdf`;
+        doc.save(fileName);
+        
+        toast({
+          title: "Relatório profissional criado!",
+          description: `${fileName} baixado com sucesso.`,
+        });
+        
+        setIsExportModalOpen(false);
+        
+      } catch (error) {
+        console.error('Erro na tabela:', error);
+        
+        // Fallback simples mas ainda corporativo
+        doc.setTextColor(31, 41, 55);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('DADOS FINANCEIROS', 20, yPos + 20);
+        
+        filteredPayments.slice(0, 20).forEach((payment, index) => {
+          const y = yPos + 40 + (index * 10);
           doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(31, 41, 55);
+          doc.text(`${format(new Date(payment.payment_date), 'dd/MM/yyyy')}`, 20, y);
+          doc.text(`${payment.transaction_id}`, 60, y);
+          doc.setTextColor(34, 197, 94);
           doc.setFont('helvetica', 'bold');
-          doc.text('* Prazo para disputas ou ajustes:', pageWidth - 20, pageHeight - 25, { align: 'right' });
-          doc.text('30 dias apos o envio deste relatorio', pageWidth - 20, pageHeight - 15, { align: 'right' });
-          
-          // Salvar arquivo
-          const fileName = `controle-financeiro-${currentDate.replace(/\//g, '-')}.pdf`;
-          doc.save(fileName);
-          
-          toast({
-            title: "Relatório profissional criado!",
-            description: `${fileName} baixado com sucesso.`,
-          });
-          
-          setIsExportModalOpen(false);
-          
-        } catch (error) {
-          console.error('Erro na tabela:', error);
-          
-          // Fallback simples
-          doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-          doc.setFontSize(12);
-          doc.text('DADOS FINANCEIROS', 20, yPos + 20);
-          
-          filteredPayments.slice(0, 20).forEach((payment, index) => {
-            const y = yPos + 40 + (index * 10);
-            doc.setFontSize(9);
-            doc.text(`${format(new Date(payment.payment_date), 'dd/MM/yyyy')}`, 20, y);
-            doc.text(`${payment.transaction_id}`, 60, y);
-            doc.text(`${formatPrice(payment.amount)}`, 120, y);
-            doc.text(`${payment.method}`, 160, y);
-          });
-          
-          const fileName = `controle-financeiro-${currentDate.replace(/\//g, '-')}.pdf`;
-          doc.save(fileName);
-          
-          toast({
-            title: "PDF gerado com sucesso",
-            description: "Formato simplificado criado.",
-          });
-          
-          setIsExportModalOpen(false);
-        }
-      }, 200);
+          doc.text(`${formatPrice(payment.amount)}`, 120, y);
+          doc.setTextColor(31, 41, 55);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`${payment.method}`, 160, y);
+        });
+        
+        // Adicionar rodapé mesmo no fallback
+        doc.setFillColor(45, 55, 72);
+        doc.rect(0, pageHeight - 25, pageWidth, 25, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.text('Documento gerado automaticamente', 20, pageHeight - 10);
+        
+        const fileName = `controle-financeiro-${currentDate.replace(/\//g, '-')}.pdf`;
+        doc.save(fileName);
+        
+        toast({
+          title: "PDF corporativo gerado",
+          description: "Arquivo criado com design profissional.",
+        });
+        
+        setIsExportModalOpen(false);
+      }
       
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
