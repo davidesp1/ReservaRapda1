@@ -1115,6 +1115,34 @@ router.post("/api/payments/cancel", isAuthenticated, async (req, res) => {
   }
 });
 
+// Rota para buscar pagamentos do usuário logado
+router.get("/api/payments/user", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    
+    const payments = await queryClient`
+      SELECT 
+        p.id,
+        p.transaction_id,
+        p.reference,
+        p.amount,
+        p.method,
+        p.status,
+        p.payment_date,
+        r.reservation_code
+      FROM payments p
+      LEFT JOIN reservations r ON p.reservation_id = r.id
+      WHERE p.user_id = ${userId}
+      ORDER BY p.payment_date DESC
+    `;
+    
+    res.json(payments);
+  } catch (err: any) {
+    console.error("Erro ao buscar pagamentos do usuário:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Rotas para o sistema POS
 router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
   try {

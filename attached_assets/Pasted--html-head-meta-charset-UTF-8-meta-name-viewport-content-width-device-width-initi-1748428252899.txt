@@ -1,0 +1,386 @@
+<html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>::-webkit-scrollbar { display: none;}</style>
+    <script>tailwind.config = {
+  "theme": {
+    "extend": {
+      "colors": {
+        "brazil-green": "#009c3b",
+        "brazil-yellow": "#ffdf00",
+        "brazil-blue": "#002776",
+        "brazil-red": "#c8102e"
+      },
+      "fontFamily": {
+        "montserrat": [
+          "Montserrat",
+          "sans-serif"
+        ],
+        "opensans": [
+          "Open Sans",
+          "sans-serif"
+        ],
+        "sans": [
+          "Inter",
+          "sans-serif"
+        ]
+      }
+    }
+  }
+};</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap"><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="bg-gray-100 font-opensans">
+
+<div id="admin-dashboard" class="flex h-[900px]">
+    <div id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-brazil-blue flex flex-col">
+        <div class="p-6">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-brazil-yellow rounded-full flex items-center justify-center mr-2">
+                    <i class="fa-solid fa-utensils text-brazil-blue"></i>
+                </div>
+                <span class="text-xl font-semibold text-white font-montserrat">
+                    Opa que delicia
+                </span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <ul>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-chart-line text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Dashboard</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-users text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão de Clientes</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-book-open text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão do Menu</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-chair text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão das Mesas</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-coins text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão Financeira</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white bg-brazil-blue bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-credit-card text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Pagamentos</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-calendar-check text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Reservas</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+        <div class="mt-auto border-t border-blue-400 p-4">
+            <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                <i class="fa-solid fa-gear text-brazil-yellow w-6"></i>
+                <span class="ml-2 font-medium">Configurações</span>
+            </span>
+            <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 mt-2 cursor-pointer">
+                <i class="fa-solid fa-right-from-bracket text-brazil-yellow w-6"></i>
+                <span class="ml-2 font-medium">Sair</span>
+            </span>
+        </div>
+    </div>
+
+    <div id="main-content" class="ml-64 flex-1 p-8 relative">
+        <div id="header" class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-800 font-montserrat">Pagamentos</h1>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="relative">
+                        <i class="fa-regular fa-bell text-xl text-gray-600"></i>
+                        <span class="absolute -top-1 -right-1 bg-brazil-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">2</span>
+                    </button>
+                </div>
+                <div class="flex items-center">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User Avatar" class="w-10 h-10 rounded-full border-2 border-brazil-yellow">
+                    <div class="ml-2">
+                        <p class="text-sm font-medium text-gray-800">Carlos Silva</p>
+                        <p class="text-xs text-gray-500">Cliente</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="pagamentos-section" class="flex flex-col gap-8 h-[720px]">
+            <div id="pagamentos-filtros" class="mb-2 flex flex-col lg:flex-row lg:items-end lg:space-x-6 space-y-3 lg:space-y-0">
+                <div class="flex-1">
+                    <label class="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">Pesquisar Pagamento</label>
+                    <div class="relative">
+                        <input id="pagamentos-search" type="text" placeholder="Data, código, valor, status..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brazil-blue bg-white text-gray-800 font-medium transition">
+                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">Método de Pagamento</label>
+                    <select id="pagamentos-metodo-filter" class="w-full lg:w-44 border border-gray-200 rounded-lg py-2 px-3 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-brazil-blue">
+                        <option value="">Todos</option>
+                        <option value="cartao">Cartão</option>
+                        <option value="mbway">MBWay</option>
+                        <option value="dinheiro">Dinheiro</option>
+                        <option value="pix">PIX</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">Status</label>
+                    <select id="pagamentos-status-filter" class="w-full lg:w-40 border border-gray-200 rounded-lg py-2 px-3 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-brazil-blue">
+                        <option value="">Todos</option>
+                        <option value="pago">Pago</option>
+                        <option value="pendente">Pendente</option>
+                        <option value="cancelado">Cancelado</option>
+                        <option value="falha">Falha</option>
+                    </select>
+                </div>
+                <button id="pagamentos-clean-filters" class="bg-brazil-yellow text-brazil-blue font-semibold rounded-lg px-4 py-2 shadow hover:bg-yellow-200 transition ml-auto lg:ml-0">
+                    Limpar
+                </button>
+                <button id="pagamentos-config-btn" class="bg-brazil-blue text-white font-semibold rounded-lg px-4 py-2 shadow hover:bg-brazil-green transition flex items-center space-x-2">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Configurações de pagamentos</span>
+                </button>
+            </div>
+
+            <div id="pagamentos-table-card" class="bg-white rounded-xl shadow-lg p-0 overflow-hidden flex-1 flex flex-col">
+                <div class="overflow-x-auto">
+                    <table id="pagamentos-table" class="min-w-full divide-y divide-gray-100">
+                        <thead class="bg-brazil-blue">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">Data</th>
+                                <th class="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">Código da Reserva</th>
+                                <th class="px-4 py-4 text-right text-xs font-bold text-white tracking-wider font-montserrat">Valor</th>
+                                <th class="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">Método de Pagamento</th>
+                                <th class="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">Status</th>
+                                <th class="px-6 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pagamentos-tbody" class="bg-white divide-y divide-gray-100 text-gray-800 font-medium">
+                            <!-- 10 linhas de exemplo -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-3 flex justify-between items-center bg-gray-50">
+                    <span id="pagamentos-pagination-label" class="text-xs text-gray-600">Exibindo 1-10 de 30 pagamentos</span>
+                    <div class="space-x-1" id="pagamentos-pagination">
+                        <button class="px-2 py-1 rounded text-brazil-blue hover:bg-brazil-blue hover:text-white transition" id="pag-prev-page">
+                            <i class="fa-solid fa-angle-left"></i>
+                        </button>
+                        <button class="px-2 py-1 rounded text-brazil-blue bg-brazil-yellow font-bold" id="pag-page-1">1</button>
+                        <button class="px-2 py-1 rounded text-brazil-blue hover:bg-brazil-blue hover:text-white transition" id="pag-page-2">2</button>
+                        <button class="px-2 py-1 rounded text-brazil-blue hover:bg-brazil-blue hover:text-white transition" id="pag-page-3">3</button>
+                        <button class="px-2 py-1 rounded text-brazil-blue hover:bg-brazil-blue hover:text-white transition" id="pag-next-page">
+                            <i class="fa-solid fa-angle-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const pagamentos = [
+    { data: "10/06/2024", codigo: "#R1012", valor: 120.40, metodo: "Cartão", status: "Pago", metodoIcon: "fa-credit-card", statusColor: "bg-brazil-green text-white", id: 1 },
+    { data: "09/06/2024", codigo: "#R1011", valor: 80.00, metodo: "MBWay", status: "Pendente", metodoIcon: "fa-mobile-alt", statusColor: "bg-brazil-yellow text-brazil-blue", id: 2 },
+    { data: "08/06/2024", codigo: "#R1010", valor: 50.00, metodo: "Dinheiro", status: "Cancelado", metodoIcon: "fa-money-bill-wave", statusColor: "bg-brazil-red text-white", id: 3 },
+    { data: "07/06/2024", codigo: "#R1009", valor: 210.00, metodo: "Cartão", status: "Pago", metodoIcon: "fa-credit-card", statusColor: "bg-brazil-green text-white", id: 4 },
+    { data: "06/06/2024", codigo: "#R1008", valor: 160.00, metodo: "PIX", status: "Pago", metodoIcon: "fa-qrcode", statusColor: "bg-brazil-green text-white", id: 5 },
+    { data: "05/06/2024", codigo: "#R1007", valor: 90.00, metodo: "Cartão", status: "Falha", metodoIcon: "fa-credit-card", statusColor: "bg-gray-300 text-gray-700", id: 6 },
+    { data: "04/06/2024", codigo: "#R1006", valor: 110.20, metodo: "MBWay", status: "Pago", metodoIcon: "fa-mobile-alt", statusColor: "bg-brazil-green text-white", id: 7 },
+    { data: "03/06/2024", codigo: "#R1005", valor: 70.00, metodo: "Dinheiro", status: "Pendente", metodoIcon: "fa-money-bill-wave", statusColor: "bg-brazil-yellow text-brazil-blue", id: 8 },
+    { data: "02/06/2024", codigo: "#R1004", valor: 200.00, metodo: "PIX", status: "Pago", metodoIcon: "fa-qrcode", statusColor: "bg-brazil-green text-white", id: 9 },
+    { data: "01/06/2024", codigo: "#R1003", valor: 60.00, metodo: "Cartão", status: "Cancelado", metodoIcon: "fa-credit-card", statusColor: "bg-brazil-red text-white", id: 10 },
+    { data: "31/05/2024", codigo: "#R1002", valor: 75.40, metodo: "MBWay", status: "Pago", metodoIcon: "fa-mobile-alt", statusColor: "bg-brazil-green text-white", id: 11 },
+    { data: "30/05/2024", codigo: "#R1001", valor: 130.00, metodo: "PIX", status: "Falha", metodoIcon: "fa-qrcode", statusColor: "bg-gray-300 text-gray-700", id: 12 },
+    { data: "29/05/2024", codigo: "#R1000", valor: 95.00, metodo: "Cartão", status: "Pago", metodoIcon: "fa-credit-card", statusColor: "bg-brazil-green text-white", id: 13 },
+    { data: "28/05/2024", codigo: "#R0999", valor: 85.00, metodo: "Dinheiro", status: "Pendente", metodoIcon: "fa-money-bill-wave", statusColor: "bg-brazil-yellow text-brazil-blue", id: 14 },
+    { data: "27/05/2024", codigo: "#R0998", valor: 120.00, metodo: "MBWay", status: "Pago", metodoIcon: "fa-mobile-alt", statusColor: "bg-brazil-green text-white", id: 15 },
+    { data: "26/05/2024", codigo: "#R0997", valor: 210.00, metodo: "PIX", status: "Pago", metodoIcon: "fa-qrcode", statusColor: "bg-brazil-green text-white", id: 16 },
+    { data: "25/05/2024", codigo: "#R0996", valor: 60.00, metodo: "Cartão", status: "Falha", metodoIcon: "fa-credit-card", statusColor: "bg-gray-300 text-gray-700", id: 17 },
+    { data: "24/05/2024", codigo: "#R0995", valor: 100.00, metodo: "Dinheiro", status: "Cancelado", metodoIcon: "fa-money-bill-wave", statusColor: "bg-brazil-red text-white", id: 18 },
+    { data: "23/05/2024", codigo: "#R0994", valor: 180.00, metodo: "PIX", status: "Pago", metodoIcon: "fa-qrcode", statusColor: "bg-brazil-green text-white", id: 19 },
+    { data: "22/05/2024", codigo: "#R0993", valor: 70.00, metodo: "Cartão", status: "Pago", metodoIcon: "fa-credit-card", statusColor: "bg-brazil-green text-white", id: 20 }
+];
+
+let pagCurrentPage = 1;
+const pagRowsPerPage = 10;
+let filteredPagamentos = pagamentos;
+
+function renderPagamentosTable(page) {
+    const tbody = document.getElementById("pagamentos-tbody");
+    tbody.innerHTML = "";
+    const start = (page - 1) * pagRowsPerPage;
+    const end = start + pagRowsPerPage;
+    const pageData = filteredPagamentos.slice(start, end);
+
+    pageData.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-gray-50 transition";
+        tr.innerHTML = `
+            <td class="px-6 py-4">${p.data}</td>
+            <td class="px-4 py-4">${p.codigo}</td>
+            <td class="px-4 py-4 text-right">R$ ${p.valor.toFixed(2)}</td>
+            <td class="px-4 py-4 text-center">
+                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-800">
+                    <i class="fa-solid ${p.metodoIcon} mr-1"></i> ${p.metodo}
+                </span>
+            </td>
+            <td class="px-4 py-4 text-center">
+                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded ${p.statusColor}">
+                    <i class="fa-solid ${getPagamentoStatusIcon(p.status)} mr-1"></i> ${p.status}
+                </span>
+            </td>
+            <td class="px-6 py-4 text-center">
+                <button class="text-brazil-blue hover:text-brazil-green transition" title="Ver Detalhes">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+                <button class="text-brazil-yellow hover:text-brazil-blue transition ml-2" title="Baixar Comprovante">
+                    <i class="fa-solid fa-download"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Pagination label
+    const pagLabel = document.getElementById("pagamentos-pagination-label");
+    pagLabel.textContent = `Exibindo ${filteredPagamentos.length === 0 ? 0 : (start+1)}-${Math.min(end, filteredPagamentos.length)} de ${filteredPagamentos.length} pagamentos`;
+}
+
+function getPagamentoStatusIcon(status) {
+    switch (status) {
+        case "Pago": return "fa-money-bill-wave";
+        case "Pendente": return "fa-wallet";
+        case "Cancelado": return "fa-ban";
+        case "Falha": return "fa-exclamation-triangle";
+        default: return "fa-question";
+    }
+}
+
+function renderPagamentosPagination() {
+    const totalPages = Math.ceil(filteredPagamentos.length / pagRowsPerPage);
+    document.getElementById("pag-page-1").className = `px-2 py-1 rounded text-brazil-blue ${pagCurrentPage === 1 ? "bg-brazil-yellow font-bold" : "hover:bg-brazil-blue hover:text-white transition"}`;
+    document.getElementById("pag-page-2").className = `px-2 py-1 rounded text-brazil-blue ${pagCurrentPage === 2 ? "bg-brazil-yellow font-bold" : "hover:bg-brazil-blue hover:text-white transition"}`;
+    document.getElementById("pag-page-3").className = `px-2 py-1 rounded text-brazil-blue ${pagCurrentPage === 3 ? "bg-brazil-yellow font-bold" : "hover:bg-brazil-blue hover:text-white transition"}`;
+    document.getElementById("pag-prev-page").disabled = pagCurrentPage === 1;
+    document.getElementById("pag-next-page").disabled = pagCurrentPage === totalPages || totalPages === 0;
+}
+
+function applyPagamentosFilters() {
+    const metodo = document.getElementById("pagamentos-metodo-filter").value.toLowerCase();
+    const status = document.getElementById("pagamentos-status-filter").value.toLowerCase();
+    const search = document.getElementById("pagamentos-search").value.toLowerCase();
+    filteredPagamentos = pagamentos.filter(p => {
+        let match = true;
+        if (metodo && p.metodo.toLowerCase() !== metodo) match = false;
+        if (status && p.status.toLowerCase() !== status) match = false;
+        if (search) {
+            const searchFields = [p.data, p.codigo, p.metodo, p.status, p.valor.toFixed(2)].join(" ").toLowerCase();
+            if (!searchFields.includes(search)) match = false;
+        }
+        return match;
+    });
+    pagCurrentPage = 1;
+    renderPagamentosTable(pagCurrentPage);
+    renderPagamentosPagination();
+}
+
+document.getElementById("pagamentos-metodo-filter").addEventListener("change", applyPagamentosFilters);
+document.getElementById("pagamentos-status-filter").addEventListener("change", applyPagamentosFilters);
+document.getElementById("pagamentos-search").addEventListener("input", applyPagamentosFilters);
+document.getElementById("pagamentos-clean-filters").addEventListener("click", function() {
+    document.getElementById("pagamentos-metodo-filter").value = "";
+    document.getElementById("pagamentos-status-filter").value = "";
+    document.getElementById("pagamentos-search").value = "";
+    applyPagamentosFilters();
+});
+
+document.getElementById("pag-page-1").addEventListener("click", function() {
+    pagCurrentPage = 1;
+    renderPagamentosTable(pagCurrentPage);
+    renderPagamentosPagination();
+});
+document.getElementById("pag-page-2").addEventListener("click", function() {
+    pagCurrentPage = 2;
+    renderPagamentosTable(pagCurrentPage);
+    renderPagamentosPagination();
+});
+document.getElementById("pag-page-3").addEventListener("click", function() {
+    pagCurrentPage = 3;
+    renderPagamentosTable(pagCurrentPage);
+    renderPagamentosPagination();
+});
+document.getElementById("pag-prev-page").addEventListener("click", function() {
+    if (pagCurrentPage > 1) {
+        pagCurrentPage--;
+        renderPagamentosTable(pagCurrentPage);
+        renderPagamentosPagination();
+    }
+});
+document.getElementById("pag-next-page").addEventListener("click", function() {
+    const totalPages = Math.ceil(filteredPagamentos.length / pagRowsPerPage);
+    if (pagCurrentPage < totalPages) {
+        pagCurrentPage++;
+        renderPagamentosTable(pagCurrentPage);
+        renderPagamentosPagination();
+    }
+});
+
+// Render on load
+renderPagamentosTable(pagCurrentPage);
+renderPagamentosPagination();
+</script>
+
+</body></html>
