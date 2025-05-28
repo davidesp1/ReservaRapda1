@@ -35,6 +35,7 @@ export default function BookTable() {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string>('');
 
   // Form setup
   const form = useForm<ReservationForm>({
@@ -126,6 +127,19 @@ export default function BookTable() {
   const getItemsByCategory = (category: string) => {
     return menuItems.filter((item: any) => item.category === category);
   };
+
+  // Obter categorias únicas dos itens do menu
+  const uniqueCategories = menuItems.reduce((categories: string[], item: any) => {
+    if (item.category && !categories.includes(item.category)) {
+      categories.push(item.category);
+    }
+    return categories;
+  }, []);
+  
+  // Definir primeira categoria como ativa por padrão
+  if (uniqueCategories.length > 0 && !activeCategory) {
+    setActiveCategory(uniqueCategories[0]);
+  }
 
   // Converter preço para euros
   const formatPrice = (price: number) => {
@@ -389,64 +403,60 @@ export default function BookTable() {
                     <div className="flex-1">
                       {/* Category Navigation */}
                       <nav className="flex flex-wrap gap-4 mb-6">
-                        <button className="px-5 py-2 rounded-lg font-bold bg-brasil-green text-white shadow hover:bg-green-700 transition">
-                          Entradas
-                        </button>
-                        <button className="px-5 py-2 rounded-lg font-bold bg-gray-100 text-brasil-blue shadow hover:bg-brasil-yellow hover:text-brasil-blue transition">
-                          Pratos Principais
-                        </button>
-                        <button className="px-5 py-2 rounded-lg font-bold bg-gray-100 text-brasil-blue shadow hover:bg-brasil-yellow hover:text-brasil-blue transition">
-                          Sobremesas
-                        </button>
-                        <button className="px-5 py-2 rounded-lg font-bold bg-gray-100 text-brasil-blue shadow hover:bg-brasil-yellow hover:text-brasil-blue transition">
-                          Bebidas
-                        </button>
+                        {uniqueCategories.map((category) => (
+                          <button 
+                            key={category}
+                            onClick={() => setActiveCategory(category)}
+                            className={`px-5 py-2 rounded-lg font-bold shadow transition ${
+                              activeCategory === category
+                                ? 'bg-brasil-green text-white hover:bg-green-700'
+                                : 'bg-gray-100 text-brasil-blue hover:bg-brasil-yellow hover:text-brasil-blue'
+                            }`}
+                          >
+                            {category.charAt(0).toUpperCase() + category.slice(1)}
+                          </button>
+                        ))}
                       </nav>
 
                       {/* Menu Items Grid */}
                       <div className="space-y-6">
-                        {['entradas', 'principais', 'sobremesas', 'bebidas'].map((category) => {
-                          const categoryItems = getItemsByCategory(category);
-                          if (categoryItems.length === 0) return null;
-
-                          const categoryConfig = {
-                            entradas: { name: 'Entradas', icon: 'fa-seedling' },
-                            principais: { name: 'Pratos Principais', icon: 'fa-drumstick-bite' },
-                            sobremesas: { name: 'Sobremesas', icon: 'fa-ice-cream' },
-                            bebidas: { name: 'Bebidas', icon: 'fa-glass-water' }
-                          };
-
-                          return (
-                            <div key={category}>
-                              <h3 className="text-lg font-bold font-montserrat text-brasil-green mb-3 flex items-center gap-2">
-                                <i className={`fas ${categoryConfig[category as keyof typeof categoryConfig].icon}`}></i> 
-                                {categoryConfig[category as keyof typeof categoryConfig].name}
-                              </h3>
-                              <div className="grid gap-4">
-                                {categoryItems.map((item: any) => (
-                                  <div key={item.id} className="bg-white rounded-xl p-3 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group">
-                                    <img 
-                                      src={item.image || 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/default.jpg'} 
-                                      alt={item.name} 
-                                      className="w-14 h-14 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
-                                    />
-                                    <div className="flex-1">
-                                      <div className="flex justify-between items-center">
-                                        <span className="font-bold text-gray-800">{item.name}</span>
-                                        <span className="font-bold text-brasil-green">{formatPrice(item.price)}</span>
-                                      </div>
-                                      <p className="text-xs text-gray-600 mt-1">{item.description || 'Delicioso prato do nosso restaurante.'}</p>
+                        {menuItems.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                            <Utensils className="w-16 h-16 mb-4" />
+                            <p className="text-lg">Carregando cardápio...</p>
+                          </div>
+                        ) : activeCategory ? (
+                          <div>
+                            <h3 className="text-lg font-bold font-montserrat text-brasil-green mb-3 flex items-center gap-2">
+                              <Utensils className="w-5 h-5" />
+                              {activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}
+                            </h3>
+                            <div className="grid gap-4">
+                              {getItemsByCategory(activeCategory).map((item: any) => (
+                                <div key={item.id} className="bg-white rounded-xl p-3 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group">
+                                  <img 
+                                    src={item.image || 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/default.jpg'} 
+                                    alt={item.name} 
+                                    className="w-14 h-14 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
+                                  />
+                                  <div className="flex-1">
+                                    <div className="flex justify-between items-center">
+                                      <span className="font-bold text-gray-800">{item.name}</span>
+                                      <span className="font-bold text-brasil-green">{formatPrice(item.price)}</span>
                                     </div>
-                                    <button 
-                                      onClick={() => addMenuItem(item)}
-                                      className="ml-3 bg-brasil-yellow px-2.5 py-1.5 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90 transition"
-                                    >
-                                      <i className="fas fa-plus"></i>
-                                    </button>
+                                    <p className="text-xs text-gray-600 mt-1">{item.description || 'Delicioso prato do nosso restaurante.'}</p>
                                   </div>
-                                ))}
-                              </div>
+                                  <button 
+                                    onClick={() => addMenuItem(item)}
+                                    className="ml-3 bg-brasil-yellow px-2.5 py-1.5 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90 transition"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
                             </div>
+                          </div>
+                        ) : null}
                           );
                         })}
 
