@@ -387,88 +387,273 @@ const Finance: React.FC = () => {
   const exportToPDF = async () => {
     try {
       toast({
-        title: "Gerando PDF...",
-        description: "Preparando documento, aguarde...",
+        title: "Criando PDF elegante...",
+        description: "Preparando documento com design moderno...",
       });
 
       const { headers, data, currentDate, totalAmount } = prepareExportData();
       
-      // Importar bibliotecas dinamicamente e aguardar carregamento
+      // Importar bibliotecas dinamicamente
       const [{ jsPDF }, autoTable] = await Promise.all([
         import('jspdf'),
         import('jspdf-autotable')
       ]);
       
       const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
       
-      // Título do documento
-      doc.setFontSize(16);
-      doc.text('Relatório de Pagamentos', 20, 20);
+      // Cores do design moderno
+      const primaryColor = [37, 99, 235]; // Azul elegante
+      const secondaryColor = [99, 102, 241]; // Roxo moderno
+      const accentColor = [16, 185, 129]; // Verde esmeralda
+      const textDark = [31, 41, 55]; // Cinza escuro
+      const textLight = [107, 114, 128]; // Cinza claro
+      const backgroundLight = [248, 250, 252]; // Fundo claro
       
-      // Informações básicas
-      doc.setFontSize(10);
-      doc.text(`Data: ${currentDate}`, 20, 35);
-      doc.text(`Registros: ${filteredPayments.length}`, 20, 42);
-      doc.text(`Total: ${formatPrice(totalAmount)}`, 20, 49);
+      // CABEÇALHO ELEGANTE
+      // Fundo do cabeçalho com gradiente simulado
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.rect(0, 0, pageWidth, 45, 'F');
       
-      // Preparar dados simples para a tabela
+      // Linha de acento
+      doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+      doc.rect(0, 45, pageWidth, 3, 'F');
+      
+      // Título principal
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.text('RELATÓRIO DE PAGAMENTOS', 20, 25);
+      
+      // Subtítulo
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Análise Financeira Detalhada', 20, 38);
+      
+      // SEÇÃO DE INFORMAÇÕES RESUMO
+      let yPos = 65;
+      
+      // Box de informações com fundo
+      doc.setFillColor(backgroundLight[0], backgroundLight[1], backgroundLight[2]);
+      doc.roundedRect(15, yPos - 5, pageWidth - 30, 35, 5, 5, 'F');
+      
+      // Informações do relatório com ícones simulados
+      doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      
+      // Data de emissão
+      doc.text('📅', 25, yPos + 8);
+      doc.text(`Data de Emissão: ${currentDate}`, 35, yPos + 8);
+      
+      // Total de registros
+      doc.text('📊', 25, yPos + 18);
+      doc.text(`Total de Registros: ${filteredPayments.length}`, 35, yPos + 18);
+      
+      // Valor total destacado
+      doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('💰', 120, yPos + 13);
+      doc.text(`Valor Total: ${formatPrice(totalAmount)}`, 130, yPos + 13);
+      
+      yPos += 45;
+      
+      // FILTROS APLICADOS (se houver)
+      const filtersApplied = [];
+      if (searchText) filtersApplied.push(`Busca: ${searchText}`);
+      if (startDate || endDate) filtersApplied.push(`Período: ${startDate || 'Início'} até ${endDate || 'Fim'}`);
+      if (statusFilter) filtersApplied.push(`Status: ${statusFilter}`);
+      if (methodFilter) {
+        const methodNames: Record<string, string> = {
+          'cash': 'Dinheiro', 'card': 'Cartão', 'mbway': 'MB Way',
+          'multibanco': 'Multibanco', 'multibanco_TPA': 'Multibanco (TPA)', 'transfer': 'Transferência'
+        };
+        filtersApplied.push(`Método: ${methodNames[methodFilter] || methodFilter}`);
+      }
+      
+      if (filtersApplied.length > 0) {
+        doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('🔍 FILTROS APLICADOS:', 20, yPos);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(textLight[0], textLight[1], textLight[2]);
+        filtersApplied.forEach((filter, index) => {
+          doc.text(`• ${filter}`, 25, yPos + 10 + (index * 7));
+        });
+        yPos += 15 + (filtersApplied.length * 7);
+      }
+      
+      // Preparar dados da tabela
       const tableRows = data.map(row => [
-        row[0], // Data
-        row[1], // ID
-        row[2], // Ref
-        row[3], // Valor
-        row[4], // Método
-        row[5], // Usuário
-        row[6]  // Status
+        row[0], row[1], row[2], row[3], row[4], row[5], row[6]
       ]);
       
-      // Usar setTimeout para garantir que as bibliotecas estejam carregadas
+      // Usar setTimeout para garantir carregamento
       setTimeout(() => {
         try {
-          // Criar tabela simples
+          // TABELA MODERNA E ELEGANTE
           (doc as any).autoTable({
             head: [headers],
             body: tableRows,
-            startY: 60,
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [66, 139, 202] }
+            startY: yPos + 10,
+            
+            // Estilos gerais
+            styles: {
+              fontSize: 9,
+              cellPadding: { top: 8, right: 6, bottom: 8, left: 6 },
+              lineColor: [229, 231, 235],
+              lineWidth: 0.5,
+              textColor: textDark,
+              font: 'helvetica'
+            },
+            
+            // Cabeçalho elegante
+            headStyles: {
+              fillColor: primaryColor,
+              textColor: [255, 255, 255],
+              fontStyle: 'bold',
+              fontSize: 10,
+              halign: 'center',
+              cellPadding: { top: 12, right: 6, bottom: 12, left: 6 }
+            },
+            
+            // Estilos das colunas
+            columnStyles: {
+              0: { cellWidth: 22, halign: 'center' }, // Data
+              1: { cellWidth: 32, halign: 'left' },   // Transação
+              2: { cellWidth: 24, halign: 'center' }, // Referência
+              3: { cellWidth: 26, halign: 'right', fontStyle: 'bold', textColor: accentColor }, // Valor
+              4: { cellWidth: 28, halign: 'center' }, // Método
+              5: { cellWidth: 32, halign: 'left' },   // Usuário
+              6: { cellWidth: 20, halign: 'center' }  // Status
+            },
+            
+            // Linhas alternadas elegantes
+            alternateRowStyles: {
+              fillColor: [249, 250, 251]
+            },
+            
+            // Margens e tema
+            margin: { top: 15, right: 15, bottom: 15, left: 15 },
+            theme: 'grid',
+            
+            // Callback para personalizar células
+            didParseCell: function(data: any) {
+              // Colorir status
+              if (data.column.index === 6) {
+                const status = data.cell.text[0].toLowerCase();
+                if (status.includes('concluído') || status.includes('completed')) {
+                  data.cell.styles.textColor = [16, 185, 129]; // Verde
+                  data.cell.styles.fontStyle = 'bold';
+                } else if (status.includes('pendente') || status.includes('pending')) {
+                  data.cell.styles.textColor = [245, 158, 11]; // Amarelo
+                  data.cell.styles.fontStyle = 'bold';
+                } else if (status.includes('falhou') || status.includes('failed')) {
+                  data.cell.styles.textColor = [239, 68, 68]; // Vermelho
+                  data.cell.styles.fontStyle = 'bold';
+                }
+              }
+              
+              // Destacar métodos de pagamento
+              if (data.column.index === 4) {
+                data.cell.styles.fontStyle = 'bold';
+                data.cell.styles.textColor = secondaryColor;
+              }
+            }
           });
           
+          // RODAPÉ ELEGANTE
+          const finalY = (doc as any).lastAutoTable.finalY || pageHeight - 50;
+          
+          // Linha decorativa
+          doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+          doc.setLineWidth(2);
+          doc.line(20, finalY + 20, pageWidth - 20, finalY + 20);
+          
+          // Informações do rodapé
+          doc.setTextColor(textLight[0], textLight[1], textLight[2]);
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          
+          const now = new Date();
+          const timestamp = now.toLocaleString('pt-PT', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          });
+          
+          doc.text(`Gerado em ${timestamp}`, 20, finalY + 35);
+          doc.text(`Sistema de Gestão Financeira`, pageWidth - 20, finalY + 35, { align: 'right' });
+          
+          // Numeração de página elegante
+          const pageCount = doc.getNumberOfPages();
+          for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.circle(pageWidth - 25, pageHeight - 25, 8, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${i}`, pageWidth - 25, pageHeight - 22, { align: 'center' });
+          }
+          
           // Salvar arquivo
-          const fileName = `pagamentos_${currentDate.replace(/\//g, '-')}.pdf`;
+          const fileName = `relatorio-pagamentos-${currentDate.replace(/\//g, '-')}.pdf`;
           doc.save(fileName);
           
           toast({
-            title: "PDF gerado com sucesso!",
-            description: `Arquivo ${fileName} foi baixado.`,
+            title: "PDF elegante criado! ✨",
+            description: `Documento ${fileName} baixado com design moderno.`,
           });
           
           setIsExportModalOpen(false);
+          
         } catch (tableError) {
           console.error('Erro na tabela:', tableError);
-          // Fallback: PDF sem tabela
-          doc.text('Dados de exportação:', 20, 70);
-          filteredPayments.slice(0, 10).forEach((payment, index) => {
-            const y = 80 + (index * 8);
-            doc.text(`${format(new Date(payment.payment_date), 'dd/MM')} - ${payment.transaction_id} - ${formatPrice(payment.amount)}`, 20, y);
+          
+          // Fallback elegante
+          doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.text('📋 DADOS DO RELATÓRIO', 20, yPos + 20);
+          
+          filteredPayments.slice(0, 15).forEach((payment, index) => {
+            const y = yPos + 40 + (index * 12);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            doc.text(`${format(new Date(payment.payment_date), 'dd/MM/yyyy')}`, 20, y);
+            doc.text(`${payment.transaction_id}`, 60, y);
+            
+            doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${formatPrice(payment.amount)}`, 120, y);
+            
+            doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${payment.method}`, 160, y);
           });
           
-          const fileName = `pagamentos_${currentDate.replace(/\//g, '-')}.pdf`;
+          const fileName = `relatorio-pagamentos-${currentDate.replace(/\//g, '-')}.pdf`;
           doc.save(fileName);
           
           toast({
-            title: "PDF gerado (formato básico)",
-            description: "Arquivo criado com formato simplificado.",
+            title: "PDF criado (formato alternativo)",
+            description: "Documento gerado com design simplificado mas elegante.",
           });
           
           setIsExportModalOpen(false);
         }
-      }, 200);
+      }, 300);
       
     } catch (error) {
-      console.error('Erro completo ao exportar PDF:', error);
+      console.error('Erro ao criar PDF:', error);
       toast({
-        title: "Erro na exportação PDF",
+        title: "Erro na criação do PDF",
         description: "Tente usar Excel ou CSV como alternativa.",
         variant: "destructive"
       });
