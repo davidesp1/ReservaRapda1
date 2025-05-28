@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Eye, Edit, X, Search, Calendar, Clock, MapPin } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -40,6 +41,15 @@ export default function Reservations() {
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [showNewReservationModal, setShowNewReservationModal] = useState(false);
+
+  // Função para lidar com nova reserva
+  const handleNewReservation = () => {
+    toast({
+      title: "Nova Reserva",
+      description: "Em breve será possível criar reservas diretamente aqui. Por enquanto, entre em contato conosco!",
+    });
+  };
   const rowsPerPage = 10;
 
   // Fetch das reservas do usuário
@@ -244,7 +254,7 @@ export default function Reservations() {
           </Button>
           
           <Button 
-            onClick={() => setLocation('/book-table')}
+            onClick={handleNewReservation}
             className="bg-brasil-green text-white font-semibold rounded-lg px-4 py-2 shadow hover:bg-green-600 transition flex items-center space-x-2"
           >
             <Plus className="h-4 w-4" />
