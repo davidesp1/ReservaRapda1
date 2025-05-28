@@ -72,7 +72,7 @@ export default function Reservations() {
   });
 
   // Buscar mesas disponíveis
-  const { data: availableTables = [] } = useQuery({
+  const { data: availableTables = [] } = useQuery<any[]>({
     queryKey: ['/api/tables'],
     enabled: showNewReservationModal,
   });
@@ -121,7 +121,7 @@ export default function Reservations() {
 
   // Função para lidar com nova reserva
   const handleNewReservation = () => {
-    setShowNewReservationModal(true);
+    setLocation('/book-table');
   };
   const rowsPerPage = 10;
 

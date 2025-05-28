@@ -16,6 +16,7 @@ import FinanceDashboard from "@/pages/FinanceDashboard";
 import FinanceProfile from "@/pages/FinanceProfile";
 import POSWrapper from "@/pages/POSWrapper";
 import Reservations from "@/pages/Reservations";
+import BookTable from "@/pages/BookTable";
 import { ThemeProvider } from "next-themes";
 import { lazy, Suspense } from "react";
 
@@ -61,6 +62,7 @@ function Router() {
       {/* Customer routes */}
       <Route path="/dashboard" component={CustomerDashboard} />
       <Route path="/reservations" component={Reservations} />
+      <Route path="/book-table" component={BookTable} />
       <Route path="/menu">
         {() => (
           <Suspense fallback={<LoadingSpinner />}>

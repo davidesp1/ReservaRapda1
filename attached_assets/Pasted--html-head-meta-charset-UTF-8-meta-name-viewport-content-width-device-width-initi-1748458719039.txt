@@ -1,0 +1,417 @@
+<html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>::-webkit-scrollbar { display: none;}</style>
+    <script>tailwind.config = {
+  "theme": {
+    "extend": {
+      "colors": {
+        "brazil-green": "#009c3b",
+        "brazil-yellow": "#ffdf00",
+        "brazil-blue": "#002776",
+        "brazil-red": "#c8102e"
+      },
+      "fontFamily": {
+        "montserrat": [
+          "Montserrat",
+          "sans-serif"
+        ],
+        "opensans": [
+          "Open Sans",
+          "sans-serif"
+        ],
+        "sans": [
+          "Inter",
+          "sans-serif"
+        ]
+      }
+    }
+  }
+};</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap"><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="bg-gray-100 font-opensans">
+
+<div id="client-dashboard" class="flex h-[900px]">
+    <div id="sidebar" class="fixed top-0 left-0 flex flex-col w-64 h-full bg-brazil-blue">
+        <div class="p-6">
+            <div class="flex items-center">
+                <div class="flex items-center justify-center w-10 h-10 mr-2 rounded-full bg-brazil-yellow">
+                    <i class="fa-solid fa-utensils text-brazil-blue"></i>
+                </div>
+                <span class="text-xl font-semibold text-white font-montserrat">
+                    Opa que delicia
+                </span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <ul>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-house text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Dashboard</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-user text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Meu Perfil</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-utensils text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Cardápio</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer bg-brazil-blue bg-opacity-40">
+                        <i class="w-6 fa-solid fa-calendar-check text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Reservas</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-credit-card text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Pagamentos</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-headset text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Suporte</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+        <div class="p-4 mt-auto border-t border-blue-400">
+            <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                <i class="w-6 fa-solid fa-right-from-bracket text-brazil-yellow"></i>
+                <span class="ml-2 font-medium">Sair</span>
+            </span>
+        </div>
+    </div>
+    <div id="main-content" class="relative flex-1 p-8 ml-64">
+        <div id="header" class="flex items-center justify-between mb-8">
+            <h1 class="text-2xl font-bold text-gray-800 font-montserrat">Nova Reserva</h1>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="relative">
+                        <i class="text-xl text-gray-600 fa-regular fa-bell"></i>
+                        <span class="absolute flex items-center justify-center w-4 h-4 text-xs text-white rounded-full -top-1 -right-1 bg-brazil-red">3</span>
+                    </button>
+                </div>
+                <div class="flex items-center">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="User Avatar" class="w-10 h-10 border-2 rounded-full border-brazil-yellow">
+                    <div class="ml-2">
+                        <p class="text-sm font-medium text-gray-800">Maria Silva</p>
+                        <p class="text-xs text-gray-500">Cliente desde 2023</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="reservation-steps" class="max-w-4xl mx-auto">
+            <div id="stepper" class="flex items-center justify-between mb-10">
+                <div class="flex items-center flex-1">
+                    <div id="step-1-indicator" class="flex flex-col items-center">
+                        <div class="flex items-center justify-center w-10 h-10 text-lg font-bold bg-white border-4 rounded-full border-brazil-green text-brazil-green step-indicator-active">
+                            1
+                        </div>
+                        <span class="mt-2 text-xs font-bold tracking-wide uppercase text-brazil-green">Data e Hora</span>
+                    </div>
+                    <div class="flex-1 h-1 mx-2 bg-brazil-green"></div>
+                </div>
+                <div class="flex items-center flex-1">
+                    <div id="step-2-indicator" class="flex flex-col items-center">
+                        <div class="flex items-center justify-center w-10 h-10 text-lg font-bold bg-white border-4 rounded-full border-brazil-yellow text-brazil-yellow">
+                            2
+                        </div>
+                        <span class="mt-2 text-xs font-bold tracking-wide uppercase text-brazil-yellow">Menu</span>
+                    </div>
+                    <div class="flex-1 h-1 mx-2 bg-brazil-yellow"></div>
+                </div>
+                <div class="flex items-center flex-1">
+                    <div id="step-3-indicator" class="flex flex-col items-center">
+                        <div class="flex items-center justify-center w-10 h-10 text-lg font-bold bg-white border-4 rounded-full border-brazil-blue text-brazil-blue">
+                            3
+                        </div>
+                        <span class="mt-2 text-xs font-bold tracking-wide uppercase text-brazil-blue">Resumo</span>
+                    </div>
+                    <div class="flex-1 h-1 mx-2 bg-brazil-blue"></div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div id="step-4-indicator" class="flex items-center justify-center w-10 h-10 text-lg font-bold bg-white border-4 rounded-full border-brazil-red text-brazil-red">
+                        4
+                    </div>
+                    <span class="mt-2 text-xs font-bold tracking-wide uppercase text-brazil-red">Pagamento</span>
+                </div>
+            </div>
+            <div id="step-contents" class="relative bg-white rounded-xl shadow-lg p-8 transition-all min-h-[400px]">
+                <div id="step-1-content">
+                    <h2 class="mb-4 text-xl font-bold font-montserrat text-brazil-green">Escolha Data, Hora e Adicione Observações</h2>
+                    <div class="grid gap-8 md:grid-cols-2">
+                        <div>
+                            <label class="block mb-2 font-semibold text-gray-700">Data da Reserva</label>
+                            <input type="date" class="w-full px-4 py-2 font-medium text-gray-700 border-2 rounded-lg border-brazil-green focus:outline-none focus:ring-2 focus:ring-brazil-green" id="reservation-date">
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-semibold text-gray-700">Horário</label>
+                            <select class="w-full px-4 py-2 font-medium text-gray-700 border-2 rounded-lg border-brazil-green focus:outline-none focus:ring-2 focus:ring-brazil-green" id="reservation-time">
+                                <option value="">Selecione o horário</option>
+                                <option>12:00</option>
+                                <option>12:30</option>
+                                <option>13:00</option>
+                                <option>13:30</option>
+                                <option>18:00</option>
+                                <option>18:30</option>
+                                <option>19:00</option>
+                                <option>19:30</option>
+                                <option>20:00</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <label class="block mb-2 font-semibold text-gray-700">Observações <span class="text-xs text-gray-400">(opcional)</span></label>
+                        <textarea id="reservation-observations" class="w-full px-4 py-2 font-medium text-gray-700 border-2 rounded-lg resize-none border-brazil-green focus:outline-none focus:ring-2 focus:ring-brazil-green" rows="3" maxlength="200" placeholder="Ex: Deixe nos saber de suas observações."></textarea>
+                    </div>
+                    <div class="flex justify-end mt-10">
+                        <button id="to-step-2" class="flex items-center px-8 py-3 text-lg font-bold text-white transition rounded-lg shadow bg-brazil-green hover:bg-green-700">
+                            Próximo
+                            <i class="ml-2 fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="step-2-content" class="hidden">
+                    <h2 class="mb-4 text-xl font-bold font-montserrat text-brazil-yellow">Selecione os Pratos</h2>
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div id="menu-card-1" class="flex items-center gap-4 p-4 transition border-2 border-transparent rounded-lg bg-gray-50 hover:border-brazil-yellow">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/14db3df368-c5ada7c592c7a6a484df.png" class="object-cover w-20 h-20 rounded-lg" alt="Moqueca de Camarão">
+                            <div>
+                                <h3 class="font-bold text-gray-800">Moqueca de Camarão</h3>
+                                <p class="text-sm text-gray-600">Deliciosa moqueca com camarões frescos.</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="mr-2 font-bold text-brazil-green">R$ 89,90</span>
+                                    <button class="px-2 py-1 text-xs font-bold rounded bg-brazil-yellow text-brazil-blue add-menu-btn" data-name="Moqueca de Camarão" data-price="89.90">
+                                        <i class="fa-solid fa-plus"></i>
+                                        <span class="ml-1">Adicionar</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="menu-card-2" class="flex items-center gap-4 p-4 transition border-2 border-transparent rounded-lg bg-gray-50 hover:border-brazil-yellow">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/7276f27bb0-4d54c37a447ad96c2e5d.png" class="object-cover w-20 h-20 rounded-lg" alt="Picanha na Brasa">
+                            <div>
+                                <h3 class="font-bold text-gray-800">Picanha na Brasa</h3>
+                                <p class="text-sm text-gray-600">Suculenta picanha grelhada com farofa.</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="mr-2 font-bold text-brazil-green">R$ 119,90</span>
+                                    <button class="px-2 py-1 text-xs font-bold rounded bg-brazil-yellow text-brazil-blue add-menu-btn" data-name="Picanha na Brasa" data-price="119.90">
+                                        <i class="fa-solid fa-plus"></i>
+                                        <span class="ml-1">Adicionar</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="menu-card-3" class="flex items-center gap-4 p-4 transition border-2 border-transparent rounded-lg bg-gray-50 hover:border-brazil-yellow">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/36bbcb69ee-94c724d6180a9cc13590.png" class="object-cover w-20 h-20 rounded-lg" alt="Acarajé Tradicional">
+                            <div>
+                                <h3 class="font-bold text-gray-800">Acarajé Tradicional</h3>
+                                <p class="text-sm text-gray-600">Bolinho de feijão fradinho frito.</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="mr-2 font-bold text-brazil-green">R$ 49,90</span>
+                                    <button class="px-2 py-1 text-xs font-bold rounded bg-brazil-yellow text-brazil-blue add-menu-btn" data-name="Acarajé Tradicional" data-price="49.90">
+                                        <i class="fa-solid fa-plus"></i>
+                                        <span class="ml-1">Adicionar</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="menu-card-4" class="flex items-center gap-4 p-4 transition border-2 border-transparent rounded-lg bg-gray-50 hover:border-brazil-yellow">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/a47cc66b23-1be4e7858e307ac3eff8.png" class="object-cover w-20 h-20 rounded-lg" alt="Pudim de Leite">
+                            <div>
+                                <h3 class="font-bold text-gray-800">Pudim de Leite</h3>
+                                <p class="text-sm text-gray-600">Clássico pudim de leite condensado.</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="mr-2 font-bold text-brazil-green">R$ 22,90</span>
+                                    <button class="px-2 py-1 text-xs font-bold rounded bg-brazil-yellow text-brazil-blue add-menu-btn" data-name="Pudim de Leite" data-price="22.90">
+                                        <i class="fa-solid fa-plus"></i>
+                                        <span class="ml-1">Adicionar</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="menu-selected-list" class="mt-8">
+                        <h4 class="mb-2 font-bold text-gray-800">Pratos Selecionados</h4>
+                        <div id="selected-menu-items" class="space-y-2"></div>
+                    </div>
+                    <div class="flex justify-between mt-10">
+                        <button id="back-to-step-1" class="flex items-center px-6 py-3 font-bold text-gray-700 transition bg-gray-200 rounded-lg hover:bg-gray-300">
+                            <i class="mr-2 fa-solid fa-arrow-left"></i>
+                            Voltar
+                        </button>
+                        <button id="to-step-3" class="flex items-center px-8 py-3 text-lg font-bold transition rounded-lg shadow bg-brazil-yellow text-brazil-blue hover:bg-yellow-400">
+                            Próximo
+                            <i class="ml-2 fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="step-3-content" class="hidden">
+                    <h2 class="mb-4 text-xl font-bold font-montserrat text-brazil-blue">Resumo da Reserva</h2>
+                    <div class="mb-6">
+                        <h4 class="mb-2 text-base font-bold text-gray-700">Detalhes da Reserva</h4>
+                        <ul class="space-y-2 text-sm text-gray-600">
+                            <li><i class="mr-2 fa-solid fa-calendar-day text-brazil-blue"></i> <span id="summary-date"></span></li>
+                            <li><i class="mr-2 fa-solid fa-clock text-brazil-blue"></i> <span id="summary-time"></span></li>
+                            <li><i class="mr-2 fa-solid fa-users text-brazil-blue"></i> <span id="summary-guests"></span></li>
+                            <li><i class="mr-2 fa-solid fa-champagne-glasses text-brazil-blue"></i> <span id="summary-occasion"></span></li>
+                            <li><i class="mr-2 fa-solid fa-message text-brazil-blue"></i> <span id="summary-observations"></span></li>
+                        </ul>
+                    </div>
+                    <div class="mb-6">
+                        <h4 class="mb-2 text-base font-bold text-gray-700">Pratos Selecionados</h4>
+                        <div id="summary-menu-list" class="space-y-2"></div>
+                    </div>
+                    <div class="mb-6">
+                        <h4 class="mb-2 text-base font-bold text-gray-700">Total Estimado</h4>
+                        <span id="summary-total" class="text-2xl font-bold text-brazil-green"></span>
+                    </div>
+                    <div class="flex justify-between mt-10">
+                        <button id="back-to-step-2" class="flex items-center px-6 py-3 font-bold text-gray-700 transition bg-gray-200 rounded-lg hover:bg-gray-300">
+                            <i class="mr-2 fa-solid fa-arrow-left"></i>
+                            Voltar
+                        </button>
+                        <button id="to-step-4" class="flex items-center px-8 py-3 text-lg font-bold text-white transition rounded-lg shadow bg-brazil-blue hover:bg-blue-900">
+                            Próximo
+                            <i class="ml-2 fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="step-4-content" class="hidden">
+                    <h2 class="mb-4 text-xl font-bold font-montserrat text-brazil-red">Pagamento</h2>
+                    <div class="mb-6">
+                        <h4 class="mb-2 text-base font-bold text-gray-700">Escolha o Método de Pagamento</h4>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <label class="flex items-center px-4 py-3 transition border-2 border-gray-200 rounded-lg cursor-pointer hover:border-brazil-green">
+                                <input type="radio" name="payment-method" value="cartao" class="mr-3 form-radio text-brazil-green" checked="">
+                                <i class="mr-2 text-lg fa-solid fa-credit-card text-brazil-green"></i>
+                                <span class="font-medium text-gray-700">Cartão de Crédito/Débito</span>
+                            </label>
+                            <label class="flex items-center px-4 py-3 transition border-2 border-gray-200 rounded-lg cursor-pointer hover:border-brazil-green">
+                                <input type="radio" name="payment-method" value="pix" class="mr-3 form-radio text-brazil-green">
+                                <i class="mr-2 text-lg fa-brands fa-pix text-brazil-green"></i>
+                                <span class="font-medium text-gray-700">PIX</span>
+                            </label>
+                            <label class="flex items-center px-4 py-3 transition border-2 border-gray-200 rounded-lg cursor-pointer hover:border-brazil-green">
+                                <input type="radio" name="payment-method" value="dinheiro" class="mr-3 form-radio text-brazil-green">
+                                <i class="mr-2 text-lg fa-solid fa-money-bill-wave text-brazil-green"></i>
+                                <span class="font-medium text-gray-700">Dinheiro na hora</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-8">
+                        <div class="flex items-center mb-2">
+                            <i class="mr-2 fa-solid fa-shield-alt text-brazil-blue"></i>
+                            <span class="text-sm text-gray-700">Pagamento seguro e protegido</span>
+                        </div>
+                        <p class="text-xs text-gray-500">Política de cancelamento: Cancele até 3h antes para evitar taxas. Após isso, será cobrada taxa de 30%.</p>
+                    </div>
+                    <div class="flex justify-between mt-10">
+                        <button id="back-to-step-3" class="flex items-center px-6 py-3 font-bold text-gray-700 transition bg-gray-200 rounded-lg hover:bg-gray-300">
+                            <i class="mr-2 fa-solid fa-arrow-left"></i>
+                            Voltar
+                        </button>
+                        <button id="finish-reservation" class="flex items-center px-8 py-3 text-lg font-bold text-white transition rounded-lg shadow bg-brazil-red hover:bg-red-800">
+                            Confirmar Reserva
+                            <i class="ml-2 fa-solid fa-check"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="step-5-content" class="hidden flex flex-col items-center justify-center min-h-[350px]">
+                    <div class="flex items-center mb-6">
+                        <div class="flex items-center justify-center w-20 h-20 mb-2 rounded-full shadow-lg bg-brazil-green">
+                            <i class="text-4xl text-white fa-solid fa-check"></i>
+                        </div>
+                    </div>
+                    <h3 class="mb-2 text-2xl font-bold text-brazil-green font-montserrat">Reserva Confirmada!</h3>
+                    <p class="mb-4 text-center text-gray-700">Você receberá a confirmação por email e poderá visualizar sua reserva na área de cliente.</p>
+                    <div class="flex gap-4">
+                        <span class="flex items-center px-6 py-3 font-bold text-white transition rounded-lg shadow cursor-pointer bg-brazil-blue hover:bg-blue-900">
+                            <i class="mr-2 fa-solid fa-house"></i>
+                            Voltar ao Dashboard
+                        </span>
+                        <span class="flex items-center px-6 py-3 font-bold transition rounded-lg shadow cursor-pointer bg-brazil-yellow text-brazil-blue hover:bg-yellow-400">
+                            <i class="mr-2 fa-solid fa-calendar-check"></i>
+                            Ver Minhas Reservas
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="chat-button" class="fixed z-40 bottom-6 right-6">
+    <button class="flex items-center justify-center transition rounded-full shadow-lg w-14 h-14 bg-brazil-green hover:bg-green-600">
+        <i class="text-2xl text-white fa-solid fa-comment-dots"></i>
+    </button>
+</div>
+
+<script>
+    let currentStep = 1;
+    const stepCount = 4;
+    let selectedMenu = [];
+
+    function updateStepperUI() {
+        for (let i = 1; i <= stepCount; i++) {
+            const indicator = document.getElementById(`step-${i}-indicator`);
+            if (!indicator) continue;
+            let child = indicator.firstElementChild;
+            child.classList.remove('bg-brazil-green', 'text-white', 'bg-brazil-yellow', 'bg-brazil-blue', 'bg-brazil-red', 'text-brazil-blue', 'text-brazil-green', 'text-brazil-yellow', 'text-brazil-red');
+            if (i === currentStep) {
+                if (i == 1) {
+                    child.classList.add('bg-brazil-green', 'text-white');
+                } else if (i == 2) {
+                    child.classList.add('bg-brazil-yellow', 'text-brazil-blue');
+                } else if (i == 3) {
+                    child.classList.add('bg-brazil-blue', 'text-white');
+                } else if (i == 4) {
+                    indicator.classList.add('bg-brazil-red', 'text-white');
+                }
+            } else {
+                if (i == 1) {
+                    child.classList.add('bg-white', 'text-brazil-green');
+                } else if (i == 2) {
+                    child.classList.add</script></body></html>
