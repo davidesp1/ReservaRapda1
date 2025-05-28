@@ -25,6 +25,7 @@ interface Reservation {
   table_number?: number;
   user_name?: string;
   confirmation_code?: string;
+  reservation_code?: string;
 }
 
 export default function Reservations() {
@@ -82,10 +83,18 @@ export default function Reservations() {
   };
 
   // Função para formatar hora
-  const formatTime = (timeString: string) => {
-    if (!timeString) return '';
-    const [hours, minutes] = timeString.split(':');
-    return `${hours}:${minutes}`;
+  const formatTime = (dateString: string) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleTimeString('pt-PT', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+    } catch (error) {
+      return '';
+    }
   };
 
   // Filtrar reservas
@@ -296,7 +305,7 @@ export default function Reservations() {
                       <tr key={reservation.id} className="hover:bg-gray-50 transition cursor-pointer">
                         <td className="px-4 py-4 text-center">
                           <span className="font-mono text-sm font-semibold text-brasil-blue">
-                            {(reservation as any).confirmation_code || `#${String(reservation.id).padStart(6, '0')}`}
+                            {reservation.reservation_code || `#${String(reservation.id).padStart(6, '0')}`}
                           </span>
                         </td>
                         <td className="px-6 py-4">{formatDate(reservation.date)}</td>
