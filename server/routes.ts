@@ -1221,6 +1221,19 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
       }
     }
 
+    // Validar método de pagamento antes de criar o pedido
+    console.log('💳 ORDER - Método de pagamento recebido:', orderData.paymentMethod);
+    let orderPaymentMethod = orderData.paymentMethod || 'cash';
+    
+    // Garantir que o método é válido
+    const validMethods = ['cash', 'card', 'mbway', 'multibanco', 'transfer', 'multibanco_TPA'];
+    if (!validMethods.includes(orderPaymentMethod)) {
+      console.log('❌ ORDER - Método inválido, usando cash:', orderPaymentMethod);
+      orderPaymentMethod = 'cash';
+    }
+    
+    console.log('💳 ORDER - Método final para pedido:', orderPaymentMethod);
+
     // Criar o pedido com o usuário autenticado
     const newOrder = await drizzleDb.insert(schema.orders).values({
       userId: Number(userId), // Sempre usar o usuário autenticado
@@ -1228,7 +1241,7 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
       status: 'completed',
       items: validatedItems,
       totalAmount: calculatedTotal,
-      paymentMethod: orderData.paymentMethod || 'cash',
+      paymentMethod: orderPaymentMethod,
       paymentStatus: 'completed',
       discount: orderData.discount || 0,
       tax: orderData.tax || 0,
