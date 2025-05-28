@@ -1238,13 +1238,19 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
     let paymentResult = null;
     
     try {
+      // Log para debug do método de pagamento recebido
+      console.log('🔍 POS - Método de pagamento recebido:', orderData.paymentMethod);
+      
       // Normalizar o método de pagamento
       let normalizedMethod = orderData.paymentMethod || 'cash';
       
       // Converter métodos não padrão para valores válidos no enum
       if (normalizedMethod === 'multibanco_tpa') {
+        console.log('✅ POS - Convertendo multibanco_tpa para multibanco');
         normalizedMethod = 'multibanco';
       }
+      
+      console.log('📝 POS - Método normalizado:', normalizedMethod);
       
       // Garantir que o método é um dos valores aceitos
       if (!['cash', 'card', 'mbway', 'multibanco', 'transfer'].includes(normalizedMethod)) {
