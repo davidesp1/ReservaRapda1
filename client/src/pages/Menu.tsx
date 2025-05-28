@@ -17,14 +17,11 @@ interface MenuItem {
   name: string;
   description: string;
   price: number;
-  image: string;
   category_id: number;
-  available: boolean;
-  popular: boolean;
-  vegetarian: boolean;
-  gluten_free: boolean;
-  spicy_level: number;
   category_name: string;
+  image_url?: string;
+  featured?: boolean;
+  is_available?: boolean;
 }
 
 // Interface para o formato de resposta da API
