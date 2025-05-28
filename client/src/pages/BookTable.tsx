@@ -54,9 +54,14 @@ export default function BookTable() {
     queryKey: ['/api/tables'],
   });
 
-  // Buscar itens do menu
-  const { data: menuItems = [] } = useQuery<any[]>({
-    queryKey: ['/api/menu'],
+  // Buscar categorias do menu
+  const { data: categories = [] } = useQuery<any[]>({
+    queryKey: ['/api/menu-categories'],
+  });
+
+  // Buscar itens do menu organizados por categoria
+  const { data: menuByCategory = [] } = useQuery<any[]>({
+    queryKey: ['/api/menu-items'],
   });
 
   // Mutation para criar reserva
@@ -72,7 +77,7 @@ export default function BookTable() {
         status: 'confirmed',
         paymentMethod: 'multibanco',
         paymentStatus: 'pending',
-        total: selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+        total: selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
         duration: 120
       });
       return response.json();
@@ -123,22 +128,29 @@ export default function BookTable() {
     }
   };
 
-  // Organizar itens do menu por categoria
-  const getItemsByCategory = (category: string) => {
-    return menuItems.filter((item: any) => item.category === category);
+  // Função para obter todos os itens a partir da resposta organizada por categoria
+  const getAllItems = () => {
+    if (!menuByCategory) return [];
+    
+    // Flatmap para extrair todos os itens de todas as categorias
+    return menuByCategory.flatMap((categoryData: any) => categoryData.items);
   };
 
-  // Obter categorias únicas dos itens do menu
-  const uniqueCategories = menuItems.reduce((categories: string[], item: any) => {
-    if (item.category && !categories.includes(item.category)) {
-      categories.push(item.category);
-    }
-    return categories;
-  }, []);
-  
-  // Definir primeira categoria como ativa por padrão
-  if (uniqueCategories.length > 0 && !activeCategory) {
-    setActiveCategory(uniqueCategories[0]);
+  // Organizar itens do menu por categoria usando o nome da categoria
+  const getItemsByCategory = (categoryName: string) => {
+    if (!menuByCategory) return [];
+    
+    // Encontrar a categoria correspondente no menuByCategory
+    const categoryData = menuByCategory.find((catData: any) => 
+      catData.category?.name === categoryName
+    );
+    
+    return categoryData ? categoryData.items : [];
+  };
+
+  // Definir primeira categoria como ativa por padrão baseado nas categorias reais
+  if (categories.length > 0 && !activeCategory) {
+    setActiveCategory(categories[0].name);
   }
 
   // Converter preço para euros
@@ -397,53 +409,51 @@ export default function BookTable() {
                   
                   {/* Menu Tabs */}
                   <div className="flex items-center gap-2 overflow-x-auto border-b border-gray-200 mb-7 scrollbar-hide">
-                    <button 
-                      className={`flex items-center gap-2 px-6 py-2 font-bold bg-white border-b-4 rounded-t-lg font-montserrat transition ${
-                        activeCategory === 'Entradas' 
-                          ? 'text-brasil-green border-brasil-green' 
-                          : 'text-brasil-blue border-transparent hover:border-brasil-green'
-                      }`}
-                      onClick={() => setActiveCategory('Entradas')}
-                    >
-                      <i className="fa-solid fa-leaf"></i> Entradas
-                    </button>
-                    <button 
-                      className={`flex items-center gap-2 px-6 py-2 font-bold bg-white border-b-4 rounded-t-lg font-montserrat transition ${
-                        activeCategory === 'Pratos Principais' 
-                          ? 'text-brasil-blue border-brasil-blue' 
-                          : 'text-brasil-blue border-transparent hover:border-brasil-blue'
-                      }`}
-                      onClick={() => setActiveCategory('Pratos Principais')}
-                    >
-                      <i className="fa-solid fa-bowl-food"></i> Pratos Principais
-                    </button>
-                    <button 
-                      className={`flex items-center gap-2 px-6 py-2 font-bold bg-white border-b-4 rounded-t-lg font-montserrat transition ${
-                        activeCategory === 'Sobremesas' 
-                          ? 'text-brasil-yellow border-brasil-yellow' 
-                          : 'text-brasil-blue border-transparent hover:border-brasil-yellow'
-                      }`}
-                      onClick={() => setActiveCategory('Sobremesas')}
-                    >
-                      <i className="fa-regular fa-ice-cream"></i> Sobremesas
-                    </button>
-                    <button 
-                      className={`flex items-center gap-2 px-6 py-2 font-bold bg-white border-b-4 rounded-t-lg font-montserrat transition ${
-                        activeCategory === 'Bebidas' 
-                          ? 'text-brasil-red border-brasil-red' 
-                          : 'text-brasil-blue border-transparent hover:border-brasil-red'
-                      }`}
-                      onClick={() => setActiveCategory('Bebidas')}
-                    >
-                      <i className="fa-solid fa-martini-glass-citrus"></i> Bebidas
-                    </button>
+                    {categories.map((category: any, index: number) => {
+                      // Mapear ícones baseado no nome da categoria
+                      const getIcon = (name: string) => {
+                        const lowerName = name.toLowerCase();
+                        if (lowerName.includes('entrada')) return 'fa-solid fa-leaf';
+                        if (lowerName.includes('principal') || lowerName.includes('prato')) return 'fa-solid fa-bowl-food';
+                        if (lowerName.includes('sobremesa')) return 'fa-regular fa-ice-cream';
+                        if (lowerName.includes('bebida')) return 'fa-solid fa-martini-glass-citrus';
+                        return 'fa-solid fa-utensils';
+                      };
+
+                      // Mapear cores baseado no nome da categoria
+                      const getColor = (name: string) => {
+                        const lowerName = name.toLowerCase();
+                        if (lowerName.includes('entrada')) return 'brasil-green';
+                        if (lowerName.includes('principal') || lowerName.includes('prato')) return 'brasil-blue';
+                        if (lowerName.includes('sobremesa')) return 'brasil-yellow';
+                        if (lowerName.includes('bebida')) return 'brasil-red';
+                        return 'brasil-green';
+                      };
+
+                      const color = getColor(category.name);
+                      const icon = getIcon(category.name);
+
+                      return (
+                        <button 
+                          key={category.id}
+                          className={`flex items-center gap-2 px-6 py-2 font-bold bg-white border-b-4 rounded-t-lg font-montserrat transition ${
+                            activeCategory === category.name 
+                              ? `text-${color} border-${color}` 
+                              : `text-brasil-blue border-transparent hover:border-${color}`
+                          }`}
+                          onClick={() => setActiveCategory(category.name)}
+                        >
+                          <i className={icon}></i> {category.name}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   <div className="flex flex-col gap-10 md:flex-row">
                     {/* Menu Categories Content */}
                     <div className="flex-1 min-w-[320px]">
                       <div className="space-y-0">
-                        {menuItems.length === 0 ? (
+                        {menuByCategory.length === 0 ? (
                           <div className="flex flex-col items-center justify-center py-12 text-gray-500">
                             <Utensils className="w-16 h-16 mb-4" />
                             <p className="text-lg">Carregando cardápio...</p>
@@ -452,18 +462,34 @@ export default function BookTable() {
                           <div className="menu-category-tab">
                             {/* Category Header */}
                             <div className="flex items-center gap-2 mb-4">
-                              {activeCategory === 'Entradas' && <i className="text-xl fa-solid fa-leaf text-brasil-green"></i>}
-                              {activeCategory === 'Pratos Principais' && <i className="text-xl fa-solid fa-bowl-food text-brasil-blue"></i>}
-                              {activeCategory === 'Sobremesas' && <i className="text-xl fa-regular fa-ice-cream text-brasil-yellow"></i>}
-                              {activeCategory === 'Bebidas' && <i className="text-xl fa-solid fa-martini-glass-citrus text-brasil-red"></i>}
-                              <h3 className={`text-lg font-bold uppercase font-montserrat ${
-                                activeCategory === 'Entradas' ? 'text-brasil-green' :
-                                activeCategory === 'Pratos Principais' ? 'text-brasil-blue' :
-                                activeCategory === 'Sobremesas' ? 'text-brasil-yellow' :
-                                'text-brasil-red'
-                              }`}>
-                                {activeCategory}
-                              </h3>
+                              {(() => {
+                                const lowerName = activeCategory.toLowerCase();
+                                let icon = 'fa-solid fa-utensils';
+                                let color = 'brasil-green';
+                                
+                                if (lowerName.includes('entrada')) {
+                                  icon = 'fa-solid fa-leaf';
+                                  color = 'brasil-green';
+                                } else if (lowerName.includes('principal') || lowerName.includes('prato')) {
+                                  icon = 'fa-solid fa-bowl-food';
+                                  color = 'brasil-blue';
+                                } else if (lowerName.includes('sobremesa')) {
+                                  icon = 'fa-regular fa-ice-cream';
+                                  color = 'brasil-yellow';
+                                } else if (lowerName.includes('bebida')) {
+                                  icon = 'fa-solid fa-martini-glass-citrus';
+                                  color = 'brasil-red';
+                                }
+                                
+                                return (
+                                  <>
+                                    <i className={`text-xl ${icon} text-${color}`}></i>
+                                    <h3 className={`text-lg font-bold uppercase font-montserrat text-${color}`}>
+                                      {activeCategory}
+                                    </h3>
+                                  </>
+                                );
+                              })()}
                             </div>
                             
                             {/* Menu Items Grid */}
