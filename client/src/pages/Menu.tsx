@@ -65,18 +65,6 @@ const MenuPage = () => {
     queryKey: ['/api/menu-items'],
   });
 
-  // Debug logs
-  console.log('🐛 Debug Menu Page:', {
-    categoriesLoading,
-    itemsLoading,
-    categoriesError,
-    itemsError,
-    categoriesCount: categories?.length || 0,
-    menuByCategoryCount: menuByCategory?.length || 0,
-    categories,
-    menuByCategory
-  });
-  
   // Função para obter todos os itens a partir da resposta organizada por categoria
   const getAllItems = () => {
     if (!menuByCategory) return [];
@@ -96,6 +84,19 @@ const MenuPage = () => {
     const categoryId = parseInt(activeCategory);
     return allItems.filter(item => item.category_id === categoryId);
   };
+
+  // Debug logs
+  const filteredItems = getFilteredItems();
+  console.log('🐛 Debug Menu Page:', {
+    categoriesLoading,
+    itemsLoading,
+    categoriesError,
+    itemsError,
+    categoriesCount: categories?.length || 0,
+    menuByCategoryCount: menuByCategory?.length || 0,
+    filteredItemsCount: filteredItems.length,
+    activeCategory
+  });
   
   // Funções do carrinho
   const addToCart = (item: MenuItem) => {
@@ -178,8 +179,6 @@ const MenuPage = () => {
     );
   }
   
-  const filteredItems = getFilteredItems();
-  
   return (
     <CustomerLayout>
       <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -217,16 +216,12 @@ const MenuPage = () => {
             
             {/* Lista de itens do cardápio */}
             <div className="space-y-6">
-              {filteredItems.map(item => (
+              {filteredItems.length > 0 ? filteredItems.map(item => (
                 <div key={item.id} className="bg-white rounded-xl p-4 flex gap-4 items-center shadow border-2 border-transparent hover:border-green-600 transition group">
                   <img 
-                    src={item.image || 'https://placehold.co/600x400/gray/white?text=Imagem+Indisponível'} 
+                    src={'https://placehold.co/600x400/gray/white?text=' + encodeURIComponent(item.name)} 
                     alt={item.name} 
                     className="w-16 h-16 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = 'https://placehold.co/600x400/gray/white?text=Imagem+Indisponível';
-                    }}
                   />
                   <div className="flex-1">
                     <div className="flex justify-between items-center mb-1">
@@ -234,23 +229,6 @@ const MenuPage = () => {
                       <span className="font-bold text-green-600 text-lg">€{(Number(item.price) / 100).toFixed(2)}</span>
                     </div>
                     <p className="text-sm text-gray-600">{item.description}</p>
-                    <div className="flex gap-2 mt-2">
-                      {item.popular && (
-                        <Badge className="bg-red-500 text-white text-xs">
-                          {t('POPULAR')}
-                        </Badge>
-                      )}
-                      {item.vegetarian && (
-                        <Badge variant="outline" className="text-green-600 border-green-600 text-xs">
-                          {t('Vegetarian')}
-                        </Badge>
-                      )}
-                      {item.gluten_free && (
-                        <Badge variant="outline" className="text-amber-600 border-amber-600 text-xs">
-                          {t('Glutenfree')}
-                        </Badge>
-                      )}
-                    </div>
                   </div>
                   <Button 
                     onClick={() => addToCart(item)}
@@ -259,7 +237,11 @@ const MenuPage = () => {
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Nenhum item encontrado nesta categoria</p>
+                </div>
+              )}
               
               {filteredItems.length === 0 && (
                 <div className="text-center py-12">
