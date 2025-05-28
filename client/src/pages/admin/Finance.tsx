@@ -417,14 +417,14 @@ const Finance: React.FC = () => {
       
       // Logo/Nome da empresa (lado esquerdo)
       doc.setTextColor(textWhite[0], textWhite[1], textWhite[2]);
-      doc.setFontSize(18);
+      doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
-      doc.text('RESTAURANTE S.A.', 20, 20);
+      doc.text('RESTAURANTE OPA QUE DELICIA', 20, 18);
       
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text('SISTEMA DE GESTAO FINANCEIRA', 20, 30);
-      doc.text('Rua Principal, 123 - Centro', 20, 40);
+      doc.text('SISTEMA DE GESTAO FINANCEIRA', 20, 28);
+      doc.text('Rua das Delicias, 456 - Centro', 20, 38);
       
       // Título principal (lado direito)
       doc.setTextColor(accentGreen[0], accentGreen[1], accentGreen[2]);
@@ -440,19 +440,52 @@ const Finance: React.FC = () => {
       doc.text('Telefone: (11) 1234-5678', pageWidth - 20, 42, { align: 'right' });
       
       // =================== INFORMAÇÕES DO RELATÓRIO ===================
-      let yPos = 70;
+      let yPos = 65;
       
-      // Data e totais
+      // Título da seção
+      doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('RESUMO DO RELATÓRIO', 20, yPos);
+      
+      yPos += 15;
+      
+      // Box de informações com fundo
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(15, yPos - 5, pageWidth - 30, 30, 3, 3, 'F');
+      
+      // Data e totais com melhor espaçamento
       doc.setTextColor(textDark[0], textDark[1], textDark[2]);
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Data: ${currentDate}`, 20, yPos);
-      doc.text(`Total de Registros: ${filteredPayments.length}`, 20, yPos + 8);
-      doc.text(`Valor Total: ${formatPrice(totalAmount)}`, 20, yPos + 16);
       
-      yPos += 35;
+      doc.text('Data de Emissao:', 25, yPos + 5);
+      doc.setFont('helvetica', 'bold');
+      doc.text(currentDate, 80, yPos + 5);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.text('Total de Registros:', 25, yPos + 13);
+      doc.setFont('helvetica', 'bold');
+      doc.text(filteredPayments.length.toString(), 90, yPos + 13);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.text('Valor Total:', 25, yPos + 21);
+      doc.setTextColor(accentGreen[0], accentGreen[1], accentGreen[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text(formatPrice(totalAmount), 75, yPos + 21);
+      
+      yPos += 45;
       
       // =================== TABELA PRINCIPAL ===================
+      // Título da tabela
+      doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('DETALHAMENTO DOS PAGAMENTOS', 20, yPos);
+      
+      yPos += 12;
+      
       const tableData = data.map(row => [
         row[0], // Data
         row[1], // Transação
@@ -463,19 +496,21 @@ const Finance: React.FC = () => {
         row[6]  // Status
       ]);
       
-      // Criar tabela sem setTimeout para garantir execução
+      // Criar tabela com espaçamento melhorado
       try {
         (doc as any).autoTable({
           head: [headers],
           body: tableData,
           startY: yPos,
+          margin: { left: 15, right: 15 },
           
           styles: {
             fontSize: 9,
-            cellPadding: 6,
+            cellPadding: { top: 6, right: 4, bottom: 6, left: 4 },
             textColor: [31, 41, 55],
             lineColor: [209, 213, 219],
-            lineWidth: 0.5
+            lineWidth: 0.5,
+            overflow: 'linebreak'
           },
           
           headStyles: {
@@ -484,21 +519,51 @@ const Finance: React.FC = () => {
             fontStyle: 'bold',
             fontSize: 10,
             halign: 'center',
-            cellPadding: 8
+            valign: 'middle',
+            cellPadding: { top: 10, right: 4, bottom: 10, left: 4 }
           },
           
           columnStyles: {
-            0: { cellWidth: 25, halign: 'center' },
-            1: { cellWidth: 40, halign: 'left' },
-            2: { cellWidth: 25, halign: 'center' },
-            3: { cellWidth: 30, halign: 'right', fontStyle: 'bold', textColor: [34, 197, 94] },
-            4: { cellWidth: 25, halign: 'center' },
-            5: { cellWidth: 35, halign: 'left' },
-            6: { cellWidth: 20, halign: 'center' }
+            0: { cellWidth: 24, halign: 'center' },    // Data
+            1: { cellWidth: 36, halign: 'left' },      // Transação
+            2: { cellWidth: 22, halign: 'center' },    // Referência
+            3: { 
+              cellWidth: 28, 
+              halign: 'right', 
+              fontStyle: 'bold', 
+              textColor: [34, 197, 94] 
+            },                                          // Valor
+            4: { cellWidth: 28, halign: 'center' },    // Método
+            5: { cellWidth: 32, halign: 'left' },      // Usuário
+            6: { cellWidth: 22, halign: 'center' }     // Status
           },
           
           alternateRowStyles: {
             fillColor: [248, 250, 252]
+          },
+          
+          // Personalização adicional de células
+          didParseCell: function(data: any) {
+            // Status com cores
+            if (data.column.index === 6) {
+              const status = data.cell.text[0].toLowerCase();
+              if (status.includes('concluído') || status.includes('completed')) {
+                data.cell.styles.textColor = [34, 197, 94];
+                data.cell.styles.fontStyle = 'bold';
+              } else if (status.includes('pendente') || status.includes('pending')) {
+                data.cell.styles.textColor = [245, 158, 11];
+                data.cell.styles.fontStyle = 'bold';
+              } else if (status.includes('falhou') || status.includes('failed')) {
+                data.cell.styles.textColor = [239, 68, 68];
+                data.cell.styles.fontStyle = 'bold';
+              }
+            }
+            
+            // Métodos de pagamento destacados
+            if (data.column.index === 4) {
+              data.cell.styles.fontStyle = 'bold';
+              data.cell.styles.textColor = [99, 102, 241];
+            }
           }
         });
         
