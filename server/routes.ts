@@ -1243,7 +1243,7 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
       
       // Converter métodos não padrão para valores válidos no enum
       if (normalizedMethod === 'multibanco_tpa') {
-        normalizedMethod = 'cash';
+        normalizedMethod = 'multibanco';
       }
       
       // Garantir que o método é um dos valores aceitos
