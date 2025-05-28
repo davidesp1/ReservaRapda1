@@ -170,9 +170,9 @@ const PaymentsPage = () => {
           >
             Limpar
           </button>
-          <button className="flex items-center px-4 py-2 space-x-2 font-semibold text-white transition rounded-lg shadow bg-brasil-green hover:bg-green-600">
-            <Plus className="h-4 w-4" />
-            <span>Novo Pagamento</span>
+          <button className="flex items-center px-4 py-2 space-x-2 font-semibold text-white transition rounded-lg shadow bg-brasil-blue hover:bg-brasil-green">
+            <i className="fa-solid fa-gear"></i>
+            <span>Configurações de pagamentos</span>
           </button>
         </div>
 
@@ -186,29 +186,26 @@ const PaymentsPage = () => {
                     Data
                   </th>
                   <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">
-                    Hora
+                    Código da Reserva
                   </th>
-                  <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">
-                    Referência
-                  </th>
-                  <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">
+                  <th className="px-4 py-4 text-right text-xs font-bold text-white tracking-wider font-montserrat">
                     Valor
                   </th>
                   <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">
-                    Método
+                    Método de Pagamento
                   </th>
                   <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">
                     Status
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">
-                    Ações
+                    Ação
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100 text-gray-800 font-medium">
                 {currentPayments.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center">
+                    <td colSpan={6} className="px-6 py-8 text-center">
                       <div className="flex flex-col items-center justify-center">
                         <i className="fa-solid fa-credit-card text-gray-300 text-5xl mb-4"></i>
                         <p className="text-gray-500 font-medium">
@@ -234,13 +231,12 @@ const PaymentsPage = () => {
                     return (
                       <tr key={payment.id} className="hover:bg-gray-50 transition cursor-pointer">
                         <td className="px-6 py-4">{formatDate(dateField)}</td>
-                        <td className="px-4 py-4">{formatTime(dateField)}</td>
-                        <td className="px-4 py-4 text-center">
+                        <td className="px-4 py-4">
                           <span className="font-mono text-sm font-semibold text-brasil-blue">
-                            {payment.reference || `PAY-${payment.id}`}
+                            {payment.reservation_code || `RES-${payment.reservation_id || payment.id}`}
                           </span>
                         </td>
-                        <td className="px-4 py-4 text-center font-semibold">
+                        <td className="px-4 py-4 text-right font-semibold">
                           €{displayAmount}
                         </td>
                         <td className="px-4 py-4 text-center">
