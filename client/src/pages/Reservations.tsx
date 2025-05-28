@@ -45,6 +45,20 @@ export default function Reservations() {
     staleTime: 30000,
   });
 
+  // Debug: Vamos ver o que está sendo retornado
+  useEffect(() => {
+    console.log('🔍 Estado atual:', { 
+      userReservations, 
+      isLoading, 
+      error,
+      total: userReservations?.length || 0 
+    });
+    
+    if (userReservations && userReservations.length > 0) {
+      console.log('📊 Primeira reserva:', userReservations[0]);
+    }
+  }, [userReservations, isLoading, error]);
+
   // Função para mapear status da API para status de exibição
   const mapStatus = (status: string) => {
     const statusMap: { [key: string]: { label: string; color: string; icon: string } } = {
