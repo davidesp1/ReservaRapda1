@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ArrowRight, ArrowLeft, Calendar, Clock, Utensils, CreditCard, Check } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Calendar, Clock, Utensils, CreditCard, Check, Plus } from 'lucide-react';
 
 // Schema de validação para a reserva
 const reservationSchema = z.object({
@@ -35,7 +35,7 @@ export default function BookTable() {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
-  const [activeCategory, setActiveCategory] = useState('entradas');
+  const [activeCategory, setActiveCategory] = useState<string>('');
 
   // Form setup
   const form = useForm<ReservationForm>({
@@ -54,73 +54,10 @@ export default function BookTable() {
     queryKey: ['/api/tables'],
   });
 
-  // Dados do menu por categoria (em euros)
-  const menuData = {
-    entradas: [
-      {
-        id: 1,
-        name: 'Empada de Frango',
-        price: 12.50,
-        description: 'Clássica empada cremosa, massa leve e recheio suculento.',
-        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/empada.jpg'
-      },
-      {
-        id: 2,
-        name: 'Bolinho de Bacalhau (6un)',
-        price: 18.00,
-        description: 'Tradicionais bolinhos de bacalhau fritos, crocantes e saborosos.',
-        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/bolinho-bacalhau.jpg'
-      }
-    ],
-    principais: [
-      {
-        id: 3,
-        name: 'Moqueca de Camarão',
-        price: 65.90,
-        description: 'Deliciosa moqueca com camarões frescos.',
-        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/14db3df368-c5ada7c592c7a6a484df.png'
-      },
-      {
-        id: 4,
-        name: 'Picanha Grelhada',
-        price: 75.00,
-        description: 'Suculenta picanha grelhada com acompanhamentos.',
-        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/picanha.jpg'
-      }
-    ],
-    sobremesas: [
-      {
-        id: 5,
-        name: 'Pudim de Leite',
-        price: 8.50,
-        description: 'Tradicional pudim de leite condensado.',
-        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/pudim.jpg'
-      },
-      {
-        id: 6,
-        name: 'Brigadeiro Gourmet',
-        price: 15.00,
-        description: 'Brigadeiros artesanais com diversos sabores.',
-        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/brigadeiro.jpg'
-      }
-    ],
-    bebidas: [
-      {
-        id: 7,
-        name: 'Caipirinha',
-        price: 12.00,
-        description: 'Tradicional caipirinha brasileira.',
-        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/caipirinha.jpg'
-      },
-      {
-        id: 8,
-        name: 'Suco Natural',
-        price: 6.50,
-        description: 'Suco natural de frutas da estação.',
-        image: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/suco.jpg'
-      }
-    ]
-  };
+  // Buscar itens do menu
+  const { data: menuItems = [] } = useQuery<any[]>({
+    queryKey: ['/api/menu'],
+  });
 
   // Mutation para criar reserva
   const createReservationMutation = useMutation({
@@ -186,6 +123,29 @@ export default function BookTable() {
     }
   };
 
+  // Organizar itens do menu por categoria
+  const getItemsByCategory = (category: string) => {
+    return menuItems.filter((item: any) => item.category === category);
+  };
+
+  // Obter categorias únicas dos itens do menu
+  const uniqueCategories = menuItems.reduce((categories: string[], item: any) => {
+    if (item.category && !categories.includes(item.category)) {
+      categories.push(item.category);
+    }
+    return categories;
+  }, []);
+  
+  // Definir primeira categoria como ativa por padrão
+  if (uniqueCategories.length > 0 && !activeCategory) {
+    setActiveCategory(uniqueCategories[0]);
+  }
+
+  // Converter preço para euros
+  const formatPrice = (price: number) => {
+    return `€ ${(price / 100).toFixed(2)}`;
+  };
+
   const removeMenuItem = (itemId: number) => {
     setSelectedItems(selectedItems.filter(item => item.id !== itemId));
   };
@@ -200,7 +160,7 @@ export default function BookTable() {
     }
   };
 
-  const total = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = selectedItems.reduce((sum, item) => sum + (item.price / 100) * item.quantity, 0);
 
   const getStepColor = (step: number) => {
     if (step === 1) return currentStep >= step ? 'brasil-green' : 'gray-300';
@@ -435,131 +395,124 @@ export default function BookTable() {
                 <div className="flex-1 flex flex-col">
                   <h2 className="mb-6 text-xl font-bold font-montserrat text-brasil-yellow flex items-center gap-2">
                     <Utensils className="h-5 w-5" />
-                    Selecione os Pratos do Cardápio
+                    Selecione os Pratos
                   </h2>
                   
-                  {/* Navegação por categorias */}
-                  <nav className="flex flex-wrap gap-4 mb-8">
-                    {Object.entries(menuData).map(([category, items]) => (
-                      <Button
-                        key={category}
-                        type="button"
-                        onClick={() => setActiveCategory(category)}
-                        className={`px-5 py-2 rounded-lg font-bold shadow transition ${
-                          activeCategory === category
-                            ? 'bg-brasil-green text-white'
-                            : 'bg-gray-100 text-brasil-blue hover:bg-brasil-yellow hover:text-brasil-blue'
-                        }`}
-                      >
-                        {category === 'entradas' && 'Entradas'}
-                        {category === 'principais' && 'Pratos Principais'}
-                        {category === 'sobremesas' && 'Sobremesas'}
-                        {category === 'bebidas' && 'Bebidas'}
-                      </Button>
-                    ))}
-                  </nav>
+                  <div className="flex gap-8 flex-1">
+                    {/* Menu Categories and Items */}
+                    <div className="flex-1">
+                      {/* Category Navigation */}
+                      <nav className="flex flex-wrap gap-4 mb-6">
+                        {uniqueCategories.map((category) => (
+                          <button 
+                            key={category}
+                            onClick={() => setActiveCategory(category)}
+                            className={`px-5 py-2 rounded-lg font-bold shadow transition ${
+                              activeCategory === category
+                                ? 'bg-brasil-green text-white hover:bg-green-700'
+                                : 'bg-gray-100 text-brasil-blue hover:bg-brasil-yellow hover:text-brasil-blue'
+                            }`}
+                          >
+                            {category.charAt(0).toUpperCase() + category.slice(1)}
+                          </button>
+                        ))}
+                      </nav>
 
-                  {/* Lista de itens da categoria ativa */}
-                  <div className="flex-1 mb-8">
-                    <h3 className="text-lg font-bold font-montserrat text-brasil-green mb-4 flex items-center gap-2">
-                      {activeCategory === 'entradas' && <><i className="fa-solid fa-seedling"></i> Entradas</>}
-                      {activeCategory === 'principais' && <><i className="fa-solid fa-drumstick-bite"></i> Pratos Principais</>}
-                      {activeCategory === 'sobremesas' && <><i className="fa-solid fa-ice-cream"></i> Sobremesas</>}
-                      {activeCategory === 'bebidas' && <><i className="fa-solid fa-wine-glass"></i> Bebidas</>}
-                    </h3>
-                    
-                    <div className="grid sm:grid-cols-2 gap-5 mb-6">
-                      {menuData[activeCategory as keyof typeof menuData]?.map((item) => (
-                        <div
-                          key={item.id}
-                          className="bg-white rounded-xl p-4 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group"
-                        >
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-16 h-16 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
-                          />
-                          <div className="flex-1">
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="font-bold text-gray-800">{item.name}</span>
-                              <span className="font-bold text-brasil-green">€{item.price.toFixed(2)}</span>
-                            </div>
-                            <p className="text-xs text-gray-600">{item.description}</p>
-                            <div className="flex items-center gap-2 mt-2">
-                              {selectedItems.find(selected => selected.id === item.id) ? (
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => updateQuantity(item.id, (selectedItems.find(s => s.id === item.id)?.quantity || 1) - 1)}
-                                    className="h-6 w-6 p-0"
+                      {/* Menu Items Grid */}
+                      <div className="space-y-6">
+                        {menuItems.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                            <Utensils className="w-16 h-16 mb-4" />
+                            <p className="text-lg">Carregando cardápio...</p>
+                          </div>
+                        ) : activeCategory ? (
+                          <div>
+                            <h3 className="text-lg font-bold font-montserrat text-brasil-green mb-3 flex items-center gap-2">
+                              <Utensils className="w-5 h-5" />
+                              {activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}
+                            </h3>
+                            <div className="grid gap-4">
+                              {getItemsByCategory(activeCategory).map((item: any) => (
+                                <div key={item.id} className="bg-white rounded-xl p-3 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group">
+                                  <img 
+                                    src={item.image || 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/default.jpg'} 
+                                    alt={item.name} 
+                                    className="w-14 h-14 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
+                                  />
+                                  <div className="flex-1">
+                                    <div className="flex justify-between items-center">
+                                      <span className="font-bold text-gray-800">{item.name}</span>
+                                      <span className="font-bold text-brasil-green">{formatPrice(item.price)}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-600 mt-1">{item.description || 'Delicioso prato do nosso restaurante.'}</p>
+                                  </div>
+                                  <button 
+                                    onClick={() => addMenuItem(item)}
+                                    className="ml-3 bg-brasil-yellow px-2.5 py-1.5 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90 transition"
                                   >
-                                    -
-                                  </Button>
-                                  <span className="text-sm font-bold min-w-[20px] text-center">
-                                    {selectedItems.find(s => s.id === item.id)?.quantity || 0}
-                                  </span>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => updateQuantity(item.id, (selectedItems.find(s => s.id === item.id)?.quantity || 0) + 1)}
-                                    className="h-6 w-6 p-0"
-                                  >
-                                    +
-                                  </Button>
+                                    <Plus className="w-4 h-4" />
+                                  </button>
                                 </div>
-                              ) : (
-                                <Button
-                                  type="button"
-                                  onClick={() => addMenuItem(item)}
-                                  className="bg-brasil-yellow px-3 py-1 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90"
-                                >
-                                  <i className="fa-solid fa-plus mr-1"></i>
-                                  Adicionar
-                                </Button>
-                              )}
+                              ))}
                             </div>
                           </div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {/* Cart Sidebar */}
+                    <div className="w-80 bg-white rounded-xl shadow-lg p-6 h-fit">
+                      <h3 className="text-lg font-bold text-brasil-blue mb-4 flex items-center gap-2">
+                        <i className="fas fa-shopping-cart"></i>
+                        Pedido ({selectedItems.length} {selectedItems.length === 1 ? 'item' : 'itens'})
+                      </h3>
+
+                      {selectedItems.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <i className="fas fa-utensils text-3xl text-gray-300 mb-3"></i>
+                          <p>Nenhum item selecionado</p>
+                          <p className="text-sm">Adicione pratos do cardápio</p>
                         </div>
-                      ))}
+                      ) : (
+                        <div className="space-y-3 mb-4">
+                          {selectedItems.map((item) => (
+                            <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-sm">{item.name}</h4>
+                                <p className="text-brasil-green font-bold">{formatPrice(item.price)}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button 
+                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                  className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition"
+                                >
+                                  <i className="fas fa-minus text-xs"></i>
+                                </button>
+                                <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                                <button 
+                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                  className="w-6 h-6 bg-brasil-yellow rounded-full flex items-center justify-center hover:bg-brasil-yellow/90 transition"
+                                >
+                                  <i className="fas fa-plus text-xs text-brasil-blue"></i>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {selectedItems.length > 0 && (
+                        <div className="border-t pt-4">
+                          <div className="flex justify-between items-center font-bold text-lg">
+                            <span>Total:</span>
+                            <span className="text-brasil-green">€ {total.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Resumo dos itens selecionados */}
-                  {selectedItems.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                      <h4 className="font-bold text-gray-800 mb-3">Itens Selecionados:</h4>
-                      <div className="space-y-2 mb-3">
-                        {selectedItems.map((item) => (
-                          <div key={item.id} className="flex justify-between items-center text-sm">
-                            <span>{item.name} x{item.quantity}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold">€{(item.price * item.quantity).toFixed(2)}</span>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => removeMenuItem(item.id)}
-                                className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                              >
-                                ×
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="border-t pt-2">
-                        <div className="flex justify-between items-center font-bold">
-                          <span>Total:</span>
-                          <span className="text-brasil-green">€{total.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between mt-auto">
+                  <div className="flex justify-between mt-8 pt-6 border-t">
                     <Button
                       type="button"
                       onClick={prevStep}
@@ -584,21 +537,103 @@ export default function BookTable() {
               {/* Step 3: Resumo */}
               {currentStep === 3 && (
                 <div className="flex-1">
-                  <h2 className="mb-6 text-xl font-bold font-montserrat text-brasil-blue">Resumo da Reserva</h2>
+                  <h2 className="mb-6 text-xl font-bold font-montserrat text-brasil-blue flex items-center gap-2">
+                    <i className="fas fa-clipboard-list"></i>
+                    Resumo da Reserva
+                  </h2>
                   
-                  <div className="space-y-4 mb-8">
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <p><strong>Data:</strong> {form.watch('date')}</p>
-                      <p><strong>Horário:</strong> {form.watch('time')}</p>
-                      <p><strong>Pessoas:</strong> {form.watch('party_size')}</p>
-                      <p><strong>Mesa:</strong> {availableTables.find((t: any) => t.id === form.watch('table_id'))?.number || 'N/A'}</p>
-                      {form.watch('special_requests') && (
-                        <p><strong>Observações:</strong> {form.watch('special_requests')}</p>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {/* Informações da Reserva */}
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h3 className="font-bold text-lg text-brasil-blue mb-4 flex items-center gap-2">
+                        <i className="fas fa-calendar-check"></i>
+                        Detalhes da Reserva
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Data:</span>
+                          <span>{form.watch('date') ? new Date(form.watch('date')).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Horário:</span>
+                          <span>{form.watch('time') || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Pessoas:</span>
+                          <span>{form.watch('party_size')} {form.watch('party_size') === 1 ? 'pessoa' : 'pessoas'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Mesa:</span>
+                          <span>Mesa {availableTables.find((t: any) => t.id === form.watch('table_id'))?.number || 'N/A'}</span>
+                        </div>
+                        {form.watch('special_requests') && (
+                          <div className="pt-3 border-t">
+                            <span className="font-medium">Observações:</span>
+                            <p className="text-sm text-gray-600 mt-1">{form.watch('special_requests')}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Itens do Pedido */}
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h3 className="font-bold text-lg text-brasil-blue mb-4 flex items-center gap-2">
+                        <i className="fas fa-utensils"></i>
+                        Pedido ({selectedItems.length} {selectedItems.length === 1 ? 'item' : 'itens'})
+                      </h3>
+                      
+                      {selectedItems.length === 0 ? (
+                        <div className="text-center py-6 text-gray-500">
+                          <i className="fas fa-plate-wheat text-2xl text-gray-300 mb-2"></i>
+                          <p>Nenhum item selecionado</p>
+                          <p className="text-sm">Volte para adicionar pratos</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {selectedItems.map((item) => (
+                            <div key={item.id} className="flex justify-between items-center p-3 bg-white rounded-lg">
+                              <div>
+                                <h4 className="font-semibold text-sm">{item.name}</h4>
+                                <p className="text-xs text-gray-600">Qtd: {item.quantity}</p>
+                              </div>
+                              <span className="font-bold text-brasil-green">
+                                € {((item.price / 100) * item.quantity).toFixed(2)}
+                              </span>
+                            </div>
+                          ))}
+                          
+                          <div className="border-t pt-3 mt-4">
+                            <div className="flex justify-between items-center font-bold text-lg">
+                              <span>Total do Pedido:</span>
+                              <span className="text-brasil-green">€ {total.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex justify-between mt-10">
+                  {/* Total Geral */}
+                  <div className="mt-8 p-6 bg-brasil-blue/10 rounded-lg border-2 border-brasil-blue/20">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="text-xl font-bold text-brasil-blue">Total da Reserva</h3>
+                        <p className="text-sm text-gray-600">
+                          {selectedItems.length > 0 ? 'Inclui taxa de mesa e pedido' : 'Apenas reserva da mesa'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-brasil-green">
+                          € {total.toFixed(2)}
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          {selectedItems.length > 0 ? 'Pagamento no restaurante' : 'Reserva gratuita'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between mt-8">
                     <Button
                       type="button"
                       onClick={prevStep}
