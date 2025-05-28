@@ -1,2223 +1,400 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, Link } from 'wouter';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import CustomerLayout from '@/components/layouts/CustomerLayout';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import PaymentDetailsModal from '@/components/payments/PaymentDetailsModal';
-import CountdownTimer from '@/components/CountdownTimer';
-import PaymentStatusMonitor from '@/components/PaymentStatusMonitor';
-import FixedCountdownTimer from '@/components/FixedCountdownTimer';
-import QRCodeDisplay from '@/components/payments/QRCodeDisplay';
-import CardDetailsForm from '@/components/payments/CardDetailsForm';
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { format } from 'date-fns';
-import { 
-  CalendarIcon, 
-  Clock, 
-  Plus, 
-  Calendar as CalendarIcon2,
-  Info, 
-  CreditCard,
-  Check,
-  AlertCircle,
-  ArrowRight,
-  Trash2,
-  Smartphone,
-  Landmark
-} from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Plus, Eye, Edit, X, Search, Calendar, Clock, MapPin } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import Swal from "sweetalert2";
-import CustomerLayout from '@/components/layouts/CustomerLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
-// Status de reserva
-type ReservationStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
-type PaymentStatus = 'pending' | 'paid' | 'failed';
-
-// Tipo para os itens de menu da reserva
-interface MenuItem {
+interface Reservation {
   id: number;
-  name: string;
-  price: number;
-  quantity: number;
-}
-
-// Interface para a nova reserva
-interface ReservationData {
-  id?: number;
-  date: Date;
+  user_id: number;
+  table_id: number;
+  date: string;
   time: string;
-  partySize: number;
-  tableId?: number;
-  status: ReservationStatus;
-  confirmationCode?: string;
-  items?: MenuItem[];
-  total?: number;
-  notes?: string;
-  paymentMethod?: string;
-  paymentStatus?: PaymentStatus;
+  guests: number;
+  status: string;
+  payment_status: string;
+  special_requests?: string;
+  created_at: string;
+  table_number?: number;
+  user_name?: string;
 }
 
-// Estado para detalhes de pagamento
-interface PaymentDetails {
-  entity?: string;
-  reference?: string;
-  expirationDate?: string;
-  phone?: string;
-}
-
-// Estender a interface ReservationData
-interface ExtendedReservationData extends ReservationData {
-  paymentDetails?: PaymentDetails;
-  paymentUrl?: string;
-  paymentReference?: string;
-  mainContent?: React.ReactNode; // Adicionado para resolver erro
-}
-
-const Reservations: React.FC = () => {
+export default function Reservations() {
   const { t } = useTranslation();
-  const { isAuthenticated, user, isLoading } = useAuth();
-  const [location, setLocation] = useLocation();
+  const { user } = useAuth();
   const { toast } = useToast();
-  
-  // Estado para controlar a etapa atual da criação da reserva
-  const [currentStep, setCurrentStep] = useState<number>(1);
-  const [isCreatingReservation, setIsCreatingReservation] = useState(false);
-  
-  // Estado para armazenar dados da reserva em andamento
-  const [reservationData, setReservationData] = useState<ExtendedReservationData>({
-    date: new Date(),
-    time: '',
-    partySize: 2,
-    status: 'pending',
-    items: [],
-    notes: '',
-  });
-  
-  // Estado para o formulário básico
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [partySize, setPartySize] = useState<number>(2);
-  const [selectedTime, setSelectedTime] = useState<string>('');
-  
-  // Estado para controlar o modal de pagamento
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  
-  // Estados para o novo fluxo de pagamento
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | 'mbway' | 'multibanco' | null>(null);
-  const [showCardForm, setShowCardForm] = useState(false);
+  const queryClient = useQueryClient();
 
-  const [cardDetails, setCardDetails] = useState<{ cardholderName: string; cardNumber: string; expiryDate: string; cvv: string } | null>(null);
-  const [mbwayPhone, setMbwayPhone] = useState<string | null>(null);
-  
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setLocation('/');
-    }
-  }, [isAuthenticated, isLoading, setLocation]);
-  
+  // Estados para filtros
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [paymentFilter, setPaymentFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+
   // Fetch das reservas do usuário
-  const { data: userReservations, isLoading: reservationsLoading, refetch: refetchReservations } = useQuery({
+  const { data: userReservations = [], isLoading, error } = useQuery<Reservation[]>({
     queryKey: ['/api/reservations'],
-    enabled: !!isAuthenticated,
+    staleTime: 30000,
   });
-  
-  // Fetch available tables for the selected date, time and party size
-  // Buscar todas as mesas
-  const { data: allTables, isLoading: allTablesLoading } = useQuery<any[]>({
-    queryKey: ['/api/tables'],
-    enabled: !!isAuthenticated,
+
+  // Função para mapear status da API para status de exibição
+  const mapStatus = (status: string) => {
+    const statusMap: { [key: string]: { label: string; color: string; icon: string } } = {
+      'pending': { label: 'Pendente', color: 'bg-brasil-yellow text-brasil-blue', icon: 'fa-clock' },
+      'confirmed': { label: 'Confirmada', color: 'bg-brasil-blue text-white', icon: 'fa-calendar-check' },
+      'cancelled': { label: 'Cancelada', color: 'bg-brasil-red text-white', icon: 'fa-times-circle' },
+      'completed': { label: 'Realizada', color: 'bg-brasil-green text-white', icon: 'fa-check-circle' },
+      'no-show': { label: 'Não compareceu', color: 'bg-gray-500 text-white', icon: 'fa-user-times' }
+    };
+    return statusMap[status] || { label: status, color: 'bg-gray-500 text-white', icon: 'fa-question-circle' };
+  };
+
+  // Função para mapear status de pagamento
+  const mapPaymentStatus = (status: string) => {
+    const statusMap: { [key: string]: { label: string; color: string; icon: string } } = {
+      'pending': { label: 'Pendente', color: 'bg-brasil-yellow text-brasil-blue', icon: 'fa-wallet' },
+      'completed': { label: 'Pago', color: 'bg-brasil-green text-white', icon: 'fa-money-bill-wave' },
+      'failed': { label: 'Falhado', color: 'bg-brasil-red text-white', icon: 'fa-ban' },
+      'refunded': { label: 'Reembolsado', color: 'bg-orange-500 text-white', icon: 'fa-undo' }
+    };
+    return statusMap[status] || { label: status, color: 'bg-gray-500 text-white', icon: 'fa-question' };
+  };
+
+  // Função para formatar data
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-PT', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  // Função para formatar hora
+  const formatTime = (timeString: string) => {
+    if (!timeString) return '';
+    const [hours, minutes] = timeString.split(':');
+    return `${hours}:${minutes}`;
+  };
+
+  // Filtrar reservas
+  const filteredReservations = userReservations.filter(reservation => {
+    const matchesSearch = searchTerm === '' || 
+      formatDate(reservation.date).includes(searchTerm.toLowerCase()) ||
+      formatTime(reservation.time).includes(searchTerm.toLowerCase()) ||
+      `Mesa ${reservation.table_number || reservation.table_id}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      mapStatus(reservation.status).label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      mapPaymentStatus(reservation.payment_status).label.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = statusFilter === '' || 
+      mapStatus(reservation.status).label.toLowerCase() === statusFilter.toLowerCase();
+
+    const matchesPayment = paymentFilter === '' || 
+      mapPaymentStatus(reservation.payment_status).label.toLowerCase() === paymentFilter.toLowerCase();
+
+    return matchesSearch && matchesStatus && matchesPayment;
   });
-  
-  // Buscar mesas disponíveis quando uma data for selecionada
-  const { data: availableTables, isLoading: tablesLoading, refetch: refetchTables } = useQuery<any[]>({
-    queryKey: ['/api/tables/available', { date: selectedDate?.toISOString(), partySize }],
-    queryFn: async ({ queryKey }) => {
-      const [_, params] = queryKey;
-      const { date, partySize } = params as { date?: string; partySize: number };
-      
-      // Se não há data, retornamos todas as mesas mas marcamos como não disponíveis para seleção
-      if (!date) {
-        return allTables?.filter(table => table.available) || [];
-      }
-      
-      // Usamos uma hora padrão para evitar problemas com o campo time
-      const defaultTime = "19:00";
-      const apiUrl = `/api/tables/available?date=${encodeURIComponent(date)}&time=${encodeURIComponent(defaultTime)}&partySize=${partySize}`;
-      
-      const response = await apiRequest('GET', apiUrl);
+
+  // Paginação
+  const totalPages = Math.ceil(filteredReservations.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const currentReservations = filteredReservations.slice(startIndex, endIndex);
+
+  // Limpar filtros
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('');
+    setPaymentFilter('');
+    setCurrentPage(1);
+  };
+
+  // Função para cancelar reserva
+  const cancelReservation = useMutation({
+    mutationFn: async (reservationId: number) => {
+      const response = await apiRequest('PATCH', `/api/reservations/${reservationId}`, {
+        status: 'cancelled'
+      });
       return response.json();
-    },
-    enabled: !!isAuthenticated && isCreatingReservation,
-  });
-  
-  // Fetch menu items
-  const { data: menuCategories, isLoading: menuItemsLoading } = useQuery({
-    queryKey: ['/api/menu-items'],
-    enabled: !!isAuthenticated && currentStep === 2,
-  });
-  
-  // Estado para controlar categoria atual sendo exibida
-  const [currentCategory, setCurrentCategory] = useState<number>(0);
-  
-  // Time slots available for reservations
-  const timeSlots = [
-    '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', 
-    '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
-    '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', 
-    '20:00', '20:30', '21:00', '21:30'
-  ];
-  
-  // Schema para validação da etapa 1 (Detalhes iniciais)
-  const step1Schema = z.object({
-    date: z.date({ required_error: t('PleaseSelectDate') }),
-    time: z.string({ required_error: t('PleaseSelectTime') }),
-    partySize: z.coerce.number().min(1, { message: t('InvalidPartySize') }),
-    tableId: z.coerce.number({ required_error: t('PleaseSelectTable') }),
-    notes: z.string().optional(),
-  });
-  
-  type Step1FormValues = z.infer<typeof step1Schema>;
-  
-  const step1Form = useForm<Step1FormValues>({
-    resolver: zodResolver(step1Schema),
-    defaultValues: {
-      date: undefined,
-      time: '',
-      partySize: 2,
-      tableId: undefined,
-      notes: '',
-    },
-  });
-  
-  // Quando a data é selecionada no formulário
-  const onDateSelect = (date: Date | undefined) => {
-    handleDateChange(date);
-    step1Form.setValue('date', date as Date);
-  };
-  
-  // Quando o tamanho do grupo muda no formulário
-  const onPartySizeChange = (value: string) => {
-    const size = parseInt(value);
-    setPartySize(size);
-    step1Form.setValue('partySize', size);
-  };
-  
-  // Adiciona state para hora selecionada
-  const [selectedTimeValue, setSelectedTimeValue] = useState('');
-
-  // Manipulador de alteração de horário
-  const handleTimeChange = (time: string) => {
-    setSelectedTimeValue(time);
-    step1Form.setValue('time', time);
-  };
-  
-  // Manipulador para alterar data
-  const handleDateChange = useCallback((date: Date | undefined) => {
-    setSelectedDate(date);
-    if (date && isCreatingReservation) {
-      refetchTables();
-    }
-  }, [isCreatingReservation, refetchTables]);
-  
-  // Atualiza as mesas disponíveis quando a data, hora ou o tamanho do grupo mudam
-  useEffect(() => {
-    if (selectedDate && isCreatingReservation) {
-      refetchTables();
-    }
-  }, [selectedDate, partySize, refetchTables, isCreatingReservation]);
-  
-  // Atualiza o estado com os dados da etapa 1
-  const onSubmitStep1 = (data: Step1FormValues) => {
-    // Atualiza os dados da reserva
-    setReservationData(prev => ({
-      ...prev,
-      date: data.date,
-      time: data.time,
-      partySize: data.partySize,
-      tableId: data.tableId,
-      notes: data.notes,
-    }));
-    
-    // Avança para a próxima etapa
-    setCurrentStep(2);
-  };
-  
-  // Função para adicionar item de menu à reserva
-  const addMenuItem = (item: any) => {
-    setReservationData(prev => {
-      const existingItems = prev.items || [];
-      const existingItem = existingItems.find(i => i.id === item.id);
-      
-      if (existingItem) {
-        // Atualiza a quantidade do item existente
-        return {
-          ...prev,
-          items: existingItems.map(i => 
-            i.id === item.id 
-              ? { ...i, quantity: i.quantity + 1 } 
-              : i
-          ),
-        };
-      } else {
-        // Adiciona o novo item à lista
-        return {
-          ...prev,
-          items: [...existingItems, { ...item, quantity: 1 }],
-        };
-      }
-    });
-  };
-  
-  // Função para remover item de menu da reserva
-  const removeMenuItem = (itemId: number) => {
-    setReservationData(prev => {
-      const existingItems = prev.items || [];
-      
-      return {
-        ...prev,
-        items: existingItems.filter(i => i.id !== itemId),
-      };
-    });
-  };
-  
-  // Função para atualizar a quantidade de um item
-  const updateItemQuantity = (itemId: number, quantity: number) => {
-    setReservationData(prev => {
-      const existingItems = prev.items || [];
-      
-      if (quantity <= 0) {
-        return {
-          ...prev,
-          items: existingItems.filter(i => i.id !== itemId),
-        };
-      }
-      
-      return {
-        ...prev,
-        items: existingItems.map(i => 
-          i.id === itemId 
-            ? { ...i, quantity } 
-            : i
-        ),
-      };
-    });
-  };
-  
-  // Submeter etapa 2 - Itens de menu
-  const submitStep2 = () => {
-    // Calcular valor total
-    const total = (reservationData.items || []).reduce(
-      (sum, item) => sum + (item.price * item.quantity), 
-      0
-    );
-    
-    setReservationData(prev => ({
-      ...prev,
-      total,
-    }));
-    
-    // Avançar para a próxima etapa
-    setCurrentStep(3);
-  };
-  
-  // Estados para o controle do pagamento
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
-  
-  // Função para lidar com a seleção do método de pagamento
-  const handlePaymentMethodSelect = (method: 'card' | 'mbway' | 'multibanco') => {
-    setSelectedPaymentMethod(method);
-  };
-
-  // Função para lidar com a submissão do formulário de cartão
-  const handleCardFormSubmit = (data: { cardholderName: string; cardNumber: string; expiryDate: string; cvv: string }) => {
-    setCardDetails(data);
-    setShowCardForm(false);
-    
-    toast({
-      title: t('CardDetailsAdded'),
-      description: t('CardDetailsSaved'),
-    });
-  };
-
-
-
-  // Função para fechar o modal de pagamento e prosseguir para a confirmação
-  const handlePaymentCompleted = () => {
-    // Importante: não fechamos o modal aqui para Multibanco
-    // Apenas registramos o status do pagamento e permitimos o usuário prosseguir
-    
-    // Se o modal estiver aberto para o método Multibanco, não fechamos automaticamente
-    if (reservationData.paymentMethod !== 'multibanco') {
-      setPaymentModalOpen(false);
-    }
-    
-    // Avançar para confirmação mesmo com modal aberto
-    setCurrentStep(4);
-    
-    toast({
-      title: t('PaymentProcessing'),
-      description: t('ReservationConfirmed'),
-      duration: 4000,
-    });
-  };
-  
-  // Contador regressivo para pagamento Multibanco
-  const [countdownTime, setCountdownTime] = useState<number>(300); // 5 minutos em segundos
-  const [countdownActive, setCountdownActive] = useState<boolean>(false);
-  
-  // Efeito para gerenciar o contador regressivo
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    
-    if (countdownActive && countdownTime > 0) {
-      timer = setInterval(() => {
-        setCountdownTime(prev => prev - 1);
-      }, 1000);
-    } else if (countdownTime === 0) {
-      // Tempo esgotado, cancelar o pagamento
-      setReservationData(prev => ({
-        ...prev,
-        paymentStatus: 'failed'  // Usamos "failed" em vez de "cancelled" para compatibilidade de tipos
-      }));
-      
-      toast({
-        title: t('PaymentTimeout'),
-        description: t('PaymentTimeoutDescription'),
-        variant: 'destructive',
-      });
-    }
-    
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [countdownActive, countdownTime, t]);
-  
-  // Formatar o tempo de contagem regressiva
-  const formatCountdown = () => {
-    const minutes = Math.floor(countdownTime / 60);
-    const seconds = countdownTime % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  };
-  
-  // Verificação periódica do status do pagamento (Multibanco e MBWay)
-  useEffect(() => {
-    let checkInterval: NodeJS.Timeout;
-    
-    // Se for um pagamento pendente (Multibanco ou MBWay) e tivermos uma referência, verificamos o status periodicamente
-    if (
-      ['multibanco', 'mbway'].includes(reservationData.paymentMethod || '') && 
-      reservationData.paymentStatus === 'pending' && 
-      reservationData.paymentReference
-    ) {
-      // Iniciar verificação imediatamente para melhor responsividade
-      const checkPaymentStatus = async () => {
-        try {
-          console.log("Verificando status do pagamento:", reservationData.paymentReference);
-          
-          // Chamar API para verificar o status do pagamento
-          const response = await apiRequest('GET', `/api/payments/status/${reservationData.paymentReference}`);
-          
-          if (response.ok) {
-            const result = await response.json();
-            console.log("Resultado da verificação do pagamento:", result);
-            
-            // Se o pagamento foi confirmado, atualizar o status
-            if (result.status === 'paid') {
-              // Atualizar APENAS o estado local - NÃO fazer mudanças automáticas
-              setReservationData(prev => ({
-                ...prev,
-                paymentStatus: 'paid'  // Mudança apenas no estado local
-              }));
-              
-              console.log("Status do pagamento atualizado apenas localmente para 'paid' - SEM atualização automática no banco");
-              
-              // Mostrar notificação de pagamento confirmado
-              toast({
-                title: t('PaymentConfirmed'),
-                description: t('PaymentConfirmedDescription'),
-                variant: 'default',
-              });
-              
-              // Desativar o contador regressivo
-              setCountdownActive(false);
-              
-              // Limpar o intervalo após o pagamento ser confirmado
-              if (checkInterval) clearInterval(checkInterval);
-            }
-          }
-        } catch (error) {
-          console.error('Erro ao verificar status do pagamento:', error);
-        }
-      };
-      
-      // Verificar imediatamente
-      checkPaymentStatus();
-      
-      // Configurar o intervalo para verificar a cada 10 segundos (mais frequente)
-      checkInterval = setInterval(checkPaymentStatus, 10000);
-    }
-    
-    return () => {
-      if (checkInterval) clearInterval(checkInterval);
-    };
-  }, [reservationData.paymentMethod, reservationData.paymentStatus, reservationData.paymentReference, reservationData.id, t]);
-
-  // Submeter etapa 3 - Pagamento
-  const submitStep3 = async (paymentMethod: string) => {
-    setIsProcessingPayment(true);
-    setPaymentError(null);
-    
-    try {
-      // Calcular valor total para o pagamento
-      const total = reservationData.items?.reduce(
-        (sum, item) => sum + (item.price * item.quantity), 
-        0
-      ) || 0;
-      
-      // Gerar código de confirmação único
-      const confirmationCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-      
-      // Preparar dados para o pagamento
-      const paymentData = {
-        method: paymentMethod,
-        amount: total,
-        reference: `RES-${Date.now()}`, // Referência única para o pagamento
-        referenceId: confirmationCode, // Usar o código de confirmação como ID para a API
-        description: `Reserva ${format(reservationData.date, 'dd/MM/yyyy')} - ${reservationData.time}`,
-        email: user?.email || '',
-        name: user?.username || 'Cliente',
-        phone: mbwayPhone || user?.phone || '',
-        reservationId: reservationData.id, // Adicionar ID da reserva para associar o pagamento
-        
-        // Adicionar detalhes do cartão se o método for cartão
-        ...(paymentMethod === 'card' && cardDetails && {
-          cardholderName: cardDetails.cardholderName,
-          cardNumber: cardDetails.cardNumber.replace(/\s/g, ''),
-          expiryDate: cardDetails.expiryDate,
-          cvv: cardDetails.cvv
-        })
-      };
-      
-      console.log(`Processando pagamento ${paymentMethod}`, paymentData);
-      
-      // Chamar API para processar o pagamento
-      const response = await apiRequest('POST', '/api/payments/process', paymentData);
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.message || 'Erro ao processar pagamento');
-      }
-      
-      console.log(`Resposta do pagamento ${paymentMethod}:`, result);
-      
-      // Processar o resultado do pagamento conforme o método
-      if (paymentMethod === 'multibanco') {
-        // Para Multibanco, configuramos os detalhes do pagamento
-        // Usar os valores retornados da API ou os valores de teste do sandbox
-        const multibancoDetails = {
-          entity: result.entity || result.entidade || '82213',
-          reference: result.reference || result.referencia || '110 278 732',
-          amount: total,
-          expirationDate: result.expirationDate || new Date(Date.now() + 72*3600*1000).toISOString()
-        };
-        
-        console.log("Processando Multibanco com detalhes:", multibancoDetails);
-        
-        // Atualizar dados da reserva
-        setReservationData({
-          ...reservationData,
-          paymentMethod,
-          paymentStatus: 'pending', // Importante: status pendente para Multibanco
-          confirmationCode,
-          paymentReference: result.paymentReference,
-          total: total,
-          paymentDetails: multibancoDetails
-        });
-        
-        // Iniciar contador regressivo para o pagamento
-        setCountdownTime(300); // 5 minutos
-        setCountdownActive(true);
-        
-        // Criar alerta de toast com os detalhes para garantir visibilidade
-        toast({
-          title: t('MultibancoPaymentDetails'),
-          description: `${t('Entity')}: ${multibancoDetails.entity} | ${t('Reference')}: ${multibancoDetails.reference}`,
-          duration: 10000,
-        });
-        
-        // Avançar para a etapa final
-        setCurrentStep(4);
-        
-        // Salvar a reserva automaticamente no banco de dados
-        finalizeReservation();
-      } 
-      else if (paymentMethod === 'mbway') {
-        setReservationData({
-          ...reservationData,
-          paymentMethod,
-          paymentStatus: 'pending',
-          confirmationCode,
-          paymentReference: result.paymentReference,
-          total: total,
-          paymentDetails: {
-            phone: paymentData.phone
-          }
-        });
-        
-        // Iniciar contador regressivo para MBWay (5 minutos)
-        setCountdownTime(300); // 5 minutos
-        setCountdownActive(true);
-        
-        // Criar alerta de toast informando sobre o tempo limite
-        toast({
-          title: t('MBWayPaymentInitiated'),
-          description: t('CompletePaymentIn5Minutes'),
-          duration: 8000,
-        });
-        
-        // Avançar para a etapa final
-        setCurrentStep(4);
-        
-        // Salvar a reserva automaticamente no banco de dados
-        finalizeReservation();
-      }
-      else if (paymentMethod === 'card') {
-        // Atualizar dados da reserva
-        setReservationData({
-          ...reservationData,
-          paymentMethod,
-          paymentStatus: 'pending',
-          confirmationCode,
-          paymentReference: result.paymentReference,
-          paymentUrl: result.paymentUrl,
-          total: total,
-          paymentDetails: {
-            reference: result.reference
-          }
-        });
-        
-        // Se temos URL de pagamento, abrir em nova janela
-        if (result.paymentUrl) {
-          console.log("Abrindo URL de pagamento:", result.paymentUrl);
-          window.open(result.paymentUrl, '_blank');
-        }
-        
-        console.log("Abrindo modal de pagamento com cartão");
-        setPaymentModalOpen(true);
-      } 
-      else {
-        // Para outros métodos ou simulação
-        setReservationData({
-          ...reservationData,
-          paymentMethod,
-          paymentStatus: 'paid',
-          confirmationCode,
-          paymentReference: result.paymentReference,
-          total: total,
-          paymentDetails: result
-        });
-        
-        // Avançar para a etapa final
-        setCurrentStep(4);
-      }
-    } catch (error: any) {
-      console.error('Erro no pagamento:', error);
-      setPaymentError(error.message || 'Ocorreu um erro ao processar o pagamento. Por favor, tente novamente.');
-      toast({
-        title: t('PaymentError'),
-        description: error.message || t('PaymentErrorMessage'),
-        variant: 'destructive',
-      });
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-  
-  // Criar reserva mutation
-  const createReservationMutation = useMutation({
-    mutationFn: async (data: any) => {
-      try {
-        console.log('Enviando dados para criação de reserva:', data);
-        const response = await apiRequest('POST', '/api/reservations', data);
-        
-        // Verificar se temos uma resposta válida
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Erro na resposta da API:', errorText);
-          throw new Error(`Erro ${response.status}: ${errorText}`);
-        }
-        
-        const result = await response.json();
-        console.log('Reserva criada com sucesso:', result);
-        return result;
-      } catch (error: any) {
-        console.error('Erro ao criar reserva:', error);
-        // Re-lançar o erro para que seja capturado pelo onError
-        throw new Error(error.message || 'Erro desconhecido ao criar reserva');
-      }
-    },
-    onSuccess: (data) => {
-      console.log('Reserva criada com sucesso:', data);
-      toast({
-        title: t('ReservationSuccess'),
-        description: t('ReservationSuccessMessage'),
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
-      // Resetar o fluxo e voltar para a lista de reservas
-      finishReservationProcess();
-    },
-    onError: (error: any) => {
-      console.error('Erro na mutation de reserva:', error);
-      toast({
-        title: t('ReservationError'),
-        description: error.message || t('ReservationErrorMessage'),
-        variant: 'destructive',
-      });
-    }
-  });
-  
-  // Finalizar processo e salvar a reserva
-  const finalizeReservation = () => {
-    try {
-      console.log("Finalizando reserva:", reservationData);
-      
-      // Prepare reservation data
-      const dateTime = new Date(reservationData.date);
-      const [hours, minutes] = reservationData.time.split(':').map(Number);
-      dateTime.setHours(hours, minutes, 0, 0);
-      
-      // Verificar dados obrigatórios
-      if (!reservationData.tableId) {
-        throw new Error("Mesa não selecionada");
-      }
-      
-      if (!reservationData.partySize) {
-        throw new Error("Número de pessoas não informado");
-      }
-      
-      // Conversão adequada para formato compatível com a API (simplificada)
-      // Removemos qualquer dado que possa conter HTML ou estruturas complexas
-      const submitData = {
-        userId: user?.id,
-        date: dateTime.toISOString(),
-        tableId: reservationData.tableId,
-        partySize: reservationData.partySize,
-        notes: reservationData.notes || '',
-        status: reservationData.paymentMethod === 'multibanco' ? 'pending' : 'confirmed', 
-        confirmationCode: reservationData.confirmationCode || `RES-${Date.now()}`,
-        paymentMethod: reservationData.paymentMethod || 'multibanco',
-        paymentStatus: reservationData.paymentStatus || 'pending',
-        total: reservationData.total || 0,
-        duration: 120
-      };
-      
-      // Remover campos complexos que podem causar problemas na serialização JSON
-      const cleanedSubmitData = {
-        userId: submitData.userId,
-        date: submitData.date,
-        tableId: submitData.tableId,
-        partySize: submitData.partySize,
-        notes: submitData.notes,
-        status: submitData.status,
-        confirmationCode: submitData.confirmationCode,
-        paymentMethod: submitData.paymentMethod,
-        paymentStatus: submitData.paymentStatus,
-        total: submitData.total,
-        duration: submitData.duration,
-      };
-      
-      console.log("Dados limpos da reserva a ser criada:", cleanedSubmitData);
-      toast({
-        title: "Salvando reserva...",
-        description: "Aguarde enquanto processamos sua reserva",
-      });
-      
-      createReservationMutation.mutate(cleanedSubmitData);
-    } catch (error: any) {
-      console.error("Erro ao finalizar reserva:", error);
-      toast({
-        title: "Erro ao finalizar reserva",
-        description: error.message || "Ocorreu um erro ao salvar sua reserva.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  // Cancelar criação de reserva e voltar à lista
-  const cancelReservationCreation = () => {
-    setIsCreatingReservation(false);
-    setCurrentStep(1);
-    
-    // Resetar dados do formulário
-    step1Form.reset();
-  };
-  
-  // Finalizar processo de reserva
-  const finishReservationProcess = () => {
-    setIsCreatingReservation(false);
-    setCurrentStep(1);
-    refetchReservations();
-    
-    // Resetar dados do formulário
-    step1Form.reset();
-  };
-  
-  // Deletar reserva
-  const deleteReservationMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await apiRequest('DELETE', `/api/reservations/${id}`);
-      return response.ok;
     },
     onSuccess: () => {
       toast({
-        title: t('ReservationCancelled'),
-        description: t('ReservationCancelledMessage'),
+        title: "Reserva cancelada",
+        description: "Sua reserva foi cancelada com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
-        title: t('Error'),
-        description: t('ReservationCancelError'),
-        variant: 'destructive',
+        title: "Erro ao cancelar",
+        description: error.message || "Não foi possível cancelar a reserva.",
+        variant: "destructive",
       });
     }
   });
-  
-  const handleDeleteReservation = (id: number) => {
-    Swal.fire({
-      title: t('ConfirmCancelReservation'),
-      text: 'Esta ação não pode ser desfeita.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Sim, cancelar',
-      cancelButtonText: 'Não cancelar'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        deleteReservationMutation.mutate(id);
-      }
-    });
-  };
-  
-  // Renderiza a etapa atual do processo de criação de reserva
-  const renderReservationStep = () => {
-    // Etapa 1: Detalhes da reserva
-    if (currentStep === 1) {
-      return (
-        <div className="space-y-6">
-          <Card className="shadow-md">
-            <CardHeader className="pb-4 border-b">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl mb-1">{t('Step1Title')}</CardTitle>
-                  <CardDescription>{t('Step1Description')}</CardDescription>
-                </div>
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brasil-blue text-white font-semibold">
-                  1
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <Form {...step1Form}>
-                <form onSubmit={step1Form.handleSubmit(onSubmitStep1)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={step1Form.control}
-                      name="date"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('Date')}</FormLabel>
-                          <div className="flex flex-col">
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="w-full justify-start text-left font-normal"
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {field.value ? (
-                                    format(field.value, 'PPP')
-                                  ) : (
-                                    <span>{t('SelectDate')}</span>
-                                  )}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value}
-                                  onSelect={(date) => onDateSelect(date)}
-                                  disabled={(date) => 
-                                    date < new Date(new Date().setHours(0, 0, 0, 0)) // No past dates
-                                  }
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={step1Form.control}
-                      name="time"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('Time')}</FormLabel>
-                          <Select 
-                              onValueChange={(value) => {
-                                field.onChange(value);
-                                handleTimeChange(value);
-                              }} 
-                              value={field.value}
-                            >
-                            <SelectTrigger>
-                              <SelectValue placeholder={t('SelectTime')}>
-                                {field.value ? (
-                                  <div className="flex items-center">
-                                    <Clock className="mr-2 h-4 w-4" />
-                                    {field.value}
-                                  </div>
-                                ) : (
-                                  <span>{t('SelectTime')}</span>
-                                )}
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {timeSlots.map((time) => (
-                                <SelectItem key={time} value={time}>
-                                  {time}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={step1Form.control}
-                      name="partySize"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('PartySize')}</FormLabel>
-                          <Select 
-                            onValueChange={(value) => onPartySizeChange(value)} 
-                            value={field.value ? field.value.toString() : "2"}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder={t('SelectPartySize')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {[1, 2, 3, 4, 5, 6, 7, 8, 10, 12].map((size) => (
-                                <SelectItem key={size} value={size.toString()}>
-                                  {size} {size === 1 ? t('Person') : t('People')}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={step1Form.control}
-                      name="tableId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('Table')}</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : ""}>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t('SelectTable')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {tablesLoading ? (
-                                <SelectItem value="loading" disabled>
-                                  {t('Loading')}...
-                                </SelectItem>
-                              ) : availableTables && Array.isArray(availableTables) && availableTables.length > 0 ? (
-                                availableTables.map((table: any) => (
-                                  <SelectItem key={table.id} value={table.id.toString()}>
-                                    {t('Table')} {table.number} ({table.capacity} {t('Seats')})
-                                    {table.category === 'vip' && ` - ${t('VIP')}`}
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                <SelectItem value="no-tables-available" disabled>
-                                  {t('NoTablesAvailable')}
-                                </SelectItem>
-                              )}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormField
-                    control={step1Form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('Notes')}</FormLabel>
-                        <FormControl>
-                          <textarea
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brasil-green focus:border-transparent resize-none"
-                            rows={3}
-                            placeholder={t('NotesPlaceholder')}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          {t('NotesDescription')}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="flex justify-between pt-4">
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={cancelReservationCreation}
-                    >
-                      {t('Cancel')}
-                    </Button>
-                    
-                    <Button 
-                      type="submit" 
-                      className="bg-brasil-green hover:bg-green-700 text-white"
-                      disabled={
-                        !availableTables || 
-                        !(Array.isArray(availableTables) && availableTables.length > 0)
-                      }
-                    >
-                      <span className="flex items-center">
-                        {t('Continue')} <ArrowRight className="ml-2 h-4 w-4" />
-                      </span>
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-          
-          {/* Card com informações do evento */}
-          <Card className="shadow-md">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">{t('EventInformation')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                <h3 className="font-semibold mb-3 text-brasil-blue">{t('EventDetails')}</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center">
-                    <div className="bg-brasil-blue/10 p-2 rounded-full mr-3 flex-shrink-0">
-                      <CalendarIcon2 className="h-4 w-4 text-brasil-blue" />
-                    </div>
-                    <p className="text-sm text-gray-600">29/05/2025 - 01/06/2025</p>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="bg-brasil-blue/10 p-2 rounded-full mr-3 flex-shrink-0">
-                      <Clock className="h-4 w-4 text-brasil-blue" />
-                    </div>
-                    <p className="text-sm text-gray-600">11:00 - 22:00</p>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="bg-brasil-blue/10 p-2 rounded-full mr-3 flex-shrink-0">
-                      <Info className="h-4 w-4 text-brasil-blue" />
-                    </div>
-                    <p className="text-sm text-gray-600">{t('ConventionCenter')}, MSBN Europe</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-    
-    // Etapa 2: Seleção de menu
-    else if (currentStep === 2) {
-      return (
-        <div className="space-y-6">
-          <Card className="shadow-md">
-            <CardHeader className="pb-4 border-b">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl mb-1">{t('Step2Title')}</CardTitle>
-                  <CardDescription>{t('Step2Description')}</CardDescription>
-                </div>
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brasil-blue text-white font-semibold">
-                  2
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                  <h3 className="font-semibold mb-4">{t('AvailableMenuItems')}</h3>
-                  
-                  {menuItemsLoading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin w-8 h-8 border-4 border-brasil-green border-t-transparent rounded-full"></div>
-                    </div>
-                  ) : menuCategories && Array.isArray(menuCategories) ? (
-                    <div className="space-y-8">
-                      {/* Indicadores de progresso da categoria */}
-                      <div className="flex justify-center space-x-2 mb-6">
-                        {menuCategories.map((categoryGroup: any, index: number) => (
-                          <div 
-                            key={categoryGroup.category.id}
-                            className={`h-2 w-10 rounded-full transition-colors cursor-pointer ${currentCategory === index ? 'bg-brasil-green' : 'bg-gray-200'}`}
-                            onClick={() => setCurrentCategory(index)}
-                          ></div>
-                        ))}
-                      </div>
-                      
-                      {/* Título da categoria atual */}
-                      {menuCategories[currentCategory] && (
-                        <div className="text-center">
-                          <h3 className="text-xl font-semibold text-brasil-blue mb-1">
-                            {menuCategories[currentCategory].category.name}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            {t('CategoryStep')} {currentCategory + 1} {t('of')} {menuCategories.length}
-                          </p>
-                        </div>
-                      )}
-                      
-                      {/* Itens da categoria atual */}
-                      {menuCategories[currentCategory] && menuCategories[currentCategory].items && menuCategories[currentCategory].items.length > 0 ? (
-                        <>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            {/* Opção sem seleção/pular */}
-                            <Card className="overflow-hidden flex flex-col h-full border-brasil-blue/20 bg-gray-50">
-                              <div className="p-3">
-                                <div className="flex justify-between">
-                                  <div>
-                                    <h4 className="font-medium">{t('NoSelection')}</h4>
-                                    <p className="text-sm text-gray-500 line-clamp-2">{t('SkipThisCategory')}</p>
-                                  </div>
-                                </div>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  className="mt-2 border-brasil-blue text-brasil-blue hover:bg-brasil-blue/10"
-                                  onClick={() => {
-                                    // Aqui não fazemos nada, apenas oferecemos o botão como uma opção visual
-                                    // O usuário avançará usando os botões de navegação no final da página
-                                  }}
-                                >
-                                  {t('Skip')}
-                                </Button>
-                              </div>
-                            </Card>
-                            
-                            {/* Itens da categoria */}
-                            {menuCategories[currentCategory].items.map((item: any) => (
-                              <Card key={item.id} className="overflow-hidden flex flex-col h-full border-brasil-blue/20">
-                                <div className="p-3">
-                                  <div className="flex justify-between">
-                                    <div>
-                                      <h4 className="font-medium">{item.name}</h4>
-                                      <p className="text-sm text-gray-500 line-clamp-2">{item.description}</p>
-                                    </div>
-                                    <div className="font-semibold text-brasil-green">€{(Number(item.price) / 100).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                                  </div>
-                                  <Button 
-                                    size="sm" 
-                                    className="mt-2 bg-brasil-green hover:bg-green-700 text-white"
-                                    onClick={() => addMenuItem(item)}
-                                  >
-                                    <Plus className="h-4 w-4 mr-1" /> {t('Add')}
-                                  </Button>
-                                </div>
-                              </Card>
-                            ))}
-                          </div>
-                          
-                          {/* Botões de navegação entre categorias */}
-                          <div className="flex justify-between mt-8">
-                            <Button
-                              variant="outline"
-                              onClick={() => setCurrentCategory(Math.max(0, currentCategory - 1))}
-                              disabled={currentCategory === 0}
-                              className="border-brasil-blue text-brasil-blue"
-                            >
-                              {t('Previous')}
-                            </Button>
-                            
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                if (currentCategory < menuCategories.length - 1) {
-                                  setCurrentCategory(currentCategory + 1);
-                                } else {
-                                  submitStep2();
-                                }
-                              }}
-                              className="border-brasil-blue text-brasil-blue"
-                            >
-                              {currentCategory === menuCategories.length - 1 ? t('Finish') : t('Next')}
-                            </Button>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-center py-4 text-gray-400 italic">
-                          {t('NoCategoryItems')}
-                          <div className="mt-4">
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                if (currentCategory < menuCategories.length - 1) {
-                                  setCurrentCategory(currentCategory + 1);
-                                } else {
-                                  submitStep2();
-                                }
-                              }}
-                              className="border-brasil-blue text-brasil-blue"
-                            >
-                              {currentCategory === menuCategories.length - 1 ? t('Finish') : t('Next')}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      {t('NoMenuItemsAvailable')}
-                    </div>
-                  )}
-                </div>
-                
-                <div>
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 sticky top-4">
-                    <h3 className="font-semibold mb-4">{t('YourOrder')}</h3>
-                    
-                    {reservationData.items && reservationData.items.length > 0 ? (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          {reservationData.items.map((item) => (
-                            <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-100">
-                              <div className="flex-1">
-                                <div className="flex items-center">
-                                  <span className="text-sm font-medium">{item.name}</span>
-                                </div>
-                                <div className="flex items-center mt-1">
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-6 w-6 p-0"
-                                    onClick={() => updateItemQuantity(item.id, item.quantity - 1)}
-                                  >
-                                    -
-                                  </Button>
-                                  <span className="mx-2 text-sm">{item.quantity}</span>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-6 w-6 p-0"
-                                    onClick={() => updateItemQuantity(item.id, item.quantity + 1)}
-                                  >
-                                    +
-                                  </Button>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-sm font-semibold">
-                                  €{((Number(item.price) / 100) * item.quantity).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                                </div>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="h-6 text-red-500 p-0 mt-1"
-                                  onClick={() => removeMenuItem(item.id)}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        
-                        <div className="pt-2 border-t border-gray-200">
-                          <div className="flex justify-between font-semibold">
-                            <span>{t('Total')}</span>
-                            <span>€{Number(reservationData.items.reduce((sum, item) => sum + ((Number(item.price) / 100) * item.quantity), 0)).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                          </div>
-                        </div>
-                        
-                        <Button 
-                          className="w-full bg-brasil-green hover:bg-green-700 text-white"
-                          onClick={submitStep2}
-                        >
-                          {t('ProceedToPayment')}
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="text-center py-4 text-gray-500">
-                        <p className="mb-2">{t('NoItemsSelected')}</p>
-                        <p className="text-sm">{t('PleaseSelectItems')}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex justify-between mt-6 pt-4 border-t">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setCurrentStep(1)}
-                >
-                  {t('Back')}
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={cancelReservationCreation}
-                >
-                  {t('CancelReservation')}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-    
-    // Etapa 3: Pagamento
-    else if (currentStep === 3) {
-      return (
-        <div className="space-y-6">
-          <Card className="shadow-md">
-            <CardHeader className="pb-4 border-b">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl mb-1">{t('Step3Title')}</CardTitle>
-                  <CardDescription>{t('Step3Description')}</CardDescription>
-                </div>
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brasil-blue text-white font-semibold">
-                  3
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-semibold mb-4">{t('PaymentMethods')}</h3>
-                  
-                  <div className="space-y-3">
-                    {isProcessingPayment ? (
-                      <div className="flex flex-col items-center justify-center py-10">
-                        <div className="animate-spin w-10 h-10 border-4 border-brasil-green border-t-transparent rounded-full mb-4"></div>
-                        <p className="text-brasil-blue font-medium">{t('ProcessingPayment')}</p>
-                        <p className="text-sm text-gray-500 mt-2">{t('PleaseWait')}</p>
-                      </div>
-                    ) : (
-                      <>
-                        {paymentError && (
-                          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                            <h4 className="font-medium mb-1">{t('PaymentError')}</h4>
-                            <p className="text-sm">{paymentError}</p>
-                          </div>
-                        )}
-                        
-                        <Card 
-                          className={`cursor-pointer hover:border-brasil-green border-2 transition-colors ${selectedPaymentMethod === 'card' ? 'border-brasil-green' : 'border-gray-200'}`}
-                          onClick={() => {
-                            handlePaymentMethodSelect('card');
-                            setShowCardForm(true);  // Abrir o modal imediatamente ao selecionar cartão
-                          }}
-                        >
-                          <CardContent className="p-4 flex items-center">
-                            <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
-                              <CreditCard className="h-6 w-6 text-brasil-blue" />
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="font-medium">{t('CreditCard')}</h4>
-                              <p className="text-sm text-gray-500">{t('CreditCardDescription')}</p>
-                              {cardDetails && (
-                                <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-100 text-sm">
-                                  <p>**** **** **** {cardDetails.cardNumber.slice(-4)}</p>
-                                  <p>{cardDetails.cardholderName}</p>
-                                </div>
-                              )}
-                            </div>
-                            {selectedPaymentMethod === 'card' && (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setShowCardForm(true);
-                                }}
-                              >
-                                {cardDetails ? t('ChangeCard') : t('AddCard')}
-                              </Button>
-                            )}
-                          </CardContent>
-                        </Card>
-                        
-                        <Card 
-                          className={`cursor-pointer hover:border-brasil-green border-2 transition-colors ${selectedPaymentMethod === 'mbway' ? 'border-brasil-green' : 'border-gray-200'}`}
-                          onClick={() => handlePaymentMethodSelect('mbway')}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-center mb-3">
-                              <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
-                                <Smartphone className="h-6 w-6 text-brasil-blue" />
-                              </div>
-                              <div className="flex-1">
-                                <h4 className="font-medium">MBWay</h4>
-                                <p className="text-sm text-gray-500">{t('MBWayDescription')}</p>
-                              </div>
-                            </div>
-                            {selectedPaymentMethod === 'mbway' && (
-                              <div className="mt-3">
-                                <Input
-                                  type="tel"
-                                  placeholder="9xxxxxxxx"
-                                  value={mbwayPhone || ''}
-                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMbwayPhone(e.target.value)}
-                                  className="w-full"
-                                  maxLength={9}
-                                />
-                                <p className="text-xs text-gray-500 mt-1">{t('EnterMBWayPhone')}</p>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                        
-                        <Card 
-                          className={`cursor-pointer hover:border-brasil-green border-2 transition-colors ${selectedPaymentMethod === 'multibanco' ? 'border-brasil-green' : 'border-gray-200'}`}
-                          onClick={() => handlePaymentMethodSelect('multibanco')}
-                        >
-                          <CardContent className="p-4 flex items-center">
-                            <div className="bg-brasil-blue/10 p-3 rounded-full mr-4">
-                              <Landmark className="h-6 w-6 text-brasil-blue" />
-                            </div>
-                            <div>
-                              <h4 className="font-medium">Multibanco</h4>
-                              <p className="text-sm text-gray-500">{t('MultibancoDescription')}</p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                        
-                        {selectedPaymentMethod && (
-                          <div className="mt-6">
-                            <Button 
-                              className="w-full bg-brasil-green hover:bg-green-700 text-white"
-                              onClick={() => submitStep3(selectedPaymentMethod)}
-                              disabled={
-                                (selectedPaymentMethod === 'card' && !cardDetails) ||
-                                (selectedPaymentMethod === 'mbway' && !mbwayPhone) ||
-                                isProcessingPayment
-                              }
-                            >
-                              {isProcessingPayment ? (
-                                <div className="flex items-center">
-                                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                                  {t('Processing')}
-                                </div>
-                              ) : (
-                                t('ProceedToPayment')
-                              )}
-                            </Button>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold mb-4">{t('ReservationSummary')}</h3>
-                  
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">{t('Date')}:</span>
-                        <span className="font-medium">{format(reservationData.date, 'PPP')}</span>
-                      </div>
-                      
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">{t('Time')}:</span>
-                        <span className="font-medium">{reservationData.time}</span>
-                      </div>
-                      
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">{t('PartySize')}:</span>
-                        <span className="font-medium">{reservationData.partySize} {reservationData.partySize === 1 ? t('Person') : t('People')}</span>
-                      </div>
-                      
-                      <div className="pt-3 border-t">
-                        <h4 className="font-semibold mb-2">{t('OrderItems')}</h4>
-                        
-                        {reservationData.items && reservationData.items.length > 0 ? (
-                          <div className="space-y-2">
-                            {reservationData.items.map((item) => (
-                              <div key={item.id} className="flex justify-between text-sm">
-                                <span>{item.name} x{item.quantity}</span>
-                                <span>€{((item.price / 100) * item.quantity).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                              </div>
-                            ))}
-                            
-                            <div className="flex justify-between font-semibold pt-2 border-t">
-                              <span>{t('Total')}</span>
-                              <span>€{(reservationData.items.reduce((sum, item) => sum + ((item.price / 100) * item.quantity), 0)).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-500">{t('NoItemsSelected')}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex justify-between mt-6 pt-4 border-t">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setCurrentStep(2)}
-                >
-                  {t('Back')}
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={cancelReservationCreation}
-                >
-                  {t('CancelReservation')}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-    
-    // Etapa 4: Confirmação
-    else {
-      return (
-        <div className="space-y-6">
-          <Card className="shadow-md">
-            <CardHeader className={`pb-4 border-b ${reservationData.paymentStatus === 'paid' ? 'bg-green-50' : 'bg-yellow-50'}`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  {reservationData.paymentStatus === 'paid' ? (
-                    <>
-                      <CardTitle className="text-xl mb-1">{t('ReservationConfirmed')}</CardTitle>
-                      <CardDescription>{t('ReservationConfirmedDescription')}</CardDescription>
-                    </>
-                  ) : (
-                    <>
-                      <CardTitle className="text-xl mb-1">{t('ReservationPending')}</CardTitle>
-                      <CardDescription>{t('PendingPaymentDescription')}</CardDescription>
-                    </>
-                  )}
-                </div>
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full ${reservationData.paymentStatus === 'paid' ? 'bg-green-500' : 'bg-yellow-500'} text-white`}>
-                  {reservationData.paymentStatus === 'paid' ? (
-                    <Check className="h-6 w-6" />
-                  ) : (
-                    <Clock className="h-6 w-6" />
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="font-semibold text-lg mb-4">{t('ReservationDetails')}</h3>
-                  
-                  <div className="bg-gray-50 p-5 rounded-lg border border-gray-100">
-                    <div className="space-y-4">
-                      {/* Código da reserva */}
-                      <div className="text-center pb-4 border-b">
-                        <div className="text-sm text-gray-600 mb-1">{t('ReservationCode')}</div>
-                        <div className="text-xl font-bold font-mono">{reservationData.confirmationCode}</div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <div className="text-sm text-gray-600">{t('Date')}</div>
-                          <div className="font-medium">{format(reservationData.date, 'PPP')}</div>
-                        </div>
-                        
-                        <div>
-                          <div className="text-sm text-gray-600">{t('Time')}</div>
-                          <div className="font-medium">{reservationData.time}</div>
-                        </div>
-                        
-                        <div>
-                          <div className="text-sm text-gray-600">{t('PartySize')}</div>
-                          <div className="font-medium">
-                            {reservationData.partySize} {reservationData.partySize === 1 ? t('Person') : t('People')}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <div className="text-sm text-gray-600">{t('PaymentStatus')}</div>
-                          <div className="font-medium">
-                            <Badge variant="outline" className={
-                              reservationData.paymentMethod === 'multibanco' && reservationData.paymentStatus !== 'paid' 
-                                ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                                : "bg-green-50 text-green-700 border-green-200"
-                            }>
-                              {reservationData.paymentMethod === 'multibanco' && reservationData.paymentStatus !== 'paid' 
-                                ? t('Pending') 
-                                : t('Paid')}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6">
-                    <h3 className="font-semibold mb-3">{t('PaymentInformation')}</h3>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                      <div className="flex items-center mb-3">
-                        <div className="bg-brasil-blue/10 p-2 rounded-full mr-3">
-                          {reservationData.paymentMethod === 'multibanco' ? (
-                            <Landmark className="h-4 w-4 text-brasil-blue" />
-                          ) : reservationData.paymentMethod === 'mbway' ? (
-                            <Smartphone className="h-4 w-4 text-brasil-blue" />
-                          ) : (
-                            <CreditCard className="h-4 w-4 text-brasil-blue" />
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-medium">{t(reservationData.paymentMethod || 'card')}</div>
-                          <div className="text-sm text-gray-600">
-                            {reservationData.paymentMethod === 'multibanco' && reservationData.paymentStatus === 'pending' 
-                              ? t('PendingTransaction') 
-                              : t('TransactionProcessed')}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Detalhes específicos para Multibanco */}
-                      {reservationData.paymentMethod === 'multibanco' && reservationData.paymentStatus === 'pending' && (
-                        <div className="mb-3 p-3 bg-yellow-50 rounded-md border border-yellow-100">
-                          <div className="text-center mb-2 font-medium text-yellow-800">
-                            {t('PaymentPendingApproval')}
-                          </div>
-                          
-                          {countdownActive && (
-                            <div className="text-center mb-3">
-                              <div className="text-sm text-gray-600">{t('TimeRemaining')}</div>
-                              <div className="text-xl font-mono font-semibold text-yellow-800">{formatCountdown()}</div>
-                            </div>
-                          )}
-                          
-                          <div className="grid grid-cols-2 gap-2 mb-3">
-                            <div>
-                              <div className="text-sm text-gray-600">{t('Entity')}</div>
-                              <div className="font-bold font-mono text-lg">{reservationData.paymentDetails?.entity || '11111'}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-600">{t('Reference')}</div>
-                              <div className="font-bold font-mono text-lg">{reservationData.paymentDetails?.reference || '999 999 999'}</div>
-                            </div>
-                          </div>
-                          
-                          <div className="text-sm text-center text-gray-600">
-                            {t('MultibancoCTA')}
-                          </div>
-                        </div>
-                      )}
 
-                      {/* Detalhes específicos para MBWay */}
-                      {reservationData.paymentMethod === 'mbway' && reservationData.paymentStatus === 'pending' && (
-                        <div className="mb-3 p-3 bg-blue-50 rounded-md border border-blue-100">
-                          <div className="text-center mb-3">
-                            <div className="flex items-center justify-center mb-2">
-                              <Smartphone className="h-6 w-6 text-blue-600 mr-2" />
-                              <span className="font-medium text-blue-800">{t('MBWayPaymentPending')}</span>
-                            </div>
-                            <div className="text-sm text-gray-600 mb-3">
-                              {t('CheckYourMobilePhone')}: {reservationData.paymentDetails?.phone}
-                            </div>
-                          </div>
-                          
-                          {countdownActive && (
-                            <div className="text-center mb-3 p-3 bg-red-50 rounded border border-red-100">
-                              <div className="text-sm text-red-600 mb-1">{t('CompletePaymentWithin')}</div>
-                              <div className="text-2xl font-mono font-bold text-red-700">{formatCountdown()}</div>
-                              <div className="text-xs text-red-600 mt-1">{t('PaymentWillBeCancelledAfterTimeout')}</div>
-                            </div>
-                          )}
-                          
-                          <div className="bg-white p-3 rounded border border-gray-200 mb-3">
-                            <h4 className="font-medium text-gray-800 mb-2">{t('ReservationSummary')}</h4>
-                            <div className="space-y-1 text-sm">
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">{t('Date')}:</span>
-                                <span className="font-medium">{format(reservationData.date, 'PPP')}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">{t('Time')}:</span>
-                                <span className="font-medium">{reservationData.time}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">{t('PartySize')}:</span>
-                                <span className="font-medium">{reservationData.partySize} {reservationData.partySize === 1 ? t('Person') : t('People')}</span>
-                              </div>
-                              <div className="flex justify-between border-t pt-1 mt-2">
-                                <span className="text-gray-600 font-medium">{t('Total')}:</span>
-                                <span className="font-bold text-lg">€{((reservationData.total || 0) / 100).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="text-sm text-center text-blue-700 bg-blue-100 p-2 rounded">
-                            📱 {t('OpenMBWayAppToConfirmPayment')}
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="pt-3 border-t">
-                        <div className="flex justify-between font-semibold">
-                          <span>{t('Total')}</span>
-                          <span>€{((reservationData.total || 0) / 100).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold text-lg mb-4">{t('AccessCodes')}</h3>
-                  
-                  <div className="bg-gray-50 p-5 rounded-lg border border-gray-100 text-center">
-                    <div className="mb-4">
-                      <div className="text-sm text-gray-600 mb-2">{t('ScanQRCode')}</div>
-                      <div className="bg-white p-4 inline-block rounded-lg border border-gray-200">
-                        {/* QR Code para Multibanco */}
-                        {reservationData.paymentMethod === 'multibanco' && reservationData.paymentStatus === 'pending' ? (
-                          <div className="text-center">
-                            <div className="w-48 h-48 bg-gray-800 mx-auto flex items-center justify-center">
-                              <div className="p-4 bg-white">
-                                <div className="text-sm font-bold mb-2">{t('MultibancoPay')}</div>
-                                <div className="text-xs mb-1">{t('Entity')}: {reservationData.paymentDetails?.entity || '11111'}</div>
-                                <div className="text-xs mb-1">{t('Reference')}: {reservationData.paymentDetails?.reference || '999999999'}</div>
-                                <div className="text-xs mb-1">€{((reservationData.total || 0) / 100).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="w-48 h-48 bg-gray-800 mx-auto flex items-center justify-center text-white text-sm p-2 text-center">
-                            {t('ReservationQRCode')}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="mb-4 pb-4 border-b">
-                      <div className="text-sm text-gray-600 mb-2">{t('OrShowBarcode')}</div>
-                      <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        {/* Código de barras para Multibanco */}
-                        {reservationData.paymentMethod === 'multibanco' && reservationData.paymentStatus === 'pending' ? (
-                          <div className="text-center">
-                            <div className="w-full h-16 bg-gray-800 mx-auto flex items-center justify-center">
-                              <div className="px-4 py-2 bg-white">
-                                <div className="text-xs font-mono font-bold">
-                                  {reservationData.paymentDetails?.entity || '11111'} | {reservationData.paymentDetails?.reference || '999999999'} | €{((reservationData.total || 0) / 100).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="w-full h-16 bg-gray-800 mx-auto flex items-center justify-center text-white text-sm">
-                            {t('ReservationBarcode')}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={() => Swal.fire({
-                          title: 'Funcionalidade de Impressão',
-                          text: t('PrintFunctionality'),
-                          icon: 'info',
-                          confirmButtonText: 'Ok'
-                        })}
-                      >
-                        <i className="fas fa-print mr-2"></i>
-                        {t('PrintConfirmation')}
-                      </Button>
-                      
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={() => Swal.fire({
-                          title: 'Funcionalidade de Email',
-                          text: t('EmailFunctionality'),
-                          icon: 'info',
-                          confirmButtonText: 'Ok'
-                        })}
-                      >
-                        <i className="fas fa-envelope mr-2"></i>
-                        {t('EmailConfirmation')}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex justify-center mt-8">
-                <Button 
-                  className="bg-brasil-green hover:bg-green-700 text-white px-8"
-                  onClick={finalizeReservation}
-                >
-                  {t('FinishAndSaveReservation')}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
+  const handleCancelReservation = (reservationId: number) => {
+    if (confirm('Tem certeza que deseja cancelar esta reserva?')) {
+      cancelReservation.mutate(reservationId);
     }
   };
-  
-  // Render da página principal de Reservas
+
+  if (isLoading) {
+    return (
+      <CustomerLayout title="Minhas Reservas">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brasil-green"></div>
+        </div>
+      </CustomerLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <CustomerLayout title="Minhas Reservas">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600">Erro ao carregar suas reservas. Tente novamente.</p>
+        </div>
+      </CustomerLayout>
+    );
+  }
+
   return (
-    <CustomerLayout title={t('Reservations')}>
-      {isCreatingReservation ? (
-        // Interface de criação de reserva em etapas
-        <div>
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-montserrat font-bold md:block hidden">
-              {t('MakeReservation')} - {t(`Step${currentStep}Name`)}
-            </h1>
-            
-            <div className="hidden md:flex items-center space-x-2">
-              {[1, 2, 3, 4].map((step) => (
-                <div 
-                  key={step}
-                  className={`flex items-center ${step !== 4 ? 'mr-2' : ''}`}
-                >
-                  <div 
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                      currentStep === step 
-                        ? 'bg-brasil-blue text-white' 
-                        : currentStep > step
-                          ? 'bg-brasil-green text-white'
-                          : 'bg-gray-200 text-gray-500'
-                    }`}
-                  >
-                    {currentStep > step ? <Check className="h-4 w-4" /> : step}
-                  </div>
-                  
-                  {step !== 4 && (
-                    <div 
-                      className={`h-1 w-6 ${
-                        currentStep > step ? 'bg-brasil-green' : 'bg-gray-200'
-                      }`}
-                    ></div>
-                  )}
-                </div>
-              ))}
+    <CustomerLayout title="Minhas Reservas">
+      <div className="flex flex-col gap-8 h-full">
+        {/* Filtros */}
+        <div className="flex flex-col lg:flex-row lg:items-end lg:space-x-6 space-y-3 lg:space-y-0">
+          <div className="flex-1">
+            <label className="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">
+              Pesquisar Reserva
+            </label>
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="Data, status, mesa..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brasil-blue bg-white text-gray-800 font-medium transition"
+              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             </div>
           </div>
           
-          {renderReservationStep()}
-        </div>
-      ) : (
-        // Lista de reservas
-        <div>
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-montserrat font-bold md:block hidden">
-              {t('Reservations')}
-            </h1>
-            
-            <Button 
-              className="bg-brasil-green hover:bg-green-700 text-white"
-              onClick={() => setIsCreatingReservation(true)}
-            >
-              <Plus className="mr-2 h-4 w-4" /> {t('NewReservation')}
-            </Button>
+          <div>
+            <label className="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">
+              Status da Reserva
+            </label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full lg:w-40 border border-gray-200 rounded-lg bg-white text-gray-700 font-medium focus:ring-2 focus:ring-brasil-blue">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="confirmada">Confirmada</SelectItem>
+                <SelectItem value="realizada">Realizada</SelectItem>
+                <SelectItem value="cancelada">Cancelada</SelectItem>
+                <SelectItem value="pendente">Pendente</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle>{t('YourReservations')}</CardTitle>
-              <CardDescription>{t('ManageYourReservations')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {reservationsLoading ? (
-                <div className="flex justify-center py-10">
-                  <div className="animate-spin w-8 h-8 border-4 border-brasil-green border-t-transparent rounded-full"></div>
-                </div>
-              ) : userReservations && Array.isArray(userReservations) && userReservations.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t('Date')}</TableHead>
-                        <TableHead>{t('Time')}</TableHead>
-                        <TableHead>{t('People')}</TableHead>
-                        <TableHead>{t('Status')}</TableHead>
-                        <TableHead>{t('Actions')}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {userReservations.map((reservation: any) => {
-                        const reservationDate = new Date(reservation.date);
-                        const formattedDate = format(reservationDate, 'PPP');
-                        const formattedTime = format(reservationDate, 'HH:mm');
-                        
-                        return (
-                          <TableRow key={reservation.id}>
-                            <TableCell>{formattedDate}</TableCell>
-                            <TableCell>{formattedTime}</TableCell>
-                            <TableCell>{reservation.partySize}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={
-                                reservation.status === 'confirmed' 
-                                  ? 'bg-green-50 text-green-700 border-green-200' 
-                                  : reservation.status === 'cancelled'
-                                    ? 'bg-red-50 text-red-700 border-red-200'
-                                    : 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                              }>
-                                {t(reservation.status)}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex space-x-2">
-                                <Button variant="outline" size="sm">
-                                  {t('View')}
-                                </Button>
-                                
-                                {reservation.status !== 'cancelled' && (
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    className="text-red-500 border-red-200 hover:bg-red-50"
-                                    onClick={() => handleDeleteReservation(reservation.id)}
-                                  >
-                                    {t('Cancel')}
-                                  </Button>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center py-10">
-                  <AlertCircle className="mx-auto h-10 w-10 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium mb-2">{t('NoReservations')}</h3>
-                  <p className="text-gray-500 mb-6">{t('NoReservationsDescription')}</p>
-                  <Button 
-                    className="bg-brasil-green hover:bg-green-700 text-white"
-                    onClick={() => setIsCreatingReservation(true)}
-                  >
-                    {t('MakeYourFirstReservation')}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </CustomerLayout>
-  );
-  
-  // Função para renderizar a lista de reservas
-  const renderReservationsList = () => (
-    <div>
-      <Card className="shadow-md">
-        <CardHeader className="pb-4 border-b">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-xl">{t('YourReservations')}</CardTitle>
-              <CardDescription>
-                {t('ManageYourReservations')}
-              </CardDescription>
-            </div>
-            <Button 
-              className="bg-brasil-green hover:bg-green-700 text-white"
-              onClick={() => setIsCreatingReservation(true)}
-            >
-              {t('NewReservation')}
-            </Button>
+          <div>
+            <label className="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">
+              Status de Pagamento
+            </label>
+            <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+              <SelectTrigger className="w-full lg:w-40 border border-gray-200 rounded-lg bg-white text-gray-700 font-medium focus:ring-2 focus:ring-brasil-blue">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="pago">Pago</SelectItem>
+                <SelectItem value="pendente">Pendente</SelectItem>
+                <SelectItem value="falhado">Falhado</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {reservationsLoading ? (
-            <div className="flex justify-center py-10">
-              <div className="animate-spin w-10 h-10 border-4 border-brasil-green border-t-transparent rounded-full"></div>
-            </div>
-          ) : userReservations && Array.isArray(userReservations) && userReservations.length > 0 ? (
-            <div className="overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('Date')}</TableHead>
-                    <TableHead>{t('Time')}</TableHead>
-                    <TableHead>{t('People')}</TableHead>
-                    <TableHead>{t('Status')}</TableHead>
-                    <TableHead>{t('Actions')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {userReservations.map((reservation: any) => {
-                    const reservationDate = new Date(reservation.date);
-                    const formattedDate = format(reservationDate, 'PPP');
-                    const formattedTime = format(reservationDate, 'HH:mm');
+          
+          <Button
+            onClick={clearFilters}
+            className="bg-brasil-yellow text-brasil-blue font-semibold rounded-lg px-4 py-2 shadow hover:bg-yellow-200 transition"
+          >
+            Limpar
+          </Button>
+          
+          <Button className="bg-brasil-green text-white font-semibold rounded-lg px-4 py-2 shadow hover:bg-green-600 transition flex items-center space-x-2">
+            <Plus className="h-4 w-4" />
+            <span>Nova Reserva</span>
+          </Button>
+        </div>
+
+        {/* Tabela de Reservas */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden flex-1 flex flex-col">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-100">
+              <thead className="bg-brasil-blue">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">
+                    Data
+                  </th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">
+                    Hora
+                  </th>
+                  <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">
+                    Mesa
+                  </th>
+                  <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">
+                    Status da Reserva
+                  </th>
+                  <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">
+                    Status de Pagamento
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100 text-gray-800 font-medium">
+                {currentReservations.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <Calendar className="h-12 w-12 text-gray-300 mb-4" />
+                        <p className="text-gray-500 font-medium">
+                          {filteredReservations.length === 0 && userReservations.length > 0 
+                            ? "Nenhuma reserva encontrada com os filtros aplicados" 
+                            : "Você ainda não tem reservas"}
+                        </p>
+                        {userReservations.length === 0 && (
+                          <p className="text-gray-400 text-sm mt-2">
+                            Clique em "Nova Reserva" para fazer sua primeira reserva
+                          </p>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  currentReservations.map((reservation) => {
+                    const status = mapStatus(reservation.status);
+                    const paymentStatus = mapPaymentStatus(reservation.payment_status);
                     
                     return (
-                      <TableRow key={reservation.id}>
-                        <TableCell>{formattedDate}</TableCell>
-                        <TableCell>{formattedTime}</TableCell>
-                        <TableCell>{reservation.partySize}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={
-                            reservation.status === 'confirmed' 
-                              ? 'bg-green-50 text-green-700 border-green-200' 
-                              : reservation.status === 'cancelled'
-                                ? 'bg-red-50 text-red-700 border-red-200'
-                                : 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                          }>
-                            {t(reservation.status)}
+                      <tr key={reservation.id} className="hover:bg-gray-50 transition cursor-pointer">
+                        <td className="px-6 py-4">{formatDate(reservation.date)}</td>
+                        <td className="px-4 py-4">{formatTime(reservation.time)}</td>
+                        <td className="px-4 py-4 text-center">
+                          Mesa {reservation.table_number || reservation.table_id}
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                          <Badge className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded ${status.color}`}>
+                            <i className={`fa-solid ${status.icon} mr-1`}></i>
+                            {status.label}
                           </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button variant="outline" size="sm">
-                              {t('View')}
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                          <Badge className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded ${paymentStatus.color}`}>
+                            <i className={`fa-solid ${paymentStatus.icon} mr-1`}></i>
+                            {paymentStatus.label}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex items-center justify-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-brasil-blue hover:text-brasil-green transition p-1"
+                              title="Ver Detalhes"
+                            >
+                              <Eye className="h-4 w-4" />
                             </Button>
-                            
-                            {reservation.status !== 'cancelled' && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                className="text-red-500 border-red-200 hover:bg-red-50"
-                                onClick={() => handleDeleteReservation(reservation.id)}
-                              >
-                                {t('Cancel')}
-                              </Button>
+                            {reservation.status !== 'cancelled' && reservation.status !== 'completed' && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-brasil-yellow hover:text-brasil-blue transition p-1"
+                                  title="Editar"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleCancelReservation(reservation.id)}
+                                  className="text-brasil-red hover:text-red-700 transition p-1"
+                                  title="Cancelar Reserva"
+                                  disabled={cancelReservation.isPending}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </>
                             )}
                           </div>
-                        </TableCell>
-                      </TableRow>
+                        </td>
+                      </tr>
                     );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-10">
-              <AlertCircle className="mx-auto h-10 w-10 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium mb-2">{t('NoReservations')}</h3>
-              <p className="text-gray-500 mb-6">{t('NoReservationsDescription')}</p>
-              <Button 
-                className="bg-brasil-green hover:bg-green-700 text-white"
-                onClick={() => setIsCreatingReservation(true)}
-              >
-                {t('MakeYourFirstReservation')}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  // Renderizar o conteúdo da página baseado no estado atual
-  const renderPageContent = () => (
-    <div className="container max-w-7xl mx-auto py-6 space-y-8">
-      {isCreatingReservation ? renderReservationStep() : renderReservationsList()}
-    </div>
-  );
-  
-  // Modal de pagamento
-  return (
-    <>
-      <CustomerLayout>
-        {/* Conteúdo principal da página */}
-        {renderPageContent()}
-      </CustomerLayout>
-      
-      {/* Modal de formulário de cartão */}
-      <CardDetailsForm
-        open={showCardForm}
-        onOpenChange={setShowCardForm}
-        onSubmit={handleCardFormSubmit}
-      />
-      
-
-      
-      {/* Modal de pagamento */}
-      <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t('PaymentInformation')}</DialogTitle>
-            <DialogDescription>
-              {reservationData.paymentMethod === 'multibanco' && t('MultibancoPaymentDescription')}
-              {reservationData.paymentMethod === 'mbway' && t('MBWayPaymentDescription')}
-              {reservationData.paymentMethod === 'card' && t('CardPaymentDescription')}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 my-4">
-            {/* Detalhes de pagamento Multibanco */}
-            {reservationData.paymentMethod === 'multibanco' && reservationData.paymentDetails && (
-              <div className="space-y-4">
-                {/* Contador regressivo com verificação automática */}
-                <div className="flex flex-col items-center gap-4">
-                  <FixedCountdownTimer 
-                    reference={reservationData.paymentDetails?.reference || reservationData.confirmationCode}
-                    paymentStatus={reservationData.paymentStatus as 'pending' | 'paid'}
-                    endTime={new Date(Date.now() + 72 * 3600 * 1000).toISOString()}
-                    onStatusChange={(newStatus) => {
-                      if (newStatus === 'paid') {
-                        // Atualizar o estado local
-                        setReservationData(prev => ({
-                          ...prev,
-                          paymentStatus: 'paid'
-                        }));
-                        
-                        // Mostrar notificação
-                        toast({
-                          title: t('PaymentConfirmed'),
-                          description: t('YourPaymentHasBeenConfirmed')
-                        });
-                      }
-                    }}
-                  />
-                </div>
-                
-                {/* Status do pagamento */}
-                <div className="text-center mb-4">
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                    reservationData.paymentStatus === 'paid' 
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {reservationData.paymentStatus === 'paid' ? t('Paid') : t('Pending')}
-                  </span>
-                </div>
-                
-                {/* QR Code e Código de barras */}
-                <QRCodeDisplay 
-                  entity={reservationData.paymentDetails?.entity || '12345'}
-                  reference={reservationData.paymentDetails?.reference || '123 456 789'}
-                  amount={Number(reservationData.total || 0)}
-                />
-                
-                {/* Informações de pagamento */}
-                <div className="flex justify-between">
-                  <span className="font-medium">{t('Entity')}:</span>
-                  <span className="font-bold">{reservationData.paymentDetails?.entity || '12345'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">{t('Reference')}:</span>
-                  <span className="font-bold">{reservationData.paymentDetails?.reference || '123 456 789'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">{t('Amount')}:</span>
-                  <span className="font-bold">€{Number(reservationData.total || 0).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                </div>
-              </div>
-            )}
-            
-            {/* Detalhes de pagamento MBWay */}
-            {reservationData.paymentMethod === 'mbway' && reservationData.paymentDetails && (
-              <div className="space-y-4">
-                <div className="flex justify-between">
-                  <span className="font-medium">{t('PhoneNumber')}:</span>
-                  <span className="font-bold">{reservationData.paymentDetails?.phone || user?.phone}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">{t('Amount')}:</span>
-                  <span className="font-bold">€{Number(reservationData.total || 0).toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                </div>
-                <div className="text-center text-sm text-gray-600 mt-2">
-                  {t('CheckYourPhoneForMBWayNotification')}
-                </div>
-              </div>
-            )}
-            
-            {/* Detalhes de pagamento com Cartão */}
-            {reservationData.paymentMethod === 'card' && reservationData.paymentDetails && (
-              <div className="space-y-4 text-center">
-                <div className="text-sm text-gray-600">
-                  {t('RedirectedToPaymentPage')}
-                </div>
-                {reservationData.paymentUrl && (
-                  <Button
-                    className="w-full bg-brasil-blue hover:bg-blue-700"
-                    onClick={() => window.open(reservationData.paymentUrl, '_blank')}
-                  >
-                    {t('OpenPaymentPage')}
-                  </Button>
+                  })
                 )}
-              </div>
-            )}
+              </tbody>
+            </table>
           </div>
           
-          <DialogFooter className="flex sm:justify-between">
-            <Button 
-              variant="outline" 
-              onClick={() => setPaymentModalOpen(false)}
-            >
-              {t('Cancel')}
-            </Button>
-            <Button 
-              className="bg-brasil-green hover:bg-green-700 text-white"
-              onClick={handlePaymentCompleted}
-            >
-              {t('ConfirmPayment')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+          {/* Paginação */}
+          {filteredReservations.length > 0 && (
+            <div className="px-6 py-3 flex justify-between items-center bg-gray-50">
+              <span className="text-xs text-gray-600">
+                Exibindo {startIndex + 1}-{Math.min(endIndex, filteredReservations.length)} de {filteredReservations.length} reservas
+              </span>
+              <div className="space-x-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="px-2 py-1 rounded text-brasil-blue hover:bg-brasil-blue hover:text-white transition"
+                >
+                  <i className="fa-solid fa-angle-left"></i>
+                </Button>
+                {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                  const pageNumber = i + 1;
+                  return (
+                    <Button
+                      key={pageNumber}
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNumber)}
+                      className={`px-2 py-1 rounded ${
+                        currentPage === pageNumber 
+                          ? "bg-brasil-yellow text-brasil-blue font-bold" 
+                          : "text-brasil-blue hover:bg-brasil-blue hover:text-white transition"
+                      }`}
+                    >
+                      {pageNumber}
+                    </Button>
+                  );
+                })}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-2 py-1 rounded text-brasil-blue hover:bg-brasil-blue hover:text-white transition"
+                >
+                  <i className="fa-solid fa-angle-right"></i>
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </CustomerLayout>
   );
-};
-
-export default Reservations;
+}
