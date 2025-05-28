@@ -1120,6 +1120,9 @@ router.get("/api/payments/user", isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.userId;
     
+    // Garantir que userId seja tratado como um número e nunca undefined
+    const safeUserId = userId ? Number(userId) : 0;
+    
     const payments = await queryClient`
       SELECT 
         p.id,
@@ -1132,7 +1135,7 @@ router.get("/api/payments/user", isAuthenticated, async (req, res) => {
         r.reservation_code
       FROM payments p
       LEFT JOIN reservations r ON p.reservation_id = r.id
-      WHERE p.user_id = ${userId}
+      WHERE p.user_id = ${safeUserId}
       ORDER BY p.payment_date DESC
     `;
     

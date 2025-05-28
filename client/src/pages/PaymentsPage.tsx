@@ -43,8 +43,8 @@ export default function PaymentsPage() {
       (payment.reference && payment.reference.toLowerCase().includes(searchTerm.toLowerCase())) ||
       payment.amount.toString().includes(searchTerm);
 
-    const matchesMethod = methodFilter === '' || payment.method === methodFilter;
-    const matchesStatus = statusFilter === '' || payment.status === statusFilter;
+    const matchesMethod = methodFilter === '' || methodFilter === 'all' || payment.method === methodFilter;
+    const matchesStatus = statusFilter === '' || statusFilter === 'all' || payment.status === statusFilter;
 
     return matchesSearch && matchesMethod && matchesStatus;
   });
@@ -175,8 +175,8 @@ export default function PaymentsPage() {
   // Limpar filtros
   const clearFilters = () => {
     setSearchTerm('');
-    setMethodFilter('');
-    setStatusFilter('');
+    setMethodFilter('all');
+    setStatusFilter('all');
     setCurrentPage(1);
   };
 
@@ -241,7 +241,7 @@ export default function PaymentsPage() {
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="card">Cartão</SelectItem>
                 <SelectItem value="mbway">MBWay</SelectItem>
                 <SelectItem value="cash">Dinheiro</SelectItem>
@@ -257,7 +257,7 @@ export default function PaymentsPage() {
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="completed">Pago</SelectItem>
                 <SelectItem value="pending">Pendente</SelectItem>
                 <SelectItem value="cancelled">Cancelado</SelectItem>
