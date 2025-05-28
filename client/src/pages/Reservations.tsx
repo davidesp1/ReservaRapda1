@@ -39,6 +39,7 @@ const newReservationSchema = z.object({
   date: z.string().min(1, "Data é obrigatória"),
   time: z.string().min(1, "Horário é obrigatório"),
   party_size: z.number().min(1, "Número de pessoas deve ser pelo menos 1").max(20, "Máximo 20 pessoas"),
+  table_id: z.number().min(1, "Mesa é obrigatória"),
   special_requests: z.string().optional(),
 });
 
@@ -65,16 +66,33 @@ export default function Reservations() {
       date: '',
       time: '',
       party_size: 2,
+      table_id: 1,
       special_requests: '',
     },
+  });
+
+  // Buscar mesas disponíveis
+  const { data: availableTables = [] } = useQuery({
+    queryKey: ['/api/tables'],
+    enabled: showNewReservationModal,
   });
 
   // Mutation para criar nova reserva
   const createReservationMutation = useMutation({
     mutationFn: async (data: NewReservationForm) => {
+      // Combinar data e hora em uma string completa
+      const fullDateTime = `${data.date} ${data.time}`;
+      
       const response = await apiRequest('POST', '/api/reservations', {
-        ...data,
-        user_id: user?.id,
+        date: fullDateTime,
+        tableId: data.table_id,
+        partySize: data.party_size,
+        notes: data.special_requests || '',
+        status: 'confirmed',
+        paymentMethod: 'multibanco',
+        paymentStatus: 'pending',
+        total: 0,
+        duration: 120
       });
       return response.json();
     },
@@ -556,36 +574,69 @@ export default function Reservations() {
                 />
               </div>
 
-              <FormField
-                control={newReservationForm.control}
-                name="party_size"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      Número de Pessoas
-                    </FormLabel>
-                    <FormControl>
-                      <Select 
-                        onValueChange={(value) => field.onChange(parseInt(value))} 
-                        defaultValue={field.value?.toString()}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Quantas pessoas?" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(num => (
-                            <SelectItem key={num} value={num.toString()}>
-                              {num} {num === 1 ? 'pessoa' : 'pessoas'}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={newReservationForm.control}
+                  name="party_size"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Pessoas
+                      </FormLabel>
+                      <FormControl>
+                        <Select 
+                          onValueChange={(value) => field.onChange(parseInt(value))} 
+                          defaultValue={field.value?.toString()}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Quantas?" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(num => (
+                              <SelectItem key={num} value={num.toString()}>
+                                {num} {num === 1 ? 'pessoa' : 'pessoas'}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={newReservationForm.control}
+                  name="table_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        Mesa
+                      </FormLabel>
+                      <FormControl>
+                        <Select 
+                          onValueChange={(value) => field.onChange(parseInt(value))} 
+                          defaultValue={field.value?.toString()}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Escolha a mesa" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableTables.map((table: any) => (
+                              <SelectItem key={table.id} value={table.id.toString()}>
+                                Mesa {table.number} ({table.capacity} lugares)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={newReservationForm.control}
