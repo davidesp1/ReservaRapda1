@@ -156,31 +156,8 @@ const PaymentsPage = () => {
   };
 
   return (
-    <CustomerLayout>
+    <CustomerLayout title="Meus Pagamentos">
       <div className="flex flex-col gap-8 h-[720px]">
-        {/* Cabeçalho */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-gray-800 font-montserrat">Meus Pagamentos</h1>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <button className="relative">
-                <i className="text-xl text-gray-600 fa-regular fa-bell"></i>
-                <span className="absolute flex items-center justify-center w-4 h-4 text-xs text-white rounded-full -top-1 -right-1 bg-brasil-red">2</span>
-              </button>
-            </div>
-            <div className="flex items-center">
-              <div className="w-10 h-10 border-2 rounded-full bg-brasil-blue border-brasil-yellow flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">
-                  {user?.username?.charAt(0).toUpperCase() || 'U'}
-                </span>
-              </div>
-              <div className="ml-2">
-                <p className="text-sm font-medium text-gray-800">{user?.username || 'Usuário'}</p>
-                <p className="text-xs text-gray-500">Cliente</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Filtros */}
         <div className="flex flex-col mb-2 space-y-3 lg:flex-row lg:items-end lg:space-x-6 lg:space-y-0">
