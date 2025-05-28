@@ -344,7 +344,7 @@ export default function Customers() {
                     disabled={currentPage === totalPages}
                     className="px-2 py-1 transition rounded text-brasil-blue hover:bg-brasil-blue hover:text-white disabled:opacity-50"
                   >
-                    <i className="fa-solid fa-angle-right"></i>
+                    <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
