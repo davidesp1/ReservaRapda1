@@ -116,7 +116,7 @@ const PaymentsPage = () => {
   };
 
   return (
-    <CustomerLayout title="Pagamentos">
+    <CustomerLayout title="Meus Pagamentos">
       <div className="flex flex-col gap-8 h-[720px]">
 
         {/* Filtros */}
