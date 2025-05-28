@@ -45,19 +45,7 @@ export default function Reservations() {
     staleTime: 30000,
   });
 
-  // Debug: Vamos ver o que está sendo retornado
-  useEffect(() => {
-    console.log('🔍 Estado atual:', { 
-      userReservations, 
-      isLoading, 
-      error,
-      total: userReservations?.length || 0 
-    });
-    
-    if (userReservations && userReservations.length > 0) {
-      console.log('📊 Primeira reserva:', userReservations[0]);
-    }
-  }, [userReservations, isLoading, error]);
+
 
   // Função para mapear status da API para status de exibição
   const mapStatus = (status: string) => {
@@ -256,6 +244,9 @@ export default function Reservations() {
             <table className="min-w-full divide-y divide-gray-100">
               <thead className="bg-brasil-blue">
                 <tr>
+                  <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">
+                    Código da Reserva
+                  </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">
                     Data
                   </th>
@@ -279,7 +270,7 @@ export default function Reservations() {
               <tbody className="bg-white divide-y divide-gray-100 text-gray-800 font-medium">
                 {currentReservations.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center">
+                    <td colSpan={7} className="px-6 py-8 text-center">
                       <div className="flex flex-col items-center justify-center">
                         <Calendar className="h-12 w-12 text-gray-300 mb-4" />
                         <p className="text-gray-500 font-medium">
@@ -302,6 +293,11 @@ export default function Reservations() {
                     
                     return (
                       <tr key={reservation.id} className="hover:bg-gray-50 transition cursor-pointer">
+                        <td className="px-4 py-4 text-center">
+                          <span className="font-mono text-sm font-semibold text-brasil-blue">
+                            #{String(reservation.id).padStart(6, '0')}
+                          </span>
+                        </td>
                         <td className="px-6 py-4">{formatDate(reservation.date)}</td>
                         <td className="px-4 py-4">{formatTime(reservation.time)}</td>
                         <td className="px-4 py-4 text-center">
