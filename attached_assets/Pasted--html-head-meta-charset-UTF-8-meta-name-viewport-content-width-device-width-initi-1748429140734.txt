@@ -1,0 +1,396 @@
+<html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>::-webkit-scrollbar { display: none;}</style>
+    <script>tailwind.config = {
+  "theme": {
+    "extend": {
+      "colors": {
+        "brazil-green": "#009c3b",
+        "brazil-yellow": "#ffdf00",
+        "brazil-blue": "#002776",
+        "brazil-red": "#c8102e"
+      },
+      "fontFamily": {
+        "montserrat": [
+          "Montserrat",
+          "sans-serif"
+        ],
+        "opensans": [
+          "Open Sans",
+          "sans-serif"
+        ],
+        "sans": [
+          "Inter",
+          "sans-serif"
+        ]
+      }
+    }
+  }
+};</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap"><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="bg-gray-100 font-opensans">
+
+<div id="admin-dashboard" class="flex h-[900px]">
+    <div id="sidebar" class="fixed top-0 left-0 flex flex-col w-64 h-full bg-brazil-blue">
+        <div class="p-6">
+            <div class="flex items-center">
+                <div class="flex items-center justify-center w-10 h-10 mr-2 rounded-full bg-brazil-yellow">
+                    <i class="fa-solid fa-utensils text-brazil-blue"></i>
+                </div>
+                <span class="text-xl font-semibold text-white font-montserrat">
+                    Opa que delicia
+                </span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <ul>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-chart-line text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Dashboard</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-users text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Gestão de Clientes</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-book-open text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Gestão do Menu</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-chair text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Gestão das Mesas</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-coins text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Gestão Financeira</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                        <i class="w-6 fa-solid fa-credit-card text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Pagamentos</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center p-2 text-white rounded-lg cursor-pointer bg-brazil-blue bg-opacity-40">
+                        <i class="w-6 fa-solid fa-calendar-check text-brazil-yellow"></i>
+                        <span class="ml-2 font-medium">Reservas</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+        <div class="p-4 mt-auto border-t border-blue-400">
+            <span class="flex items-center p-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                <i class="w-6 fa-solid fa-gear text-brazil-yellow"></i>
+                <span class="ml-2 font-medium">Configurações</span>
+            </span>
+            <span class="flex items-center p-2 mt-2 text-white rounded-lg cursor-pointer hover:bg-brazil-blue hover:bg-opacity-40">
+                <i class="w-6 fa-solid fa-right-from-bracket text-brazil-yellow"></i>
+                <span class="ml-2 font-medium">Sair</span>
+            </span>
+        </div>
+    </div>
+
+    <div id="main-content" class="relative flex-1 p-8 ml-64">
+        <div id="header" class="flex items-center justify-between mb-8">
+            <h1 class="text-2xl font-bold text-gray-800 font-montserrat">Minhas Reservas</h1>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="relative">
+                        <i class="text-xl text-gray-600 fa-regular fa-bell"></i>
+                        <span class="absolute flex items-center justify-center w-4 h-4 text-xs text-white rounded-full -top-1 -right-1 bg-brazil-red">2</span>
+                    </button>
+                </div>
+                <div class="flex items-center">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User Avatar" class="w-10 h-10 border-2 rounded-full border-brazil-yellow">
+                    <div class="ml-2">
+                        <p class="text-sm font-medium text-gray-800">Carlos Silva</p>
+                        <p class="text-xs text-gray-500">Cliente</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="reservas-section" class="flex flex-col gap-8 h-[720px]">
+            <div id="reservas-filtros" class="flex flex-col mb-2 space-y-3 lg:flex-row lg:items-end lg:space-x-6 lg:space-y-0">
+                <div class="flex-1">
+                    <label class="block mb-1 text-sm font-semibold text-gray-700 font-montserrat">Pesquisar Reserva</label>
+                    <div class="relative">
+                        <input id="reservas-search" type="text" placeholder="Data, status, mesa..." class="w-full py-2 pl-10 pr-4 font-medium text-gray-800 transition bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brazil-blue">
+                        <span class="absolute text-gray-400 transform -translate-y-1/2 left-3 top-1/2">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-semibold text-gray-700 font-montserrat">Status da Reserva</label>
+                    <select id="reservas-status-filter" class="w-full px-3 py-2 font-medium text-gray-700 bg-white border border-gray-200 rounded-lg lg:w-40 focus:ring-2 focus:ring-brazil-blue">
+                        <option value="">Todos</option>
+                        <option value="confirmada">Confirmada</option>
+                        <option value="realizada">Realizada</option>
+                        <option value="cancelada">Cancelada</option>
+                        <option value="pendente">Pendente</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-semibold text-gray-700 font-montserrat">Status de Pagamento</label>
+                    <select id="reservas-pagamento-filter" class="w-full px-3 py-2 font-medium text-gray-700 bg-white border border-gray-200 rounded-lg lg:w-40 focus:ring-2 focus:ring-brazil-blue">
+                        <option value="">Todos</option>
+                        <option value="pago">Pago</option>
+                        <option value="pendente">Pendente</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                </div>
+                <button id="reservas-clean-filters" class="px-4 py-2 ml-auto font-semibold transition rounded-lg shadow bg-brazil-yellow text-brazil-blue hover:bg-yellow-200 lg:ml-0">
+                    Limpar
+                </button>
+                <button id="nova-reserva-btn" class="flex items-center px-4 py-2 space-x-2 font-semibold text-white transition rounded-lg shadow bg-brazil-green hover:bg-green-600">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Nova Reserva</span>
+                </button>
+            </div>
+
+            <div id="reservas-table-card" class="flex flex-col flex-1 p-0 overflow-hidden bg-white shadow-lg rounded-xl">
+                <div class="overflow-x-auto">
+                    <table id="reservas-table" class="min-w-full divide-y divide-gray-100">
+                        <thead class="bg-brazil-blue">
+                            <tr>
+                                <th class="px-6 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Data</th>
+                                <th class="px-4 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Hora</th>
+                                <th class="px-4 py-4 text-xs font-bold tracking-wider text-center text-white font-montserrat">Mesa</th>
+                                <th class="px-4 py-4 text-xs font-bold tracking-wider text-center text-white font-montserrat">Status da Reserva</th>
+                                <th class="px-4 py-4 text-xs font-bold tracking-wider text-center text-white font-montserrat">Status de Pagamento</th>
+                                <th class="px-6 py-4 text-xs font-bold tracking-wider text-center text-white font-montserrat">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservas-tbody" class="font-medium text-gray-800 bg-white divide-y divide-gray-100">
+                            <!-- 10 linhas de exemplo -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex items-center justify-between px-6 py-3 bg-gray-50">
+                    <span id="pagination-label" class="text-xs text-gray-600">Exibindo 1-10 de 20 reservas</span>
+                    <div class="space-x-1" id="reservas-pagination">
+                        <button class="px-2 py-1 transition rounded text-brazil-blue hover:bg-brazil-blue hover:text-white" id="prev-page">
+                            <i class="fa-solid fa-angle-left"></i>
+                        </button>
+                        <button class="px-2 py-1 font-bold rounded text-brazil-blue bg-brazil-yellow" id="page-1">1</button>
+                        <button class="px-2 py-1 transition rounded text-brazil-blue hover:bg-brazil-blue hover:text-white" id="page-2">2</button>
+                        <button class="px-2 py-1 transition rounded text-brazil-blue hover:bg-brazil-blue hover:text-white" id="page-3">3</button>
+                        <button class="px-2 py-1 transition rounded text-brazil-blue hover:bg-brazil-blue hover:text-white" id="next-page">
+                            <i class="fa-solid fa-angle-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const reservas = [
+    { data: "10/06/2024", hora: "20:00", mesa: "Mesa 8", status: "Confirmada", statusColor: "bg-brazil-blue text-white", pagamento: "Pago", pagColor: "bg-brazil-green text-white", id: 1 },
+    { data: "08/06/2024", hora: "19:30", mesa: "Mesa 5", status: "Pendente", statusColor: "bg-brazil-yellow text-brazil-blue", pagamento: "Pendente", pagColor: "bg-brazil-yellow text-brazil-blue", id: 2 },
+    { data: "05/06/2024", hora: "21:00", mesa: "Mesa 3", status: "Cancelada", statusColor: "bg-brazil-red text-white", pagamento: "Cancelado", pagColor: "bg-brazil-red text-white", id: 3 },
+    { data: "01/06/2024", hora: "18:30", mesa: "Mesa 2", status: "Realizada", statusColor: "bg-brazil-green text-white", pagamento: "Pago", pagColor: "bg-brazil-green text-white", id: 4 },
+    { data: "31/05/2024", hora: "20:30", mesa: "Mesa 10", status: "Confirmada", statusColor: "bg-brazil-blue text-white", pagamento: "Pendente", pagColor: "bg-brazil-yellow text-brazil-blue", id: 5 },
+    { data: "28/05/2024", hora: "19:00", mesa: "Mesa 1", status: "Realizada", statusColor: "bg-brazil-green text-white", pagamento: "Pago", pagColor: "bg-brazil-green text-white", id: 6 },
+    { data: "24/05/2024", hora: "21:15", mesa: "Mesa 7", status: "Pendente", statusColor: "bg-brazil-yellow text-brazil-blue", pagamento: "Pendente", pagColor: "bg-brazil-yellow text-brazil-blue", id: 7 },
+    { data: "20/05/2024", hora: "20:45", mesa: "Mesa 4", status: "Cancelada", statusColor: "bg-brazil-red text-white", pagamento: "Cancelado", pagColor: "bg-brazil-red text-white", id: 8 },
+    { data: "15/05/2024", hora: "18:00", mesa: "Mesa 6", status: "Confirmada", statusColor: "bg-brazil-blue text-white", pagamento: "Pago", pagColor: "bg-brazil-green text-white", id: 9 },
+    { data: "12/05/2024", hora: "19:45", mesa: "Mesa 9", status: "Realizada", statusColor: "bg-brazil-green text-white", pagamento: "Pago", pagColor: "bg-brazil-green text-white", id: 10 },
+    { data: "10/05/2024", hora: "18:30", mesa: "Mesa 11", status: "Pendente", statusColor: "bg-brazil-yellow text-brazil-blue", pagamento: "Pendente", pagColor: "bg-brazil-yellow text-brazil-blue", id: 11 },
+    { data: "08/05/2024", hora: "20:15", mesa: "Mesa 12", status: "Cancelada", statusColor: "bg-brazil-red text-white", pagamento: "Cancelado", pagColor: "bg-brazil-red text-white", id: 12 },
+    { data: "06/05/2024", hora: "21:00", mesa: "Mesa 13", status: "Confirmada", statusColor: "bg-brazil-blue text-white", pagamento: "Pago", pagColor: "bg-brazil-green text-white", id: 13 },
+    { data: "04/05/2024", hora: "19:15", mesa: "Mesa 14", status: "Realizada", statusColor: "bg-brazil-green text-white", pagamento: "Pago", pagColor: "bg-brazil-green text-white", id: 14 },
+    { data: "02/05/2024", hora: "20:00", mesa: "Mesa 15", status: "Pendente", statusColor: "bg-brazil-yellow text-brazil-blue", pagamento: "Pendente", pagColor: "bg-brazil-yellow text-brazil-blue", id: 15 },
+    { data: "30/04/2024", hora: "18:30", mesa: "Mesa 16", status: "Cancelada", statusColor: "bg-brazil-red text-white", pagamento: "Cancelado", pagColor: "bg-brazil-red text-white", id: 16 },
+    { data: "28/04/2024", hora: "21:00", mesa: "Mesa 17", status: "Confirmada", statusColor: "bg-brazil-blue text-white", pagamento: "Pago", pagColor: "bg-brazil-green text-white", id: 17 },
+    { data: "26/04/2024", hora: "19:30", mesa: "Mesa 18", status: "Realizada", statusColor: "bg-brazil-green text-white", pagamento: "Pago", pagColor: "bg-brazil-green text-white", id: 18 },
+    { data: "24/04/2024", hora: "20:45", mesa: "Mesa 19", status: "Pendente", statusColor: "bg-brazil-yellow text-brazil-blue", pagamento: "Pendente", pagColor: "bg-brazil-yellow text-brazil-blue", id: 19 },
+    { data: "22/04/2024", hora: "18:00", mesa: "Mesa 20", status: "Cancelada", statusColor: "bg-brazil-red text-white", pagamento: "Cancelado", pagColor: "bg-brazil-red text-white", id: 20 }
+];
+
+let currentPage = 1;
+const rowsPerPage = 10;
+let filteredReservas = reservas;
+
+function renderTable(page) {
+    const tbody = document.getElementById("reservas-tbody");
+    tbody.innerHTML = "";
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const pageData = filteredReservas.slice(start, end);
+
+    pageData.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-gray-50 transition cursor-pointer";
+        tr.innerHTML = `
+            <td class="px-6 py-4">${r.data}</td>
+            <td class="px-4 py-4">${r.hora}</td>
+            <td class="px-4 py-4 text-center">${r.mesa}</td>
+            <td class="px-4 py-4 text-center">
+                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded ${r.statusColor}">
+                    <i class="fa-solid ${getStatusIcon(r.status)} mr-1"></i> ${r.status}
+                </span>
+            </td>
+            <td class="px-4 py-4 text-center">
+                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded ${r.pagColor}">
+                    <i class="fa-solid ${getPagamentoIcon(r.pagamento)} mr-1"></i> ${r.pagamento}
+                </span>
+            </td>
+            <td class="px-6 py-4 text-center">
+                <button class="transition text-brazil-blue hover:text-brazil-green" title="Ver Detalhes">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+                <button class="ml-2 transition text-brazil-yellow hover:text-brazil-blue" title="Editar" ${r.status === 'Cancelada' ? 'disabled' : ''}>
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="ml-2 transition text-brazil-red hover:text-brazil-blue" title="Cancelar Reserva" ${r.status === 'Cancelada' ? 'disabled' : ''}>
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Pagination label
+    const pagLabel = document.getElementById("pagination-label");
+    pagLabel.textContent = `Exibindo ${filteredReservas.length === 0 ? 0 : (start+1)}-${Math.min(end, filteredReservas.length)} de ${filteredReservas.length} reservas`;
+}
+
+function getStatusIcon(status) {
+    switch (status) {
+        case "Confirmada": return "fa-calendar-check";
+        case "Realizada": return "fa-check-circle";
+        case "Pendente": return "fa-clock";
+        case "Cancelada": return "fa-times-circle";
+        default: return "fa-question-circle";
+    }
+}
+function getPagamentoIcon(status) {
+    switch (status) {
+        case "Pago": return "fa-money-bill-wave";
+        case "Pendente": return "fa-wallet";
+        case "Cancelado": return "fa-ban";
+        default: return "fa-question";
+    }
+}
+
+function renderPagination() {
+    const totalPages = Math.ceil(filteredReservas.length / rowsPerPage);
+    document.getElementById("page-1").className = `px-2 py-1 rounded text-brazil-blue ${currentPage === 1 ? "bg-brazil-yellow font-bold" : "hover:bg-brazil-blue hover:text-white transition"}`;
+    document.getElementById("page-2").className = `px-2 py-1 rounded text-brazil-blue ${currentPage === 2 ? "bg-brazil-yellow font-bold" : "hover:bg-brazil-blue hover:text-white transition"}`;
+    document.getElementById("page-3").className = `px-2 py-1 rounded text-brazil-blue ${currentPage === 3 ? "bg-brazil-yellow font-bold" : "hover:bg-brazil-blue hover:text-white transition"}`;
+    document.getElementById("prev-page").disabled = currentPage === 1;
+    document.getElementById("next-page").disabled = currentPage === totalPages || totalPages === 0;
+}
+
+function applyFilters() {
+    const status = document.getElementById("reservas-status-filter").value.toLowerCase();
+    const pagamento = document.getElementById("reservas-pagamento-filter").value.toLowerCase();
+    const search = document.getElementById("reservas-search").value.toLowerCase();
+    filteredReservas = reservas.filter(r => {
+        let match = true;
+        if (status && r.status.toLowerCase() !== status) match = false;
+        if (pagamento && r.pagamento.toLowerCase() !== pagamento) match = false;
+        if (search) {
+            const searchFields = [r.data, r.hora, r.mesa, r.status, r.pagamento].join(" ").toLowerCase();
+            if (!searchFields.includes(search)) match = false;
+        }
+        return match;
+    });
+    currentPage = 1;
+    renderTable(currentPage);
+    renderPagination();
+}
+
+document.getElementById("reservas-status-filter").addEventListener("change", applyFilters);
+document.getElementById("reservas-pagamento-filter").addEventListener("change", applyFilters);
+document.getElementById("reservas-search").addEventListener("input", applyFilters);
+document.getElementById("reservas-clean-filters").addEventListener("click", function() {
+    document.getElementById("reservas-status-filter").value = "";
+    document.getElementById("reservas-pagamento-filter").value = "";
+    document.getElementById("reservas-search").value = "";
+    applyFilters();
+});
+
+document.getElementById("page-1").addEventListener("click", function() {
+    currentPage = 1;
+    renderTable(currentPage);
+    renderPagination();
+});
+document.getElementById("page-2").addEventListener("click", function() {
+    currentPage = 2;
+    renderTable(currentPage);
+    renderPagination();
+});
+document.getElementById("page-3").addEventListener("click", function() {
+    currentPage = 3;
+    renderTable(currentPage);
+    renderPagination();
+});
+document.getElementById("prev-page").addEventListener("click", function() {
+    if (currentPage > 1) {
+        currentPage--;
+        renderTable(currentPage);
+        renderPagination();
+    }
+});
+document.getElementById("next-page").addEventListener("click", function() {
+    const totalPages = Math.ceil(filteredReservas.length / rowsPerPage);
+    if (currentPage < totalPages) {
+        currentPage++;
+        renderTable(currentPage);
+        renderPagination();
+    }
+});
+
+// Render on load
+renderTable(currentPage);
+renderPagination();
+</script>
+
+</body></html>
