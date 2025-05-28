@@ -34,24 +34,42 @@ const PaymentsPage = () => {
     staleTime: 30000,
   });
 
+  // Debug: verificar estrutura dos dados
+  React.useEffect(() => {
+    if (payments && payments.length > 0) {
+      console.log('🔍 Estrutura dos pagamentos:', payments[0]);
+      console.log('📊 Total de pagamentos:', payments.length);
+    }
+  }, [payments]);
+
   // Função para formatar data
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-PT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('pt-PT', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return dateString;
+    }
   };
 
   // Função para formatar hora
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('pt-PT', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleTimeString('pt-PT', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+    } catch (error) {
+      return '';
+    }
   };
 
   // Função para mapear status
