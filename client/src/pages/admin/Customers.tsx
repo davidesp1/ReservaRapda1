@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/contexts/AuthContext';
+import { Search, Crown, DollarSign, Users, User, Eye, Edit3, Trash2, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface User {
   id: number;
@@ -108,10 +109,10 @@ export default function Customers() {
 
   const getRoleInfo = (role: string) => {
     const roleMap = {
-      admin: { label: 'Master', icon: 'fa-crown', bgColor: 'bg-brasil-green bg-opacity-10', textColor: 'text-brasil-green', borderColor: 'border-brasil-green' },
-      financeiro: { label: 'Financeiro', icon: 'fa-dollar-sign', bgColor: 'bg-brasil-yellow bg-opacity-10', textColor: 'text-brasil-yellow', borderColor: 'border-brasil-yellow' },
-      collaborator: { label: 'Colaborador', icon: 'fa-users', bgColor: 'bg-brasil-red bg-opacity-10', textColor: 'text-brasil-red', borderColor: 'border-brasil-red' },
-      customer: { label: 'Cliente', icon: 'fa-user', bgColor: 'bg-gray-100', textColor: 'text-gray-600', borderColor: 'border-gray-200' },
+      admin: { label: 'Master', icon: Crown, bgColor: 'bg-brasil-green bg-opacity-10', textColor: 'text-brasil-green', borderColor: 'border-brasil-green' },
+      financeiro: { label: 'Financeiro', icon: DollarSign, bgColor: 'bg-brasil-yellow bg-opacity-10', textColor: 'text-brasil-yellow', borderColor: 'border-brasil-yellow' },
+      collaborator: { label: 'Colaborador', icon: Users, bgColor: 'bg-brasil-red bg-opacity-10', textColor: 'text-brasil-red', borderColor: 'border-brasil-red' },
+      customer: { label: 'Cliente', icon: User, bgColor: 'bg-gray-100', textColor: 'text-gray-600', borderColor: 'border-gray-200' },
     };
     
     return roleMap[role as keyof typeof roleMap] || roleMap.customer;
@@ -208,7 +209,7 @@ export default function Customers() {
                     className="w-full py-2 pl-10 pr-4 font-medium text-gray-800 transition bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brasil-blue"
                   />
                   <span className="absolute text-gray-400 transform -translate-y-1/2 left-3 top-1/2">
-                    <i className="fa-solid fa-magnifying-glass"></i>
+                    <Search className="w-4 h-4" />
                   </span>
                 </div>
               </div>
@@ -280,26 +281,26 @@ export default function Customers() {
                           <td className="px-4 py-4">{user.email}</td>
                           <td className="px-4 py-4">
                             <span className={`inline-flex items-center px-2 py-1 mr-1 text-xs font-semibold rounded ${roleInfo.bgColor} ${roleInfo.textColor}`}>
-                              <i className={`mr-1 fa-solid ${roleInfo.icon}`}></i> {roleInfo.label}
+                              <roleInfo.icon className="mr-1 w-3 h-3" /> {roleInfo.label}
                             </span>
                           </td>
                           <td className="px-4 py-4 text-center">
                             <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded ${statusInfo.bgColor} ${statusInfo.textColor}`}>
-                              <i className="mr-1 text-xs fa-solid fa-circle"></i> {statusInfo.label}
+                              <Circle className="mr-1 w-2 h-2 fill-current" /> {statusInfo.label}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-center">
                             <button className="mr-2 text-brasil-blue hover:text-brasil-green" onClick={(e) => { e.stopPropagation(); showClienteProfile(user); }}>
-                              <i className="fa-solid fa-eye"></i>
+                              <Eye className="w-4 h-4" />
                             </button>
                             <button className="mr-2 text-brasil-blue hover:text-brasil-green" onClick={(e) => { e.stopPropagation(); /* Editar função */ }}>
-                              <i className="fa-solid fa-file-pen"></i>
+                              <Edit3 className="w-4 h-4" />
                             </button>
                             <button 
                               className="text-brasil-blue hover:text-red-600" 
                               onClick={(e) => { e.stopPropagation(); handleDeleteUser(user.id); }}
                             >
-                              <i className="fa-solid fa-trash-can"></i>
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </td>
                         </tr>
@@ -320,7 +321,7 @@ export default function Customers() {
                     disabled={currentPage === 1}
                     className="px-2 py-1 transition rounded text-brasil-blue hover:bg-brasil-blue hover:text-white disabled:opacity-50"
                   >
-                    <i className="fa-solid fa-angle-left"></i>
+                    <ChevronLeft className="w-4 h-4" />
                   </button>
                   {[...Array(Math.min(totalPages, 5))].map((_, i) => {
                     const pageNum = i + 1;
