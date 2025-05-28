@@ -16,14 +16,15 @@ interface Reservation {
   user_id: number;
   table_id: number;
   date: string;
-  time: string;
-  guests: number;
+  time?: string;
+  party_size: number;
   status: string;
   payment_status: string;
   special_requests?: string;
-  created_at: string;
+  created_at?: string;
   table_number?: number;
   user_name?: string;
+  confirmation_code?: string;
 }
 
 export default function Reservations() {
@@ -91,7 +92,7 @@ export default function Reservations() {
   const filteredReservations = userReservations.filter(reservation => {
     const matchesSearch = searchTerm === '' || 
       formatDate(reservation.date).includes(searchTerm.toLowerCase()) ||
-      formatTime(reservation.time).includes(searchTerm.toLowerCase()) ||
+      (reservation.date && formatTime(reservation.date).includes(searchTerm.toLowerCase())) ||
       `Mesa ${reservation.table_number || reservation.table_id}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       mapStatus(reservation.status).label.toLowerCase().includes(searchTerm.toLowerCase()) ||
       mapPaymentStatus(reservation.payment_status).label.toLowerCase().includes(searchTerm.toLowerCase());
@@ -295,11 +296,11 @@ export default function Reservations() {
                       <tr key={reservation.id} className="hover:bg-gray-50 transition cursor-pointer">
                         <td className="px-4 py-4 text-center">
                           <span className="font-mono text-sm font-semibold text-brasil-blue">
-                            #{String(reservation.id).padStart(6, '0')}
+                            {(reservation as any).confirmation_code || `#${String(reservation.id).padStart(6, '0')}`}
                           </span>
                         </td>
                         <td className="px-6 py-4">{formatDate(reservation.date)}</td>
-                        <td className="px-4 py-4">{formatTime(reservation.time)}</td>
+                        <td className="px-4 py-4">{formatTime(reservation.date)}</td>
                         <td className="px-4 py-4 text-center">
                           Mesa {reservation.table_number || reservation.table_id}
                         </td>
