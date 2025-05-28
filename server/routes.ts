@@ -1152,6 +1152,10 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
     const orderData = req.body;
     const userId = req.session.userId;
     
+    // Log detalhado do que chegou do POS
+    console.log('🎯 POS ORDER - Método de pagamento recebido:', orderData.paymentMethod);
+    console.log('🎯 POS ORDER - Dados completos:', JSON.stringify(orderData, null, 2));
+    
     // Validação de autenticação
     if (!userId) {
       return res.status(401).json({ error: 'Usuário não autenticado' });
@@ -1224,7 +1228,7 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
       status: 'completed',
       items: validatedItems,
       totalAmount: calculatedTotal,
-      paymentMethod: orderData.paymentMethod || 'cash',
+      paymentMethod: orderData.paymentMethod === 'multibanco_tpa' ? 'multibanco' : (orderData.paymentMethod || 'cash'),
       paymentStatus: 'completed',
       discount: orderData.discount || 0,
       tax: orderData.tax || 0,
