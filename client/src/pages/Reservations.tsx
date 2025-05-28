@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'wouter';
 import CustomerLayout from '@/components/layouts/CustomerLayout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ export default function Reservations() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   // Estados para filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -241,7 +243,10 @@ export default function Reservations() {
             Limpar
           </Button>
           
-          <Button className="bg-brasil-green text-white font-semibold rounded-lg px-4 py-2 shadow hover:bg-green-600 transition flex items-center space-x-2">
+          <Button 
+            onClick={() => setLocation('/book-table')}
+            className="bg-brasil-green text-white font-semibold rounded-lg px-4 py-2 shadow hover:bg-green-600 transition flex items-center space-x-2"
+          >
             <Plus className="h-4 w-4" />
             <span>Nova Reserva</span>
           </Button>
