@@ -387,13 +387,12 @@ const Finance: React.FC = () => {
   const exportToPDF = async () => {
     try {
       toast({
-        title: "Criando PDF elegante...",
-        description: "Preparando documento com design moderno...",
+        title: "Criando PDF profissional...",
+        description: "Gerando relatório com design corporativo...",
       });
 
       const { headers, data, currentDate, totalAmount } = prepareExportData();
       
-      // Importar bibliotecas dinamicamente
       const [{ jsPDF }, autoTable] = await Promise.all([
         import('jspdf'),
         import('jspdf-autotable')
@@ -403,157 +402,126 @@ const Finance: React.FC = () => {
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
       
-      // Cores do design moderno
-      const primaryColor = [37, 99, 235]; // Azul elegante
-      const secondaryColor = [99, 102, 241]; // Roxo moderno
-      const accentColor = [16, 185, 129]; // Verde esmeralda
-      const textDark = [31, 41, 55]; // Cinza escuro
-      const textLight = [107, 114, 128]; // Cinza claro
-      const backgroundLight = [248, 250, 252]; // Fundo claro
+      // Cores baseadas no exemplo
+      const headerBlue = [45, 55, 72]; // Azul escuro do cabeçalho
+      const accentGreen = [34, 197, 94]; // Verde do exemplo
+      const tableBlue = [59, 130, 246]; // Azul da tabela
+      const textWhite = [255, 255, 255];
+      const textDark = [31, 41, 55];
+      const borderGray = [209, 213, 219];
       
-      // CABEÇALHO ELEGANTE
-      // Fundo do cabeçalho com gradiente simulado
-      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.rect(0, 0, pageWidth, 45, 'F');
+      // =================== CABEÇALHO PRINCIPAL ===================
+      // Fundo azul escuro
+      doc.setFillColor(headerBlue[0], headerBlue[1], headerBlue[2]);
+      doc.rect(0, 0, pageWidth, 50, 'F');
       
-      // Linha de acento
-      doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
-      doc.rect(0, 45, pageWidth, 3, 'F');
+      // Logo/Nome da empresa (lado esquerdo)
+      doc.setTextColor(textWhite[0], textWhite[1], textWhite[2]);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('RESTAURANTE S.A.', 20, 20);
       
-      // Título principal
-      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text('SISTEMA DE GESTAO FINANCEIRA', 20, 30);
+      doc.text('Rua Principal, 123 - Centro', 20, 40);
+      
+      // Título principal (lado direito)
+      doc.setTextColor(accentGreen[0], accentGreen[1], accentGreen[2]);
       doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
-      doc.text('RELATÓRIO DE PAGAMENTOS', 20, 25);
+      doc.text('CONTROLE', pageWidth - 20, 20, { align: 'right' });
+      doc.text('FINANCEIRO', pageWidth - 20, 32, { align: 'right' });
       
-      // Subtítulo
-      doc.setFontSize(12);
+      // Informações de contato
+      doc.setTextColor(textWhite[0], textWhite[1], textWhite[2]);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text('Análise Financeira Detalhada', 20, 38);
+      doc.text('Telefone: (11) 1234-5678', pageWidth - 20, 42, { align: 'right' });
       
-      // SEÇÃO DE INFORMAÇÕES RESUMO
-      let yPos = 65;
+      // =================== INFORMAÇÕES DO RELATÓRIO ===================
+      let yPos = 70;
       
-      // Box de informações com fundo
-      doc.setFillColor(backgroundLight[0], backgroundLight[1], backgroundLight[2]);
-      doc.roundedRect(15, yPos - 5, pageWidth - 30, 35, 5, 5, 'F');
-      
-      // Informações do relatório com ícones simulados
+      // Data e totais
       doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      
-      // Data de emissão
-      doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Data de Emissao:', 25, yPos + 8);
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(currentDate, 75, yPos + 8);
+      doc.text(`Data: ${currentDate}`, 20, yPos);
+      doc.text(`Total de Registros: ${filteredPayments.length}`, 20, yPos + 8);
+      doc.text(`Valor Total: ${formatPrice(totalAmount)}`, 20, yPos + 16);
       
-      // Total de registros
-      doc.setFont('helvetica', 'bold');
-      doc.text('Total de Registros:', 25, yPos + 18);
-      doc.setFont('helvetica', 'normal');
-      doc.text(filteredPayments.length.toString(), 85, yPos + 18);
+      yPos += 35;
       
-      // Valor total destacado
-      doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Valor Total:', 120, yPos + 13);
-      doc.text(formatPrice(totalAmount), 165, yPos + 13);
-      
-      yPos += 45;
-      
-      // FILTROS APLICADOS (se houver)
-      const filtersApplied = [];
-      if (searchText) filtersApplied.push(`Busca: ${searchText}`);
-      if (startDate || endDate) filtersApplied.push(`Período: ${startDate || 'Início'} até ${endDate || 'Fim'}`);
-      if (statusFilter) filtersApplied.push(`Status: ${statusFilter}`);
-      if (methodFilter) {
-        const methodNames: Record<string, string> = {
-          'cash': 'Dinheiro', 'card': 'Cartão', 'mbway': 'MB Way',
-          'multibanco': 'Multibanco', 'multibanco_TPA': 'Multibanco (TPA)', 'transfer': 'Transferência'
-        };
-        filtersApplied.push(`Método: ${methodNames[methodFilter] || methodFilter}`);
-      }
-      
-      if (filtersApplied.length > 0) {
-        doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('FILTROS APLICADOS:', 20, yPos);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(textLight[0], textLight[1], textLight[2]);
-        filtersApplied.forEach((filter, index) => {
-          doc.text(`- ${filter}`, 25, yPos + 10 + (index * 7));
-        });
-        yPos += 15 + (filtersApplied.length * 7);
-      }
-      
-      // Preparar dados da tabela
-      const tableRows = data.map(row => [
-        row[0], row[1], row[2], row[3], row[4], row[5], row[6]
+      // =================== TABELA PRINCIPAL ===================
+      const tableData = data.map(row => [
+        row[0], // Data
+        row[1], // Transação
+        row[2], // Referência  
+        row[3], // Valor
+        row[4], // Método
+        row[5], // Usuário
+        row[6]  // Status
       ]);
       
-      // Usar setTimeout para garantir carregamento
       setTimeout(() => {
         try {
-          // TABELA MODERNA E ELEGANTE
           (doc as any).autoTable({
             head: [headers],
-            body: tableRows,
-            startY: yPos + 10,
+            body: tableData,
+            startY: yPos,
+            
+            // Configurações da tabela
+            tableWidth: 'auto',
+            margin: { left: 15, right: 15 },
             
             // Estilos gerais
             styles: {
               fontSize: 9,
-              cellPadding: { top: 8, right: 6, bottom: 8, left: 6 },
-              lineColor: [229, 231, 235],
-              lineWidth: 0.5,
+              cellPadding: 6,
               textColor: textDark,
+              lineColor: borderGray,
+              lineWidth: 0.5,
               font: 'helvetica'
             },
             
-            // Cabeçalho elegante
+            // Cabeçalho com estilo do exemplo
             headStyles: {
-              fillColor: primaryColor,
-              textColor: [255, 255, 255],
+              fillColor: tableBlue,
+              textColor: textWhite,
               fontStyle: 'bold',
               fontSize: 10,
               halign: 'center',
-              cellPadding: { top: 12, right: 6, bottom: 12, left: 6 }
+              valign: 'middle',
+              cellPadding: 8
             },
             
             // Estilos das colunas
             columnStyles: {
-              0: { cellWidth: 25, halign: 'center' }, // Data
-              1: { cellWidth: 35, halign: 'left' },   // Transação
-              2: { cellWidth: 22, halign: 'center' }, // Referência
-              3: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: accentColor }, // Valor
-              4: { cellWidth: 30, halign: 'center' }, // Método
-              5: { cellWidth: 35, halign: 'left' },   // Usuário
-              6: { cellWidth: 25, halign: 'center' }  // Status
+              0: { cellWidth: 25, halign: 'center' },
+              1: { cellWidth: 40, halign: 'left' },
+              2: { cellWidth: 25, halign: 'center' },
+              3: { cellWidth: 30, halign: 'right', fontStyle: 'bold' },
+              4: { cellWidth: 25, halign: 'center' },
+              5: { cellWidth: 35, halign: 'left' },
+              6: { cellWidth: 20, halign: 'center' }
             },
             
-            // Linhas alternadas elegantes
+            // Alternação de cores
             alternateRowStyles: {
-              fillColor: [249, 250, 251]
+              fillColor: [248, 250, 252]
             },
             
-            // Margens e tema
-            margin: { top: 15, right: 15, bottom: 15, left: 15 },
-            theme: 'grid',
+            // Bordas
+            tableLineColor: borderGray,
+            tableLineWidth: 0.5,
             
-            // Callback para personalizar células
+            // Personalização de células
             didParseCell: function(data: any) {
-              // Colorir status
+              // Status colorido
               if (data.column.index === 6) {
                 const status = data.cell.text[0].toLowerCase();
                 if (status.includes('concluído') || status.includes('completed')) {
-                  data.cell.styles.textColor = [16, 185, 129]; // Verde
+                  data.cell.styles.textColor = [34, 197, 94]; // Verde
                   data.cell.styles.fontStyle = 'bold';
                 } else if (status.includes('pendente') || status.includes('pending')) {
                   data.cell.styles.textColor = [245, 158, 11]; // Amarelo
@@ -564,103 +532,92 @@ const Finance: React.FC = () => {
                 }
               }
               
-              // Destacar métodos de pagamento
-              if (data.column.index === 4) {
+              // Valores em destaque
+              if (data.column.index === 3) {
+                data.cell.styles.textColor = [34, 197, 94];
                 data.cell.styles.fontStyle = 'bold';
-                data.cell.styles.textColor = secondaryColor;
               }
             }
           });
           
-          // RODAPÉ ELEGANTE
-          const finalY = (doc as any).lastAutoTable.finalY || pageHeight - 50;
+          // =================== RODAPÉ CORPORATIVO ===================
+          const finalY = (doc as any).lastAutoTable.finalY + 30;
           
-          // Linha decorativa
-          doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-          doc.setLineWidth(2);
-          doc.line(20, finalY + 20, pageWidth - 20, finalY + 20);
+          // Linha de assinatura
+          doc.setDrawColor(textDark[0], textDark[1], textDark[2]);
+          doc.setLineWidth(0.5);
+          doc.line(20, finalY, 100, finalY);
           
-          // Informações do rodapé
-          doc.setTextColor(textLight[0], textLight[1], textLight[2]);
-          doc.setFontSize(8);
+          // Nome do responsável
+          doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+          doc.setFontSize(10);
           doc.setFont('helvetica', 'normal');
+          doc.text('Gestor Financeiro', 20, finalY + 10);
           
-          const now = new Date();
-          const timestamp = now.toLocaleString('pt-PT', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-          });
+          // =================== FUNDO DECORATIVO ===================
+          // Fundo azul escuro no rodapé
+          doc.setFillColor(headerBlue[0], headerBlue[1], headerBlue[2]);
+          doc.rect(0, pageHeight - 40, pageWidth, 40, 'F');
           
-          doc.text(`Gerado em ${timestamp}`, 20, finalY + 35);
-          doc.text(`Sistema de Gestão Financeira`, pageWidth - 20, finalY + 35, { align: 'right' });
+          // Texto do rodapé
+          doc.setTextColor(textWhite[0], textWhite[1], textWhite[2]);
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'italic');
+          doc.text('* Documento gerado automaticamente pelo sistema', 20, pageHeight - 25);
+          doc.text(`${new Date().toLocaleString('pt-PT')}`, 20, pageHeight - 15);
           
-          // Numeração de página elegante
-          const pageCount = doc.getNumberOfPages();
-          for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.circle(pageWidth - 25, pageHeight - 25, 8, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`${i}`, pageWidth - 25, pageHeight - 22, { align: 'center' });
-          }
+          // Prazo para disputas (como no exemplo)
+          doc.setTextColor(accentGreen[0], accentGreen[1], accentGreen[2]);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text('* Prazo para disputas ou ajustes:', pageWidth - 20, pageHeight - 25, { align: 'right' });
+          doc.text('30 dias apos o envio deste relatorio', pageWidth - 20, pageHeight - 15, { align: 'right' });
           
           // Salvar arquivo
-          const fileName = `relatorio-pagamentos-${currentDate.replace(/\//g, '-')}.pdf`;
+          const fileName = `controle-financeiro-${currentDate.replace(/\//g, '-')}.pdf`;
           doc.save(fileName);
           
           toast({
-            title: "PDF elegante criado! ✨",
-            description: `Documento ${fileName} baixado com design moderno.`,
+            title: "Relatório profissional criado!",
+            description: `${fileName} baixado com sucesso.`,
           });
           
           setIsExportModalOpen(false);
           
-        } catch (tableError) {
-          console.error('Erro na tabela:', tableError);
+        } catch (error) {
+          console.error('Erro na tabela:', error);
           
-          // Fallback elegante
+          // Fallback simples
           doc.setTextColor(textDark[0], textDark[1], textDark[2]);
           doc.setFontSize(12);
-          doc.setFont('helvetica', 'bold');
-          doc.text('DADOS DO RELATORIO', 20, yPos + 20);
+          doc.text('DADOS FINANCEIROS', 20, yPos + 20);
           
-          filteredPayments.slice(0, 15).forEach((payment, index) => {
-            const y = yPos + 40 + (index * 12);
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            
-            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+          filteredPayments.slice(0, 20).forEach((payment, index) => {
+            const y = yPos + 40 + (index * 10);
+            doc.setFontSize(9);
             doc.text(`${format(new Date(payment.payment_date), 'dd/MM/yyyy')}`, 20, y);
             doc.text(`${payment.transaction_id}`, 60, y);
-            
-            doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-            doc.setFont('helvetica', 'bold');
             doc.text(`${formatPrice(payment.amount)}`, 120, y);
-            
-            doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-            doc.setFont('helvetica', 'normal');
             doc.text(`${payment.method}`, 160, y);
           });
           
-          const fileName = `relatorio-pagamentos-${currentDate.replace(/\//g, '-')}.pdf`;
+          const fileName = `controle-financeiro-${currentDate.replace(/\//g, '-')}.pdf`;
           doc.save(fileName);
           
           toast({
-            title: "PDF criado (formato alternativo)",
-            description: "Documento gerado com design simplificado mas elegante.",
+            title: "PDF gerado com sucesso",
+            description: "Formato simplificado criado.",
           });
           
           setIsExportModalOpen(false);
         }
-      }, 300);
+      }, 200);
       
     } catch (error) {
-      console.error('Erro ao criar PDF:', error);
+      console.error('Erro ao gerar PDF:', error);
       toast({
         title: "Erro na criação do PDF",
-        description: "Tente usar Excel ou CSV como alternativa.",
+        description: "Tente usar Excel ou CSV.",
         variant: "destructive"
       });
       setIsExportModalOpen(false);
