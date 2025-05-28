@@ -842,6 +842,7 @@ Status: PAGO
                     }`}
                     onClick={() => {
                       console.log('🔍 DEBUG - Selecionando Multibanco TPA');
+                      alert('DEBUG: Selecionou Multibanco TPA');
                       setSelectedPaymentMethod('multibanco_TPA');
                     }}
                   >
