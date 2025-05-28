@@ -46,12 +46,6 @@ const resources = {
       ViewAllItems: "Ver todos os itens",
       ErrorLoadingMenu:
         "Ocorreu um erro ao carregar o menu. Por favor, tente novamente.",
-      
-      // Cart
-      YourOrder: "Seu Pedido",
-      EmptyCart: "Seu carrinho está vazio",
-      Total: "Total",
-      ProceedToCheckout: "Finalizar Pedido",
 
       // Testimonials
       CustomerSay: "O que Nossos Clientes Dizem",

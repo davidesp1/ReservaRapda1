@@ -677,6 +677,9 @@ router.post("/api/reservations", isAuthenticated, async (req, res) => {
       return res.status(400).json({ error: "Mesa não encontrada" });
     }
 
+    // Gerar código de confirmação se não fornecido
+    const finalConfirmationCode = confirmationCode || `RES-${Date.now()}`;
+    
     // Gerar código único de 8 caracteres para a reserva
     const generateReservationCode = () => {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -688,7 +691,6 @@ router.post("/api/reservations", isAuthenticated, async (req, res) => {
     };
     
     const reservationCode = generateReservationCode();
-    const finalConfirmationCode = confirmationCode || reservationCode;
 
     // Validar userId
     if (!userId) {
@@ -720,7 +722,7 @@ router.post("/api/reservations", isAuthenticated, async (req, res) => {
         ${finalConfirmationCode},
         ${paymentMethod},
         ${paymentStatus},
-        ${Math.round(parseFloat(total) * 100)},
+        ${parseFloat(total)},
         ${parseInt(duration)}
       )
       RETURNING *
