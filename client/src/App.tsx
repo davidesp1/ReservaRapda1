@@ -24,7 +24,7 @@ import { lazy, Suspense } from "react";
 const PaymentDetails = lazy(() => import("@/pages/PaymentDetails"));
 const PaymentSuccess = lazy(() => import("@/pages/PaymentSuccess"));
 const PaymentCancel = lazy(() => import("@/pages/PaymentCancel"));
-const Menu = lazy(() => import("@/pages/Menu"));
+const Menu = lazy(() => import("@/pages/MenuSimple"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const Support = lazy(() => import("@/pages/Support"));
 const Payments = lazy(() => import("@/pages/Payments"));
