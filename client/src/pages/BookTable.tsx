@@ -54,7 +54,7 @@ export default function BookTable() {
   });
 
   // Buscar itens do menu
-  const { data: menuItems = [] } = useQuery({
+  const { data: menuItems = [] } = useQuery<any[]>({
     queryKey: ['/api/menu'],
   });
 
@@ -122,6 +122,16 @@ export default function BookTable() {
     }
   };
 
+  // Organizar itens do menu por categoria
+  const getItemsByCategory = (category: string) => {
+    return menuItems.filter((item: any) => item.category === category);
+  };
+
+  // Converter preço para euros
+  const formatPrice = (price: number) => {
+    return `€ ${(price / 100).toFixed(2)}`;
+  };
+
   const removeMenuItem = (itemId: number) => {
     setSelectedItems(selectedItems.filter(item => item.id !== itemId));
   };
@@ -136,7 +146,7 @@ export default function BookTable() {
     }
   };
 
-  const total = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = selectedItems.reduce((sum, item) => sum + (item.price / 100) * item.quantity, 0);
 
   const getStepColor = (step: number) => {
     if (step === 1) return currentStep >= step ? 'brasil-green' : 'gray-300';
@@ -395,103 +405,57 @@ export default function BookTable() {
 
                       {/* Menu Items Grid */}
                       <div className="space-y-6">
-                        <div>
-                          <h3 className="text-lg font-bold font-montserrat text-brasil-green mb-3 flex items-center gap-2">
-                            <i className="fas fa-seedling"></i> Entradas
-                          </h3>
-                          <div className="grid gap-4">
-                            <div className="bg-white rounded-xl p-3 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group">
-                              <img 
-                                src="https://storage.googleapis.com/uxpilot-auth.appspot.com/food/empada.jpg" 
-                                alt="Empada de Frango" 
-                                className="w-14 h-14 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
-                              />
-                              <div className="flex-1">
-                                <div className="flex justify-between items-center">
-                                  <span className="font-bold text-gray-800">Empada de Frango</span>
-                                  <span className="font-bold text-brasil-green">R$ 15,00</span>
-                                </div>
-                                <p className="text-xs text-gray-600 mt-1">Clássica empada cremosa, massa leve e recheio suculento.</p>
-                              </div>
-                              <button 
-                                onClick={() => addMenuItem({ id: 1, name: 'Empada de Frango', price: 15.00 })}
-                                className="ml-3 bg-brasil-yellow px-2.5 py-1.5 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90 transition"
-                              >
-                                <i className="fas fa-plus"></i>
-                              </button>
-                            </div>
+                        {['entradas', 'principais', 'sobremesas', 'bebidas'].map((category) => {
+                          const categoryItems = getItemsByCategory(category);
+                          if (categoryItems.length === 0) return null;
 
-                            <div className="bg-white rounded-xl p-3 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group">
-                              <img 
-                                src="https://storage.googleapis.com/uxpilot-auth.appspot.com/food/bolinho-bacalhau.jpg" 
-                                alt="Bolinho de Bacalhau" 
-                                className="w-14 h-14 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
-                              />
-                              <div className="flex-1">
-                                <div className="flex justify-between items-center">
-                                  <span className="font-bold text-gray-800">Bolinho de Bacalhau (6un)</span>
-                                  <span className="font-bold text-brasil-green">R$ 24,00</span>
-                                </div>
-                                <p className="text-xs text-gray-600 mt-1">Tradicionais bolinhos de bacalhau fritos, crocantes e saborosos.</p>
+                          const categoryConfig = {
+                            entradas: { name: 'Entradas', icon: 'fa-seedling' },
+                            principais: { name: 'Pratos Principais', icon: 'fa-drumstick-bite' },
+                            sobremesas: { name: 'Sobremesas', icon: 'fa-ice-cream' },
+                            bebidas: { name: 'Bebidas', icon: 'fa-glass-water' }
+                          };
+
+                          return (
+                            <div key={category}>
+                              <h3 className="text-lg font-bold font-montserrat text-brasil-green mb-3 flex items-center gap-2">
+                                <i className={`fas ${categoryConfig[category as keyof typeof categoryConfig].icon}`}></i> 
+                                {categoryConfig[category as keyof typeof categoryConfig].name}
+                              </h3>
+                              <div className="grid gap-4">
+                                {categoryItems.map((item: any) => (
+                                  <div key={item.id} className="bg-white rounded-xl p-3 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group">
+                                    <img 
+                                      src={item.image || 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/default.jpg'} 
+                                      alt={item.name} 
+                                      className="w-14 h-14 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
+                                    />
+                                    <div className="flex-1">
+                                      <div className="flex justify-between items-center">
+                                        <span className="font-bold text-gray-800">{item.name}</span>
+                                        <span className="font-bold text-brasil-green">{formatPrice(item.price)}</span>
+                                      </div>
+                                      <p className="text-xs text-gray-600 mt-1">{item.description || 'Delicioso prato do nosso restaurante.'}</p>
+                                    </div>
+                                    <button 
+                                      onClick={() => addMenuItem(item)}
+                                      className="ml-3 bg-brasil-yellow px-2.5 py-1.5 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90 transition"
+                                    >
+                                      <i className="fas fa-plus"></i>
+                                    </button>
+                                  </div>
+                                ))}
                               </div>
-                              <button 
-                                onClick={() => addMenuItem({ id: 2, name: 'Bolinho de Bacalhau', price: 24.00 })}
-                                className="ml-3 bg-brasil-yellow px-2.5 py-1.5 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90 transition"
-                              >
-                                <i className="fas fa-plus"></i>
-                              </button>
                             </div>
+                          );
+                        })}
+
+                        {menuItems.length === 0 && (
+                          <div className="text-center py-8 text-gray-500">
+                            <i className="fas fa-utensils text-3xl text-gray-300 mb-3"></i>
+                            <p>Carregando cardápio...</p>
                           </div>
-                        </div>
-
-                        <div>
-                          <h3 className="text-lg font-bold font-montserrat text-brasil-green mb-3 flex items-center gap-2">
-                            <i className="fas fa-drumstick-bite"></i> Pratos Principais
-                          </h3>
-                          <div className="grid gap-4">
-                            <div className="bg-white rounded-xl p-3 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group">
-                              <img 
-                                src="https://storage.googleapis.com/uxpilot-auth.appspot.com/14db3df368-c5ada7c592c7a6a484df.png" 
-                                alt="Moqueca de Camarão" 
-                                className="w-14 h-14 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
-                              />
-                              <div className="flex-1">
-                                <div className="flex justify-between items-center">
-                                  <span className="font-bold text-gray-800">Moqueca de Camarão</span>
-                                  <span className="font-bold text-brasil-green">R$ 89,90</span>
-                                </div>
-                                <p className="text-xs text-gray-600 mt-1">Deliciosa moqueca com camarões frescos.</p>
-                              </div>
-                              <button 
-                                onClick={() => addMenuItem({ id: 3, name: 'Moqueca de Camarão', price: 89.90 })}
-                                className="ml-3 bg-brasil-yellow px-2.5 py-1.5 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90 transition"
-                              >
-                                <i className="fas fa-plus"></i>
-                              </button>
-                            </div>
-
-                            <div className="bg-white rounded-xl p-3 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group">
-                              <img 
-                                src="https://storage.googleapis.com/uxpilot-auth.appspot.com/food/feijoada.jpg" 
-                                alt="Feijoada Completa" 
-                                className="w-14 h-14 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
-                              />
-                              <div className="flex-1">
-                                <div className="flex justify-between items-center">
-                                  <span className="font-bold text-gray-800">Feijoada Completa</span>
-                                  <span className="font-bold text-brasil-green">R$ 65,00</span>
-                                </div>
-                                <p className="text-xs text-gray-600 mt-1">Tradicional feijoada brasileira com acompanhamentos.</p>
-                              </div>
-                              <button 
-                                onClick={() => addMenuItem({ id: 4, name: 'Feijoada Completa', price: 65.00 })}
-                                className="ml-3 bg-brasil-yellow px-2.5 py-1.5 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90 transition"
-                              >
-                                <i className="fas fa-plus"></i>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     </div>
 
@@ -514,7 +478,7 @@ export default function BookTable() {
                             <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                               <div className="flex-1">
                                 <h4 className="font-semibold text-sm">{item.name}</h4>
-                                <p className="text-brasil-green font-bold">R$ {item.price.toFixed(2)}</p>
+                                <p className="text-brasil-green font-bold">{formatPrice(item.price)}</p>
                               </div>
                               <div className="flex items-center gap-2">
                                 <button 

@@ -722,7 +722,7 @@ router.post("/api/reservations", isAuthenticated, async (req, res) => {
         ${finalConfirmationCode},
         ${paymentMethod},
         ${paymentStatus},
-        ${parseFloat(total)},
+        ${Math.round(parseFloat(total) * 100)},
         ${parseInt(duration)}
       )
       RETURNING *
