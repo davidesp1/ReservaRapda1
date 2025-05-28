@@ -504,26 +504,24 @@ export default function BookTable() {
                                 return (
                                   <div 
                                     key={item.id} 
-                                    className={`bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-100 hover:border-${categoryColor} transition group min-w-[220px]`}
+                                    className={`bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-100 hover:border-${categoryColor} transition group min-w-[220px] cursor-pointer hover:shadow-md transform hover:scale-[1.02]`}
+                                    onClick={() => addMenuItem(item)}
                                   >
                                     <img 
                                       src={item.image_url || item.image || 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/default.jpg'} 
-                                      className={`object-cover rounded-lg w-14 h-14 ring-2 ring-${categoryColor} ring-opacity-20`}
+                                      className={`object-cover rounded-lg w-14 h-14 ring-2 ring-${categoryColor} ring-opacity-20 group-hover:ring-opacity-40`}
                                       alt={item.name}
                                     />
                                     <div className="flex-1">
-                                      <h4 className="text-base font-bold text-gray-800">{item.name}</h4>
-                                      <span className="block text-xs text-gray-500">{item.description || 'Delicioso prato do nosso restaurante.'}</span>
-                                      <div className="flex items-center mt-1">
-                                        <span className={`mr-1 text-base font-bold text-${categoryColor}`}>
+                                      <h4 className="text-base font-bold text-gray-800 group-hover:text-gray-900">{item.name}</h4>
+                                      <span className="block text-xs text-gray-500 group-hover:text-gray-600">{item.description || 'Delicioso prato do nosso restaurante.'}</span>
+                                      <div className="flex items-center justify-between mt-1">
+                                        <span className={`text-base font-bold text-${categoryColor} group-hover:text-opacity-80`}>
                                           {formatPrice(item.price)}
                                         </span>
-                                        <button 
-                                          className="px-2 py-1 text-xs font-bold rounded-lg bg-brasil-yellow text-brasil-blue hover:bg-yellow-400 transition"
-                                          onClick={() => addMenuItem(item)}
-                                        >
+                                        <div className="px-2 py-1 text-xs font-bold rounded-lg bg-brasil-yellow text-brasil-blue group-hover:bg-yellow-400 transition">
                                           <i className="fa-solid fa-plus"></i>
-                                        </button>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
