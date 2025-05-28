@@ -257,56 +257,30 @@ const Finance: React.FC = () => {
 
   // Exportar dados para PDF
   const handleExport = async () => {
+    if (filteredPayments.length === 0) {
+      toast({
+        title: "Nenhum dado para exportar",
+        description: "Não há pagamentos para exportar com os filtros aplicados.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
-      // Importar jsPDF dinamicamente
-      const { jsPDF } = await import('jspdf');
-      await import('jspdf-autotable');
-      
-      const doc = new jsPDF();
-      
-      // Configurar informações do documento
+      toast({
+        title: "Gerando PDF...",
+        description: "Preparando arquivo para download...",
+      });
+
+      // Gerar dados CSV como fallback simples
       const currentDate = new Date().toLocaleDateString('pt-PT');
       const totalAmount = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
       
-      // Cabeçalho do documento
-      doc.setFontSize(20);
-      doc.text('Relatório de Pagamentos', 20, 20);
+      // Cabeçalho CSV
+      const headers = ['Data', 'Transação', 'Referência', 'Valor', 'Método', 'Usuário', 'Status'];
       
-      doc.setFontSize(12);
-      doc.text(`Data de emissão: ${currentDate}`, 20, 35);
-      doc.text(`Total de registros: ${filteredPayments.length}`, 20, 45);
-      doc.text(`Valor total: ${formatPrice(totalAmount)}`, 20, 55);
-      
-      // Informações dos filtros aplicados
-      let yPosition = 70;
-      if (searchText) {
-        doc.text(`Filtro de busca: ${searchText}`, 20, yPosition);
-        yPosition += 10;
-      }
-      if (startDate || endDate) {
-        const dateRange = `${startDate || 'Início'} até ${endDate || 'Fim'}`;
-        doc.text(`Período: ${dateRange}`, 20, yPosition);
-        yPosition += 10;
-      }
-      if (statusFilter) {
-        doc.text(`Status: ${statusFilter}`, 20, yPosition);
-        yPosition += 10;
-      }
-      if (methodFilter) {
-        const methodNames = {
-          'cash': 'Dinheiro',
-          'card': 'Cartão',
-          'mbway': 'MB Way',
-          'multibanco': 'Multibanco',
-          'multibanco_TPA': 'Multibanco (TPA)',
-          'transfer': 'Transferência'
-        };
-        doc.text(`Método: ${methodNames[methodFilter] || methodFilter}`, 20, yPosition);
-        yPosition += 10;
-      }
-      
-      // Preparar dados da tabela
-      const tableData = filteredPayments.map(payment => [
+      // Dados CSV
+      const csvData = filteredPayments.map(payment => [
         format(new Date(payment.payment_date), 'dd/MM/yyyy'),
         payment.transaction_id,
         payment.reference,
@@ -322,39 +296,38 @@ const Finance: React.FC = () => {
         payment.status === 'pending' ? 'Pendente' :
         payment.status === 'failed' ? 'Falhado' : payment.status
       ]);
-      
-      // Criar tabela
-      (doc as any).autoTable({
-        head: [['Data', 'Transação', 'Referência', 'Valor', 'Método', 'Usuário', 'Status']],
-        body: tableData,
-        startY: yPosition + 10,
-        styles: {
-          fontSize: 8,
-          cellPadding: 3
-        },
-        headStyles: {
-          fillColor: [37, 99, 235], // Azul
-          textColor: 255,
-          fontStyle: 'bold'
-        },
-        alternateRowStyles: {
-          fillColor: [248, 250, 252]
-        }
-      });
-      
-      // Salvar o PDF
-      const fileName = `pagamentos_${currentDate.replace(/\//g, '-')}.pdf`;
-      doc.save(fileName);
-      
+
+      // Criar conteúdo CSV
+      const csvContent = [
+        `Relatório de Pagamentos - ${currentDate}`,
+        `Total de registros: ${filteredPayments.length}`,
+        `Valor total: ${formatPrice(totalAmount)}`,
+        '',
+        headers.join(','),
+        ...csvData.map(row => row.join(','))
+      ].join('\n');
+
+      // Criar e baixar arquivo
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `pagamentos_${currentDate.replace(/\//g, '-')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
       toast({
         title: "Exportação concluída",
-        description: `Arquivo ${fileName} foi baixado com sucesso.`,
+        description: "Arquivo CSV baixado com sucesso.",
       });
+
     } catch (error) {
-      console.error('Erro ao exportar PDF:', error);
+      console.error('Erro ao exportar:', error);
       toast({
         title: "Erro na exportação",
-        description: "Ocorreu um erro ao gerar o PDF. Tente novamente.",
+        description: "Ocorreu um erro ao gerar o arquivo. Tente novamente.",
         variant: "destructive"
       });
     }
