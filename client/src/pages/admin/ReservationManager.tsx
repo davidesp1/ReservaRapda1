@@ -46,7 +46,6 @@ type Reservation = {
   last_name: string;
   email: string;
   phone: string;
-  confirmation_code: string;
   reservation_code: string;
   date: string;
   party_size: number;
@@ -167,7 +166,7 @@ const ReservationManager: React.FC = () => {
       
       // Include reservations that match the search text
       const matchesSearch = 
-        (reservation.confirmation_code && reservation.confirmation_code.toLowerCase().includes(searchLower)) ||
+        (reservation.reservation_code && reservation.reservation_code.toLowerCase().includes(searchLower)) ||
         (reservation.user_name && reservation.user_name.toLowerCase().includes(searchLower));
       
       return matchesSearch;
@@ -436,7 +435,7 @@ const ReservationManager: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-gray-500">{t('Code')}</p>
-                  <p className="font-medium">{selectedReservation.confirmation_code}</p>
+                  <p className="font-medium">{selectedReservation.reservation_code}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">{t('Status')}</p>

@@ -562,7 +562,7 @@ router.get("/api/payments", isAuthenticated, async (req, res) => {
     const payments = await queryClient`
       SELECT 
         p.*,
-        r.confirmation_code as reservation_code,
+        r.reservation_code,
         r.date as reservation_date,
         t.number as table_number
       FROM payments p
@@ -604,7 +604,6 @@ router.get("/api/admin/reservations", isAuthenticated, async (req, res) => {
         r.date,
         r.party_size,
         r.status,
-        r.confirmation_code,
         r.reservation_code,
         r.payment_method,
         r.payment_status,
@@ -707,7 +706,7 @@ router.post("/api/reservations", isAuthenticated, async (req, res) => {
         party_size, 
         notes, 
         status,
-        confirmation_code,
+        reservation_code,
         payment_method,
         payment_status,
         total,

@@ -24,7 +24,6 @@ interface Reservation {
   created_at?: string;
   table_number?: number;
   user_name?: string;
-  confirmation_code?: string;
   reservation_code?: string;
 }
 
