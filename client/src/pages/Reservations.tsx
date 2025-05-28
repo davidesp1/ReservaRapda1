@@ -192,12 +192,12 @@ export default function Reservations() {
             <label className="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">
               Status da Reserva
             </label>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter || "todos"} onValueChange={(value) => setStatusFilter(value === "todos" ? "" : value)}>
               <SelectTrigger className="w-full lg:w-40 border border-gray-200 rounded-lg bg-white text-gray-700 font-medium focus:ring-2 focus:ring-brasil-blue">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="confirmada">Confirmada</SelectItem>
                 <SelectItem value="realizada">Realizada</SelectItem>
                 <SelectItem value="cancelada">Cancelada</SelectItem>
@@ -210,12 +210,12 @@ export default function Reservations() {
             <label className="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">
               Status de Pagamento
             </label>
-            <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+            <Select value={paymentFilter || "todos"} onValueChange={(value) => setPaymentFilter(value === "todos" ? "" : value)}>
               <SelectTrigger className="w-full lg:w-40 border border-gray-200 rounded-lg bg-white text-gray-700 font-medium focus:ring-2 focus:ring-brasil-blue">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="pago">Pago</SelectItem>
                 <SelectItem value="pendente">Pendente</SelectItem>
                 <SelectItem value="falhado">Falhado</SelectItem>
