@@ -1,0 +1,204 @@
+            <div id="step-contents" class="relative bg-white rounded-xl shadow-lg p-8 transition-all min-h-[500px]">
+                <div id="step-2-content" class="">
+                    <h2 class="mb-6 text-xl font-bold font-montserrat text-brazil-yellow">Selecione o que irá consumir</h2>
+                    <div id="menu-tabs-block" class="flex items-center gap-2 overflow-x-auto border-b border-gray-200 mb-7 scrollbar-hide">
+                        <button class="flex items-center gap-2 px-6 py-2 font-bold bg-white border-b-4 rounded-t-lg menu-tab-btn font-montserrat text-brazil-green border-brazil-green active" data-tab="entradas" id="tab-btn-entradas">
+                            <i class="fa-solid fa-leaf"></i> Entradas
+                        </button>
+                        <button class="flex items-center gap-2 px-6 py-2 font-bold bg-white border-b-4 border-transparent rounded-t-lg menu-tab-btn font-montserrat text-brazil-blue" data-tab="principais" id="tab-btn-principais">
+                            <i class="fa-solid fa-bowl-food"></i> Pratos Principais
+                        </button>
+                        <button class="flex items-center gap-2 px-6 py-2 font-bold bg-white border-b-4 border-transparent rounded-t-lg menu-tab-btn font-montserrat text-brazil-yellow" data-tab="sobremesas" id="tab-btn-sobremesas">
+                            <i class="fa-regular fa-ice-cream"></i> Sobremesas
+                        </button>
+                        <button class="flex items-center gap-2 px-6 py-2 font-bold bg-white border-b-4 border-transparent rounded-t-lg menu-tab-btn font-montserrat text-brazil-red" data-tab="bebidas" id="tab-btn-bebidas">
+                            <i class="fa-solid fa-martini-glass-citrus"></i> Bebidas
+                        </button>
+                    </div>
+                    <div id="menu-step-2-layout" class="flex flex-col gap-10 md:flex-row">
+                        <div id="menu-categories-block" class="flex-1 min-w-[320px]">
+                            <div id="menu-categories-list" class="space-y-0">
+                                <!-- ENTRADAS -->
+                                <div id="category-entradas-tab" class="menu-category-tab">
+                                    <div class="flex items-center gap-2 mb-4">
+                                        <i class="text-xl fa-solid fa-leaf text-brazil-green"></i>
+                                        <h3 class="text-lg font-bold uppercase text-brazil-green font-montserrat">Entradas</h3>
+                                    </div>
+                                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div class="bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-100 hover:border-brazil-green transition group min-w-[220px]" id="menu-card-empada">
+                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/20c46c5e10-empada.png" class="object-cover rounded-lg w-14 h-14 ring-2 ring-brazil-green ring-opacity-20" alt="Empada de Frango">
+                                            <div class="flex-1">
+                                                <h4 class="text-base font-bold text-gray-800">Empada de Frango</h4>
+                                                <span class="block text-xs text-gray-500">Massa leve, recheio cremoso de frango.</span>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="mr-1 text-base font-bold text-brazil-green">R$ 12,00</span>
+                                                    <button class="px-2 py-1 text-xs font-bold rounded-lg bg-brazil-yellow text-brazil-blue add-menu-btn" data-name="Empada de Frango" data-price="12">
+                                                        <i class="fa-solid fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-100 hover:border-brazil-green transition group min-w-[220px]" id="menu-card-bolinho">
+                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/bolinho-de-bacalhau.png" class="object-cover rounded-lg w-14 h-14 ring-2 ring-brazil-green ring-opacity-20" alt="Bolinho de Bacalhau">
+                                            <div class="flex-1">
+                                                <h4 class="text-base font-bold text-gray-800">Bolinho de Bacalhau</h4>
+                                                <span class="block text-xs text-gray-500">Tradicional, crocante por fora.</span>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="mr-1 text-base font-bold text-brazil-green">R$ 16,00</span>
+                                                    <button class="px-2 py-1 text-xs font-bold rounded-lg bg-brazil-yellow text-brazil-blue add-menu-btn" data-name="Bolinho de Bacalhau" data-price="16">
+                                                        <i class="fa-solid fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- PRATOS PRINCIPAIS -->
+                                <div id="category-principais-tab" class="hidden menu-category-tab">
+                                    <div class="flex items-center gap-2 mb-4">
+                                        <i class="text-xl fa-solid fa-bowl-food text-brazil-blue"></i>
+                                        <h3 class="text-lg font-bold uppercase text-brazil-blue font-montserrat">Pratos Principais</h3>
+                                    </div>
+                                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div class="bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-100 hover:border-brazil-blue transition group min-w-[220px]" id="menu-card-moqueca">
+                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/14db3df368-c5ada7c592c7a6a484df.png" class="object-cover rounded-lg w-14 h-14 ring-2 ring-brazil-blue ring-opacity-20" alt="Moqueca de Camarão">
+                                            <div class="flex-1">
+                                                <h4 class="text-base font-bold text-gray-800">Moqueca de Camarão</h4>
+                                                <span class="block text-xs text-gray-500">Camarões frescos e molho aromático.</span>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="mr-1 text-base font-bold text-brazil-blue">R$ 89,90</span>
+                                                    <button class="px-2 py-1 text-xs font-bold rounded-lg bg-brazil-yellow text-brazil-blue add-menu-btn" data-name="Moqueca de Camarão" data-price="89.90">
+                                                        <i class="fa-solid fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-100 hover:border-brazil-blue transition group min-w-[220px]" id="menu-card-picanha">
+                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/7276f27bb0-4d54c37a447ad96c2e5d.png" class="object-cover rounded-lg w-14 h-14 ring-2 ring-brazil-blue ring-opacity-20" alt="Picanha na Brasa">
+                                            <div class="flex-1">
+                                                <h4 class="text-base font-bold text-gray-800">Picanha na Brasa</h4>
+                                                <span class="block text-xs text-gray-500">Com farofa e vinagrete.</span>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="mr-1 text-base font-bold text-brazil-blue">R$ 119,90</span>
+                                                    <button class="px-2 py-1 text-xs font-bold rounded-lg bg-brazil-yellow text-brazil-blue add-menu-btn" data-name="Picanha na Brasa" data-price="119.90">
+                                                        <i class="fa-solid fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-100 hover:border-brazil-blue transition group min-w-[220px]" id="menu-card-acaraje">
+                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/36bbcb69ee-94c724d6180a9cc13590.png" class="object-cover rounded-lg w-14 h-14 ring-2 ring-brazil-blue ring-opacity-20" alt="Acarajé Tradicional">
+                                            <div class="flex-1">
+                                                <h4 class="text-base font-bold text-gray-800">Acarajé Tradicional</h4>
+                                                <span class="block text-xs text-gray-500">Bolinho frito com vatapá.</span>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="mr-1 text-base font-bold text-brazil-blue">R$ 49,90</span>
+                                                    <button class="px-2 py-1 text-xs font-bold rounded-lg bg-brazil-yellow text-brazil-blue add-menu-btn" data-name="Acarajé Tradicional" data-price="49.90">
+                                                        <i class="fa-solid fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- SOBREMESAS -->
+                                <div id="category-sobremesas-tab" class="hidden menu-category-tab">
+                                    <div class="flex items-center gap-2 mb-4">
+                                        <i class="text-xl fa-regular fa-ice-cream text-brazil-yellow"></i>
+                                        <h3 class="text-lg font-bold uppercase text-brazil-yellow font-montserrat">Sobremesas</h3>
+                                    </div>
+                                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div class="bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-100 hover:border-brazil-yellow transition group min-w-[220px]" id="menu-card-pudim">
+                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/a47cc66b23-1be4e7858e307ac3eff8.png" class="object-cover rounded-lg w-14 h-14 ring-2 ring-brazil-yellow ring-opacity-20" alt="Pudim de Leite">
+                                            <div class="flex-1">
+                                                <h4 class="text-base font-bold text-gray-800">Pudim de Leite</h4>
+                                                <span class="block text-xs text-gray-500">Tradicional, macio e doce.</span>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="mr-1 text-base font-bold text-brazil-yellow">R$ 22,90</span>
+                                                    <button class="px-2 py-1 text-xs font-bold rounded-lg bg-brazil-yellow text-brazil-blue add-menu-btn" data-name="Pudim de Leite" data-price="22.90">
+                                                        <i class="fa-solid fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-100 hover:border-brazil-yellow transition group min-w-[220px]" id="menu-card-brigadeiro">
+                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/brigadeiro-gourmet.png" class="object-cover rounded-lg w-14 h-14 ring-2 ring-brazil-yellow ring-opacity-20" alt="Brigadeiro Gourmet">
+                                            <div class="flex-1">
+                                                <h4 class="text-base font-bold text-gray-800">Brigadeiro Gourmet</h4>
+                                                <span class="block text-xs text-gray-500">Chocolate belga &amp; granulado.</span>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="mr-1 text-base font-bold text-brazil-yellow">R$ 7,00</span>
+                                                    <button class="px-2 py-1 text-xs font-bold rounded-lg bg-brazil-yellow text-brazil-blue add-menu-btn" data-name="Brigadeiro Gourmet" data-price="7">
+                                                        <i class="fa-solid fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- BEBIDAS -->
+                                <div id="category-bebidas-tab" class="hidden menu-category-tab">
+                                    <div class="flex items-center gap-2 mb-4">
+                                        <i class="text-xl fa-solid fa-martini-glass-citrus text-brazil-red"></i>
+                                        <h3 class="text-lg font-bold uppercase text-brazil-red font-montserrat">Bebidas</h3>
+                                    </div>
+                                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div class="bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-100 hover:border-brazil-red transition group min-w-[220px]" id="menu-card-caipirinha">
+                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/caipirinha.png" class="object-cover rounded-lg w-14 h-14 ring-2 ring-brazil-red ring-opacity-20" alt="Caipirinha">
+                                            <div class="flex-1">
+                                                <h4 class="text-base font-bold text-gray-800">Caipirinha</h4>
+                                                <span class="block text-xs text-gray-500">Cachaça, limão e açúcar.</span>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="mr-1 text-base font-bold text-brazil-red">R$ 18,00</span>
+                                                    <button class="px-2 py-1 text-xs font-bold rounded-lg bg-brazil-yellow text-brazil-blue add-menu-btn" data-name="Caipirinha" data-price="18">
+                                                        <i class="fa-solid fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-100 hover:border-brazil-red transition group min-w-[220px]" id="menu-card-suco">
+                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/suco-laranja.png" class="object-cover rounded-lg w-14 h-14 ring-2 ring-brazil-red ring-opacity-20" alt="Suco de Laranja">
+                                            <div class="flex-1">
+                                                <h4 class="text-base font-bold text-gray-800">Suco de Laranja</h4>
+                                                <span class="block text-xs text-gray-500">Natural, feito na hora.</span>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="mr-1 text-base font-bold text-brazil-red">R$ 9,00</span>
+                                                    <button class="px-2 py-1 text-xs font-bold rounded-lg bg-brazil-yellow text-brazil-blue add-menu-btn" data-name="Suco de Laranja" data-price="9">
+                                                        <i class="fa-solid fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- END CATEGORIES -->
+                            </div>
+                        </div>
+                        <div id="selected-summary-block" class="w-full md:w-[340px] shrink-0">
+                            <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-10 min-h-[320px] border-2 border-brazil-yellow" id="menu-summary-card">
+                                <h4 class="flex items-center gap-2 mb-3 text-lg font-bold text-brazil-yellow font-montserrat">
+                                    <i class="fa-solid fa-clipboard-list"></i> Meu Pedido
+                                </h4>
+                                <div id="selected-menu-items" class="space-y-3 min-h-[48px]">
+                                </div>
+                                <hr class="my-4 border-dashed border-brazil-yellow">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-semibold text-gray-700">Total</span>
+                                    <span class="text-2xl font-extrabold text-brazil-green" id="summary-total">R$ 0,00</span>
+                                </div>
+                                <div class="flex justify-between gap-2 mt-6">
+                                    <button id="back-to-step-1" class="flex items-center justify-center w-1/2 px-5 py-3 font-bold text-gray-700 transition bg-gray-200 rounded-lg hover:bg-gray-300">
+                                        <i class="mr-2 fa-solid fa-arrow-left"></i>
+                                        Voltar
+                                    </button>
+                                    <button id="to-step-3" class="flex items-center justify-center w-1/2 py-3 text-lg font-bold transition rounded-lg shadow bg-brazil-yellow text-brazil-blue px-7 hover:bg-yellow-400">
+                                        Próximo
+                                        <i class="ml-2 fa-solid fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Step 3, Step 4, Step 5, etc remain unchanged, omitted here for brevity -->
+            </div>

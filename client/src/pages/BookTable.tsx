@@ -393,143 +393,188 @@ export default function BookTable() {
               {/* Step 2: Menu */}
               {currentStep === 2 && (
                 <div className="flex-1 flex flex-col">
-                  <h2 className="mb-6 text-xl font-bold font-montserrat text-brasil-yellow flex items-center gap-2">
-                    <Utensils className="h-5 w-5" />
-                    Selecione os Pratos
-                  </h2>
+                  <h2 className="mb-6 text-xl font-bold font-montserrat text-brasil-yellow">Selecione o que irá consumir</h2>
                   
-                  <div className="flex gap-8 flex-1">
-                    {/* Menu Categories and Items */}
-                    <div className="flex-1">
-                      {/* Category Navigation */}
-                      <nav className="flex flex-wrap gap-4 mb-6">
-                        {uniqueCategories.map((category) => (
-                          <button 
-                            key={category}
-                            onClick={() => setActiveCategory(category)}
-                            className={`px-5 py-2 rounded-lg font-bold shadow transition ${
-                              activeCategory === category
-                                ? 'bg-brasil-green text-white hover:bg-green-700'
-                                : 'bg-gray-100 text-brasil-blue hover:bg-brasil-yellow hover:text-brasil-blue'
-                            }`}
-                          >
-                            {category.charAt(0).toUpperCase() + category.slice(1)}
-                          </button>
-                        ))}
-                      </nav>
+                  {/* Menu Tabs */}
+                  <div className="flex items-center gap-2 overflow-x-auto border-b border-gray-200 mb-7 scrollbar-hide">
+                    <button 
+                      className={`flex items-center gap-2 px-6 py-2 font-bold bg-white border-b-4 rounded-t-lg font-montserrat transition ${
+                        activeCategory === 'Entradas' 
+                          ? 'text-brasil-green border-brasil-green' 
+                          : 'text-brasil-blue border-transparent hover:border-brasil-green'
+                      }`}
+                      onClick={() => setActiveCategory('Entradas')}
+                    >
+                      <i className="fa-solid fa-leaf"></i> Entradas
+                    </button>
+                    <button 
+                      className={`flex items-center gap-2 px-6 py-2 font-bold bg-white border-b-4 rounded-t-lg font-montserrat transition ${
+                        activeCategory === 'Pratos Principais' 
+                          ? 'text-brasil-blue border-brasil-blue' 
+                          : 'text-brasil-blue border-transparent hover:border-brasil-blue'
+                      }`}
+                      onClick={() => setActiveCategory('Pratos Principais')}
+                    >
+                      <i className="fa-solid fa-bowl-food"></i> Pratos Principais
+                    </button>
+                    <button 
+                      className={`flex items-center gap-2 px-6 py-2 font-bold bg-white border-b-4 rounded-t-lg font-montserrat transition ${
+                        activeCategory === 'Sobremesas' 
+                          ? 'text-brasil-yellow border-brasil-yellow' 
+                          : 'text-brasil-blue border-transparent hover:border-brasil-yellow'
+                      }`}
+                      onClick={() => setActiveCategory('Sobremesas')}
+                    >
+                      <i className="fa-regular fa-ice-cream"></i> Sobremesas
+                    </button>
+                    <button 
+                      className={`flex items-center gap-2 px-6 py-2 font-bold bg-white border-b-4 rounded-t-lg font-montserrat transition ${
+                        activeCategory === 'Bebidas' 
+                          ? 'text-brasil-red border-brasil-red' 
+                          : 'text-brasil-blue border-transparent hover:border-brasil-red'
+                      }`}
+                      onClick={() => setActiveCategory('Bebidas')}
+                    >
+                      <i className="fa-solid fa-martini-glass-citrus"></i> Bebidas
+                    </button>
+                  </div>
 
-                      {/* Menu Items Grid */}
-                      <div className="space-y-6">
+                  <div className="flex flex-col gap-10 md:flex-row">
+                    {/* Menu Categories Content */}
+                    <div className="flex-1 min-w-[320px]">
+                      <div className="space-y-0">
                         {menuItems.length === 0 ? (
                           <div className="flex flex-col items-center justify-center py-12 text-gray-500">
                             <Utensils className="w-16 h-16 mb-4" />
                             <p className="text-lg">Carregando cardápio...</p>
                           </div>
-                        ) : activeCategory ? (
-                          <div>
-                            <h3 className="text-lg font-bold font-montserrat text-brasil-green mb-3 flex items-center gap-2">
-                              <Utensils className="w-5 h-5" />
-                              {activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}
-                            </h3>
-                            <div className="grid gap-4">
-                              {getItemsByCategory(activeCategory).map((item: any) => (
-                                <div key={item.id} className="bg-white rounded-xl p-3 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group">
-                                  <img 
-                                    src={item.image || 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/default.jpg'} 
-                                    alt={item.name} 
-                                    className="w-14 h-14 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
-                                  />
-                                  <div className="flex-1">
-                                    <div className="flex justify-between items-center">
-                                      <span className="font-bold text-gray-800">{item.name}</span>
-                                      <span className="font-bold text-brasil-green">{formatPrice(item.price)}</span>
-                                    </div>
-                                    <p className="text-xs text-gray-600 mt-1">{item.description || 'Delicioso prato do nosso restaurante.'}</p>
-                                  </div>
-                                  <button 
-                                    onClick={() => addMenuItem(item)}
-                                    className="ml-3 bg-brasil-yellow px-2.5 py-1.5 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90 transition"
+                        ) : activeCategory && (
+                          <div className="menu-category-tab">
+                            {/* Category Header */}
+                            <div className="flex items-center gap-2 mb-4">
+                              {activeCategory === 'Entradas' && <i className="text-xl fa-solid fa-leaf text-brasil-green"></i>}
+                              {activeCategory === 'Pratos Principais' && <i className="text-xl fa-solid fa-bowl-food text-brasil-blue"></i>}
+                              {activeCategory === 'Sobremesas' && <i className="text-xl fa-regular fa-ice-cream text-brasil-yellow"></i>}
+                              {activeCategory === 'Bebidas' && <i className="text-xl fa-solid fa-martini-glass-citrus text-brasil-red"></i>}
+                              <h3 className={`text-lg font-bold uppercase font-montserrat ${
+                                activeCategory === 'Entradas' ? 'text-brasil-green' :
+                                activeCategory === 'Pratos Principais' ? 'text-brasil-blue' :
+                                activeCategory === 'Sobremesas' ? 'text-brasil-yellow' :
+                                'text-brasil-red'
+                              }`}>
+                                {activeCategory}
+                              </h3>
+                            </div>
+                            
+                            {/* Menu Items Grid */}
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                              {getItemsByCategory(activeCategory).map((item: any) => {
+                                const categoryColor = 
+                                  activeCategory === 'Entradas' ? 'brasil-green' :
+                                  activeCategory === 'Pratos Principais' ? 'brasil-blue' :
+                                  activeCategory === 'Sobremesas' ? 'brasil-yellow' :
+                                  'brasil-red';
+                                
+                                return (
+                                  <div 
+                                    key={item.id} 
+                                    className={`bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-100 hover:border-${categoryColor} transition group min-w-[220px]`}
                                   >
-                                    <Plus className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              ))}
+                                    <img 
+                                      src={item.image_url || item.image || 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/default.jpg'} 
+                                      className={`object-cover rounded-lg w-14 h-14 ring-2 ring-${categoryColor} ring-opacity-20`}
+                                      alt={item.name}
+                                    />
+                                    <div className="flex-1">
+                                      <h4 className="text-base font-bold text-gray-800">{item.name}</h4>
+                                      <span className="block text-xs text-gray-500">{item.description || 'Delicioso prato do nosso restaurante.'}</span>
+                                      <div className="flex items-center mt-1">
+                                        <span className={`mr-1 text-base font-bold text-${categoryColor}`}>
+                                          {formatPrice(item.price)}
+                                        </span>
+                                        <button 
+                                          className="px-2 py-1 text-xs font-bold rounded-lg bg-brasil-yellow text-brasil-blue hover:bg-yellow-400 transition"
+                                          onClick={() => addMenuItem(item)}
+                                        >
+                                          <i className="fa-solid fa-plus"></i>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
-                        ) : null}
+                        )}
                       </div>
                     </div>
 
-                    {/* Cart Sidebar */}
-                    <div className="w-80 bg-white rounded-xl shadow-lg p-6 h-fit">
-                      <h3 className="text-lg font-bold text-brasil-blue mb-4 flex items-center gap-2">
-                        <i className="fas fa-shopping-cart"></i>
-                        Pedido ({selectedItems.length} {selectedItems.length === 1 ? 'item' : 'itens'})
-                      </h3>
-
-                      {selectedItems.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                          <i className="fas fa-utensils text-3xl text-gray-300 mb-3"></i>
-                          <p>Nenhum item selecionado</p>
-                          <p className="text-sm">Adicione pratos do cardápio</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3 mb-4">
-                          {selectedItems.map((item) => (
-                            <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-sm">{item.name}</h4>
-                                <p className="text-brasil-green font-bold">{formatPrice(item.price)}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <button 
-                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                  className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition"
-                                >
-                                  <i className="fas fa-minus text-xs"></i>
-                                </button>
-                                <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                                <button 
-                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                  className="w-6 h-6 bg-brasil-yellow rounded-full flex items-center justify-center hover:bg-brasil-yellow/90 transition"
-                                >
-                                  <i className="fas fa-plus text-xs text-brasil-blue"></i>
-                                </button>
-                              </div>
+                    {/* Order Summary Sidebar */}
+                    <div className="w-full md:w-[340px] shrink-0">
+                      <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-10 min-h-[320px] border-2 border-brasil-yellow">
+                        <h4 className="flex items-center gap-2 mb-3 text-lg font-bold text-brasil-yellow font-montserrat">
+                          <i className="fa-solid fa-clipboard-list"></i> Meu Pedido
+                        </h4>
+                        
+                        <div className="space-y-3 min-h-[48px]">
+                          {selectedItems.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                              <i className="fas fa-utensils text-3xl text-gray-300 mb-3"></i>
+                              <p>Nenhum item selecionado</p>
+                              <p className="text-sm">Adicione pratos do cardápio</p>
                             </div>
-                          ))}
+                          ) : (
+                            selectedItems.map((item) => (
+                              <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-sm">{item.name}</h4>
+                                  <p className="text-brasil-green font-bold">{formatPrice(item.price)}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button 
+                                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                    className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition"
+                                  >
+                                    <i className="fas fa-minus text-xs"></i>
+                                  </button>
+                                  <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                                  <button 
+                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                    className="w-6 h-6 bg-brasil-yellow rounded-full flex items-center justify-center hover:bg-brasil-yellow/90 transition"
+                                  >
+                                    <i className="fas fa-plus text-xs text-brasil-blue"></i>
+                                  </button>
+                                </div>
+                              </div>
+                            ))
+                          )}
                         </div>
-                      )}
-
-                      {selectedItems.length > 0 && (
-                        <div className="border-t pt-4">
-                          <div className="flex justify-between items-center font-bold text-lg">
-                            <span>Total:</span>
-                            <span className="text-brasil-green">€ {total.toFixed(2)}</span>
-                          </div>
+                        
+                        <hr className="my-4 border-dashed border-brasil-yellow" />
+                        
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="font-semibold text-gray-700">Total</span>
+                          <span className="text-2xl font-extrabold text-brasil-green">€ {total.toFixed(2)}</span>
                         </div>
-                      )}
+                        
+                        <div className="flex justify-between gap-2 mt-6">
+                          <button 
+                            onClick={prevStep}
+                            className="flex items-center justify-center w-1/2 px-5 py-3 font-bold text-gray-700 transition bg-gray-200 rounded-lg hover:bg-gray-300"
+                          >
+                            <i className="mr-2 fa-solid fa-arrow-left"></i>
+                            Voltar
+                          </button>
+                          <button 
+                            onClick={nextStep}
+                            className="flex items-center justify-center w-1/2 py-3 text-lg font-bold transition rounded-lg shadow bg-brasil-yellow text-brasil-blue px-7 hover:bg-yellow-400"
+                          >
+                            Próximo
+                            <i className="ml-2 fa-solid fa-arrow-right"></i>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="flex justify-between mt-8 pt-6 border-t">
-                    <Button
-                      type="button"
-                      onClick={prevStep}
-                      variant="outline"
-                      className="flex items-center px-8 py-3 text-lg font-bold"
-                    >
-                      <ArrowLeft className="mr-2 h-5 w-5" />
-                      Anterior
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={nextStep}
-                      className="flex items-center px-8 py-3 text-lg font-bold text-brasil-blue bg-brasil-yellow hover:bg-brasil-yellow/90"
-                    >
-                      Próximo
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
                   </div>
                 </div>
               )}
