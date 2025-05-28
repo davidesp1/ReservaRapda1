@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ArrowRight, ArrowLeft, Calendar, Clock, Utensils, CreditCard, Check } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Calendar, Clock, Utensils, CreditCard, Check, Plus } from 'lucide-react';
 
 // Schema de validação para a reserva
 const reservationSchema = z.object({
@@ -457,15 +457,6 @@ export default function BookTable() {
                             </div>
                           </div>
                         ) : null}
-                          );
-                        })}
-
-                        {menuItems.length === 0 && (
-                          <div className="text-center py-8 text-gray-500">
-                            <i className="fas fa-utensils text-3xl text-gray-300 mb-3"></i>
-                            <p>Carregando cardápio...</p>
-                          </div>
-                        )}
                       </div>
                     </div>
 
