@@ -547,6 +547,38 @@ router.get("/api/reservations", isAuthenticated, async (req, res) => {
   }
 });
 
+// Endpoint para buscar pagamentos do usuário
+router.get("/api/payments", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Usuário não autenticado" });
+    }
+    
+    const safeUserId = Number(userId);
+    
+    // Buscar pagamentos do usuário com informações das reservas
+    const payments = await queryClient`
+      SELECT 
+        p.*,
+        r.confirmation_code as reservation_code,
+        r.date as reservation_date,
+        t.number as table_number
+      FROM payments p
+      LEFT JOIN reservations r ON p.reservation_id = r.id
+      LEFT JOIN tables t ON r.table_id = t.id
+      WHERE p.user_id = ${safeUserId}
+      ORDER BY p.payment_date DESC, p.id DESC
+    `;
+    
+    res.json(payments);
+  } catch (err: any) {
+    console.error("Erro ao buscar pagamentos:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Rota para buscar TODAS as reservas (área admin)
 router.get("/api/admin/reservations", isAuthenticated, async (req, res) => {
   try {
