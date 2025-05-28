@@ -504,7 +504,7 @@ export default function BookTable() {
                         <div className="border-t pt-4">
                           <div className="flex justify-between items-center font-bold text-lg">
                             <span>Total:</span>
-                            <span className="text-brasil-green">R$ {total.toFixed(2)}</span>
+                            <span className="text-brasil-green">€ {total.toFixed(2)}</span>
                           </div>
                         </div>
                       )}
@@ -596,7 +596,7 @@ export default function BookTable() {
                                 <p className="text-xs text-gray-600">Qtd: {item.quantity}</p>
                               </div>
                               <span className="font-bold text-brasil-green">
-                                R$ {(item.price * item.quantity).toFixed(2)}
+                                € {((item.price / 100) * item.quantity).toFixed(2)}
                               </span>
                             </div>
                           ))}
@@ -604,7 +604,7 @@ export default function BookTable() {
                           <div className="border-t pt-3 mt-4">
                             <div className="flex justify-between items-center font-bold text-lg">
                               <span>Total do Pedido:</span>
-                              <span className="text-brasil-green">R$ {total.toFixed(2)}</span>
+                              <span className="text-brasil-green">€ {total.toFixed(2)}</span>
                             </div>
                           </div>
                         </div>
@@ -623,7 +623,7 @@ export default function BookTable() {
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-brasil-green">
-                          R$ {total.toFixed(2)}
+                          € {total.toFixed(2)}
                         </div>
                         <p className="text-sm text-gray-600">
                           {selectedItems.length > 0 ? 'Pagamento no restaurante' : 'Reserva gratuita'}
