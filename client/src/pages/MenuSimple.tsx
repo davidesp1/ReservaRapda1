@@ -65,8 +65,9 @@ const MenuSimple = () => {
         );
         console.log('📋 Itens processados:', flatItems);
         setAllItems(flatItems);
-        
         setLoading(false);
+        
+        console.log('✅ Carregamento concluído! Categorias:', categoriesData.length, 'Itens:', flatItems.length);
       } catch (error) {
         console.error('❌ Erro ao carregar dados:', error);
         setLoading(false);
