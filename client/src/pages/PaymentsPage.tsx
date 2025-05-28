@@ -84,10 +84,11 @@ const PaymentsPage = () => {
 
   // Filtrar pagamentos
   const filteredPayments = payments.filter(payment => {
+    const dateField = payment.payment_date || payment.reservation_date || '';
     const matchesSearch = searchTerm === '' || 
-      formatDate(payment.date).includes(searchTerm.toLowerCase()) ||
-      formatTime(payment.date).includes(searchTerm.toLowerCase()) ||
-      payment.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      formatDate(dateField).includes(searchTerm.toLowerCase()) ||
+      formatTime(dateField).includes(searchTerm.toLowerCase()) ||
+      (payment.reference && payment.reference.toLowerCase().includes(searchTerm.toLowerCase())) ||
       mapMethod(payment.method).toLowerCase().includes(searchTerm.toLowerCase()) ||
       mapStatus(payment.status).label.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -227,17 +228,20 @@ const PaymentsPage = () => {
                   currentPayments.map((payment) => {
                     const status = mapStatus(payment.status);
                     
+                    const dateField = payment.payment_date || payment.reservation_date || '';
+                    const displayAmount = (payment.amount / 100).toFixed(2); // Converter de centavos para euros
+                    
                     return (
                       <tr key={payment.id} className="hover:bg-gray-50 transition cursor-pointer">
-                        <td className="px-6 py-4">{formatDate(payment.date)}</td>
-                        <td className="px-4 py-4">{formatTime(payment.date)}</td>
+                        <td className="px-6 py-4">{formatDate(dateField)}</td>
+                        <td className="px-4 py-4">{formatTime(dateField)}</td>
                         <td className="px-4 py-4 text-center">
                           <span className="font-mono text-sm font-semibold text-brasil-blue">
-                            {payment.reference}
+                            {payment.reference || `PAY-${payment.id}`}
                           </span>
                         </td>
                         <td className="px-4 py-4 text-center font-semibold">
-                          €{payment.amount.toFixed(2)}
+                          €{displayAmount}
                         </td>
                         <td className="px-4 py-4 text-center">
                           {mapMethod(payment.method)}
