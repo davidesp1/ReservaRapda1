@@ -6,12 +6,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Eye, Edit, X, Search, Calendar, Clock, MapPin } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
+import { Plus, Eye, Edit, X, Search, Calendar, Clock, MapPin, Users } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
 interface Reservation {
   id: number;
@@ -29,6 +34,16 @@ interface Reservation {
   reservation_code?: string;
 }
 
+// Schema de validação para nova reserva
+const newReservationSchema = z.object({
+  date: z.string().min(1, "Data é obrigatória"),
+  time: z.string().min(1, "Horário é obrigatório"),
+  party_size: z.number().min(1, "Número de pessoas deve ser pelo menos 1").max(20, "Máximo 20 pessoas"),
+  special_requests: z.string().optional(),
+});
+
+type NewReservationForm = z.infer<typeof newReservationSchema>;
+
 export default function Reservations() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -43,12 +58,52 @@ export default function Reservations() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showNewReservationModal, setShowNewReservationModal] = useState(false);
 
+  // Form para nova reserva
+  const newReservationForm = useForm<NewReservationForm>({
+    resolver: zodResolver(newReservationSchema),
+    defaultValues: {
+      date: '',
+      time: '',
+      party_size: 2,
+      special_requests: '',
+    },
+  });
+
+  // Mutation para criar nova reserva
+  const createReservationMutation = useMutation({
+    mutationFn: async (data: NewReservationForm) => {
+      const response = await apiRequest('POST', '/api/reservations', {
+        ...data,
+        user_id: user?.id,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Reserva Criada!",
+        description: "Sua reserva foi criada com sucesso. Você receberá uma confirmação em breve.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
+      setShowNewReservationModal(false);
+      newReservationForm.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao Criar Reserva",
+        description: error.message || "Ocorreu um erro ao criar a reserva. Tente novamente.",
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Função para submeter nova reserva
+  const onSubmitNewReservation = (data: NewReservationForm) => {
+    createReservationMutation.mutate(data);
+  };
+
   // Função para lidar com nova reserva
   const handleNewReservation = () => {
-    toast({
-      title: "Nova Reserva",
-      description: "Em breve será possível criar reservas diretamente aqui. Por enquanto, entre em contato conosco!",
-    });
+    setShowNewReservationModal(true);
   };
   const rowsPerPage = 10;
 
@@ -429,6 +484,155 @@ export default function Reservations() {
           )}
         </div>
       </div>
+
+      {/* Modal de Nova Reserva */}
+      <Dialog open={showNewReservationModal} onOpenChange={setShowNewReservationModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-brasil-blue">
+              <Plus className="h-5 w-5" />
+              Nova Reserva
+            </DialogTitle>
+          </DialogHeader>
+          
+          <Form {...newReservationForm}>
+            <form onSubmit={newReservationForm.handleSubmit(onSubmitNewReservation)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={newReservationForm.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Data
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          {...field}
+                          min={new Date().toISOString().split('T')[0]}
+                          className="w-full"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={newReservationForm.control}
+                  name="time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Horário
+                      </FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o horário" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="12:00">12:00</SelectItem>
+                            <SelectItem value="12:30">12:30</SelectItem>
+                            <SelectItem value="13:00">13:00</SelectItem>
+                            <SelectItem value="13:30">13:30</SelectItem>
+                            <SelectItem value="14:00">14:00</SelectItem>
+                            <SelectItem value="19:00">19:00</SelectItem>
+                            <SelectItem value="19:30">19:30</SelectItem>
+                            <SelectItem value="20:00">20:00</SelectItem>
+                            <SelectItem value="20:30">20:30</SelectItem>
+                            <SelectItem value="21:00">21:00</SelectItem>
+                            <SelectItem value="21:30">21:30</SelectItem>
+                            <SelectItem value="22:00">22:00</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={newReservationForm.control}
+                name="party_size"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Número de Pessoas
+                    </FormLabel>
+                    <FormControl>
+                      <Select 
+                        onValueChange={(value) => field.onChange(parseInt(value))} 
+                        defaultValue={field.value?.toString()}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Quantas pessoas?" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(num => (
+                            <SelectItem key={num} value={num.toString()}>
+                              {num} {num === 1 ? 'pessoa' : 'pessoas'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={newReservationForm.control}
+                name="special_requests"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observações Especiais (opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Aniversário, alergias, preferências de mesa..."
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowNewReservationModal(false)}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createReservationMutation.isPending}
+                  className="flex-1 bg-brasil-green hover:bg-brasil-green/90"
+                >
+                  {createReservationMutation.isPending ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                      Criando...
+                    </>
+                  ) : (
+                    'Criar Reserva'
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </CustomerLayout>
   );
 }
