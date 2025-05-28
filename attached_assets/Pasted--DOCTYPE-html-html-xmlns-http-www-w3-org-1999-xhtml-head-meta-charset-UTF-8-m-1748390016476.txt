@@ -180,9 +180,6 @@
                     <button id="clientes-clean-filters" class="px-4 py-2 ml-auto font-semibold transition rounded-lg shadow bg-brazil-yellow text-brazil-blue hover:bg-yellow-200 md:ml-0">
                         Limpar
                     </button>
-                    <button id="clientes-clean-filters" class="px-4 py-2 ml-auto font-semibold transition rounded-lg shadow bg-brazil-blue text-brazil-yellow hover:bg-blue-800 md:ml-0">
-                        + Novo Cliente
-                    </button>
                 </div>
                 <div id="clientes-table-card" class="flex flex-col flex-1 p-0 overflow-hidden bg-white shadow-lg rounded-xl">
                     <div class="overflow-x-auto">
@@ -192,9 +189,9 @@
                                     <th class="px-6 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Nome</th>
                                     <th class="px-4 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Telefone</th>
                                     <th class="px-4 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Email</th>
-                                    <th class="px-4 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">Acessos</th>
+                                    <th class="px-4 py-4 text-xs font-bold tracking-wider text-left text-white font-montserrat">acessos</th>
                                     <th class="px-4 py-4 text-xs font-bold tracking-wider text-center text-white font-montserrat">Status</th>
-                                    <th class="px-4 py-4 text-xs font-bold tracking-wider text-center text-white font-montserrat">Ações</th>
+                                    <th class="px-4 py-4 text-xs font-bold tracking-wider text-center text-white font-montserrat">ações</th>
                                 </tr>
                             </thead>
                             <tbody id="clientes-tbody" class="font-medium text-gray-800 bg-white divide-y divide-gray-100">
