@@ -305,6 +305,10 @@ Status: PAGO
             type: 'pos'
           };
           
+          // Log para debug do método selecionado
+          console.log('🔍 FRONTEND - Método selecionado:', selectedPaymentMethod);
+          console.log('🔍 FRONTEND - Dados enviados:', orderData);
+          
           // Enviar os dados para a API
           fetch('/api/pos/orders', {
             method: 'POST',
