@@ -570,7 +570,6 @@ router.get("/api/payments", isAuthenticated, async (req, res) => {
       FROM reservations r
       JOIN tables t ON r.table_id = t.id
       WHERE r.user_id = ${safeUserId}
-        AND r.total > 0
       ORDER BY r.date DESC
     `;
     
