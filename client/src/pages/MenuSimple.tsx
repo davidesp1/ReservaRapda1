@@ -139,6 +139,31 @@ const MenuSimple = () => {
       <CustomerLayout>
         <div className="container mx-auto py-8">
           <h1 className="text-3xl font-bold mb-6">Carregando cardápio...</h1>
+          <p className="text-gray-600">
+            Categorias: {categories.length} | Itens: {allItems.length}
+          </p>
+        </div>
+      </CustomerLayout>
+    );
+  }
+
+  // Forçar exibição mesmo se não há dados para debug
+  if (categories.length === 0 && allItems.length === 0) {
+    return (
+      <CustomerLayout>
+        <div className="container mx-auto py-8">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">DEBUG: Sem dados carregados</h1>
+          <div className="bg-gray-100 p-4 rounded">
+            <p>Loading: {loading.toString()}</p>
+            <p>Categorias: {categories.length}</p>
+            <p>Itens: {allItems.length}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+            >
+              Recarregar Página
+            </button>
+          </div>
         </div>
       </CustomerLayout>
     );
