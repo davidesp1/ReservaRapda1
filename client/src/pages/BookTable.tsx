@@ -368,21 +368,186 @@ export default function BookTable() {
 
               {/* Step 2: Menu */}
               {currentStep === 2 && (
-                <div className="flex-1">
+                <div className="flex-1 flex flex-col">
                   <h2 className="mb-6 text-xl font-bold font-montserrat text-brasil-yellow flex items-center gap-2">
                     <Utensils className="h-5 w-5" />
-                    Selecione os Pratos (Opcional)
+                    Selecione os Pratos
                   </h2>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    {/* Menu items would go here */}
-                    <div className="text-center text-gray-500 col-span-full">
-                      <p>Você pode adicionar pratos do nosso cardápio ou prosseguir sem seleção.</p>
-                      <p className="text-sm">Esta etapa é opcional.</p>
+                  <div className="flex gap-8 flex-1">
+                    {/* Menu Categories and Items */}
+                    <div className="flex-1">
+                      {/* Category Navigation */}
+                      <nav className="flex flex-wrap gap-4 mb-6">
+                        <button className="px-5 py-2 rounded-lg font-bold bg-brasil-green text-white shadow hover:bg-green-700 transition">
+                          Entradas
+                        </button>
+                        <button className="px-5 py-2 rounded-lg font-bold bg-gray-100 text-brasil-blue shadow hover:bg-brasil-yellow hover:text-brasil-blue transition">
+                          Pratos Principais
+                        </button>
+                        <button className="px-5 py-2 rounded-lg font-bold bg-gray-100 text-brasil-blue shadow hover:bg-brasil-yellow hover:text-brasil-blue transition">
+                          Sobremesas
+                        </button>
+                        <button className="px-5 py-2 rounded-lg font-bold bg-gray-100 text-brasil-blue shadow hover:bg-brasil-yellow hover:text-brasil-blue transition">
+                          Bebidas
+                        </button>
+                      </nav>
+
+                      {/* Menu Items Grid */}
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-lg font-bold font-montserrat text-brasil-green mb-3 flex items-center gap-2">
+                            <i className="fas fa-seedling"></i> Entradas
+                          </h3>
+                          <div className="grid gap-4">
+                            <div className="bg-white rounded-xl p-3 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group">
+                              <img 
+                                src="https://storage.googleapis.com/uxpilot-auth.appspot.com/food/empada.jpg" 
+                                alt="Empada de Frango" 
+                                className="w-14 h-14 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
+                              />
+                              <div className="flex-1">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-bold text-gray-800">Empada de Frango</span>
+                                  <span className="font-bold text-brasil-green">R$ 15,00</span>
+                                </div>
+                                <p className="text-xs text-gray-600 mt-1">Clássica empada cremosa, massa leve e recheio suculento.</p>
+                              </div>
+                              <button 
+                                onClick={() => addMenuItem({ id: 1, name: 'Empada de Frango', price: 15.00 })}
+                                className="ml-3 bg-brasil-yellow px-2.5 py-1.5 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90 transition"
+                              >
+                                <i className="fas fa-plus"></i>
+                              </button>
+                            </div>
+
+                            <div className="bg-white rounded-xl p-3 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group">
+                              <img 
+                                src="https://storage.googleapis.com/uxpilot-auth.appspot.com/food/bolinho-bacalhau.jpg" 
+                                alt="Bolinho de Bacalhau" 
+                                className="w-14 h-14 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
+                              />
+                              <div className="flex-1">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-bold text-gray-800">Bolinho de Bacalhau (6un)</span>
+                                  <span className="font-bold text-brasil-green">R$ 24,00</span>
+                                </div>
+                                <p className="text-xs text-gray-600 mt-1">Tradicionais bolinhos de bacalhau fritos, crocantes e saborosos.</p>
+                              </div>
+                              <button 
+                                onClick={() => addMenuItem({ id: 2, name: 'Bolinho de Bacalhau', price: 24.00 })}
+                                className="ml-3 bg-brasil-yellow px-2.5 py-1.5 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90 transition"
+                              >
+                                <i className="fas fa-plus"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className="text-lg font-bold font-montserrat text-brasil-green mb-3 flex items-center gap-2">
+                            <i className="fas fa-drumstick-bite"></i> Pratos Principais
+                          </h3>
+                          <div className="grid gap-4">
+                            <div className="bg-white rounded-xl p-3 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group">
+                              <img 
+                                src="https://storage.googleapis.com/uxpilot-auth.appspot.com/14db3df368-c5ada7c592c7a6a484df.png" 
+                                alt="Moqueca de Camarão" 
+                                className="w-14 h-14 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
+                              />
+                              <div className="flex-1">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-bold text-gray-800">Moqueca de Camarão</span>
+                                  <span className="font-bold text-brasil-green">R$ 89,90</span>
+                                </div>
+                                <p className="text-xs text-gray-600 mt-1">Deliciosa moqueca com camarões frescos.</p>
+                              </div>
+                              <button 
+                                onClick={() => addMenuItem({ id: 3, name: 'Moqueca de Camarão', price: 89.90 })}
+                                className="ml-3 bg-brasil-yellow px-2.5 py-1.5 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90 transition"
+                              >
+                                <i className="fas fa-plus"></i>
+                              </button>
+                            </div>
+
+                            <div className="bg-white rounded-xl p-3 flex gap-4 items-center shadow border-2 border-transparent hover:border-brasil-green transition group">
+                              <img 
+                                src="https://storage.googleapis.com/uxpilot-auth.appspot.com/food/feijoada.jpg" 
+                                alt="Feijoada Completa" 
+                                className="w-14 h-14 rounded-lg object-cover border-2 border-gray-100 group-hover:scale-105 transition"
+                              />
+                              <div className="flex-1">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-bold text-gray-800">Feijoada Completa</span>
+                                  <span className="font-bold text-brasil-green">R$ 65,00</span>
+                                </div>
+                                <p className="text-xs text-gray-600 mt-1">Tradicional feijoada brasileira com acompanhamentos.</p>
+                              </div>
+                              <button 
+                                onClick={() => addMenuItem({ id: 4, name: 'Feijoada Completa', price: 65.00 })}
+                                className="ml-3 bg-brasil-yellow px-2.5 py-1.5 rounded-lg text-brasil-blue text-xs font-bold hover:bg-brasil-yellow/90 transition"
+                              >
+                                <i className="fas fa-plus"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Cart Sidebar */}
+                    <div className="w-80 bg-white rounded-xl shadow-lg p-6 h-fit">
+                      <h3 className="text-lg font-bold text-brasil-blue mb-4 flex items-center gap-2">
+                        <i className="fas fa-shopping-cart"></i>
+                        Pedido ({selectedItems.length} {selectedItems.length === 1 ? 'item' : 'itens'})
+                      </h3>
+
+                      {selectedItems.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <i className="fas fa-utensils text-3xl text-gray-300 mb-3"></i>
+                          <p>Nenhum item selecionado</p>
+                          <p className="text-sm">Adicione pratos do cardápio</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 mb-4">
+                          {selectedItems.map((item) => (
+                            <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-sm">{item.name}</h4>
+                                <p className="text-brasil-green font-bold">R$ {item.price.toFixed(2)}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button 
+                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                  className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition"
+                                >
+                                  <i className="fas fa-minus text-xs"></i>
+                                </button>
+                                <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                                <button 
+                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                  className="w-6 h-6 bg-brasil-yellow rounded-full flex items-center justify-center hover:bg-brasil-yellow/90 transition"
+                                >
+                                  <i className="fas fa-plus text-xs text-brasil-blue"></i>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {selectedItems.length > 0 && (
+                        <div className="border-t pt-4">
+                          <div className="flex justify-between items-center font-bold text-lg">
+                            <span>Total:</span>
+                            <span className="text-brasil-green">R$ {total.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex justify-between mt-10">
+                  <div className="flex justify-between mt-8 pt-6 border-t">
                     <Button
                       type="button"
                       onClick={prevStep}
@@ -407,21 +572,103 @@ export default function BookTable() {
               {/* Step 3: Resumo */}
               {currentStep === 3 && (
                 <div className="flex-1">
-                  <h2 className="mb-6 text-xl font-bold font-montserrat text-brasil-blue">Resumo da Reserva</h2>
+                  <h2 className="mb-6 text-xl font-bold font-montserrat text-brasil-blue flex items-center gap-2">
+                    <i className="fas fa-clipboard-list"></i>
+                    Resumo da Reserva
+                  </h2>
                   
-                  <div className="space-y-4 mb-8">
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <p><strong>Data:</strong> {form.watch('date')}</p>
-                      <p><strong>Horário:</strong> {form.watch('time')}</p>
-                      <p><strong>Pessoas:</strong> {form.watch('party_size')}</p>
-                      <p><strong>Mesa:</strong> {availableTables.find((t: any) => t.id === form.watch('table_id'))?.number || 'N/A'}</p>
-                      {form.watch('special_requests') && (
-                        <p><strong>Observações:</strong> {form.watch('special_requests')}</p>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {/* Informações da Reserva */}
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h3 className="font-bold text-lg text-brasil-blue mb-4 flex items-center gap-2">
+                        <i className="fas fa-calendar-check"></i>
+                        Detalhes da Reserva
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Data:</span>
+                          <span>{form.watch('date') ? new Date(form.watch('date')).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Horário:</span>
+                          <span>{form.watch('time') || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Pessoas:</span>
+                          <span>{form.watch('party_size')} {form.watch('party_size') === 1 ? 'pessoa' : 'pessoas'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Mesa:</span>
+                          <span>Mesa {availableTables.find((t: any) => t.id === form.watch('table_id'))?.number || 'N/A'}</span>
+                        </div>
+                        {form.watch('special_requests') && (
+                          <div className="pt-3 border-t">
+                            <span className="font-medium">Observações:</span>
+                            <p className="text-sm text-gray-600 mt-1">{form.watch('special_requests')}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Itens do Pedido */}
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h3 className="font-bold text-lg text-brasil-blue mb-4 flex items-center gap-2">
+                        <i className="fas fa-utensils"></i>
+                        Pedido ({selectedItems.length} {selectedItems.length === 1 ? 'item' : 'itens'})
+                      </h3>
+                      
+                      {selectedItems.length === 0 ? (
+                        <div className="text-center py-6 text-gray-500">
+                          <i className="fas fa-plate-wheat text-2xl text-gray-300 mb-2"></i>
+                          <p>Nenhum item selecionado</p>
+                          <p className="text-sm">Volte para adicionar pratos</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {selectedItems.map((item) => (
+                            <div key={item.id} className="flex justify-between items-center p-3 bg-white rounded-lg">
+                              <div>
+                                <h4 className="font-semibold text-sm">{item.name}</h4>
+                                <p className="text-xs text-gray-600">Qtd: {item.quantity}</p>
+                              </div>
+                              <span className="font-bold text-brasil-green">
+                                R$ {(item.price * item.quantity).toFixed(2)}
+                              </span>
+                            </div>
+                          ))}
+                          
+                          <div className="border-t pt-3 mt-4">
+                            <div className="flex justify-between items-center font-bold text-lg">
+                              <span>Total do Pedido:</span>
+                              <span className="text-brasil-green">R$ {total.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex justify-between mt-10">
+                  {/* Total Geral */}
+                  <div className="mt-8 p-6 bg-brasil-blue/10 rounded-lg border-2 border-brasil-blue/20">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="text-xl font-bold text-brasil-blue">Total da Reserva</h3>
+                        <p className="text-sm text-gray-600">
+                          {selectedItems.length > 0 ? 'Inclui taxa de mesa e pedido' : 'Apenas reserva da mesa'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-brasil-green">
+                          R$ {total.toFixed(2)}
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          {selectedItems.length > 0 ? 'Pagamento no restaurante' : 'Reserva gratuita'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between mt-8">
                     <Button
                       type="button"
                       onClick={prevStep}
