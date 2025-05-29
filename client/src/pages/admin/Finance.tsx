@@ -61,6 +61,30 @@ interface PaymentWithUser extends Payment {
   email?: string;
 }
 
+interface Reservation {
+  id: number;
+  user_id: number;
+  table_id: number;
+  user_name: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  reservation_code: string;
+  date: string;
+  party_size: number;
+  status: string;
+  payment_method: string;
+  payment_status: string;
+  total: number;
+  notes: string;
+  duration: number;
+  table_number: number;
+  table_capacity: number;
+  eupago_entity: string;
+  eupago_reference: string;
+}
+
 const Finance: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, isAdmin, user } = useAuth();
@@ -70,9 +94,8 @@ const Finance: React.FC = () => {
   const [endDate, setEndDate] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [methodFilter, setMethodFilter] = useState<string>("");
-  const [filteredPayments, setFilteredPayments] = useState<PaymentWithUser[]>(
-    [],
-  );
+  const [filteredPayments, setFilteredPayments] = useState<PaymentWithUser[]>([]);
+  const [filteredReservations, setFilteredReservations] = useState<Reservation[]>([]);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const { toast } = useToast();
 
@@ -88,62 +111,117 @@ const Finance: React.FC = () => {
     refetchIntervalInBackground: true,
   });
 
+  // Fetch reservations
+  const {
+    data: reservations = [],
+    isLoading: reservationsLoading,
+  } = useQuery<Reservation[]>({
+    queryKey: ["/api/admin/reservations"],
+    enabled: isAuthenticated && isAdmin,
+    refetchInterval: 10000,
+    refetchIntervalInBackground: true,
+  });
+
   // Aplicar filtros
   const applyFilters = () => {
+    // Filtrar pagamentos
     if (!payments) {
       setFilteredPayments([]);
-      return;
+    } else {
+      let filteredPay = [...payments];
+
+      // Filtro de busca para pagamentos
+      if (searchText) {
+        filteredPay = filteredPay.filter(
+          (payment) =>
+            payment.transaction_id
+              ?.toLowerCase()
+              .includes(searchText.toLowerCase()) ||
+            payment.reference?.toLowerCase().includes(searchText.toLowerCase()) ||
+            payment.username?.toLowerCase().includes(searchText.toLowerCase()) ||
+            payment.first_name
+              ?.toLowerCase()
+              .includes(searchText.toLowerCase()) ||
+            payment.last_name?.toLowerCase().includes(searchText.toLowerCase()),
+        );
+      }
+
+      // Filtro de data para pagamentos
+      if (startDate) {
+        filteredPay = filteredPay.filter(
+          (payment) => new Date(payment.payment_date) >= new Date(startDate),
+        );
+      }
+
+      if (endDate) {
+        filteredPay = filteredPay.filter(
+          (payment) =>
+            new Date(payment.payment_date) <= new Date(endDate + "T23:59:59"),
+        );
+      }
+
+      // Filtro de status para pagamentos
+      if (statusFilter) {
+        filteredPay = filteredPay.filter((payment) => payment.status === statusFilter);
+      }
+
+      // Filtro de método para pagamentos
+      if (methodFilter) {
+        filteredPay = filteredPay.filter((payment) => payment.method === methodFilter);
+      }
+
+      setFilteredPayments(filteredPay);
     }
 
-    let filtered = [...payments];
+    // Filtrar reservas
+    if (!reservations) {
+      setFilteredReservations([]);
+    } else {
+      let filteredRes = [...reservations];
 
-    // Filtro de busca
-    if (searchText) {
-      filtered = filtered.filter(
-        (payment) =>
-          payment.transaction_id
-            ?.toLowerCase()
-            .includes(searchText.toLowerCase()) ||
-          payment.reference?.toLowerCase().includes(searchText.toLowerCase()) ||
-          payment.username?.toLowerCase().includes(searchText.toLowerCase()) ||
-          payment.first_name
-            ?.toLowerCase()
-            .includes(searchText.toLowerCase()) ||
-          payment.last_name?.toLowerCase().includes(searchText.toLowerCase()),
-      );
+      // Filtro de busca para reservas
+      if (searchText) {
+        filteredRes = filteredRes.filter(
+          (reservation) =>
+            reservation.user_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+            reservation.email?.toLowerCase().includes(searchText.toLowerCase()) ||
+            reservation.phone?.toLowerCase().includes(searchText.toLowerCase()) ||
+            reservation.reservation_code?.toLowerCase().includes(searchText.toLowerCase()),
+        );
+      }
+
+      // Filtro de data para reservas
+      if (startDate) {
+        filteredRes = filteredRes.filter(
+          (reservation) => new Date(reservation.date) >= new Date(startDate),
+        );
+      }
+
+      if (endDate) {
+        filteredRes = filteredRes.filter(
+          (reservation) =>
+            new Date(reservation.date) <= new Date(endDate + "T23:59:59"),
+        );
+      }
+
+      // Filtro de status para reservas (payment_status)
+      if (statusFilter) {
+        filteredRes = filteredRes.filter((reservation) => reservation.payment_status === statusFilter);
+      }
+
+      // Filtro de método para reservas (payment_method)
+      if (methodFilter) {
+        filteredRes = filteredRes.filter((reservation) => reservation.payment_method === methodFilter);
+      }
+
+      setFilteredReservations(filteredRes);
     }
-
-    // Filtro de data
-    if (startDate) {
-      filtered = filtered.filter(
-        (payment) => new Date(payment.payment_date) >= new Date(startDate),
-      );
-    }
-
-    if (endDate) {
-      filtered = filtered.filter(
-        (payment) =>
-          new Date(payment.payment_date) <= new Date(endDate + "T23:59:59"),
-      );
-    }
-
-    // Filtro de status
-    if (statusFilter) {
-      filtered = filtered.filter((payment) => payment.status === statusFilter);
-    }
-
-    // Filtro de método
-    if (methodFilter) {
-      filtered = filtered.filter((payment) => payment.method === methodFilter);
-    }
-
-    setFilteredPayments(filtered);
   };
 
   // Aplicar filtros automaticamente quando os dados mudarem
   useEffect(() => {
     applyFilters();
-  }, [payments, searchText, startDate, endDate, statusFilter, methodFilter]);
+  }, [payments, reservations, searchText, startDate, endDate, statusFilter, methodFilter]);
 
   // Calcular totais
   const totals = React.useMemo(() => {
@@ -807,6 +885,16 @@ const Finance: React.FC = () => {
               }`}
             >
               Pagamentos
+            </button>
+            <button
+              onClick={() => setCurrentTab("reservas")}
+              className={`px-6 py-3 font-semibold rounded-t-lg focus:outline-none ml-2 ${
+                currentTab === "reservas"
+                  ? "text-blue-600 border-b-2 border-blue-600 bg-white"
+                  : "text-gray-500 hover:text-blue-600 bg-white"
+              }`}
+            >
+              Reservas
             </button>
             <button
               onClick={() => setCurrentTab("analise")}
