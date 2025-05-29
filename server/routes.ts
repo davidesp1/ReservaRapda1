@@ -1842,6 +1842,27 @@ router.post("/api/payments/multibanco", isAuthenticated, async (req, res) => {
     console.log('[Multibanco] Resultado do pagamento:', paymentResult);
     
     if (paymentResult.success) {
+      // Atualizar a reserva com as informações da EuPago
+      try {
+        const updateResult = await queryClient`
+          UPDATE reservations 
+          SET 
+            eupago_entity = ${paymentResult.entity || paymentResult.entidade || null},
+            eupago_reference = ${paymentResult.reference || paymentResult.referencia || null}
+          WHERE reservation_code = ${reservationId}
+          RETURNING id, reservation_code, eupago_entity, eupago_reference
+        `;
+        
+        if (updateResult.length > 0) {
+          console.log(`[Multibanco] Reserva ${reservationId} atualizada com informações EuPago:`, updateResult[0]);
+        } else {
+          console.log(`[Multibanco] Reserva com código ${reservationId} não encontrada para atualização`);
+        }
+      } catch (updateError) {
+        console.error('[Multibanco] Erro ao atualizar reserva com informações EuPago:', updateError);
+        // Não falhar o pagamento por causa deste erro
+      }
+      
       res.json({
         success: true,
         entity: paymentResult.entity,

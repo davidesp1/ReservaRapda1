@@ -1,26 +1,51 @@
-import { useState } from 'react';
-import { useLocation, Link } from 'wouter';
-import { useTranslation } from 'react-i18next';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-import CustomerLayout from '@/components/layouts/CustomerLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ArrowRight, ArrowLeft, Calendar, Clock, Utensils, CreditCard, Check, Plus } from 'lucide-react';
+import { useState } from "react";
+import { useLocation, Link } from "wouter";
+import { useTranslation } from "react-i18next";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import CustomerLayout from "@/components/layouts/CustomerLayout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  ArrowRight,
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Utensils,
+  CreditCard,
+  Check,
+  Plus,
+} from "lucide-react";
 
 // Schema de validação para a reserva
 const reservationSchema = z.object({
   date: z.string().min(1, "Data é obrigatória"),
   time: z.string().min(1, "Horário é obrigatório"),
-  party_size: z.number().min(1, "Número de pessoas deve ser pelo menos 1").max(20, "Máximo 20 pessoas"),
+  party_size: z
+    .number()
+    .min(1, "Número de pessoas deve ser pelo menos 1")
+    .max(20, "Máximo 20 pessoas"),
   table_id: z.number().min(1, "Mesa é obrigatória"),
   special_requests: z.string().optional(),
 });
@@ -35,69 +60,75 @@ export default function BookTable() {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string>('');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('card');
+  const [activeCategory, setActiveCategory] = useState<string>("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("card");
   const [multibancoData, setMultibancoData] = useState<any>(null);
 
   // Form setup
   const form = useForm<ReservationForm>({
     resolver: zodResolver(reservationSchema),
     defaultValues: {
-      date: '',
-      time: '',
+      date: "",
+      time: "",
       party_size: 2,
       table_id: 1,
-      special_requests: '',
+      special_requests: "",
     },
   });
 
   // Buscar mesas disponíveis
   const { data: availableTables = [] } = useQuery<any[]>({
-    queryKey: ['/api/tables'],
+    queryKey: ["/api/tables"],
   });
 
   // Buscar categorias do menu
   const { data: categories = [] } = useQuery<any[]>({
-    queryKey: ['/api/menu-categories'],
+    queryKey: ["/api/menu-categories"],
   });
 
   // Buscar itens do menu organizados por categoria
   const { data: menuByCategory = [] } = useQuery<any[]>({
-    queryKey: ['/api/menu-items'],
+    queryKey: ["/api/menu-items"],
   });
 
   // Mutation para finalizar reserva
   const finalizeReservationMutation = useMutation({
     mutationFn: async (data: ReservationForm) => {
       const fullDateTime = `${data.date} ${data.time}`;
-      
-      const response = await apiRequest('POST', '/api/reservations', {
+
+      const response = await apiRequest("POST", "/api/reservations", {
         date: fullDateTime,
         tableId: data.table_id,
         partySize: data.party_size,
-        notes: data.special_requests || '',
-        status: 'confirmed',
-        paymentMethod: 'multibanco',
-        paymentStatus: 'pending',
-        total: selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        notes: data.special_requests || "",
+        status: "confirmed",
+        paymentMethod: "multibanco",
+        paymentStatus: "pending",
+        total: selectedItems.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0,
+        ),
         duration: 120,
-        selectedItems: selectedItems // Incluir itens selecionados
+        selectedItems: selectedItems, // Incluir itens selecionados
       });
       return response.json();
     },
     onSuccess: () => {
       toast({
         title: "Reserva Confirmada!",
-        description: "Sua reserva foi confirmada com sucesso. Você receberá uma confirmação em breve.",
+        description:
+          "Sua reserva foi confirmada com sucesso. Você receberá uma confirmação em breve.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reservations"] });
       setCurrentStep(5); // Ir para tela de agradecimento
     },
     onError: (error: any) => {
       toast({
         title: "Erro ao Confirmar Reserva",
-        description: error.message || "Ocorreu um erro ao confirmar a reserva. Tente novamente.",
-        variant: 'destructive',
+        description:
+          error.message ||
+          "Ocorreu um erro ao confirmar a reserva. Tente novamente.",
+        variant: "destructive",
       });
     },
   });
@@ -106,41 +137,41 @@ export default function BookTable() {
   const processMultibancoMutation = useMutation({
     mutationFn: async (reservationData: any) => {
       // Primeiro criar a reserva
-      const reservationResponse = await fetch('/api/reservations', {
-        method: 'POST',
+      const reservationResponse = await fetch("/api/reservations", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(reservationData),
       });
-      
+
       if (!reservationResponse.ok) {
-        throw new Error('Erro ao criar reserva');
+        throw new Error("Erro ao criar reserva");
       }
-      
+
       const reservation = await reservationResponse.json();
-      
+
       // Depois processar o pagamento Multibanco com o código da reserva
-      const paymentResponse = await fetch('/api/payments/multibanco', {
-        method: 'POST',
+      const paymentResponse = await fetch("/api/payments/multibanco", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           amount: reservationData.total,
-          reservationId: reservation.reservation_code
+          reservationId: reservation.reservation_code,
         }),
       });
-      
+
       if (!paymentResponse.ok) {
-        throw new Error('Erro ao processar pagamento');
+        throw new Error("Erro ao processar pagamento");
       }
-      
+
       const paymentResult = await paymentResponse.json();
-      
+
       return {
         reservation,
-        payment: paymentResult
+        payment: paymentResult,
       };
     },
     onSuccess: (result) => {
@@ -149,10 +180,10 @@ export default function BookTable() {
         setMultibancoData({
           ...result.payment,
           reservationCode: result.reservation.reservation_code,
-          reservationId: result.reservation.id
+          reservationId: result.reservation.id,
         });
         setCurrentStep(4); // Ir para tela de pagamento Multibanco
-        
+
         toast({
           title: "Reserva Criada!",
           description: `Sua reserva ${result.reservation.reservation_code} foi criada. Complete o pagamento para confirmar.`,
@@ -161,15 +192,16 @@ export default function BookTable() {
         toast({
           title: "Erro no Pagamento",
           description: "Erro ao processar pagamento Multibanco.",
-          variant: 'destructive',
+          variant: "destructive",
         });
       }
     },
     onError: (error: any) => {
       toast({
         title: "Erro na API de Pagamento",
-        description: error.message || "Erro ao conectar com o serviço de pagamento.",
-        variant: 'destructive',
+        description:
+          error.message || "Erro ao conectar com o serviço de pagamento.",
+        variant: "destructive",
       });
     },
   });
@@ -185,24 +217,30 @@ export default function BookTable() {
     // Validar cada step antes de prosseguir
     if (currentStep === 1) {
       // Validar dados obrigatórios do step 1
-      const isValid = form.getValues('date') && form.getValues('time') && form.getValues('party_size') && form.getValues('table_id');
+      const isValid =
+        form.getValues("date") &&
+        form.getValues("time") &&
+        form.getValues("party_size") &&
+        form.getValues("table_id");
       if (!isValid) {
         toast({
           title: "Dados Incompletos",
-          description: "Por favor, preencha todos os campos obrigatórios antes de continuar.",
-          variant: 'destructive',
+          description:
+            "Por favor, preencha todos os campos obrigatórios antes de continuar.",
+          variant: "destructive",
         });
         return;
       }
     }
-    
+
     if (currentStep === 2) {
       // Validar se pelo menos um item foi selecionado
       if (selectedItems.length === 0) {
         toast({
           title: "Menu Não Selecionado",
-          description: "Por favor, selecione pelo menos um item do menu antes de continuar.",
-          variant: 'destructive',
+          description:
+            "Por favor, selecione pelo menos um item do menu antes de continuar.",
+          variant: "destructive",
         });
         return;
       }
@@ -210,7 +248,7 @@ export default function BookTable() {
 
     if (currentStep === 3) {
       // Verificar método de pagamento selecionado
-      if (selectedPaymentMethod === 'multibanco') {
+      if (selectedPaymentMethod === "multibanco") {
         // Criar reserva e processar pagamento Multibanco automaticamente
         const formData = form.getValues();
         const reservationData = {
@@ -218,14 +256,14 @@ export default function BookTable() {
           tableId: formData.table_id,
           partySize: formData.party_size,
           notes: formData.special_requests,
-          status: 'confirmed',
-          paymentMethod: 'multibanco',
-          paymentStatus: 'pending',
+          status: "confirmed",
+          paymentMethod: "multibanco",
+          paymentStatus: "pending",
           total: total,
           duration: 120,
-          selectedItems: selectedItems
+          selectedItems: selectedItems,
         };
-        
+
         processMultibancoMutation.mutate(reservationData);
         return;
       } else {
@@ -235,7 +273,7 @@ export default function BookTable() {
         return;
       }
     }
-    
+
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
@@ -248,13 +286,17 @@ export default function BookTable() {
   };
 
   const addMenuItem = (item: any) => {
-    const existingItem = selectedItems.find(selected => selected.id === item.id);
+    const existingItem = selectedItems.find(
+      (selected) => selected.id === item.id,
+    );
     if (existingItem) {
-      setSelectedItems(selectedItems.map(selected => 
-        selected.id === item.id 
-          ? { ...selected, quantity: selected.quantity + 1 }
-          : selected
-      ));
+      setSelectedItems(
+        selectedItems.map((selected) =>
+          selected.id === item.id
+            ? { ...selected, quantity: selected.quantity + 1 }
+            : selected,
+        ),
+      );
     } else {
       setSelectedItems([...selectedItems, { ...item, quantity: 1 }]);
     }
@@ -263,7 +305,7 @@ export default function BookTable() {
   // Função para obter todos os itens a partir da resposta organizada por categoria
   const getAllItems = () => {
     if (!menuByCategory) return [];
-    
+
     // Flatmap para extrair todos os itens de todas as categorias
     return menuByCategory.flatMap((categoryData: any) => categoryData.items);
   };
@@ -271,12 +313,12 @@ export default function BookTable() {
   // Organizar itens do menu por categoria usando o nome da categoria
   const getItemsByCategory = (categoryName: string) => {
     if (!menuByCategory) return [];
-    
+
     // Encontrar a categoria correspondente no menuByCategory
-    const categoryData = menuByCategory.find((catData: any) => 
-      catData.category?.name === categoryName
+    const categoryData = menuByCategory.find(
+      (catData: any) => catData.category?.name === categoryName,
     );
-    
+
     return categoryData ? categoryData.items : [];
   };
 
@@ -291,27 +333,32 @@ export default function BookTable() {
   };
 
   const removeMenuItem = (itemId: number) => {
-    setSelectedItems(selectedItems.filter(item => item.id !== itemId));
+    setSelectedItems(selectedItems.filter((item) => item.id !== itemId));
   };
 
   const updateQuantity = (itemId: number, quantity: number) => {
     if (quantity === 0) {
       removeMenuItem(itemId);
     } else {
-      setSelectedItems(selectedItems.map(item => 
-        item.id === itemId ? { ...item, quantity } : item
-      ));
+      setSelectedItems(
+        selectedItems.map((item) =>
+          item.id === itemId ? { ...item, quantity } : item,
+        ),
+      );
     }
   };
 
-  const total = selectedItems.reduce((sum, item) => sum + (item.price / 100) * item.quantity, 0);
+  const total = selectedItems.reduce(
+    (sum, item) => sum + (item.price / 100) * item.quantity,
+    0,
+  );
 
   const getStepColor = (step: number) => {
-    if (step === 1) return currentStep >= step ? 'brasil-green' : 'gray-300';
-    if (step === 2) return currentStep >= step ? 'brasil-yellow' : 'gray-300';
-    if (step === 3) return currentStep >= step ? 'brasil-blue' : 'gray-300';
-    if (step === 4) return currentStep >= step ? 'brasil-red' : 'gray-300';
-    return 'gray-300';
+    if (step === 1) return currentStep >= step ? "brasil-green" : "gray-300";
+    if (step === 2) return currentStep >= step ? "brasil-yellow" : "gray-300";
+    if (step === 3) return currentStep >= step ? "brasil-blue" : "gray-300";
+    if (step === 4) return currentStep >= step ? "brasil-red" : "gray-300";
+    return "gray-300";
   };
 
   return (
@@ -319,10 +366,12 @@ export default function BookTable() {
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-gray-800 font-montserrat">Nova Reserva</h1>
+          <h1 className="text-2xl font-bold text-gray-800 font-montserrat">
+            Nova Reserva
+          </h1>
           <Button
             variant="outline"
-            onClick={() => setLocation('/reservations')}
+            onClick={() => setLocation("/reservations")}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -334,45 +383,67 @@ export default function BookTable() {
         <div className="flex items-center justify-between mb-10">
           <div className="flex items-center flex-1">
             <div className="flex flex-col items-center">
-              <div className={`flex items-center justify-center w-10 h-10 text-lg font-bold rounded-full border-4 ${currentStep >= 1 ? 'bg-brasil-green border-brasil-green text-white' : 'bg-white border-gray-300 text-gray-300'}`}>
-                {currentStep > 1 ? <Check className="h-5 w-5" /> : '1'}
+              <div
+                className={`flex items-center justify-center w-10 h-10 text-lg font-bold rounded-full border-4 ${currentStep >= 1 ? "bg-brasil-green border-brasil-green text-white" : "bg-white border-gray-300 text-gray-300"}`}
+              >
+                {currentStep > 1 ? <Check className="h-5 w-5" /> : "1"}
               </div>
-              <span className={`mt-2 text-xs font-bold tracking-wide uppercase ${currentStep >= 1 ? 'text-brasil-green' : 'text-gray-300'}`}>
+              <span
+                className={`mt-2 text-xs font-bold tracking-wide uppercase ${currentStep >= 1 ? "text-brasil-green" : "text-gray-300"}`}
+              >
                 Data e Hora
               </span>
             </div>
-            <div className={`flex-1 h-1 mx-2 ${currentStep > 1 ? 'bg-brasil-green' : 'bg-gray-300'}`}></div>
+            <div
+              className={`flex-1 h-1 mx-2 ${currentStep > 1 ? "bg-brasil-green" : "bg-gray-300"}`}
+            ></div>
           </div>
 
           <div className="flex items-center flex-1">
             <div className="flex flex-col items-center">
-              <div className={`flex items-center justify-center w-10 h-10 text-lg font-bold rounded-full border-4 ${currentStep >= 2 ? 'bg-brasil-yellow border-brasil-yellow text-brasil-blue' : 'bg-white border-gray-300 text-gray-300'}`}>
-                {currentStep > 2 ? <Check className="h-5 w-5" /> : '2'}
+              <div
+                className={`flex items-center justify-center w-10 h-10 text-lg font-bold rounded-full border-4 ${currentStep >= 2 ? "bg-brasil-yellow border-brasil-yellow text-brasil-blue" : "bg-white border-gray-300 text-gray-300"}`}
+              >
+                {currentStep > 2 ? <Check className="h-5 w-5" /> : "2"}
               </div>
-              <span className={`mt-2 text-xs font-bold tracking-wide uppercase ${currentStep >= 2 ? 'text-brasil-yellow' : 'text-gray-300'}`}>
+              <span
+                className={`mt-2 text-xs font-bold tracking-wide uppercase ${currentStep >= 2 ? "text-brasil-yellow" : "text-gray-300"}`}
+              >
                 Menu
               </span>
             </div>
-            <div className={`flex-1 h-1 mx-2 ${currentStep > 2 ? 'bg-brasil-yellow' : 'bg-gray-300'}`}></div>
+            <div
+              className={`flex-1 h-1 mx-2 ${currentStep > 2 ? "bg-brasil-yellow" : "bg-gray-300"}`}
+            ></div>
           </div>
 
           <div className="flex items-center flex-1">
             <div className="flex flex-col items-center">
-              <div className={`flex items-center justify-center w-10 h-10 text-lg font-bold rounded-full border-4 ${currentStep >= 3 ? 'bg-brasil-blue border-brasil-blue text-white' : 'bg-white border-gray-300 text-gray-300'}`}>
-                {currentStep > 3 ? <Check className="h-5 w-5" /> : '3'}
+              <div
+                className={`flex items-center justify-center w-10 h-10 text-lg font-bold rounded-full border-4 ${currentStep >= 3 ? "bg-brasil-blue border-brasil-blue text-white" : "bg-white border-gray-300 text-gray-300"}`}
+              >
+                {currentStep > 3 ? <Check className="h-5 w-5" /> : "3"}
               </div>
-              <span className={`mt-2 text-xs font-bold tracking-wide uppercase ${currentStep >= 3 ? 'text-brasil-blue' : 'text-gray-300'}`}>
+              <span
+                className={`mt-2 text-xs font-bold tracking-wide uppercase ${currentStep >= 3 ? "text-brasil-blue" : "text-gray-300"}`}
+              >
                 Resumo
               </span>
             </div>
-            <div className={`flex-1 h-1 mx-2 ${currentStep > 3 ? 'bg-brasil-blue' : 'bg-gray-300'}`}></div>
+            <div
+              className={`flex-1 h-1 mx-2 ${currentStep > 3 ? "bg-brasil-blue" : "bg-gray-300"}`}
+            ></div>
           </div>
 
           <div className="flex flex-col items-center">
-            <div className={`flex items-center justify-center w-10 h-10 text-lg font-bold rounded-full border-4 ${currentStep >= 4 ? 'bg-brasil-red border-brasil-red text-white' : 'bg-white border-gray-300 text-gray-300'}`}>
+            <div
+              className={`flex items-center justify-center w-10 h-10 text-lg font-bold rounded-full border-4 ${currentStep >= 4 ? "bg-brasil-red border-brasil-red text-white" : "bg-white border-gray-300 text-gray-300"}`}
+            >
               4
             </div>
-            <span className={`mt-2 text-xs font-bold tracking-wide uppercase ${currentStep >= 4 ? 'text-brasil-red' : 'text-gray-300'}`}>
+            <span
+              className={`mt-2 text-xs font-bold tracking-wide uppercase ${currentStep >= 4 ? "text-brasil-red" : "text-gray-300"}`}
+            >
               Pagamento
             </span>
           </div>
@@ -381,8 +452,10 @@ export default function BookTable() {
         {/* Step Content */}
         <div className="bg-white rounded-xl shadow-lg p-8 flex-1">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col">
-              
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="h-full flex flex-col"
+            >
               {/* Step 1: Data e Hora */}
               {currentStep === 1 && (
                 <div className="flex-1">
@@ -390,19 +463,21 @@ export default function BookTable() {
                     <Calendar className="h-5 w-5" />
                     Escolha Data, Hora e Adicione Observações
                   </h2>
-                  
+
                   <div className="grid gap-6 md:grid-cols-2 mb-6">
                     <FormField
                       control={form.control}
                       name="date"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-semibold text-gray-700">Data da Reserva</FormLabel>
+                          <FormLabel className="font-semibold text-gray-700">
+                            Data da Reserva
+                          </FormLabel>
                           <FormControl>
                             <Input
                               type="date"
                               {...field}
-                              min={new Date().toISOString().split('T')[0]}
+                              min={new Date().toISOString().split("T")[0]}
                               className="border-2 border-brasil-green focus:ring-brasil-green"
                             />
                           </FormControl>
@@ -416,9 +491,14 @@ export default function BookTable() {
                       name="time"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-semibold text-gray-700">Horário</FormLabel>
+                          <FormLabel className="font-semibold text-gray-700">
+                            Horário
+                          </FormLabel>
                           <FormControl>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
                               <SelectTrigger className="border-2 border-brasil-green focus:ring-brasil-green">
                                 <SelectValue placeholder="Selecione o horário" />
                               </SelectTrigger>
@@ -447,19 +527,26 @@ export default function BookTable() {
                       name="party_size"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-semibold text-gray-700">Número de Pessoas</FormLabel>
+                          <FormLabel className="font-semibold text-gray-700">
+                            Número de Pessoas
+                          </FormLabel>
                           <FormControl>
-                            <Select 
-                              onValueChange={(value) => field.onChange(parseInt(value))} 
+                            <Select
+                              onValueChange={(value) =>
+                                field.onChange(parseInt(value))
+                              }
                               defaultValue={field.value?.toString()}
                             >
                               <SelectTrigger className="border-2 border-brasil-green focus:ring-brasil-green">
                                 <SelectValue placeholder="Quantas pessoas?" />
                               </SelectTrigger>
                               <SelectContent>
-                                {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(num => (
+                                {[
+                                  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                                  15, 16, 17, 18, 19, 20,
+                                ].map((num) => (
                                   <SelectItem key={num} value={num.toString()}>
-                                    {num} {num === 1 ? 'pessoa' : 'pessoas'}
+                                    {num} {num === 1 ? "pessoa" : "pessoas"}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -475,10 +562,14 @@ export default function BookTable() {
                       name="table_id"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-semibold text-gray-700">Mesa</FormLabel>
+                          <FormLabel className="font-semibold text-gray-700">
+                            Mesa
+                          </FormLabel>
                           <FormControl>
-                            <Select 
-                              onValueChange={(value) => field.onChange(parseInt(value))} 
+                            <Select
+                              onValueChange={(value) =>
+                                field.onChange(parseInt(value))
+                              }
                               defaultValue={field.value?.toString()}
                             >
                               <SelectTrigger className="border-2 border-brasil-green focus:ring-brasil-green">
@@ -486,8 +577,12 @@ export default function BookTable() {
                               </SelectTrigger>
                               <SelectContent>
                                 {availableTables.map((table: any) => (
-                                  <SelectItem key={table.id} value={table.id.toString()}>
-                                    Mesa {table.number} ({table.capacity} lugares)
+                                  <SelectItem
+                                    key={table.id}
+                                    value={table.id.toString()}
+                                  >
+                                    Mesa {table.number} ({table.capacity}{" "}
+                                    lugares)
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -505,7 +600,10 @@ export default function BookTable() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-semibold text-gray-700">
-                          Observações <span className="text-xs text-gray-400">(opcional)</span>
+                          Observações{" "}
+                          <span className="text-xs text-gray-400">
+                            (opcional)
+                          </span>
                         </FormLabel>
                         <FormControl>
                           <Textarea
@@ -537,40 +635,55 @@ export default function BookTable() {
               {/* Step 2: Menu */}
               {currentStep === 2 && (
                 <div className="flex-1 flex flex-col">
-                  <h2 className="mb-6 text-xl font-bold font-montserrat text-brasil-yellow">Selecione o que irá consumir</h2>
-                  
+                  <h2 className="mb-6 text-xl font-bold font-montserrat text-brasil-yellow">
+                    Selecione o que irá consumir
+                  </h2>
+
                   {/* Menu Tabs */}
                   <div className="flex items-center gap-2 overflow-x-auto border-b border-gray-200 mb-7 scrollbar-hide">
                     {categories.map((category: any, index: number) => {
                       // Mapear ícones baseado no nome da categoria
                       const getIcon = (name: string) => {
                         const lowerName = name.toLowerCase();
-                        if (lowerName.includes('entrada')) return 'fa-solid fa-leaf';
-                        if (lowerName.includes('principal') || lowerName.includes('prato')) return 'fa-solid fa-bowl-food';
-                        if (lowerName.includes('sobremesa')) return 'fa-regular fa-ice-cream';
-                        if (lowerName.includes('bebida')) return 'fa-solid fa-martini-glass-citrus';
-                        return 'fa-solid fa-utensils';
+                        if (lowerName.includes("entrada"))
+                          return "fa-solid fa-leaf";
+                        if (
+                          lowerName.includes("principal") ||
+                          lowerName.includes("prato")
+                        )
+                          return "fa-solid fa-bowl-food";
+                        if (lowerName.includes("sobremesa"))
+                          return "fa-regular fa-ice-cream";
+                        if (lowerName.includes("bebida"))
+                          return "fa-solid fa-martini-glass-citrus";
+                        return "fa-solid fa-utensils";
                       };
 
                       // Mapear cores baseado no nome da categoria
                       const getColor = (name: string) => {
                         const lowerName = name.toLowerCase();
-                        if (lowerName.includes('entrada')) return 'brasil-green';
-                        if (lowerName.includes('principal') || lowerName.includes('prato')) return 'brasil-blue';
-                        if (lowerName.includes('sobremesa')) return 'brasil-yellow';
-                        if (lowerName.includes('bebida')) return 'brasil-red';
-                        return 'brasil-green';
+                        if (lowerName.includes("entrada"))
+                          return "brasil-green";
+                        if (
+                          lowerName.includes("principal") ||
+                          lowerName.includes("prato")
+                        )
+                          return "brasil-blue";
+                        if (lowerName.includes("sobremesa"))
+                          return "brasil-yellow";
+                        if (lowerName.includes("bebida")) return "brasil-red";
+                        return "brasil-green";
                       };
 
                       const color = getColor(category.name);
                       const icon = getIcon(category.name);
 
                       return (
-                        <button 
+                        <button
                           key={category.id}
                           className={`flex items-center gap-2 px-6 py-2 font-bold bg-white border-b-4 rounded-t-lg font-montserrat transition ${
-                            activeCategory === category.name 
-                              ? `text-${color} border-${color}` 
+                            activeCategory === category.name
+                              ? `text-${color} border-${color}`
                               : `text-brasil-blue border-transparent hover:border-${color}`
                           }`}
                           onClick={() => setActiveCategory(category.name)}
@@ -590,77 +703,103 @@ export default function BookTable() {
                             <Utensils className="w-16 h-16 mb-4" />
                             <p className="text-lg">Carregando cardápio...</p>
                           </div>
-                        ) : activeCategory && (
-                          <div className="menu-category-tab">
-                            {/* Category Header */}
-                            <div className="flex items-center gap-2 mb-4">
-                              {(() => {
-                                const lowerName = activeCategory.toLowerCase();
-                                let icon = 'fa-solid fa-utensils';
-                                let color = 'brasil-green';
-                                
-                                if (lowerName.includes('entrada')) {
-                                  icon = 'fa-solid fa-leaf';
-                                  color = 'brasil-green';
-                                } else if (lowerName.includes('principal') || lowerName.includes('prato')) {
-                                  icon = 'fa-solid fa-bowl-food';
-                                  color = 'brasil-blue';
-                                } else if (lowerName.includes('sobremesa')) {
-                                  icon = 'fa-regular fa-ice-cream';
-                                  color = 'brasil-yellow';
-                                } else if (lowerName.includes('bebida')) {
-                                  icon = 'fa-solid fa-martini-glass-citrus';
-                                  color = 'brasil-red';
-                                }
-                                
-                                return (
-                                  <>
-                                    <i className={`text-xl ${icon} text-${color}`}></i>
-                                    <h3 className={`text-lg font-bold uppercase font-montserrat text-${color}`}>
-                                      {activeCategory}
-                                    </h3>
-                                  </>
-                                );
-                              })()}
-                            </div>
-                            
-                            {/* Menu Items Grid */}
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                              {getItemsByCategory(activeCategory).map((item: any) => {
-                                const categoryColor = 
-                                  activeCategory === 'Entradas' ? 'brasil-green' :
-                                  activeCategory === 'Pratos Principais' ? 'brasil-blue' :
-                                  activeCategory === 'Sobremesas' ? 'brasil-yellow' :
-                                  'brasil-red';
-                                
-                                return (
-                                  <div 
-                                    key={item.id} 
-                                    className={`bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-100 hover:border-${categoryColor} transition group min-w-[220px] cursor-pointer hover:shadow-md transform hover:scale-[1.02]`}
-                                    onClick={() => addMenuItem(item)}
-                                  >
-                                    <img 
-                                      src={item.image_url || item.image || 'https://storage.googleapis.com/uxpilot-auth.appspot.com/food/default.jpg'} 
-                                      className={`object-cover rounded-lg w-14 h-14 ring-2 ring-${categoryColor} ring-opacity-20 group-hover:ring-opacity-40`}
-                                      alt={item.name}
-                                    />
-                                    <div className="flex-1">
-                                      <h4 className="text-base font-bold text-gray-800 group-hover:text-gray-900">{item.name}</h4>
-                                      <span className="block text-xs text-gray-500 group-hover:text-gray-600">{item.description || 'Delicioso prato do nosso restaurante.'}</span>
-                                      <div className="flex items-center justify-between mt-1">
-                                        <span className={`text-base font-bold text-${categoryColor} group-hover:text-opacity-80`}>
-                                          {formatPrice(item.price)}
-                                        </span>
-                                        <div className="px-2 py-1 text-xs font-bold rounded-lg bg-brasil-yellow text-brasil-blue group-hover:bg-yellow-400 transition">
-                                          <i className="fa-solid fa-plus"></i>
+                        ) : (
+                          activeCategory && (
+                            <div className="menu-category-tab">
+                              {/* Category Header */}
+                              <div className="flex items-center gap-2 mb-4">
+                                {(() => {
+                                  const lowerName =
+                                    activeCategory.toLowerCase();
+                                  let icon = "fa-solid fa-utensils";
+                                  let color = "brasil-green";
+
+                                  if (lowerName.includes("entrada")) {
+                                    icon = "fa-solid fa-leaf";
+                                    color = "brasil-green";
+                                  } else if (
+                                    lowerName.includes("principal") ||
+                                    lowerName.includes("prato")
+                                  ) {
+                                    icon = "fa-solid fa-bowl-food";
+                                    color = "brasil-blue";
+                                  } else if (lowerName.includes("sobremesa")) {
+                                    icon = "fa-regular fa-ice-cream";
+                                    color = "brasil-yellow";
+                                  } else if (lowerName.includes("bebida")) {
+                                    icon = "fa-solid fa-martini-glass-citrus";
+                                    color = "brasil-red";
+                                  }
+
+                                  return (
+                                    <>
+                                      <i
+                                        className={`text-xl ${icon} text-${color}`}
+                                      ></i>
+                                      <h3
+                                        className={`text-lg font-bold uppercase font-montserrat text-${color}`}
+                                      >
+                                        {activeCategory}
+                                      </h3>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+
+                              {/* Menu Items Grid */}
+                              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                {getItemsByCategory(activeCategory).map(
+                                  (item: any) => {
+                                    const categoryColor =
+                                      activeCategory === "Entradas"
+                                        ? "brasil-green"
+                                        : activeCategory === "Pratos Principais"
+                                          ? "brasil-blue"
+                                          : activeCategory === "Sobremesas"
+                                            ? "brasil-yellow"
+                                            : "brasil-red";
+
+                                    return (
+                                      <div
+                                        key={item.id}
+                                        className={`bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-100 hover:border-${categoryColor} transition group min-w-[220px] cursor-pointer hover:shadow-md transform hover:scale-[1.02]`}
+                                        onClick={() => addMenuItem(item)}
+                                      >
+                                        <img
+                                          src={
+                                            item.image_url ||
+                                            item.image ||
+                                            "https://storage.googleapis.com/uxpilot-auth.appspot.com/food/default.jpg"
+                                          }
+                                          className={`object-cover rounded-lg w-14 h-14 ring-2 ring-${categoryColor} ring-opacity-20 group-hover:ring-opacity-40`}
+                                          alt={item.name}
+                                        />
+                                        <div className="flex-1">
+                                          <h4 className="text-base font-bold text-gray-800 group-hover:text-gray-900">
+                                            {item.name}
+                                          </h4>
+                                          <span className="block text-xs text-gray-500 group-hover:text-gray-600">
+                                            {item.description ||
+                                              "Delicioso prato do nosso restaurante."}
+                                          </span>
+                                          <div className="flex items-center justify-between mt-1">
+                                            <span
+                                              className={`text-base font-bold text-${categoryColor} group-hover:text-opacity-80`}
+                                            >
+                                              {formatPrice(item.price)}
+                                            </span>
+                                            <div className="px-2 py-1 text-xs font-bold rounded-lg bg-brasil-yellow text-brasil-blue group-hover:bg-yellow-400 transition">
+                                              <i className="fa-solid fa-plus"></i>
+                                            </div>
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                                    );
+                                  },
+                                )}
+                              </div>
                             </div>
-                          </div>
+                          )
                         )}
                       </div>
                     </div>
@@ -669,33 +808,49 @@ export default function BookTable() {
                     <div className="w-full md:w-[340px] shrink-0">
                       <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-10 min-h-[320px] border-2 border-brasil-yellow">
                         <h4 className="flex items-center gap-2 mb-3 text-lg font-bold text-brasil-yellow font-montserrat">
-                          <i className="fa-solid fa-clipboard-list"></i> Meu Pedido
+                          <i className="fa-solid fa-clipboard-list"></i> Meu
+                          Pedido
                         </h4>
-                        
+
                         <div className="space-y-3 min-h-[48px]">
                           {selectedItems.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
                               <i className="fas fa-utensils text-3xl text-gray-300 mb-3"></i>
                               <p>Nenhum item selecionado</p>
-                              <p className="text-sm">Adicione pratos do cardápio</p>
+                              <p className="text-sm">
+                                Adicione pratos do cardápio
+                              </p>
                             </div>
                           ) : (
                             selectedItems.map((item) => (
-                              <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <div
+                                key={item.id}
+                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                              >
                                 <div className="flex-1">
-                                  <h4 className="font-semibold text-sm">{item.name}</h4>
-                                  <p className="text-brasil-green font-bold">{formatPrice(item.price)}</p>
+                                  <h4 className="font-semibold text-sm">
+                                    {item.name}
+                                  </h4>
+                                  <p className="text-brasil-green font-bold">
+                                    {formatPrice(item.price)}
+                                  </p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <button 
-                                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                  <button
+                                    onClick={() =>
+                                      updateQuantity(item.id, item.quantity - 1)
+                                    }
                                     className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition"
                                   >
                                     <i className="fas fa-minus text-xs"></i>
                                   </button>
-                                  <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                                  <button 
-                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                  <span className="w-8 text-center font-semibold">
+                                    {item.quantity}
+                                  </span>
+                                  <button
+                                    onClick={() =>
+                                      updateQuantity(item.id, item.quantity + 1)
+                                    }
                                     className="w-6 h-6 bg-brasil-yellow rounded-full flex items-center justify-center hover:bg-brasil-yellow/90 transition"
                                   >
                                     <i className="fas fa-plus text-xs text-brasil-blue"></i>
@@ -705,23 +860,27 @@ export default function BookTable() {
                             ))
                           )}
                         </div>
-                        
+
                         <hr className="my-4 border-dashed border-brasil-yellow" />
-                        
+
                         <div className="flex items-center justify-between mb-3">
-                          <span className="font-semibold text-gray-700">Total</span>
-                          <span className="text-2xl font-extrabold text-brasil-green">€ {total.toFixed(2)}</span>
+                          <span className="font-semibold text-gray-700">
+                            Total
+                          </span>
+                          <span className="text-2xl font-extrabold text-brasil-green">
+                            € {total.toFixed(2)}
+                          </span>
                         </div>
-                        
+
                         <div className="flex justify-between gap-2 mt-6">
-                          <button 
+                          <button
                             onClick={prevStep}
                             className="flex items-center justify-center w-1/2 px-5 py-3 font-bold text-gray-700 transition bg-gray-200 rounded-lg hover:bg-gray-300"
                           >
                             <i className="mr-2 fa-solid fa-arrow-left"></i>
                             Voltar
                           </button>
-                          <button 
+                          <button
                             onClick={nextStep}
                             className="flex items-center justify-center w-1/2 py-3 text-lg font-bold transition rounded-lg shadow bg-brasil-yellow text-brasil-blue px-7 hover:bg-yellow-400"
                           >
@@ -742,36 +901,44 @@ export default function BookTable() {
                     <i className="fa-solid fa-clipboard-list text-brasil-blue"></i>
                     Resumo do Pedido
                   </h2>
-                  
+
                   <div className="flex flex-col md:flex-row gap-9">
                     {/* Order Summary Card */}
                     <div className="flex-1">
                       <div className="bg-white rounded-2xl shadow-xl border-2 border-brasil-blue p-6 mb-7 min-h-[320px]">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-montserrat text-lg font-bold text-brasil-blue flex items-center gap-2">
-                            <i className="fa-solid fa-utensils"></i> Itens Selecionados
+                            <i className="fa-solid fa-utensils"></i> Itens
+                            Selecionados
                           </h3>
-                          <button 
+                          <button
                             onClick={() => setCurrentStep(2)}
                             className="text-brasil-green hover:underline font-bold text-sm flex items-center gap-1"
                           >
                             <i className="fa-solid fa-pen-to-square"></i> Editar
                           </button>
                         </div>
-                        
+
                         <div className="divide-y divide-gray-200 mb-4">
                           {selectedItems.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
                               <i className="fa-solid fa-utensils text-3xl text-gray-300 mb-3"></i>
                               <p>Nenhum item selecionado</p>
-                              <p className="text-sm">Volte para adicionar pratos</p>
+                              <p className="text-sm">
+                                Volte para adicionar pratos
+                              </p>
                             </div>
                           ) : (
                             selectedItems.map((item) => (
-                              <div key={item.id} className="flex items-center justify-between py-3">
+                              <div
+                                key={item.id}
+                                className="flex items-center justify-between py-3"
+                              >
                                 <span className="font-montserrat font-semibold text-gray-700 flex-1">
-                                  {item.name} 
-                                  <span className="text-xs text-gray-400 font-normal ml-2">x{item.quantity}</span>
+                                  {item.name}
+                                  <span className="text-xs text-gray-400 font-normal ml-2">
+                                    x{item.quantity}
+                                  </span>
                                 </span>
                                 <span className="text-gray-600 font-bold">
                                   {formatPrice(item.price * item.quantity)}
@@ -780,21 +947,32 @@ export default function BookTable() {
                             ))
                           )}
                         </div>
-                        
+
                         <div className="flex justify-between mt-5 mb-0 items-center">
-                          <span className="text-gray-700 font-bold text-base">Total</span>
-                          <span className="text-2xl font-extrabold text-brasil-green">€ {total.toFixed(2)}</span>
+                          <span className="text-gray-700 font-bold text-base">
+                            Total
+                          </span>
+                          <span className="text-2xl font-extrabold text-brasil-green">
+                            € {total.toFixed(2)}
+                          </span>
                         </div>
                       </div>
-                      
+
                       {/* Política de Cancelamento */}
                       <div className="bg-blue-50 rounded-2xl border-l-4 border-brasil-blue px-6 py-4 flex items-start gap-4 shadow-sm mb-5">
                         <i className="fa-solid fa-circle-info text-brasil-blue text-xl mt-1"></i>
                         <div>
-                          <div className="text-brasil-blue font-semibold mb-1">Política de Cancelamento</div>
+                          <div className="text-brasil-blue font-semibold mb-1">
+                            Política de Cancelamento
+                          </div>
                           <div className="text-gray-700 text-sm">
-                            Cancelamentos até 2 horas antes do horário reservado são gratuitos. Após isso, poderá ser aplicada uma taxa. 
-                            Consulte <span className="underline text-brasil-blue font-bold cursor-pointer">detalhes</span>.
+                            Cancelamentos até 2 horas antes do horário reservado
+                            são gratuitos. Após isso, poderá ser aplicada uma
+                            taxa. Consulte{" "}
+                            <span className="underline text-brasil-blue font-bold cursor-pointer">
+                              detalhes
+                            </span>
+                            .
                           </div>
                         </div>
                       </div>
@@ -802,34 +980,65 @@ export default function BookTable() {
                       {/* Detalhes da Reserva */}
                       <div className="bg-white rounded-2xl shadow-xl border-2 border-brasil-yellow p-6 mb-5">
                         <h4 className="font-montserrat text-lg font-bold text-brasil-yellow mb-4 flex items-center gap-2">
-                          <i className="fa-solid fa-calendar-check text-brasil-yellow"></i> Detalhes da Reserva
+                          <i className="fa-solid fa-calendar-check text-brasil-yellow"></i>{" "}
+                          Detalhes da Reserva
                         </h4>
-                        
+
                         <div className="space-y-3">
                           <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                            <span className="font-medium text-gray-700">Data:</span>
-                            <span className="font-semibold">{form.watch('date') ? new Date(form.watch('date')).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                            <span className="font-medium text-gray-700">
+                              Data:
+                            </span>
+                            <span className="font-semibold">
+                              {form.watch("date")
+                                ? new Date(
+                                    form.watch("date"),
+                                  ).toLocaleDateString("pt-BR")
+                                : "N/A"}
+                            </span>
                           </div>
-                          
+
                           <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                            <span className="font-medium text-gray-700">Horário:</span>
-                            <span className="font-semibold">{form.watch('time') || 'N/A'}</span>
+                            <span className="font-medium text-gray-700">
+                              Horário:
+                            </span>
+                            <span className="font-semibold">
+                              {form.watch("time") || "N/A"}
+                            </span>
                           </div>
-                          
+
                           <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                            <span className="font-medium text-gray-700">Pessoas:</span>
-                            <span className="font-semibold">{form.watch('party_size')} {form.watch('party_size') === 1 ? 'pessoa' : 'pessoas'}</span>
+                            <span className="font-medium text-gray-700">
+                              Pessoas:
+                            </span>
+                            <span className="font-semibold">
+                              {form.watch("party_size")}{" "}
+                              {form.watch("party_size") === 1
+                                ? "pessoa"
+                                : "pessoas"}
+                            </span>
                           </div>
-                          
+
                           <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                            <span className="font-medium text-gray-700">Mesa:</span>
-                            <span className="font-semibold">Mesa {availableTables.find((t: any) => t.id === form.watch('table_id'))?.number || 'N/A'}</span>
+                            <span className="font-medium text-gray-700">
+                              Mesa:
+                            </span>
+                            <span className="font-semibold">
+                              Mesa{" "}
+                              {availableTables.find(
+                                (t: any) => t.id === form.watch("table_id"),
+                              )?.number || "N/A"}
+                            </span>
                           </div>
-                          
-                          {form.watch('special_requests') && (
+
+                          {form.watch("special_requests") && (
                             <div className="p-3 bg-gray-50 rounded-lg">
-                              <span className="font-medium text-gray-700 block mb-1">Observações:</span>
-                              <p className="text-sm text-gray-600">{form.watch('special_requests')}</p>
+                              <span className="font-medium text-gray-700 block mb-1">
+                                Observações:
+                              </span>
+                              <p className="text-sm text-gray-600">
+                                {form.watch("special_requests")}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -841,69 +1050,82 @@ export default function BookTable() {
                       <div className="bg-white rounded-2xl shadow-xl border-2 border-brasil-yellow p-7 min-h-[410px] flex flex-col justify-between">
                         <div>
                           <h4 className="font-montserrat text-lg font-bold text-brasil-yellow mb-4 flex items-center gap-2">
-                            <i className="fa-solid fa-lock text-brasil-yellow"></i> Selecione o método de pagamento
+                            <i className="fa-solid fa-lock text-brasil-yellow"></i>{" "}
+                            Selecione o método de pagamento
                           </h4>
-                          
+
                           <div className="space-y-4">
                             <label className="flex items-center gap-4 cursor-pointer border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-brasil-green transition focus-within:border-brasil-green">
-                              <input 
-                                type="radio" 
-                                name="payment-method" 
-                                value="card" 
-                                className="hidden peer" 
-                                checked={selectedPaymentMethod === 'card'}
-                                onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                              <input
+                                type="radio"
+                                name="payment-method"
+                                value="card"
+                                className="hidden peer"
+                                checked={selectedPaymentMethod === "card"}
+                                onChange={(e) =>
+                                  setSelectedPaymentMethod(e.target.value)
+                                }
                               />
                               <span className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200 peer-checked:ring-2 peer-checked:ring-brasil-green">
                                 <i className="fa-solid fa-credit-card text-brasil-green text-2xl"></i>
                               </span>
-                              <span className="flex-1 text-gray-800 font-bold font-montserrat">Cartão</span>
+                              <span className="flex-1 text-gray-800 font-bold font-montserrat">
+                                Cartão
+                              </span>
                               <i className="fa-solid fa-check text-brasil-green opacity-0 peer-checked:opacity-100 transition"></i>
                             </label>
-                            
+
                             <label className="flex items-center gap-4 cursor-pointer border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-brasil-blue transition focus-within:border-brasil-blue">
-                              <input 
-                                type="radio" 
-                                name="payment-method" 
-                                value="multibanco" 
+                              <input
+                                type="radio"
+                                name="payment-method"
+                                value="multibanco"
                                 className="hidden peer"
-                                checked={selectedPaymentMethod === 'multibanco'}
-                                onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                                checked={selectedPaymentMethod === "multibanco"}
+                                onChange={(e) =>
+                                  setSelectedPaymentMethod(e.target.value)
+                                }
                               />
                               <span className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200 peer-checked:ring-2 peer-checked:ring-brasil-blue">
                                 <i className="fa-solid fa-building-columns text-brasil-blue text-2xl"></i>
                               </span>
-                              <span className="flex-1 text-gray-800 font-bold font-montserrat">Multibanco</span>
+                              <span className="flex-1 text-gray-800 font-bold font-montserrat">
+                                Multibanco
+                              </span>
                               <i className="fa-solid fa-check text-brasil-blue opacity-0 peer-checked:opacity-100 transition"></i>
                             </label>
-                            
+
                             <label className="flex items-center gap-4 cursor-pointer border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-brasil-red transition focus-within:border-brasil-red">
-                              <input 
-                                type="radio" 
-                                name="payment-method" 
-                                value="mbway" 
+                              <input
+                                type="radio"
+                                name="payment-method"
+                                value="mbway"
                                 className="hidden peer"
-                                checked={selectedPaymentMethod === 'mbway'}
-                                onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                                checked={selectedPaymentMethod === "mbway"}
+                                onChange={(e) =>
+                                  setSelectedPaymentMethod(e.target.value)
+                                }
                               />
                               <span className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200 peer-checked:ring-2 peer-checked:ring-brasil-red">
                                 <i className="fa-solid fa-mobile-screen-button text-brasil-red text-2xl"></i>
                               </span>
-                              <span className="flex-1 text-gray-800 font-bold font-montserrat">MB Way</span>
+                              <span className="flex-1 text-gray-800 font-bold font-montserrat">
+                                MB Way
+                              </span>
                               <i className="fa-solid fa-check text-brasil-red opacity-0 peer-checked:opacity-100 transition"></i>
                             </label>
                           </div>
                         </div>
-                        
+
                         <div className="flex justify-between mt-9 gap-2">
-                          <button 
+                          <button
                             onClick={prevStep}
                             className="bg-gray-200 text-gray-700 font-bold px-5 py-3 rounded-lg hover:bg-gray-300 transition flex items-center w-1/2 justify-center"
                           >
                             <i className="fa-solid fa-arrow-left mr-2"></i>
                             Voltar
                           </button>
-                          <button 
+                          <button
                             onClick={nextStep}
                             disabled={processMultibancoMutation.isPending}
                             className="bg-brasil-yellow text-brasil-blue font-bold px-7 py-3 rounded-lg shadow hover:bg-yellow-400 transition text-lg flex items-center w-1/2 justify-center disabled:opacity-50"
@@ -922,10 +1144,11 @@ export default function BookTable() {
                           </button>
                         </div>
                       </div>
-                      
+
                       <div className="flex flex-col items-center text-xs text-gray-500 mt-4 gap-1">
                         <i className="fa-solid fa-shield-halved text-brasil-green"></i>
-                        Ambiente seguro. Todos os pagamentos são protegidos e criptografados.
+                        Ambiente seguro. Todos os pagamentos são protegidos e
+                        criptografados.
                       </div>
                     </div>
                   </div>
@@ -933,29 +1156,50 @@ export default function BookTable() {
               )}
 
               {/* Step 4: Pagamento Multibanco ou Agradecimento */}
-              {currentStep === 4 && selectedPaymentMethod === 'multibanco' && (
+              {currentStep === 4 && selectedPaymentMethod === "multibanco" && (
                 <div className="w-full flex flex-col lg:flex-row items-stretch gap-8 p-8">
                   {/* Detalhes da Reserva */}
                   <section className="flex-1 bg-white rounded-2xl shadow-lg p-6">
                     <h2 className="font-montserrat text-lg font-bold text-brasil-blue mb-6 flex items-center">
-                      <i className="fa-solid fa-receipt text-brasil-yellow mr-3"></i> Detalhes da Reserva
+                      <i className="fa-solid fa-receipt text-brasil-yellow mr-3"></i>{" "}
+                      Detalhes da Reserva
                     </h2>
                     <ul className="space-y-5">
                       <li className="flex justify-between items-center">
-                        <span className="text-gray-600 font-semibold font-montserrat">Restaurante</span>
-                        <span className="text-gray-800 font-bold font-montserrat text-right">Opa que delicia</span>
+                        <span className="text-gray-600 font-semibold font-montserrat">
+                          Restaurante
+                        </span>
+                        <span className="text-gray-800 font-bold font-montserrat text-right">
+                          Opa que delicia
+                        </span>
                       </li>
                       <li className="flex justify-between items-center">
-                        <span className="text-gray-600 font-semibold font-montserrat">Número de Pessoas</span>
-                        <span className="text-gray-800 font-bold font-montserrat text-right">{form.watch('party_size')}</span>
+                        <span className="text-gray-600 font-semibold font-montserrat">
+                          Número de Pessoas
+                        </span>
+                        <span className="text-gray-800 font-bold font-montserrat text-right">
+                          {form.watch("party_size")}
+                        </span>
                       </li>
                       <li className="flex justify-between items-center">
-                        <span className="text-gray-600 font-semibold font-montserrat">Mesa/Área</span>
-                        <span className="text-gray-800 font-bold font-montserrat text-right">Mesa {availableTables.find((t: any) => t.id === form.watch('table_id'))?.number || 'N/A'}</span>
+                        <span className="text-gray-600 font-semibold font-montserrat">
+                          Mesa/Área
+                        </span>
+                        <span className="text-gray-800 font-bold font-montserrat text-right">
+                          Mesa{" "}
+                          {availableTables.find(
+                            (t: any) => t.id === form.watch("table_id"),
+                          )?.number || "N/A"}
+                        </span>
                       </li>
                       <li className="flex flex-col md:flex-row md:justify-between md:items-center">
-                        <span className="text-gray-600 font-semibold font-montserrat mb-2 md:mb-0">Observações</span>
-                        <span className="text-gray-800 font-medium font-opensans text-right md:w-3/5">{form.watch('special_requests') || 'Nenhuma observação'}</span>
+                        <span className="text-gray-600 font-semibold font-montserrat mb-2 md:mb-0">
+                          Observações
+                        </span>
+                        <span className="text-gray-800 font-medium font-opensans text-right md:w-3/5">
+                          {form.watch("special_requests") ||
+                            "Nenhuma observação"}
+                        </span>
                       </li>
                     </ul>
                   </section>
@@ -965,58 +1209,75 @@ export default function BookTable() {
                     <div>
                       <div className="flex items-center justify-between mb-4">
                         <h2 className="font-montserrat text-lg font-bold text-brasil-blue flex items-center">
-                          <i className="fa-solid fa-building-columns text-brasil-yellow mr-3"></i>Pagamento - Multibanco
+                          <i className="fa-solid fa-building-columns text-brasil-yellow mr-3"></i>
+                          Pagamento - Multibanco
                         </h2>
                         <span className="inline-flex items-center px-3 py-1 rounded-full bg-brasil-yellow text-brasil-blue font-bold text-xs">
-                          <i className="fa-solid fa-circle-dot mr-2 text-xs"></i>Em aberto
+                          <i className="fa-solid fa-circle-dot mr-2 text-xs"></i>
+                          Em aberto
                         </span>
                       </div>
                       <div className="flex items-center mb-6">
                         <i className="fa-solid fa-hourglass-half text-brasil-red mr-2 text-lg"></i>
-                        <span className="font-montserrat font-semibold text-brasil-red text-lg">30:00</span>
-                        <span className="ml-2 text-gray-500 text-sm">(tempo para pagamento)</span>
+                        <span className="font-montserrat font-semibold text-brasil-red text-lg">
+                          30:00
+                        </span>
+                        <span className="ml-2 text-gray-500 text-sm">
+                          (tempo para pagamento)
+                        </span>
                       </div>
                       <div className="mb-5">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="font-montserrat text-gray-600 font-semibold">Entidade:</span>
+                          <span className="font-montserrat text-gray-600 font-semibold">
+                            Entidade:
+                          </span>
                           <span className="font-montserrat text-gray-900 font-bold text-right">
-                            {multibancoData?.entity || 'Carregando...'}
+                            {multibancoData?.entity || "Carregando..."}
                           </span>
                         </div>
                         <div className="flex justify-between items-center mb-2">
-                          <span className="font-montserrat text-gray-600 font-semibold">Referência:</span>
+                          <span className="font-montserrat text-gray-600 font-semibold">
+                            Referência:
+                          </span>
                           <span className="font-montserrat text-gray-900 font-bold text-right">
-                            {multibancoData?.reference || 'Carregando...'}
+                            {multibancoData?.reference || "Carregando..."}
                           </span>
                         </div>
                         <div className="flex justify-between items-center mb-2">
-                          <span className="font-montserrat text-gray-600 font-semibold">Valor total:</span>
+                          <span className="font-montserrat text-gray-600 font-semibold">
+                            Valor total:
+                          </span>
                           <span className="font-montserrat text-brasil-green font-bold text-xl text-right">
-                            € {multibancoData?.amount?.toFixed(2) || total.toFixed(2)}
+                            €{" "}
+                            {multibancoData?.amount?.toFixed(2) ||
+                              total.toFixed(2)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center mb-2 pt-2 border-t border-gray-200">
-                          <span className="font-montserrat text-gray-600 font-semibold">Código de Reserva:</span>
+                          <span className="font-montserrat text-gray-600 font-semibold">
+                            Código de Reserva:
+                          </span>
                           <span className="font-montserrat text-brasil-blue font-bold text-right">
-                            {multibancoData?.reservationCode || 'Gerando...'}
+                            {multibancoData?.reservationCode || "Gerando..."}
                           </span>
                         </div>
                       </div>
                       <div className="bg-brasil-blue bg-opacity-5 border border-brasil-blue rounded-xl p-4 mb-4 flex items-start">
                         <i className="fa-solid fa-info-circle text-brasil-blue mr-3 mt-1"></i>
-                        <p className="text-sm text-brasil-blue font-montserrat font-semibold">
-                          Use estes dados para realizar o pagamento através do Multibanco (ATM) ou Homebanking.
+                        <p className="text-sm text-brasil-yellow font-montserrat font-semibold">
+                          Use estes dados para realizar o pagamento através do
+                          Multibanco (ATM) ou Homebanking.
                         </p>
                       </div>
                     </div>
                     <div className="flex flex-col gap-3">
-                      <button 
-                        onClick={() => setLocation('/reservations')}
+                      <button
+                        onClick={() => setLocation("/reservations")}
                         className="w-full py-3 rounded-lg bg-brasil-green text-white font-montserrat font-bold text-base shadow hover:bg-brasil-yellow hover:text-brasil-blue transition"
                       >
                         Ver Minhas Reservas
                       </button>
-                      <button 
+                      <button
                         onClick={() => setCurrentStep(3)}
                         className="w-full py-3 rounded-lg bg-gray-400 text-white font-montserrat font-bold text-base shadow hover:bg-gray-500 transition"
                       >
@@ -1034,77 +1295,103 @@ export default function BookTable() {
                     <div className="bg-brasil-green rounded-full w-24 h-24 flex items-center justify-center mb-6 shadow-md border-8 border-brasil-yellow animate-bounce">
                       <i className="fa-solid fa-check text-white text-5xl"></i>
                     </div>
-                    
+
                     <h2 className="text-3xl md:text-4xl font-bold font-montserrat text-brasil-green mb-2 text-center">
                       Obrigado pela sua reserva!
                     </h2>
-                    
+
                     <p className="text-lg text-gray-700 font-semibold mb-4 text-center max-w-xl">
-                      Sua reserva foi confirmada com sucesso! Estamos ansiosos para recebê-lo no <span className="text-brasil-blue font-bold">Opa que delicia</span> e proporcionar uma experiência única de sabores brasileiros.
+                      Sua reserva foi confirmada com sucesso! Estamos ansiosos
+                      para recebê-lo no{" "}
+                      <span className="text-brasil-blue font-bold">
+                        Opa que delicia
+                      </span>{" "}
+                      e proporcionar uma experiência única de sabores
+                      brasileiros.
                     </p>
-                    
+
                     <div className="flex flex-col items-center gap-2 mb-5">
                       <div className="flex items-center gap-2 text-brasil-blue text-base font-semibold">
                         <i className="fa-solid fa-calendar-days"></i>
-                        <span>{form.watch('date') ? new Date(form.watch('date')).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                        <span>
+                          {form.watch("date")
+                            ? new Date(form.watch("date")).toLocaleDateString(
+                                "pt-BR",
+                              )
+                            : "N/A"}
+                        </span>
                         <span className="mx-1">|</span>
                         <i className="fa-solid fa-clock"></i>
-                        <span>{form.watch('time') || 'N/A'}</span>
+                        <span>{form.watch("time") || "N/A"}</span>
                         <span className="mx-1">|</span>
                         <i className="fa-solid fa-users"></i>
-                        <span>{form.watch('party_size')} {form.watch('party_size') === 1 ? 'pessoa' : 'pessoas'}</span>
+                        <span>
+                          {form.watch("party_size")}{" "}
+                          {form.watch("party_size") === 1
+                            ? "pessoa"
+                            : "pessoas"}
+                        </span>
                       </div>
-                      
-                      {form.watch('special_requests') && (
+
+                      {form.watch("special_requests") && (
                         <div className="flex items-center gap-2 text-brasil-green text-base font-medium">
                           <i className="fa-solid fa-comment"></i>
-                          <span>{form.watch('special_requests')}</span>
+                          <span>{form.watch("special_requests")}</span>
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="bg-brasil-yellow/10 border-l-4 border-brasil-yellow p-4 rounded-xl flex flex-col items-center mb-4 max-w-xl">
                       <div className="flex items-center gap-2 text-brasil-blue font-bold text-base mb-1">
                         <i className="fa-solid fa-envelope-open-text"></i>
                         Confirmação enviada por e-mail!
                       </div>
                       <div className="text-gray-700 text-sm text-center max-w-xs">
-                        Você receberá todos os detalhes da sua reserva no seu e-mail cadastrado. Se precisar alterar ou cancelar, acesse <span className="underline text-brasil-blue cursor-pointer">Minhas Reservas</span>.
+                        Você receberá todos os detalhes da sua reserva no seu
+                        e-mail cadastrado. Se precisar alterar ou cancelar,
+                        acesse{" "}
+                        <span className="underline text-brasil-blue cursor-pointer">
+                          Minhas Reservas
+                        </span>
+                        .
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-row flex-wrap gap-4 mt-2 mb-6">
-                      <button 
-                        onClick={() => window.location.href = '/'}
+                      <button
+                        onClick={() => (window.location.href = "/")}
                         className="bg-brasil-green text-white font-bold px-8 py-3 rounded-lg shadow-lg hover:bg-emerald-700 transition flex items-center gap-2 text-lg"
                       >
                         <i className="fa-solid fa-house"></i>
                         Ir para Dashboard
                       </button>
-                      <button 
-                        onClick={() => window.location.href = '/reservations'}
+                      <button
+                        onClick={() => (window.location.href = "/reservations")}
                         className="bg-brasil-yellow text-brasil-blue font-bold px-8 py-3 rounded-lg shadow-lg hover:bg-yellow-400 transition flex items-center gap-2 text-lg"
                       >
                         <i className="fa-solid fa-calendar-check"></i>
                         Ver Minhas Reservas
                       </button>
-                      <button 
-                        onClick={() => window.location.href = '/menu'}
+                      <button
+                        onClick={() => (window.location.href = "/menu")}
                         className="bg-brasil-blue text-white font-bold px-8 py-3 rounded-lg shadow-lg hover:bg-blue-900 transition flex items-center gap-2 text-lg"
                       >
                         <i className="fa-solid fa-utensils"></i>
                         Explorar Cardápio
                       </button>
                     </div>
-                    
+
                     <div className="flex flex-col items-center gap-1 text-brasil-green mt-2">
-                      <span className="font-montserrat text-lg font-bold">Até breve! 😃</span>
-                      <span className="text-sm text-gray-600">Aproveite o melhor da culinária brasileira.</span>
+                      <span className="font-montserrat text-lg font-bold">
+                        Até breve! 😃
+                      </span>
+                      <span className="text-sm text-gray-600">
+                        Aproveite o melhor da culinária brasileira.
+                      </span>
                     </div>
                   </div>
                 </div>
               )}
-
             </form>
           </Form>
         </div>
