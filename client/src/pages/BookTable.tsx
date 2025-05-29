@@ -64,8 +64,8 @@ export default function BookTable() {
     queryKey: ['/api/menu-items'],
   });
 
-  // Mutation para criar reserva
-  const createReservationMutation = useMutation({
+  // Mutation para finalizar reserva
+  const finalizeReservationMutation = useMutation({
     mutationFn: async (data: ReservationForm) => {
       const fullDateTime = `${data.date} ${data.time}`;
       
@@ -78,32 +78,62 @@ export default function BookTable() {
         paymentMethod: 'multibanco',
         paymentStatus: 'pending',
         total: selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        duration: 120
+        duration: 120,
+        selectedItems: selectedItems // Incluir itens selecionados
       });
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Reserva Criada!",
-        description: "Sua reserva foi criada com sucesso. Você receberá uma confirmação em breve.",
+        title: "Reserva Confirmada!",
+        description: "Sua reserva foi confirmada com sucesso. Você receberá uma confirmação em breve.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
       setLocation('/reservations');
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao Criar Reserva",
-        description: error.message || "Ocorreu um erro ao criar a reserva. Tente novamente.",
+        title: "Erro ao Confirmar Reserva",
+        description: error.message || "Ocorreu um erro ao confirmar a reserva. Tente novamente.",
         variant: 'destructive',
       });
     },
   });
 
   const onSubmit = (data: ReservationForm) => {
-    createReservationMutation.mutate(data);
+    // Só deve finalizar a reserva se estiver no step 4 (Pagamento)
+    if (currentStep === 4) {
+      finalizeReservationMutation.mutate(data);
+    }
   };
 
   const nextStep = () => {
+    // Validar cada step antes de prosseguir
+    if (currentStep === 1) {
+      // Validar dados obrigatórios do step 1
+      const isValid = form.getValues('date') && form.getValues('time') && form.getValues('party_size') && form.getValues('table_id');
+      if (!isValid) {
+        toast({
+          title: "Dados Incompletos",
+          description: "Por favor, preencha todos os campos obrigatórios antes de continuar.",
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+    
+    if (currentStep === 2) {
+      // Validar se pelo menos um item foi selecionado
+      if (selectedItems.length === 0) {
+        toast({
+          title: "Menu Não Selecionado",
+          description: "Por favor, selecione pelo menos um item do menu antes de continuar.",
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+    
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
@@ -751,13 +781,13 @@ export default function BookTable() {
                     </Button>
                     <Button
                       type="submit"
-                      disabled={createReservationMutation.isPending}
+                      disabled={finalizeReservationMutation.isPending}
                       className="flex items-center px-8 py-3 text-lg font-bold text-white bg-brasil-red hover:bg-brasil-red/90"
                     >
-                      {createReservationMutation.isPending ? (
+                      {finalizeReservationMutation.isPending ? (
                         <>
                           <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                          Criando...
+                          Confirmando...
                         </>
                       ) : (
                         <>
