@@ -247,6 +247,13 @@ const ReservationManager: React.FC = () => {
     const total = calculateTotal();
     const change = received - total;
     
+    console.log('Calculadora debug:', {
+      receivedAmount,
+      received,
+      total,
+      change
+    });
+    
     setCashCalculatorData({
       total,
       received: receivedAmount,
@@ -269,6 +276,7 @@ const ReservationManager: React.FC = () => {
       return; // Não fazer nada para entradas inválidas
     }
     
+    console.log('Calculadora - Novo valor recebido:', newReceived);
     // Atualizar o cálculo automaticamente
     updateCashCalculation(newReceived);
   };
@@ -1509,7 +1517,10 @@ const ReservationManager: React.FC = () => {
               <div className="bg-blue-50 p-3 rounded-lg">
                 <div className="text-xs text-blue-600 mb-1">Recebido</div>
                 <div className="text-lg font-bold text-blue-800">
-                  €{cashCalculatorData.received || '0.00'}
+                  {cashCalculatorData.received ? 
+                    formatPrice(parseFloat(cashCalculatorData.received)) : 
+                    '€0.00'
+                  }
                 </div>
               </div>
 
