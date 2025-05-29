@@ -342,51 +342,51 @@ const Finance: React.FC = () => {
     }).format(price / 100);
   };
 
-  // Ícone e badge do método de pagamento
+  // Ícone e badge do método de pagamento - versão compacta
   const getPaymentMethodBadge = (method: string) => {
     switch (method?.toLowerCase()) {
       case "cash":
       case "dinheiro":
         return (
-          <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-            <Banknote className="w-4 h-4" />
+          <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">
+            <Banknote className="w-3 h-3" />
             Dinheiro
           </div>
         );
       case "card":
       case "cartao":
         return (
-          <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-            <CreditCard className="w-4 h-4" />
+          <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+            <CreditCard className="w-3 h-3" />
             Cartão
           </div>
         );
       case "mbway":
         return (
-          <div className="flex items-center gap-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
-            <Smartphone className="w-4 h-4" />
-            MB Way
+          <div className="flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-medium">
+            <Smartphone className="w-3 h-3" />
+            MBWay
           </div>
         );
       case "multibanco":
         return (
-          <div className="flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
-            <Building className="w-4 h-4" />
-            Multibanco
+          <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-medium">
+            <Building className="w-3 h-3" />
+            MB
           </div>
         );
       case "multibanco_tpa":
         return (
-          <div className="flex items-center gap-2 px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">
-            <CreditCard className="w-4 h-4" />
-            Multibanco (TPA)
+          <div className="flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-800 rounded text-xs font-medium">
+            <CreditCard className="w-3 h-3" />
+            TPA
           </div>
         );
       case "transfer":
         return (
-          <div className="flex items-center gap-2 px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-sm font-medium">
-            <ArrowLeftRight className="w-4 h-4" />
-            Transferência
+          <div className="flex items-center gap-1 px-2 py-1 bg-teal-100 text-teal-800 rounded text-xs font-medium">
+            <ArrowLeftRight className="w-3 h-3" />
+            Transfer
           </div>
         );
       default:
@@ -1160,28 +1160,25 @@ const Finance: React.FC = () => {
               {/* Tabela de Pagamentos */}
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
+                  <table className="w-full divide-y divide-gray-200">
                     <thead className="bg-blue-600">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-20">
                           Data
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
-                          Transação
+                        <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-24">
+                          ID
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
-                          Referência
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-20">
                           Valor
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-28">
                           Método
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-32">
                           Usuário
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <th className="px-3 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-20">
                           Status
                         </th>
                       </tr>
@@ -1189,38 +1186,34 @@ const Finance: React.FC = () => {
                     <tbody className="bg-white divide-y divide-gray-100 text-sm">
                       {(getCurrentItems() as PaymentWithUser[]).map((payment) => (
                         <tr key={payment.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-4 whitespace-nowrap text-xs">
                             {format(
                               new Date(payment.payment_date),
                               "dd/MM/yyyy",
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">
-                            #{payment.transaction_id}
+                          <td className="px-3 py-4 whitespace-nowrap font-mono text-xs">
+                            #{payment.id}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {payment.reference}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap font-bold text-gray-800">
+                          <td className="px-3 py-4 whitespace-nowrap font-bold text-gray-800 text-xs">
                             {formatPrice(payment.amount)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-4 whitespace-nowrap text-xs">
                             {getPaymentMethodBadge(payment.method)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                <span className="text-blue-600 font-semibold text-sm">
-                                  {payment.first_name?.[0]}
-                                  {payment.last_name?.[0]}
+                          <td className="px-3 py-4 whitespace-nowrap text-xs">
+                            <div className="flex items-center gap-1">
+                              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span className="text-blue-600 font-semibold text-xs">
+                                  {payment.first_name?.[0] || payment.username?.[0] || 'U'}
                                 </span>
                               </div>
-                              <span>
-                                {payment.first_name} {payment.last_name}
+                              <span className="truncate max-w-20">
+                                {payment.first_name || payment.username || 'N/A'}
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-4 whitespace-nowrap text-xs">
                             {getStatusBadge(payment.status)}
                           </td>
                         </tr>
