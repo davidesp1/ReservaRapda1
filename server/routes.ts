@@ -2311,6 +2311,21 @@ router.post("/api/printers/:printerId/test-print", async (req, res) => {
   }
 });
 
+// Abrir gaveta de dinheiro
+router.post("/api/printers/:printerId/open-drawer", async (req, res) => {
+  try {
+    const { printerId } = req.params;
+    const result = await printerService.openCashDrawer(printerId);
+    res.json(result);
+  } catch (error: any) {
+    console.error(`Erro ao abrir gaveta na impressora ${req.params.printerId}:`, error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Erro ao abrir gaveta de dinheiro'
+    });
+  }
+});
+
 // Salvar configuração de impressora
 router.put("/api/printers/:printerId/config", async (req, res) => {
   try {

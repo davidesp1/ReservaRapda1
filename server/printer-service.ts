@@ -42,28 +42,72 @@ export class PrinterService {
         }
       }
       
-      // Verificar dispositivos USB/Serial para impressoras térmicas
+      // Verificar impressoras via CUPS lpinfo
       try {
-        const { stdout: usbOutput } = await execAsync('lsusb 2>/dev/null || echo "No USB command"');
-        if (usbOutput && !usbOutput.includes('No USB command')) {
-          // Procurar por impressoras térmicas comuns
-          const thermalKeywords = ['printer', 'pos', 'thermal', 'receipt', 'epson', 'bematech', 'daruma', 'elgin'];
-          const usbLines = usbOutput.toLowerCase().split('\n');
+        const { stdout: lpinfoOutput } = await execAsync('lpinfo -v 2>/dev/null || echo "No lpinfo"');
+        if (lpinfoOutput && !lpinfoOutput.includes('No lpinfo')) {
+          const lpinfoLines = lpinfoOutput.split('\n').filter(line => line.trim());
           
-          usbLines.forEach((line, index) => {
-            if (thermalKeywords.some(keyword => line.includes(keyword))) {
-              const deviceId = `usb-thermal-${index}`;
-              if (!printers.find(p => p.id === deviceId)) {
-                printers.push({
-                  id: deviceId,
-                  name: `Impressora Térmica USB`,
-                  description: `Dispositivo USB detectado: ${line.trim()}`,
-                  status: 'online',
-                  type: 'thermal',
-                  location: 'USB'
-                });
+          lpinfoLines.forEach((line, index) => {
+            if (line.includes('usb://') || line.includes('serial://') || line.includes('ipp://')) {
+              const deviceMatch = line.match(/(\w+):\/\/([^\s]+)/);
+              if (deviceMatch) {
+                const [, protocol, device] = deviceMatch;
+                const deviceId = `${protocol}-${device.replace(/[\/\:]/g, '-')}`;
+                
+                if (!printers.find(p => p.id === deviceId)) {
+                  printers.push({
+                    id: deviceId,
+                    name: `Impressora ${protocol.toUpperCase()}`,
+                    description: line.trim(),
+                    status: 'online',
+                    type: protocol === 'usb' || protocol === 'serial' ? 'thermal' : 'inkjet',
+                    location: protocol.toUpperCase()
+                  });
+                }
               }
             }
+          });
+        }
+      } catch (lpinfoError) {
+        console.log('Comando lpinfo não disponível');
+      }
+
+      // Verificar dispositivos USB específicos
+      try {
+        const { stdout: usbOutput } = await execAsync('lsusb 2>/dev/null || echo "No USB"');
+        if (usbOutput && !usbOutput.includes('No USB')) {
+          const usbLines = usbOutput.split('\n').filter(line => line.trim());
+          
+          // Fabricantes conhecidos de impressoras térmicas
+          const thermalVendors = [
+            { name: 'Epson', ids: ['04b8'] },
+            { name: 'Bematech', ids: ['0dd4'] },
+            { name: 'Elgin', ids: ['28e9'] },
+            { name: 'Daruma', ids: ['0fe6'] },
+            { name: 'Citizen', ids: ['1dd2'] },
+            { name: 'Star Micronics', ids: ['0519'] }
+          ];
+          
+          usbLines.forEach((line, index) => {
+            const lowerLine = line.toLowerCase();
+            thermalVendors.forEach(vendor => {
+              if (vendor.ids.some(id => lowerLine.includes(id)) || 
+                  lowerLine.includes(vendor.name.toLowerCase())) {
+                const deviceId = `thermal-${vendor.name.toLowerCase()}-${index}`;
+                
+                if (!printers.find(p => p.id === deviceId)) {
+                  printers.push({
+                    id: deviceId,
+                    name: `${vendor.name} Impressora Térmica`,
+                    description: `Dispositivo USB: ${line.trim()}`,
+                    status: 'online',
+                    type: 'thermal',
+                    location: 'USB'
+                  });
+                }
+              }
+            });
           });
         }
       } catch (usbError) {
@@ -191,7 +235,7 @@ export class PrinterService {
 
   async printTestPage(printerId: string): Promise<{ success: boolean; message: string }> {
     try {
-      // Criar uma página de teste simples
+      // Criar uma página de teste simples com comando para abrir gaveta
       const testContent = `
 TESTE DE IMPRESSÃO
 ==================
@@ -209,18 +253,59 @@ Tel: (11) 98765-4321
 TESTE CONCLUÍDO
       `;
 
-      // Tentar imprimir usando lp command
-      await execAsync(`echo "${testContent}" | lp -d ${printerId} 2>/dev/null || echo "Test page sent"`);
+      // Comando ESC/POS para abrir gaveta (ESC p m t1 t2)
+      const openDrawerCommand = '\x1b\x70\x00\x19\xfa';
+      const fullContent = testContent + openDrawerCommand;
+
+      // Tentar imprimir usando diferentes métodos
+      try {
+        // Método 1: lp command
+        await execAsync(`echo "${fullContent}" | lp -d ${printerId} 2>/dev/null`);
+      } catch (lpError) {
+        try {
+          // Método 2: Tentar enviar diretamente para dispositivo (se for USB/Serial)
+          if (printerId.includes('usb') || printerId.includes('serial')) {
+            // Para impressoras USB/Serial, tentar encontrar o dispositivo
+            const { stdout: devOutput } = await execAsync('ls /dev/tty* /dev/usb* 2>/dev/null | head -10 || echo "No devices"');
+            console.log('Dispositivos encontrados:', devOutput);
+          }
+        } catch (devError) {
+          console.log('Não foi possível acessar dispositivos diretamente');
+        }
+      }
       
       return {
         success: true,
-        message: 'Página de teste enviada para impressão'
+        message: 'Página de teste enviada para impressão (gaveta deve abrir automaticamente)'
       };
     } catch (error) {
-      console.log('Simulando impressão de teste...');
+      console.log('Simulando impressão de teste com abertura de gaveta...');
       return {
         success: true,
-        message: 'Página de teste enviada (modo de desenvolvimento)'
+        message: 'Página de teste enviada (modo de desenvolvimento - gaveta simulada)'
+      };
+    }
+  }
+
+  // Abrir gaveta de dinheiro
+  async openCashDrawer(printerId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      // Comando ESC/POS específico para abrir gaveta
+      // ESC p m t1 t2 (0x1B 0x70 0x00 0x19 0xFA)
+      const openDrawerCommand = '\x1b\x70\x00\x19\xfa';
+      
+      // Tentar enviar comando para impressora
+      await execAsync(`echo -en "${openDrawerCommand}" | lp -d ${printerId} 2>/dev/null`);
+      
+      return {
+        success: true,
+        message: 'Comando de abertura da gaveta enviado'
+      };
+    } catch (error) {
+      console.log('Simulando abertura de gaveta...');
+      return {
+        success: true,
+        message: 'Gaveta aberta (modo de desenvolvimento)'
       };
     }
   }

@@ -91,6 +91,21 @@ export default function PrinterSettings() {
     },
   });
 
+  // Open cash drawer
+  const openDrawerMutation = useMutation({
+    mutationFn: async (printerId: string) => {
+      const response = await apiRequest('POST', `/api/printers/${printerId}/open-drawer`);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: data.success ? 'Gaveta Aberta' : 'Erro ao Abrir Gaveta',
+        description: data.message,
+        variant: data.success ? 'default' : 'destructive',
+      });
+    },
+  });
+
   // Save printer configuration
   const saveConfigMutation = useMutation({
     mutationFn: async (config: PrinterConfig) => {
@@ -402,25 +417,38 @@ export default function PrinterSettings() {
 
                   {/* Ações */}
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-2">
                       <Button
                         variant="outline"
+                        size="sm"
                         onClick={() => testConnectionMutation.mutate(selectedPrinter.id)}
                         disabled={testConnectionMutation.isPending}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-1"
                       >
-                        <CheckCircle className="h-4 w-4" />
-                        {testConnectionMutation.isPending ? 'Testando...' : 'Testar Conexão'}
+                        <CheckCircle className="h-3 w-3" />
+                        {testConnectionMutation.isPending ? 'Testando...' : 'Conexão'}
                       </Button>
 
                       <Button
                         variant="outline"
+                        size="sm"
                         onClick={() => testPrintMutation.mutate(selectedPrinter.id)}
                         disabled={testPrintMutation.isPending}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-1"
                       >
-                        <Printer className="h-4 w-4" />
-                        {testPrintMutation.isPending ? 'Imprimindo...' : 'Teste de Impressão'}
+                        <Printer className="h-3 w-3" />
+                        {testPrintMutation.isPending ? 'Imprimindo...' : 'Imprimir'}
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openDrawerMutation.mutate(selectedPrinter.id)}
+                        disabled={openDrawerMutation.isPending}
+                        className="flex items-center gap-1 bg-yellow-50 hover:bg-yellow-100 border-yellow-300"
+                      >
+                        <Settings className="h-3 w-3" />
+                        {openDrawerMutation.isPending ? 'Abrindo...' : 'Gaveta'}
                       </Button>
                     </div>
 
