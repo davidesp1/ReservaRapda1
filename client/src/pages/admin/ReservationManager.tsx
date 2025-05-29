@@ -1477,58 +1477,53 @@ const ReservationManager: React.FC = () => {
 
       {/* Modal da Calculadora de Troco */}
       <Dialog open={showCashCalculator} onOpenChange={setShowCashCalculator}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="pb-3">
+            <DialogTitle className="flex items-center text-lg">
               <i className="fa-solid fa-calculator mr-2 text-green-600"></i>
               Calculadora de Troco
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-sm">
               Calcule o troco para o pagamento em dinheiro
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            {/* Valor Total */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="text-center">
-                <div className="text-sm text-gray-600 mb-1">Total da Conta</div>
-                <div className="text-2xl font-bold text-gray-800">{formatPrice(cashCalculatorData.total)}</div>
+          <div className="space-y-3">
+            {/* Resumo dos Valores */}
+            <div className="grid grid-cols-3 gap-2 text-center">
+              {/* Valor Total */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="text-xs text-gray-600 mb-1">Total</div>
+                <div className="text-lg font-bold text-gray-800">{formatPrice(cashCalculatorData.total)}</div>
               </div>
-            </div>
 
-            {/* Valor Recebido */}
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="text-center">
-                <div className="text-sm text-blue-600 mb-1">Valor Recebido</div>
-                <div className="text-2xl font-bold text-blue-800">
+              {/* Valor Recebido */}
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <div className="text-xs text-blue-600 mb-1">Recebido</div>
+                <div className="text-lg font-bold text-blue-800">
                   €{cashCalculatorData.received || '0.00'}
                 </div>
               </div>
-            </div>
 
-            {/* Troco */}
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="text-center">
-                <div className="text-sm text-green-600 mb-1">Troco</div>
-                <div className="text-2xl font-bold text-green-800">
+              {/* Troco */}
+              <div className="bg-green-50 p-3 rounded-lg">
+                <div className="text-xs text-green-600 mb-1">Troco</div>
+                <div className="text-lg font-bold text-green-800">
                   {formatPrice(cashCalculatorData.change)}
                 </div>
                 {cashCalculatorData.change < 0 && (
-                  <div className="text-xs text-red-500 mt-1">
-                    Valor insuficiente
-                  </div>
+                  <div className="text-xs text-red-500 mt-1">Insuficiente</div>
                 )}
               </div>
             </div>
 
-            {/* Teclado Numérico */}
-            <div className="grid grid-cols-3 gap-2">
+            {/* Teclado Numérico Compacto */}
+            <div className="grid grid-cols-3 gap-1.5">
               {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'].map((key) => (
                 <Button
                   key={key}
                   variant="outline"
-                  className="h-12 text-lg font-medium"
+                  className="h-10 text-base font-medium"
                   onClick={() => handleCashCalculatorDigit(key === '⌫' ? 'backspace' : key)}
                 >
                   {key}
@@ -1537,14 +1532,14 @@ const ReservationManager: React.FC = () => {
             </div>
 
             {/* Botões de Valor Rápido */}
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-1.5">
               {[5, 10, 20, 50].map((amount) => (
                 <Button
                   key={amount}
                   variant="outline"
                   size="sm"
                   onClick={() => handleCashCalculation(amount.toString())}
-                  className="text-xs"
+                  className="text-xs h-8"
                 >
                   €{amount}
                 </Button>
@@ -1554,17 +1549,18 @@ const ReservationManager: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setCashCalculatorData(prev => ({ ...prev, received: '', change: 0 }))}
-              className="w-full"
+              className="w-full h-9 text-sm"
             >
               <i className="fa-solid fa-eraser mr-2"></i>
               Limpar
             </Button>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="pt-3 gap-2">
             <Button
               variant="outline"
               onClick={() => setShowCashCalculator(false)}
+              className="flex-1"
             >
               Cancelar
             </Button>
@@ -1574,9 +1570,9 @@ const ReservationManager: React.FC = () => {
                 handleCompleteReservation();
               }}
               disabled={parseFloat(cashCalculatorData.received) < cashCalculatorData.total}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 flex-1"
             >
-              Confirmar Reserva
+              Confirmar
             </Button>
           </DialogFooter>
         </DialogContent>
