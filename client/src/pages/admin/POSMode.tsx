@@ -33,6 +33,16 @@ const POSMode = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("cash");
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
+  const [newClientData, setNewClientData] = useState({
+    username: '',
+    email: '',
+    first_name: '',
+    last_name: '',
+    phone: ''
+  });
   
   // Carregar métodos de pagamento disponíveis com atualização automática
   const { data: paymentSettings } = useQuery({
@@ -46,6 +56,12 @@ const POSMode = () => {
     queryKey: ['/api/menu-items'],
     refetchInterval: 15000, // Atualiza a cada 15 segundos
     refetchIntervalInBackground: true,
+  });
+
+  // Carregar clientes cadastrados
+  const { data: clients } = useQuery({
+    queryKey: ['/api/users'],
+    enabled: isClientModalOpen, // Só carrega quando o modal está aberto
   });
   
   // Os dados já vêm agrupados por categoria, então não precisamos de uma consulta separada
@@ -269,11 +285,15 @@ Status: PAGO
   };
 
   const handleProcessOrder = () => {
-    console.log('🔍 DEBUG - Processando pedido com método:', selectedPaymentMethod);
-    console.log('🔍 DEBUG - Fechando modal...');
     setIsPaymentModalOpen(false);
     
-    // Usar SweetAlert2 para confirmar a finalização
+    // Se o método selecionado for "staff", abrir modal de seleção de cliente
+    if (selectedPaymentMethod === 'staff') {
+      setIsClientModalOpen(true);
+      return;
+    }
+    
+    // Para outros métodos, continuar com o fluxo normal
     import('sweetalert2').then((Swal) => {
       Swal.default.fire({
         title: t('Finalizar Pedido'),
@@ -872,6 +892,192 @@ Status: PAGO
                 onClick={handleProcessOrder}
               >
                 {t('Continuar')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Seleção de Cliente */}
+      {isClientModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">{t('Selecionar Cliente')}</h3>
+              <button 
+                onClick={() => setIsClientModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <button
+                onClick={() => setIsNewClientModalOpen(true)}
+                className="w-full p-3 border-2 border-dashed border-orange-300 rounded-lg text-orange-600 hover:bg-orange-50 transition-colors"
+              >
+                <Plus className="w-5 h-5 inline mr-2" />
+                {t('Adicionar Novo Cliente')}
+              </button>
+            </div>
+
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {clients && clients.length > 0 ? (
+                clients.map((client: any) => (
+                  <div
+                    key={client.id}
+                    className={`p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                      selectedClient?.id === client.id ? 'border-orange-500 bg-orange-50' : 'border-gray-300'
+                    }`}
+                    onClick={() => setSelectedClient(client)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {client.first_name} {client.last_name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {client.email} | {client.username}
+                        </div>
+                      </div>
+                      {selectedClient?.id === client.id && (
+                        <Check className="h-5 w-5 text-orange-500" />
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  {t('Nenhum cliente cadastrado')}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button 
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
+                onClick={() => setIsClientModalOpen(false)}
+              >
+                {t('Cancelar')}
+              </button>
+              <button 
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50"
+                disabled={!selectedClient}
+                onClick={() => {
+                  setIsClientModalOpen(false);
+                  // Continuar com o processamento do pedido
+                  import('sweetalert2').then((Swal) => {
+                    Swal.default.fire({
+                      title: t('Finalizar Pedido Staff'),
+                      text: t('Pedido para: {{name}}', { name: `${selectedClient.first_name} ${selectedClient.last_name}` }),
+                      icon: 'question',
+                      showCancelButton: true,
+                      confirmButtonColor: '#f97316',
+                      cancelButtonColor: '#6b7280',
+                      confirmButtonText: t('Confirmar'),
+                      cancelButtonText: t('Cancelar')
+                    }).then((result) => {
+                      if (result.isConfirmed) {
+                        // Processar pedido staff aqui
+                        // TODO: Implementar lógica de processamento
+                      }
+                    });
+                  });
+                }}
+              >
+                {t('Confirmar Cliente')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Novo Cliente */}
+      {isNewClientModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">{t('Novo Cliente')}</h3>
+              <button 
+                onClick={() => setIsNewClientModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('Nome')}
+                </label>
+                <input
+                  type="text"
+                  value={newClientData.first_name}
+                  onChange={(e) => setNewClientData({...newClientData, first_name: e.target.value})}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder={t('Nome do cliente')}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('Sobrenome')}
+                </label>
+                <input
+                  type="text"
+                  value={newClientData.last_name}
+                  onChange={(e) => setNewClientData({...newClientData, last_name: e.target.value})}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder={t('Sobrenome do cliente')}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('Email')}
+                </label>
+                <input
+                  type="email"
+                  value={newClientData.email}
+                  onChange={(e) => setNewClientData({...newClientData, email: e.target.value})}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder={t('email@exemplo.com')}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('Telefone')} ({t('opcional')})
+                </label>
+                <input
+                  type="tel"
+                  value={newClientData.phone}
+                  onChange={(e) => setNewClientData({...newClientData, phone: e.target.value})}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder={t('+351 999 999 999')}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button 
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
+                onClick={() => setIsNewClientModalOpen(false)}
+              >
+                {t('Cancelar')}
+              </button>
+              <button 
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50"
+                disabled={!newClientData.first_name || !newClientData.email}
+                onClick={() => {
+                  // TODO: Implementar criação de novo cliente
+                  console.log('Criar novo cliente:', newClientData);
+                  setIsNewClientModalOpen(false);
+                }}
+              >
+                {t('Criar Cliente')}
               </button>
             </div>
           </div>
