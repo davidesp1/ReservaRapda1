@@ -1287,9 +1287,9 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
       paymentStatus = 'pending';
     }
 
-    // Criar o pedido
+    // Criar o pedido usando o nome correto do campo
     const newOrder = await drizzleDb.insert(schema.orders).values({
-      userId: orderUserId,
+      userId: orderUserId, // Drizzle mapeia userId para user_id automaticamente
       type: 'pos',
       status: orderStatus,
       items: validatedItems,
@@ -1308,11 +1308,16 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
     let paymentResult = null;
     
     try {
-      // Normalizar o método de pagamento
+      // Normalizar o método de pagamento para a tabela payments
       let normalizedMethod = orderData.paymentMethod || 'cash';
       
-      // Garantir que o método é um dos valores aceitos
-      const validMethods = ['cash', 'card', 'mbway', 'multibanco', 'transfer', 'multibanco_TPA', 'staff'];
+      // Para pedidos staff, registrar como 'cash' na tabela payments mas manter detalhes no campo 'details'
+      if (normalizedMethod === 'staff') {
+        normalizedMethod = 'cash'; // Usar cash no enum, mas indicar que é staff nos detalhes
+      }
+      
+      // Garantir que o método é um dos valores aceitos pelo enum
+      const validMethods = ['cash', 'card', 'mbway', 'multibanco', 'transfer', 'multibanco_TPA'];
       
       if (!validMethods.includes(normalizedMethod)) {
         normalizedMethod = 'cash';
@@ -1327,19 +1332,23 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
       const paymentDate = new Date().toISOString();
       const transactionId = 'POS-' + Date.now();
       
+      // Usar o status correto do pagamento baseado no tipo de pedido
+      const finalPaymentStatus = paymentStatus; // 'pending' para staff, 'completed' para outros
+      
       // Adicionando o campo reservationId (usando o id do pedido como valor temporário)
       // Isso garante que não violamos a restrição NOT NULL no banco
       const result = await queryClient`
         INSERT INTO payments 
           (user_id, reservation_id, amount, method, status, reference, transaction_id, payment_date, details)
         VALUES 
-          (${Number(userId)}, ${newOrder[0].id}, ${amountForPayment}, ${normalizedMethod}, ${'completed'}, 
+          (${orderUserId}, ${newOrder[0].id}, ${amountForPayment}, ${normalizedMethod}, ${finalPaymentStatus}, 
            ${'POS-Order-' + newOrder[0].id}, ${transactionId}, ${paymentDate}, 
            ${JSON.stringify({
              type: 'pos',
              orderId: newOrder[0].id,
              items: validatedItems.length,
-             userId: Number(userId)
+             userId: orderUserId,
+             staffOrder: orderPaymentMethod === 'staff'
            })})
         RETURNING *
       `;
