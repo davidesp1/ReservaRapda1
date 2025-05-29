@@ -1277,12 +1277,6 @@ export default function BookTable() {
                       >
                         Ver Minhas Reservas
                       </button>
-                      <button
-                        onClick={() => setCurrentStep(3)}
-                        className="w-full py-3 rounded-lg bg-gray-400 text-white font-montserrat font-bold text-base shadow hover:bg-gray-500 transition"
-                      >
-                        Voltar
-                      </button>
                     </div>
                   </section>
                 </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from "react-i18next";
-import { supabase } from '@/lib/supabaseClient';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { CustomerLayout } from "@/components/layouts/CustomerLayout";
 import {
   Card,
@@ -47,15 +48,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Interface para representar um pagamento
-interface Payment {
+// Interface para representar uma reserva com informações de pagamento
+interface ReservationPayment {
   id: number;
   date: string;
-  amount: number;
-  status: "completed" | "pending" | "failed";
-  method: "card" | "mbway" | "multibanco" | "transfer";
-  reference: string;
+  total: number;
+  payment_status: "pending" | "completed" | "failed";
+  payment_method: "card" | "mbway" | "multibanco" | "transfer" | "cash";
   reservation_code: string;
+  eupago_entity?: string;
+  eupago_reference?: string;
+  table_number: number;
+  party_size: number;
 }
 
 const PaymentsPage = () => {
@@ -65,72 +69,35 @@ const PaymentsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showSettings, setShowSettings] = useState(false);
 
-  // Dados de exemplo
-  const payments: Payment[] = [
-    {
-      id: 1,
-      date: "2025-05-15T18:30:00",
-      amount: 58.9,
-      status: "completed",
-      method: "card",
-      reference: "REF2025051501",
-      reservation_code: 101,
+  // Buscar reservas do cliente do banco de dados
+  const { data: reservations = [], isLoading } = useQuery({
+    queryKey: ['/api/reservations'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/reservations');
+      return response.json();
     },
-    {
-      id: 2,
-      date: "2025-05-12T19:45:00",
-      amount: 74.5,
-      status: "completed",
-      method: "mbway",
-      reference: "REF2025051202",
-      reservation_code: 98,
-    },
-    {
-      id: 3,
-      date: "2025-05-28T20:00:00",
-      amount: 125.75,
-      status: "pending",
-      method: "multibanco",
-      reference: "REF2025052803",
-      reservation_code: 112,
-    },
-    {
-      id: 4,
-      date: "2025-05-30T12:15:00",
-      amount: 45.2,
-      status: "pending",
-      method: "transfer",
-      reference: "REF2025053004",
-      reservation_code: 118,
-    },
-    {
-      id: 5,
-      date: "2025-05-10T13:30:00",
-      amount: 92.4,
-      status: "failed",
-      method: "card",
-      reference: "REF2025051005",
-      reservation_code: 95,
-    },
-  ];
+  });
 
-  // Filtrar pagamentos com base na aba ativa e termo de busca
-  const getFilteredPayments = () => {
-    return payments
-      .filter((payment) => {
+  // Filtrar reservas com base na aba ativa e termo de busca
+  const getFilteredReservations = () => {
+    return reservations
+      .filter((reservation: any) => {
         if (activeTab === "all") return true;
-        return payment.status === activeTab;
+        return reservation.payment_status === activeTab;
       })
-      .filter((payment) => {
+      .filter((reservation: any) => {
         if (!searchTerm) return true;
         const term = searchTerm.toLowerCase();
         return (
-          payment.reference.toLowerCase().includes(term) ||
-          payment.amount.toString().includes(term) ||
-          payment.method.toLowerCase().includes(term)
+          reservation.reservation_code?.toLowerCase().includes(term) ||
+          (reservation.total / 100).toString().includes(term) ||
+          reservation.payment_method?.toLowerCase().includes(term)
         );
       });
   };
+
+  // Obter lista filtrada de reservas
+  const filteredPayments = getFilteredReservations();
 
   // Formatar método de pagamento
   const formatMethod = (method: string) => {
@@ -470,23 +437,25 @@ const PaymentsPage = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredPayments.map((payment) => (
-                        <TableRow key={payment.id}>
-                          <TableCell>{payment.reservation_code}</TableCell>
+                      {filteredPayments.map((reservation: any) => (
+                        <TableRow key={reservation.id}>
+                          <TableCell>{reservation.reservation_code}</TableCell>
                           <TableCell>
                             <div className="flex items-center">
                               <Calendar className="mr-2 h-4 w-4 text-gray-500" />
-                              {new Date(payment.date).toLocaleDateString()}
+                              {new Date(reservation.date).toLocaleDateString()}
                             </div>
                           </TableCell>
-                          <TableCell>{payment.reference}</TableCell>
+                          <TableCell>
+                            {reservation.eupago_reference || 'N/A'}
+                          </TableCell>
                           <TableCell className="font-medium">
-                            €{payment.amount.toFixed(2)}
+                            €{(reservation.total / 100).toFixed(2)}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center">
                               <CreditCard className="mr-2 h-4 w-4 text-gray-500" />
-                              {formatMethod(payment.method)}
+                              {formatMethod(reservation.payment_method)}
                             </div>
                           </TableCell>
                           <TableCell>{renderStatus(payment.status)}</TableCell>
