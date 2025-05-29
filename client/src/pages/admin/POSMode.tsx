@@ -27,7 +27,7 @@ interface OrderItem {
 const POSMode = () => {
   const { t } = useTranslation();
   const [_, navigate] = useLocation();
-  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [activeCategory, setActiveCategory] = useState<string>("");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -68,6 +68,13 @@ const POSMode = () => {
   // Os dados já vêm agrupados por categoria, então não precisamos de uma consulta separada
   const categories = menuItemsData ? menuItemsData.map((cat: any) => cat.category) : [];
   const categoriesLoading = isLoading;
+  
+  // Definir automaticamente a primeira categoria como ativa quando as categorias forem carregadas
+  useEffect(() => {
+    if (categories && categories.length > 0 && !activeCategory) {
+      setActiveCategory(categories[0].name);
+    }
+  }, [categories, activeCategory]);
   
   // Efeito para lidar com a tela cheia
   useEffect(() => {
@@ -598,16 +605,6 @@ Status: PAGO
         <div className="w-2/3 bg-white p-4 overflow-y-auto">
           {/* Abas de Categorias */}
           <div className="flex space-x-2 overflow-x-auto pb-2 mb-6">
-            <button 
-              className={`px-4 py-2 rounded-lg font-medium ${
-                activeCategory === "all" 
-                  ? "bg-primary text-white" 
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-              onClick={() => setActiveCategory("all")}
-            >
-              {t('Todos')}
-            </button>
             {categories?.map((category: any) => (
               <button 
                 key={category.id}
