@@ -865,6 +865,138 @@ router.post("/api/reservations", isAuthenticated, async (req, res) => {
   }
 });
 
+// Rota para criar reserva completa (wizard do admin)
+router.post("/api/complete-reservation", isAuthenticated, async (req, res) => {
+  try {
+    const { customerInfo, selectedItems, tableId, date, paymentMethod, total, notes, adminCreated } = req.body;
+    
+    console.log("Criando reserva completa:", {
+      customerInfo,
+      selectedItems: selectedItems?.length || 0,
+      tableId,
+      date,
+      paymentMethod,
+      total,
+      adminCreated
+    });
+
+    // Validações
+    if (!customerInfo?.name || !customerInfo?.email || !tableId || !date || !selectedItems?.length) {
+      return res.status(400).json({ 
+        error: "Dados incompletos: nome, email, mesa, data e itens são obrigatórios" 
+      });
+    }
+
+    // Verificar/criar usuário
+    let userId;
+    const existingUser = await queryClient`
+      SELECT id FROM users WHERE email = ${customerInfo.email} LIMIT 1
+    `;
+
+    if (existingUser.length > 0) {
+      userId = existingUser[0].id;
+    } else {
+      // Criar novo usuário
+      const [firstName, ...lastNameParts] = customerInfo.name.split(' ');
+      const lastName = lastNameParts.join(' ') || '';
+      
+      const newUserResult = await queryClient`
+        INSERT INTO users (
+          username, email, first_name, last_name, phone, role, status
+        ) VALUES (
+          ${customerInfo.email}, 
+          ${customerInfo.email}, 
+          ${firstName}, 
+          ${lastName}, 
+          ${customerInfo.phone || null}, 
+          'customer', 
+          'active'
+        ) RETURNING id
+      `;
+      userId = newUserResult[0].id;
+    }
+
+    // Gerar código de reserva único
+    const reservationCode = 'RES-' + Date.now().toString().slice(-8);
+
+    // Criar reserva
+    const reservationResult = await queryClient`
+      INSERT INTO reservations (
+        user_id, table_id, date, party_size, status, reservation_code,
+        payment_method, payment_status, total, notes, duration
+      ) VALUES (
+        ${userId}, ${parseInt(tableId)}, ${date}, ${customerInfo.partySize || 2},
+        'confirmed', ${reservationCode}, ${paymentMethod}, 'pending',
+        ${total}, ${notes || null}, 120
+      ) RETURNING *
+    `;
+
+    const reservation = reservationResult[0];
+
+    // Criar itens da reserva
+    for (const item of selectedItems) {
+      await queryClient`
+        INSERT INTO reservation_items (
+          reservation_id, menu_item_id, quantity, price, notes
+        ) VALUES (
+          ${reservation.id}, ${item.id}, ${item.quantity}, ${item.price}, ''
+        )
+      `;
+    }
+
+    // Processar pagamento se não for dinheiro
+    let paymentResult = null;
+    if (paymentMethod !== 'cash') {
+      try {
+        paymentResult = await processPayment(paymentMethod, total, customerInfo.phone, reservationCode);
+        
+        if (paymentResult.success && paymentMethod === 'multibanco') {
+          // Atualizar reserva com informações EuPago
+          await queryClient`
+            UPDATE reservations 
+            SET 
+              eupago_entity = ${paymentResult.entity || paymentResult.entidade || null},
+              eupago_reference = ${paymentResult.reference || paymentResult.referencia || null}
+            WHERE id = ${reservation.id}
+          `;
+        }
+      } catch (paymentError) {
+        console.error('Erro ao processar pagamento:', paymentError);
+        // Continuar sem falhar a reserva
+      }
+    }
+
+    // Buscar reserva completa para retorno
+    const completeReservation = await queryClient`
+      SELECT 
+        r.*,
+        t.number as table_number,
+        t.capacity as table_capacity,
+        u.first_name,
+        u.last_name,
+        u.email
+      FROM reservations r
+      JOIN tables t ON r.table_id = t.id
+      JOIN users u ON r.user_id = u.id
+      WHERE r.id = ${reservation.id}
+    `;
+
+    const response = {
+      reservation: completeReservation[0],
+      payment: paymentResult,
+      reservation_code: reservationCode,
+      reference: paymentResult?.reference || paymentResult?.referencia || null
+    };
+
+    console.log("Reserva completa criada com sucesso:", response);
+    res.status(201).json(response);
+
+  } catch (err: any) {
+    console.error("Erro ao criar reserva completa:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Rota para processamento de pagamentos
 router.post("/api/payments/process", isAuthenticated, async (req, res) => {
   try {
