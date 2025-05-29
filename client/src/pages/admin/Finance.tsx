@@ -1375,74 +1375,79 @@ const Finance: React.FC = () => {
               {/* Tabela de Reservas */}
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
+                  <table className="w-full divide-y divide-gray-200">
                     <thead className="bg-blue-600">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-20">
                           Código
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
                           Cliente
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-32">
                           Data/Hora
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-16">
                           Mesa
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-20">
                           Pessoas
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-24">
                           Valor
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-24">
                           Método
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
-                          Status Pagamento
+                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-24">
+                          Status
                         </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {(getCurrentItems() as Reservation[]).map((reservation) => (
                         <tr key={reservation.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
                             {reservation.reservation_code || `#R${reservation.id}`}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-4 py-4">
                             <div className="flex items-center">
                               <img
                                 src={`https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-${(reservation.id % 8) + 1}.jpg`}
                                 alt=""
-                                className="w-8 h-8 rounded-full border-2 border-green-600 mr-3"
+                                className="w-8 h-8 rounded-full border-2 border-green-600 mr-3 flex-shrink-0"
                               />
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">
+                              <div className="min-w-0 flex-1">
+                                <div className="text-sm font-medium text-gray-900 truncate">
                                   {reservation.user_name}
                                 </div>
-                                <div className="text-sm text-gray-500">
+                                <div className="text-sm text-gray-500 truncate">
                                   {reservation.email}
                                 </div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {reservation.date ? format(new Date(reservation.date), 'dd/MM/yyyy HH:mm') : '-'}
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div className="text-xs">
+                              {reservation.date ? format(new Date(reservation.date), 'dd/MM/yyyy') : '-'}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {reservation.date ? format(new Date(reservation.date), 'HH:mm') : ''}
+                            </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            Mesa {reservation.table_number || 'N/A'}
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-center">
+                            {reservation.table_number || 'N/A'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {reservation.party_size || 0} pessoas
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-center">
+                            {reservation.party_size || 0}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             €{((reservation.total || 0) / 100).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-4 py-4 whitespace-nowrap">
                             {getPaymentMethodBadge(reservation.payment_method || 'cash')}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-4 py-4 whitespace-nowrap">
                             {getStatusBadge(reservation.payment_status || 'pending')}
                           </td>
                         </tr>
