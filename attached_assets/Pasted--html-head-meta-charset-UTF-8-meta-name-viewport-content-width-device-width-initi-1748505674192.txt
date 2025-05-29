@@ -1,0 +1,272 @@
+<html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>
+        ::-webkit-scrollbar { display: none;}
+        @media (max-width: 1024px) {
+            #sidebar { width: 4rem !important; }
+            #main-content { margin-left: 4rem !important; }
+        }
+    </style>
+    <script>tailwind.config = {
+  "theme": {
+    "extend": {
+      "colors": {
+        "brazil-green": "#009c3b",
+        "brazil-yellow": "#ffdf00",
+        "brazil-blue": "#002776",
+        "brazil-red": "#c8102e"
+      },
+      "fontFamily": {
+        "montserrat": [
+          "Montserrat",
+          "sans-serif"
+        ],
+        "opensans": [
+          "Open Sans",
+          "sans-serif"
+        ],
+        "sans": [
+          "Inter",
+          "sans-serif"
+        ]
+      }
+    }
+  }
+};</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap"><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="bg-gray-100 font-opensans">
+
+<div id="checkout-page" class="flex min-h-[900px]">
+    <nav id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-brazil-blue flex flex-col z-40 transition-all duration-300" aria-label="Navegação principal">
+        <div class="p-6">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-brazil-yellow rounded-full flex items-center justify-center mr-2">
+                    <i class="fa-solid fa-utensils text-brazil-blue"></i>
+                </div>
+                <span class="text-xl font-semibold text-white font-montserrat hidden lg:inline">
+                    Opa que delicia
+                </span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <ul>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-house text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium hidden lg:inline">Dashboard</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white bg-brazil-blue bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-user text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium hidden lg:inline">Meu Perfil</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-utensils text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium hidden lg:inline">Cardápio</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-calendar-check text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium hidden lg:inline">Reservas</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-credit-card text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium hidden lg:inline">Pagamentos</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-headset text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium hidden lg:inline">Suporte</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+        <div class="mt-auto border-t border-blue-400 p-4">
+            <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                <i class="fa-solid fa-right-from-bracket text-brazil-yellow w-6"></i>
+                <span class="ml-2 font-medium hidden lg:inline">Sair</span>
+            </span>
+        </div>
+    </nav>
+
+    <div id="main-content" class="ml-64 flex-1 min-h-[900px] bg-gray-50 relative transition-all duration-300">
+        <header id="header-checkout" class="flex justify-between items-center px-4 md:px-8 py-7 mb-0 shadow-sm bg-white z-30 sticky top-0 left-0 w-full">
+            <h1 class="text-2xl font-bold text-gray-800 font-montserrat">Checkout da Reserva</h1>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="relative" aria-label="Notificações">
+                        <i class="fa-regular fa-bell text-xl text-gray-600"></i>
+                        <span class="absolute -top-1 -right-1 bg-brazil-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
+                    </button>
+                </div>
+                <div class="flex items-center">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="User Avatar" class="w-10 h-10 rounded-full border-2 border-brazil-yellow">
+                    <div class="ml-2 hidden md:block">
+                        <p class="text-sm font-medium text-gray-800">Maria Silva</p>
+                        <p class="text-xs text-gray-500">Cliente desde 2023</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div id="bar-reserva-status" class="sticky top-[4.5rem] z-40 border-b border-gray-200 bg-brazil-blue flex flex-col md:flex-row md:items-center md:justify-between px-4 py-4 md:px-8" role="region" aria-label="Resumo da Reserva">
+            <div class="flex items-center space-x-3 mb-2 md:mb-0">
+                <span id="status-reserva" class="inline-flex items-center px-3 py-1 rounded-full bg-brazil-yellow text-brazil-blue font-bold text-xs md:text-sm" aria-label="Status da Reserva">
+                    <i class="fa-solid fa-hourglass-half mr-2"></i>Pendente
+                </span>
+                <span class="inline-flex items-center font-montserrat text-white font-semibold text-xs md:text-base" aria-label="Código da Reserva">
+                    <i class="fa-solid fa-tag mr-1 text-brazil-yellow"></i> R-20250522-XYZ123
+                </span>
+            </div>
+            <div class="flex items-center space-x-4 text-white font-montserrat text-xs md:text-base">
+                <span class="inline-flex items-center" aria-label="Data da Reserva">
+                    <i class="fa-solid fa-calendar-day text-brazil-yellow mr-2"></i>22/05/2025
+                </span>
+                <span class="inline-flex items-center" aria-label="Hora da Reserva">
+                    <i class="fa-solid fa-clock text-brazil-yellow mr-2"></i>19:30
+                </span>
+                <span class="inline-flex items-center" aria-label="Status do Pagamento">
+                    <i class="fa-solid fa-credit-card text-brazil-yellow mr-2"></i>
+                    <span id="status-pagamento" class="font-semibold">Aguardando pagamento</span>
+                </span>
+            </div>
+        </div>
+
+        <main id="checkout-main" class="w-full flex flex-col lg:flex-row items-stretch px-2 pt-8 pb-12 md:px-10 gap-8 max-w-5xl mx-auto">
+            <section id="detalhes-reserva" class="flex-1 bg-white rounded-2xl shadow-lg p-5 md:p-8 mb-6 md:mb-0" aria-label="Detalhes da Reserva">
+                <h2 class="font-montserrat text-lg font-bold text-brazil-blue mb-6 flex items-center">
+                    <i class="fa-solid fa-receipt text-brazil-yellow mr-3"></i> Detalhes da Reserva
+                </h2>
+                <ul class="space-y-5">
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-600 font-semibold font-montserrat">Restaurante</span>
+                        <span class="text-gray-800 font-bold font-montserrat text-right">Opa que delicia</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-600 font-semibold font-montserrat">Número de Pessoas</span>
+                        <span class="text-gray-800 font-bold font-montserrat text-right" id="checkout-num-pessoas">4</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-600 font-semibold font-montserrat">Mesa/Área</span>
+                        <span class="text-gray-800 font-bold font-montserrat text-right" id="checkout-mesa">Mesa 8</span>
+                    </li>
+                    <li class="flex flex-col md:flex-row md:justify-between md:items-center">
+                        <span class="text-gray-600 font-semibold font-montserrat mb-2 md:mb-0">Observações</span>
+                        <span class="text-gray-800 font-medium font-opensans text-right md:w-3/5" id="checkout-observacoes">Sem glúten, aniversário de casamento.</span>
+                    </li>
+                </ul>
+            </section>
+            <section id="pagamento-multibanco" class="w-full max-w-lg bg-white rounded-2xl shadow-lg p-5 md:p-8 flex flex-col justify-between" aria-label="Pagamento Multibanco">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="font-montserrat text-lg font-bold text-brazil-blue flex items-center">
+                            <i class="fa-solid fa-building-columns text-brazil-yellow mr-3"></i>Pagamento - Multibanco
+                        </h2>
+                        <span id="multibanco-status" class="inline-flex items-center px-3 py-1 rounded-full bg-brazil-yellow text-brazil-blue font-bold text-xs" aria-label="Status Multibanco">
+                            <i class="fa-solid fa-circle-dot mr-2 text-xs"></i>Em aberto
+                        </span>
+                    </div>
+                    <div class="flex items-center mb-6" aria-label="Tempo Restante">
+                        <i class="fa-solid fa-hourglass-half text-brazil-red mr-2 text-lg"></i>
+                        <span class="font-montserrat font-semibold text-brazil-red text-lg" id="multibanco-timer" aria-live="polite">30:00</span>
+                        <span class="ml-2 text-gray-500 text-sm">(tempo para pagamento)</span>
+                    </div>
+                    <div class="mb-5">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-montserrat text-gray-600 font-semibold">Entidade:</span>
+                            <span class="font-montserrat text-gray-900 font-bold text-right">25879</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-montserrat text-gray-600 font-semibold">Referência:</span>
+                            <span class="font-montserrat text-gray-900 font-bold text-right">879 458 563</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-montserrat text-gray-600 font-semibold">Valor total:</span>
+                            <span class="font-montserrat text-brazil-green font-bold text-xl text-right" id="checkout-valor">€ 75,00</span>
+                        </div>
+                    </div>
+                    <div class="bg-brazil-blue bg-opacity-5 border border-brazil-blue rounded-xl p-4 mb-4 flex items-start" aria-label="Instrução de Pagamento">
+                        <i class="fa-solid fa-info-circle text-brazil-blue mr-3 mt-1"></i>
+                        <p class="text-sm text-brazil-blue font-montserrat font-semibold">
+                            Use estes dados para realizar o pagamento através do Multibanco (ATM) ou Homebanking.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <button class="w-full py-3 rounded-lg bg-brazil-green text-white font-montserrat font-bold text-base shadow hover:bg-brazil-yellow hover:text-brazil-blue transition focus:outline-none focus:ring-2 focus:ring-brazil-green focus:ring-offset-2" aria-label="Confirmar Pagamento">
+                        Confirmar Pagamento
+                    </button>
+                    <button class="w-full py-3 rounded-lg bg-brazil-red text-white font-montserrat font-bold text-base shadow hover:bg-red-700 transition focus:outline-none focus:ring-2 focus:ring-brazil-red focus:ring-offset-2" aria-label="Cancelar Reserva">
+                        Cancelar Reserva
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<script>
+    let timerSeconds = 1800;
+    function updateTimer() {
+        if (timerSeconds <= 0) {
+            document.getElementById('multibanco-timer').innerText = "00:00";
+            document.getElementById('multibanco-status').innerHTML = '<i class="fa-solid fa-circle-xmark mr-2 text-xs"></i>Expirado';
+            document.getElementById('multibanco-status').className = "inline-flex items-center px-3 py-1 rounded-full bg-brazil-red text-white font-bold text-xs";
+            document.getElementById('status-reserva').innerHTML = '<i class="fa-solid fa-times-circle mr-2"></i>Expirado';
+            document.getElementById('status-reserva').className = "inline-flex items-center px-3 py-1 rounded-full bg-brazil-red text-white font-bold text-xs md:text-sm";
+            document.getElementById('status-pagamento').innerText = "Expirado";
+            return;
+        }
+        let min = Math.floor(timerSeconds / 60);
+        let sec = timerSeconds % 60;
+        document.getElementById('multibanco-timer').innerText =
+            (min < 10 ? "0"+min : min) + ":" + (sec < 10 ? "0"+sec : sec);
+        timerSeconds--;
+        setTimeout(updateTimer, 1000);
+    }
+    window.onload = function() {
+        updateTimer();
+    }
+</script>
+
+</body></html>

@@ -36,6 +36,7 @@ export default function BookTable() {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('card');
 
   // Form setup
   const form = useForm<ReservationForm>({
@@ -89,7 +90,7 @@ export default function BookTable() {
         description: "Sua reserva foi confirmada com sucesso. Você receberá uma confirmação em breve.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
-      setLocation('/reservations');
+      setCurrentStep(5); // Ir para tela de agradecimento
     },
     onError: (error: any) => {
       toast({
@@ -135,10 +136,17 @@ export default function BookTable() {
     }
 
     if (currentStep === 3) {
-      // Finalizar reserva automaticamente e ir para tela de agradecimento
-      const data = form.getValues();
-      finalizeReservationMutation.mutate(data);
-      return;
+      // Verificar método de pagamento selecionado
+      if (selectedPaymentMethod === 'multibanco') {
+        // Ir para tela de pagamento Multibanco
+        setCurrentStep(4);
+        return;
+      } else {
+        // Para outros métodos, finalizar reserva automaticamente
+        const data = form.getValues();
+        finalizeReservationMutation.mutate(data);
+        return;
+      }
     }
     
     if (currentStep < 4) {
@@ -751,7 +759,14 @@ export default function BookTable() {
                           
                           <div className="space-y-4">
                             <label className="flex items-center gap-4 cursor-pointer border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-brasil-green transition focus-within:border-brasil-green">
-                              <input type="radio" name="payment-method" value="card" className="hidden peer" defaultChecked />
+                              <input 
+                                type="radio" 
+                                name="payment-method" 
+                                value="card" 
+                                className="hidden peer" 
+                                checked={selectedPaymentMethod === 'card'}
+                                onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                              />
                               <span className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200 peer-checked:ring-2 peer-checked:ring-brasil-green">
                                 <i className="fa-solid fa-credit-card text-brasil-green text-2xl"></i>
                               </span>
@@ -760,7 +775,14 @@ export default function BookTable() {
                             </label>
                             
                             <label className="flex items-center gap-4 cursor-pointer border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-brasil-blue transition focus-within:border-brasil-blue">
-                              <input type="radio" name="payment-method" value="multibanco" className="hidden peer" />
+                              <input 
+                                type="radio" 
+                                name="payment-method" 
+                                value="multibanco" 
+                                className="hidden peer"
+                                checked={selectedPaymentMethod === 'multibanco'}
+                                onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                              />
                               <span className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200 peer-checked:ring-2 peer-checked:ring-brasil-blue">
                                 <i className="fa-solid fa-building-columns text-brasil-blue text-2xl"></i>
                               </span>
@@ -769,7 +791,14 @@ export default function BookTable() {
                             </label>
                             
                             <label className="flex items-center gap-4 cursor-pointer border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-brasil-red transition focus-within:border-brasil-red">
-                              <input type="radio" name="payment-method" value="mbway" className="hidden peer" />
+                              <input 
+                                type="radio" 
+                                name="payment-method" 
+                                value="mbway" 
+                                className="hidden peer"
+                                checked={selectedPaymentMethod === 'mbway'}
+                                onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                              />
                               <span className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200 peer-checked:ring-2 peer-checked:ring-brasil-red">
                                 <i className="fa-solid fa-mobile-screen-button text-brasil-red text-2xl"></i>
                               </span>
@@ -806,8 +835,94 @@ export default function BookTable() {
                 </div>
               )}
 
-              {/* Step 4: Agradecimento */}
-              {currentStep === 4 && (
+              {/* Step 4: Pagamento Multibanco ou Agradecimento */}
+              {currentStep === 4 && selectedPaymentMethod === 'multibanco' && (
+                <div className="w-full flex flex-col lg:flex-row items-stretch gap-8 p-8">
+                  {/* Detalhes da Reserva */}
+                  <section className="flex-1 bg-white rounded-2xl shadow-lg p-6">
+                    <h2 className="font-montserrat text-lg font-bold text-brasil-blue mb-6 flex items-center">
+                      <i className="fa-solid fa-receipt text-brasil-yellow mr-3"></i> Detalhes da Reserva
+                    </h2>
+                    <ul className="space-y-5">
+                      <li className="flex justify-between items-center">
+                        <span className="text-gray-600 font-semibold font-montserrat">Restaurante</span>
+                        <span className="text-gray-800 font-bold font-montserrat text-right">Opa que delicia</span>
+                      </li>
+                      <li className="flex justify-between items-center">
+                        <span className="text-gray-600 font-semibold font-montserrat">Número de Pessoas</span>
+                        <span className="text-gray-800 font-bold font-montserrat text-right">{form.watch('party_size')}</span>
+                      </li>
+                      <li className="flex justify-between items-center">
+                        <span className="text-gray-600 font-semibold font-montserrat">Mesa/Área</span>
+                        <span className="text-gray-800 font-bold font-montserrat text-right">Mesa {availableTables.find((t: any) => t.id === form.watch('table_id'))?.number || 'N/A'}</span>
+                      </li>
+                      <li className="flex flex-col md:flex-row md:justify-between md:items-center">
+                        <span className="text-gray-600 font-semibold font-montserrat mb-2 md:mb-0">Observações</span>
+                        <span className="text-gray-800 font-medium font-opensans text-right md:w-3/5">{form.watch('special_requests') || 'Nenhuma observação'}</span>
+                      </li>
+                    </ul>
+                  </section>
+
+                  {/* Pagamento Multibanco */}
+                  <section className="w-full max-w-lg bg-white rounded-2xl shadow-lg p-6 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="font-montserrat text-lg font-bold text-brasil-blue flex items-center">
+                          <i className="fa-solid fa-building-columns text-brasil-yellow mr-3"></i>Pagamento - Multibanco
+                        </h2>
+                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-brasil-yellow text-brasil-blue font-bold text-xs">
+                          <i className="fa-solid fa-circle-dot mr-2 text-xs"></i>Em aberto
+                        </span>
+                      </div>
+                      <div className="flex items-center mb-6">
+                        <i className="fa-solid fa-hourglass-half text-brasil-red mr-2 text-lg"></i>
+                        <span className="font-montserrat font-semibold text-brasil-red text-lg">30:00</span>
+                        <span className="ml-2 text-gray-500 text-sm">(tempo para pagamento)</span>
+                      </div>
+                      <div className="mb-5">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-montserrat text-gray-600 font-semibold">Entidade:</span>
+                          <span className="font-montserrat text-gray-900 font-bold text-right">25879</span>
+                        </div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-montserrat text-gray-600 font-semibold">Referência:</span>
+                          <span className="font-montserrat text-gray-900 font-bold text-right">879 458 563</span>
+                        </div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-montserrat text-gray-600 font-semibold">Valor total:</span>
+                          <span className="font-montserrat text-brasil-green font-bold text-xl text-right">€ {total.toFixed(2)}</span>
+                        </div>
+                      </div>
+                      <div className="bg-brasil-blue bg-opacity-5 border border-brasil-blue rounded-xl p-4 mb-4 flex items-start">
+                        <i className="fa-solid fa-info-circle text-brasil-blue mr-3 mt-1"></i>
+                        <p className="text-sm text-brasil-blue font-montserrat font-semibold">
+                          Use estes dados para realizar o pagamento através do Multibanco (ATM) ou Homebanking.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      <button 
+                        onClick={() => {
+                          const data = form.getValues();
+                          finalizeReservationMutation.mutate(data);
+                        }}
+                        className="w-full py-3 rounded-lg bg-brasil-green text-white font-montserrat font-bold text-base shadow hover:bg-brasil-yellow hover:text-brasil-blue transition"
+                      >
+                        Confirmar Pagamento
+                      </button>
+                      <button 
+                        onClick={() => setCurrentStep(3)}
+                        className="w-full py-3 rounded-lg bg-brasil-red text-white font-montserrat font-bold text-base shadow hover:bg-red-700 transition"
+                      >
+                        Voltar
+                      </button>
+                    </div>
+                  </section>
+                </div>
+              )}
+
+              {/* Step 5: Agradecimento (após finalizar reserva) */}
+              {currentStep === 5 && (
                 <div className="w-full flex flex-col items-center px-8 py-16">
                   <div className="flex flex-col items-center justify-center gap-5">
                     <div className="bg-brasil-green rounded-full w-24 h-24 flex items-center justify-center mb-6 shadow-md border-8 border-brasil-yellow animate-bounce">
