@@ -285,6 +285,71 @@ Status: PAGO
     }
   };
 
+  const processStaffOrder = async () => {
+    try {
+      // Preparar os dados do pedido para o funcionário
+      const orderData = {
+        items: orderItems.map(item => ({
+          menuItemId: item.menuItem.id,
+          quantity: item.quantity,
+          price: item.menuItem.price,
+          notes: '',
+          modifications: []
+        })),
+        totalAmount: totalPrice,
+        paymentMethod: 'staff',
+        staffClientId: selectedClient.id, // ID do funcionário
+        discount: 0,
+        tax: 0,
+        type: 'pos',
+        status: 'pending' // Status pendente para pedidos staff
+      };
+
+      // Enviar os dados para a API
+      const response = await fetch('/api/pos/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        throw new Error(t('Erro ao salvar pedido'));
+      }
+
+      const result = await response.json();
+
+      // Mostrar confirmação de sucesso
+      import('sweetalert2').then((Swal) => {
+        Swal.default.fire({
+          title: t('Pedido Registrado!'),
+          text: t('Pedido staff registrado com pagamento pendente para {{name}}', { 
+            name: `${selectedClient.first_name} ${selectedClient.last_name}` 
+          }),
+          icon: 'success',
+          confirmButtonColor: '#f97316',
+          confirmButtonText: t('OK')
+        }).then(() => {
+          // Limpar o pedido após sucesso
+          setOrderItems([]);
+          setSelectedClient(null);
+        });
+      });
+
+    } catch (error) {
+      console.error('Erro ao processar pedido staff:', error);
+      import('sweetalert2').then((Swal) => {
+        Swal.default.fire({
+          title: t('Erro'),
+          text: t('Erro ao processar pedido staff'),
+          icon: 'error',
+          confirmButtonColor: '#f97316'
+        });
+      });
+    }
+  };
+
   const handleProcessOrder = () => {
     setIsPaymentModalOpen(false);
     
@@ -1001,8 +1066,8 @@ Status: PAGO
                       cancelButtonText: t('Cancelar')
                     }).then((result) => {
                       if (result.isConfirmed) {
-                        // Processar pedido staff aqui
-                        // TODO: Implementar lógica de processamento
+                        // Processar pedido staff
+                        processStaffOrder();
                       }
                     });
                   });

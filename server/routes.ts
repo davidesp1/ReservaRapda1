@@ -1275,15 +1275,27 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
       orderPaymentMethod = 'cash';
     }
 
-    // Criar o pedido com o usuário autenticado
+    // Determinar o usuário e status do pedido baseado no método de pagamento
+    let orderUserId = Number(userId); // Por padrão, usar o usuário autenticado
+    let orderStatus = 'completed';
+    let paymentStatus = 'completed';
+    
+    // Se for pedido staff, usar o ID do funcionário e status pendente
+    if (orderPaymentMethod === 'staff' && orderData.staffClientId) {
+      orderUserId = Number(orderData.staffClientId);
+      orderStatus = orderData.status || 'pending';
+      paymentStatus = 'pending';
+    }
+
+    // Criar o pedido
     const newOrder = await drizzleDb.insert(schema.orders).values({
-      userId: Number(userId), // Sempre usar o usuário autenticado
+      userId: orderUserId,
       type: 'pos',
-      status: 'completed',
+      status: orderStatus,
       items: validatedItems,
       totalAmount: calculatedTotal,
       paymentMethod: orderPaymentMethod,
-      paymentStatus: 'completed',
+      paymentStatus: paymentStatus,
       discount: orderData.discount || 0,
       tax: orderData.tax || 0,
       printedReceipt: orderData.printReceipt || false,
