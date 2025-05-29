@@ -636,120 +636,127 @@ export default function BookTable() {
               {/* Step 3: Resumo */}
               {currentStep === 3 && (
                 <div className="flex-1">
-                  <h2 className="mb-6 text-xl font-bold font-montserrat text-brasil-blue flex items-center gap-2">
-                    <i className="fas fa-clipboard-list"></i>
-                    Resumo da Reserva
+                  <h2 className="text-xl font-bold font-montserrat text-brasil-blue mb-8 flex items-center gap-3">
+                    <i className="fa-solid fa-clipboard-list text-brasil-blue"></i>
+                    Resumo do Pedido
                   </h2>
                   
-                  <div className="grid gap-6 md:grid-cols-2">
-                    {/* Informações da Reserva */}
-                    <div className="bg-gray-50 rounded-lg p-6">
-                      <h3 className="font-bold text-lg text-brasil-blue mb-4 flex items-center gap-2">
-                        <i className="fas fa-calendar-check"></i>
-                        Detalhes da Reserva
-                      </h3>
-                      <div className="space-y-3">
-                        <div className="flex justify-between">
-                          <span className="font-medium">Data:</span>
-                          <span>{form.watch('date') ? new Date(form.watch('date')).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                  <div className="flex flex-col md:flex-row gap-9">
+                    {/* Order Summary Card */}
+                    <div className="flex-1">
+                      <div className="bg-white rounded-2xl shadow-xl border-2 border-brasil-blue p-6 mb-7 min-h-[320px]">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-montserrat text-lg font-bold text-brasil-blue flex items-center gap-2">
+                            <i className="fa-solid fa-utensils"></i> Itens Selecionados
+                          </h3>
+                          <button 
+                            onClick={() => setCurrentStep(2)}
+                            className="text-brasil-green hover:underline font-bold text-sm flex items-center gap-1"
+                          >
+                            <i className="fa-solid fa-pen-to-square"></i> Editar
+                          </button>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium">Horário:</span>
-                          <span>{form.watch('time') || 'N/A'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium">Pessoas:</span>
-                          <span>{form.watch('party_size')} {form.watch('party_size') === 1 ? 'pessoa' : 'pessoas'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium">Mesa:</span>
-                          <span>Mesa {availableTables.find((t: any) => t.id === form.watch('table_id'))?.number || 'N/A'}</span>
-                        </div>
-                        {form.watch('special_requests') && (
-                          <div className="pt-3 border-t">
-                            <span className="font-medium">Observações:</span>
-                            <p className="text-sm text-gray-600 mt-1">{form.watch('special_requests')}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Itens do Pedido */}
-                    <div className="bg-gray-50 rounded-lg p-6">
-                      <h3 className="font-bold text-lg text-brasil-blue mb-4 flex items-center gap-2">
-                        <i className="fas fa-utensils"></i>
-                        Pedido ({selectedItems.length} {selectedItems.length === 1 ? 'item' : 'itens'})
-                      </h3>
-                      
-                      {selectedItems.length === 0 ? (
-                        <div className="text-center py-6 text-gray-500">
-                          <i className="fas fa-plate-wheat text-2xl text-gray-300 mb-2"></i>
-                          <p>Nenhum item selecionado</p>
-                          <p className="text-sm">Volte para adicionar pratos</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {selectedItems.map((item) => (
-                            <div key={item.id} className="flex justify-between items-center p-3 bg-white rounded-lg">
-                              <div>
-                                <h4 className="font-semibold text-sm">{item.name}</h4>
-                                <p className="text-xs text-gray-600">Qtd: {item.quantity}</p>
+                        
+                        <div className="divide-y divide-gray-200 mb-4">
+                          {selectedItems.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                              <i className="fa-solid fa-utensils text-3xl text-gray-300 mb-3"></i>
+                              <p>Nenhum item selecionado</p>
+                              <p className="text-sm">Volte para adicionar pratos</p>
+                            </div>
+                          ) : (
+                            selectedItems.map((item) => (
+                              <div key={item.id} className="py-3 flex justify-between items-center">
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-base text-gray-800">{item.name}</h4>
+                                  <p className="text-sm text-gray-600">Quantidade: {item.quantity}</p>
+                                  <p className="text-sm text-brasil-green font-medium">{formatPrice(item.price)} cada</p>
+                                </div>
+                                <div className="text-right">
+                                  <span className="font-bold text-lg text-brasil-green">
+                                    {formatPrice(item.price * item.quantity)}
+                                  </span>
+                                </div>
                               </div>
-                              <span className="font-bold text-brasil-green">
-                                € {((item.price / 100) * item.quantity).toFixed(2)}
-                              </span>
-                            </div>
-                          ))}
-                          
-                          <div className="border-t pt-3 mt-4">
-                            <div className="flex justify-between items-center font-bold text-lg">
-                              <span>Total do Pedido:</span>
-                              <span className="text-brasil-green">€ {total.toFixed(2)}</span>
-                            </div>
+                            ))
+                          )}
+                        </div>
+                        
+                        <div className="flex justify-between mt-5 mb-0 items-center">
+                          <span className="text-gray-700 font-bold text-base">Total</span>
+                          <span className="text-2xl font-extrabold text-brasil-green">€ {total.toFixed(2)}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Política de Cancelamento */}
+                      <div className="bg-blue-50 rounded-2xl border-l-4 border-brasil-blue px-6 py-4 flex items-start gap-4 shadow-sm mb-5">
+                        <i className="fa-solid fa-circle-info text-brasil-blue text-xl mt-1"></i>
+                        <div>
+                          <div className="text-brasil-blue font-semibold mb-1">Política de Cancelamento</div>
+                          <div className="text-gray-700 text-sm">
+                            Cancelamentos até 2 horas antes do horário reservado são gratuitos. Após isso, poderá ser aplicada uma taxa. 
+                            Consulte <span className="underline text-brasil-blue font-bold cursor-pointer">detalhes</span>.
                           </div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Total Geral */}
-                  <div className="mt-8 p-6 bg-brasil-blue/10 rounded-lg border-2 border-brasil-blue/20">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="text-xl font-bold text-brasil-blue">Total da Reserva</h3>
-                        <p className="text-sm text-gray-600">
-                          {selectedItems.length > 0 ? 'Inclui taxa de mesa e pedido' : 'Apenas reserva da mesa'}
-                        </p>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-brasil-green">
-                          € {total.toFixed(2)}
+                    </div>
+
+                    {/* Reservation Details Card */}
+                    <div className="w-full md:w-[370px] shrink-0">
+                      <div className="bg-white rounded-2xl shadow-xl border-2 border-brasil-yellow p-7 min-h-[410px] flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-montserrat text-lg font-bold text-brasil-yellow mb-4 flex items-center gap-2">
+                            <i className="fa-solid fa-calendar-check text-brasil-yellow"></i> Detalhes da Reserva
+                          </h4>
+                          
+                          <div className="space-y-4 mb-6">
+                            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                              <span className="font-medium text-gray-700">Data:</span>
+                              <span className="font-semibold">{form.watch('date') ? new Date(form.watch('date')).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                            </div>
+                            
+                            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                              <span className="font-medium text-gray-700">Horário:</span>
+                              <span className="font-semibold">{form.watch('time') || 'N/A'}</span>
+                            </div>
+                            
+                            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                              <span className="font-medium text-gray-700">Pessoas:</span>
+                              <span className="font-semibold">{form.watch('party_size')} {form.watch('party_size') === 1 ? 'pessoa' : 'pessoas'}</span>
+                            </div>
+                            
+                            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                              <span className="font-medium text-gray-700">Mesa:</span>
+                              <span className="font-semibold">Mesa {availableTables.find((t: any) => t.id === form.watch('table_id'))?.number || 'N/A'}</span>
+                            </div>
+                            
+                            {form.watch('special_requests') && (
+                              <div className="p-3 bg-gray-50 rounded-lg">
+                                <span className="font-medium text-gray-700 block mb-1">Observações:</span>
+                                <p className="text-sm text-gray-600">{form.watch('special_requests')}</p>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-600">
-                          {selectedItems.length > 0 ? 'Pagamento no restaurante' : 'Reserva gratuita'}
-                        </p>
+                        
+                        <div className="flex justify-between gap-3 mt-6">
+                          <button 
+                            onClick={prevStep}
+                            className="flex items-center justify-center w-1/2 px-4 py-3 font-bold text-gray-700 transition bg-gray-200 rounded-lg hover:bg-gray-300"
+                          >
+                            <i className="mr-2 fa-solid fa-arrow-left"></i>
+                            Voltar
+                          </button>
+                          <button 
+                            onClick={nextStep}
+                            className="flex items-center justify-center w-1/2 py-3 text-lg font-bold transition rounded-lg shadow bg-brasil-blue text-white hover:bg-brasil-blue/90"
+                          >
+                            Próximo
+                            <i className="ml-2 fa-solid fa-arrow-right"></i>
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="flex justify-between mt-8">
-                    <Button
-                      type="button"
-                      onClick={prevStep}
-                      variant="outline"
-                      className="flex items-center px-8 py-3 text-lg font-bold"
-                    >
-                      <ArrowLeft className="mr-2 h-5 w-5" />
-                      Anterior
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={nextStep}
-                      className="flex items-center px-8 py-3 text-lg font-bold text-white bg-brasil-blue hover:bg-brasil-blue/90"
-                    >
-                      Finalizar
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
                   </div>
                 </div>
               )}
