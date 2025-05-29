@@ -329,12 +329,12 @@ const Finance: React.FC = () => {
                 <label className="block text-xs text-gray-600 mb-1 font-semibold">
                   Tipo
                 </label>
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <Select value={typeFilter || "all"} onValueChange={(value) => setTypeFilter(value === "all" ? "" : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="payment">Pagamentos</SelectItem>
                     <SelectItem value="reservation">Reservas</SelectItem>
                   </SelectContent>
@@ -367,12 +367,12 @@ const Finance: React.FC = () => {
                 <label className="block text-xs text-gray-600 mb-1 font-semibold">
                   Status
                 </label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select value={statusFilter || "all"} onValueChange={(value) => setStatusFilter(value === "all" ? "" : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="completed">Pago</SelectItem>
                     <SelectItem value="pending">Pendente</SelectItem>
                     <SelectItem value="failed">Falhou</SelectItem>
@@ -385,12 +385,12 @@ const Finance: React.FC = () => {
                 <label className="block text-xs text-gray-600 mb-1 font-semibold">
                   Método
                 </label>
-                <Select value={methodFilter} onValueChange={setMethodFilter}>
+                <Select value={methodFilter || "all"} onValueChange={(value) => setMethodFilter(value === "all" ? "" : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="card">Cartão</SelectItem>
                     <SelectItem value="mbway">MB Way</SelectItem>
                     <SelectItem value="multibanco">Multibanco</SelectItem>
