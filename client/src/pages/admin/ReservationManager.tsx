@@ -12,6 +12,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import AdminLayout from '@/components/layouts/AdminLayout';
 
 type Reservation = {
   id: number;
@@ -191,7 +192,7 @@ const ReservationManager: React.FC = () => {
     setSearchText('');
     setPaymentMethodFilter('');
     setPaymentStatusFilter('');
-    setCurrentPage(1); // Reset to first page when clearing filters
+    setCurrentPage(1);
   };
 
   // Filter reservations based on search and filters
@@ -329,305 +330,216 @@ const ReservationManager: React.FC = () => {
 
   if (reservationsLoading) {
     return (
-      <div className="bg-gray-100 font-opensans min-h-screen">
+      <AdminLayout title="Gestão de Reservas">
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/3"></div>
           <div className="h-12 bg-gray-200 rounded"></div>
           <div className="h-96 bg-gray-200 rounded"></div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="bg-gray-100 font-opensans">
-      <div className="flex h-screen">
-        {/* Sidebar */}
-        <div className="fixed left-0 top-0 h-full w-64 bg-blue-800 flex flex-col">
-          <div className="p-6">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center mr-2">
-                <i className="fa-solid fa-utensils text-blue-800"></i>
-              </div>
-              <span className="text-xl font-semibold text-white font-montserrat">
-                Opa que delicia
-              </span>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <ul>
-              <li className="px-6 py-3">
-                <span className="flex items-center text-white hover:bg-blue-800 hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
-                  <i className="fa-solid fa-chart-line text-yellow-400 w-6"></i>
-                  <span className="ml-2 font-medium">Dashboard</span>
-                </span>
-              </li>
-              <li className="px-6 py-3">
-                <span className="flex items-center text-white hover:bg-blue-800 hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
-                  <i className="fa-solid fa-users text-yellow-400 w-6"></i>
-                  <span className="ml-2 font-medium">Gestão de Clientes</span>
-                </span>
-              </li>
-              <li className="px-6 py-3">
-                <span className="flex items-center text-white hover:bg-blue-800 hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
-                  <i className="fa-solid fa-book-open text-yellow-400 w-6"></i>
-                  <span className="ml-2 font-medium">Gestão do Menu</span>
-                </span>
-              </li>
-              <li className="px-6 py-3">
-                <span className="flex items-center text-white hover:bg-blue-800 hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
-                  <i className="fa-solid fa-chair text-yellow-400 w-6"></i>
-                  <span className="ml-2 font-medium">Gestão das Mesas</span>
-                </span>
-              </li>
-              <li className="px-6 py-3">
-                <span className="flex items-center text-white hover:bg-blue-800 hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
-                  <i className="fa-solid fa-coins text-yellow-400 w-6"></i>
-                  <span className="ml-2 font-medium">Gestão Financeira</span>
-                </span>
-              </li>
-              <li className="px-6 py-3">
-                <span className="flex items-center text-white hover:bg-blue-800 hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
-                  <i className="fa-solid fa-credit-card text-yellow-400 w-6"></i>
-                  <span className="ml-2 font-medium">Pagamentos</span>
-                </span>
-              </li>
-              <li className="px-6 py-3">
-                <span className="flex items-center text-white bg-blue-800 bg-opacity-40 rounded-lg p-2 cursor-pointer">
-                  <i className="fa-solid fa-calendar-check text-yellow-400 w-6"></i>
-                  <span className="ml-2 font-medium">Reservas</span>
-                </span>
-              </li>
-            </ul>
-          </div>
-          <div className="mt-auto border-t border-blue-400 p-4">
-            <span className="flex items-center text-white hover:bg-blue-800 hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
-              <i className="fa-solid fa-gear text-yellow-400 w-6"></i>
-              <span className="ml-2 font-medium">Configurações</span>
-            </span>
-            <span className="flex items-center text-white hover:bg-blue-800 hover:bg-opacity-40 rounded-lg p-2 mt-2 cursor-pointer">
-              <i className="fa-solid fa-right-from-bracket text-yellow-400 w-6"></i>
-              <span className="ml-2 font-medium">Sair</span>
-            </span>
-          </div>
+    <AdminLayout title="Gestão de Reservas">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-800">Gestão de Reservas</h1>
+          <Button
+            onClick={() => setIsNewReservationModalOpen(true)}
+            className="bg-green-600 hover:bg-green-700 text-white font-bold flex items-center space-x-2"
+          >
+            <i className="fa-solid fa-plus"></i>
+            <span>Nova Reserva</span>
+          </Button>
         </div>
 
-        <div className="ml-64 flex-1 p-8 relative">
-          {/* Header */}
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-800 font-montserrat">Gestão de Reservas</h1>
-            <div className="flex items-center space-x-4">
+        {/* Main Content */}
+        <div className="bg-white rounded-lg shadow p-6">
+          {/* Filters */}
+          <div className="flex flex-col md:flex-row md:items-end md:space-x-6 space-y-3 md:space-y-0 mb-6">
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-sm font-semibold mb-1 text-gray-700">Buscar Reserva</label>
               <div className="relative">
-                <button className="relative">
-                  <i className="fa-regular fa-bell text-xl text-gray-600"></i>
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">2</span>
-                </button>
+                <input
+                  type="text"
+                  placeholder="Nome do cliente, contato ou código"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 bg-white text-gray-800 font-medium transition"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                />
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <i className="fa-solid fa-magnifying-glass"></i>
+                </span>
               </div>
-              <div className="flex items-center">
-                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User Avatar" className="w-10 h-10 rounded-full border-2 border-yellow-400" />
-                <div className="ml-2">
-                  <p className="text-sm font-medium text-gray-800">Admin</p>
-                  <p className="text-xs text-gray-500">Administrador</p>
-                </div>
-              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-1 text-gray-700">Método de Pagamento</label>
+              <select
+                className="w-full md:w-44 border border-gray-200 rounded-lg py-2 px-3 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-blue-600"
+                value={paymentMethodFilter}
+                onChange={(e) => setPaymentMethodFilter(e.target.value)}
+              >
+                <option value="">Todos</option>
+                <option value="cash">Dinheiro</option>
+                <option value="card">Cartão</option>
+                <option value="mbway">MBWay</option>
+                <option value="multibanco">Multibanco</option>
+                <option value="transfer">Transferência</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-1 text-gray-700">Status de Pagamento</label>
+              <select
+                className="w-full md:w-44 border border-gray-200 rounded-lg py-2 px-3 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-blue-600"
+                value={paymentStatusFilter}
+                onChange={(e) => setPaymentStatusFilter(e.target.value)}
+              >
+                <option value="">Todos</option>
+                <option value="completed">Pago</option>
+                <option value="pending">Pendente</option>
+                <option value="cancelled">Cancelado</option>
+              </select>
+            </div>
+            <div>
+              <button
+                onClick={clearFilters}
+                className="bg-yellow-400 text-blue-800 font-semibold rounded-lg px-4 py-2 shadow hover:bg-yellow-200 transition mt-2 md:mt-0"
+              >
+                Limpar
+              </button>
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col" style={{ height: '760px' }}>
-            {/* Filters */}
-            <div className="flex flex-col md:flex-row md:items-end md:space-x-6 space-y-3 md:space-y-0 mb-6">
-              <div className="flex-1 min-w-[200px]">
-                <label className="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">Buscar Reserva</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Nome do cliente, contato ou código"
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 bg-white text-gray-800 font-medium transition"
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                  />
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                    <i className="fa-solid fa-magnifying-glass"></i>
-                  </span>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">Método de Pagamento</label>
-                <select
-                  className="w-full md:w-44 border border-gray-200 rounded-lg py-2 px-3 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-blue-600"
-                  value={paymentMethodFilter}
-                  onChange={(e) => setPaymentMethodFilter(e.target.value)}
-                >
-                  <option value="">Todos</option>
-                  <option value="cash">Dinheiro</option>
-                  <option value="card">Cartão</option>
-                  <option value="mbway">MBWay</option>
-                  <option value="multibanco">Multibanco</option>
-                  <option value="transfer">Transferência</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">Status de Pagamento</label>
-                <select
-                  className="w-full md:w-44 border border-gray-200 rounded-lg py-2 px-3 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-blue-600"
-                  value={paymentStatusFilter}
-                  onChange={(e) => setPaymentStatusFilter(e.target.value)}
-                >
-                  <option value="">Todos</option>
-                  <option value="completed">Pago</option>
-                  <option value="pending">Pendente</option>
-                  <option value="cancelled">Cancelado</option>
-                </select>
-              </div>
-              <div>
-                <button
-                  onClick={clearFilters}
-                  className="bg-yellow-400 text-blue-800 font-semibold rounded-lg px-4 py-2 shadow hover:bg-yellow-200 transition mt-2 md:mt-0"
-                >
-                  Limpar
-                </button>
-              </div>
-              <div className="ml-auto">
-                <button
-                  onClick={() => setIsNewReservationModalOpen(true)}
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-lg shadow transition flex items-center space-x-2"
-                >
-                  <i className="fa-solid fa-plus"></i>
-                  <span>Nova Reserva</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Table */}
-            <div className="flex-1 flex flex-col overflow-hidden rounded-xl border border-gray-100 shadow bg-white">
-              <div className="overflow-x-auto flex-1">
-                <table className="min-w-full divide-y divide-gray-100">
-                  <thead className="bg-blue-800">
+          {/* Table */}
+          <div className="flex-1 flex flex-col overflow-hidden rounded-xl border border-gray-100 shadow bg-white">
+            <div className="overflow-x-auto flex-1">
+              <table className="min-w-full divide-y divide-gray-100">
+                <thead className="bg-blue-800">
+                  <tr>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider">Código</th>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider">Cliente</th>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider">Contato</th>
+                    <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider">Mesa</th>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider">Data</th>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider">Hora</th>
+                    <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider">Status de Pagamento</th>
+                    <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider">Método</th>
+                    <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100 text-gray-800 font-medium">
+                  {currentReservations.length === 0 ? (
                     <tr>
-                      <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">Código</th>
-                      <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">Cliente</th>
-                      <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">Contato</th>
-                      <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">Mesa</th>
-                      <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">Data</th>
-                      <th className="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">Hora</th>
-                      <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">Status de Pagamento</th>
-                      <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">Método</th>
-                      <th className="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">Ações</th>
+                      <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                        Nenhuma reserva encontrada
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-100 text-gray-800 font-medium">
-                    {currentReservations.length === 0 ? (
-                      <tr>
-                        <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
-                          Nenhuma reserva encontrada
-                        </td>
-                      </tr>
-                    ) : (
-                      currentReservations.map((reservation) => {
-                        const statusDisplay = getPaymentStatusDisplay(reservation.payment_status);
-                        return (
-                          <tr key={reservation.id}>
-                            <td className="px-4 py-4 font-semibold text-blue-800">
-                              {reservation.reservation_code || `#R${reservation.id}`}
-                            </td>
-                            <td className="px-4 py-4 flex items-center">
-                              <img
-                                src={`https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-${(reservation.id % 8) + 1}.jpg`}
-                                alt=""
-                                className="w-8 h-8 rounded-full border-2 border-green-600 mr-3"
-                              />
-                              {reservation.user_name || `${reservation.first_name} ${reservation.last_name}`}
-                            </td>
-                            <td className="px-4 py-4">{reservation.phone || reservation.email}</td>
-                            <td className="px-4 py-4 text-center">{reservation.table_number}</td>
-                            <td className="px-4 py-4">{format(new Date(reservation.date), 'dd/MM/yyyy')}</td>
-                            <td className="px-4 py-4">{format(new Date(reservation.date), 'HH:mm')}</td>
-                            <td className="px-4 py-4 text-center">
-                              <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold ${statusDisplay.bgColor} ${statusDisplay.textColor} rounded`}>
-                                <i className={`${statusDisplay.icon} mr-1`}></i> {formatPaymentStatus(reservation.payment_status)}
-                              </span>
-                            </td>
-                            <td className="px-4 py-4 text-center">
-                              <span className="inline-flex items-center px-2 py-1 text-xs font-semibold bg-gray-100 text-blue-800 rounded">
-                                <i className={`${getPaymentMethodIcon(reservation.payment_method)} mr-1`}></i> {formatPaymentMethod(reservation.payment_method)}
-                              </span>
-                            </td>
-                            <td className="px-4 py-4 text-center space-x-1">
-                              <button
-                                onClick={() => {
-                                  setSelectedReservation(reservation);
-                                  setIsDetailsModalOpen(true);
-                                }}
-                                className="text-blue-800 hover:text-green-600 px-2 py-1 rounded"
-                              >
-                                <i className="fa-solid fa-eye"></i>
-                              </button>
-                              <button className="text-yellow-500 hover:text-yellow-600 px-2 py-1 rounded">
-                                <i className="fa-solid fa-pen"></i>
-                              </button>
-                              <button
-                                onClick={() => handleDeleteReservation(reservation.id)}
-                                className="text-red-500 hover:text-red-600 px-2 py-1 rounded"
-                              >
-                                <i className="fa-solid fa-trash"></i>
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+                  ) : (
+                    currentReservations.map((reservation) => {
+                      const statusDisplay = getPaymentStatusDisplay(reservation.payment_status);
+                      return (
+                        <tr key={reservation.id}>
+                          <td className="px-4 py-4 font-semibold text-blue-800">
+                            {reservation.reservation_code || `#R${reservation.id}`}
+                          </td>
+                          <td className="px-4 py-4 flex items-center">
+                            <img
+                              src={`https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-${(reservation.id % 8) + 1}.jpg`}
+                              alt=""
+                              className="w-8 h-8 rounded-full border-2 border-green-600 mr-3"
+                            />
+                            {reservation.user_name || `${reservation.first_name} ${reservation.last_name}`}
+                          </td>
+                          <td className="px-4 py-4">{reservation.phone || reservation.email}</td>
+                          <td className="px-4 py-4 text-center">{reservation.table_number}</td>
+                          <td className="px-4 py-4">{format(new Date(reservation.date), 'dd/MM/yyyy')}</td>
+                          <td className="px-4 py-4">{format(new Date(reservation.date), 'HH:mm')}</td>
+                          <td className="px-4 py-4 text-center">
+                            <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold ${statusDisplay.bgColor} ${statusDisplay.textColor} rounded`}>
+                              <i className={`${statusDisplay.icon} mr-1`}></i> {formatPaymentStatus(reservation.payment_status)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            <span className="inline-flex items-center px-2 py-1 text-xs font-semibold bg-gray-100 text-blue-800 rounded">
+                              <i className={`${getPaymentMethodIcon(reservation.payment_method)} mr-1`}></i> {formatPaymentMethod(reservation.payment_method)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-center space-x-1">
+                            <button
+                              onClick={() => {
+                                setSelectedReservation(reservation);
+                                setIsDetailsModalOpen(true);
+                              }}
+                              className="text-blue-800 hover:text-green-600 px-2 py-1 rounded"
+                            >
+                              <i className="fa-solid fa-eye"></i>
+                            </button>
+                            <button className="text-yellow-500 hover:text-yellow-600 px-2 py-1 rounded">
+                              <i className="fa-solid fa-pen"></i>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteReservation(reservation.id)}
+                              className="text-red-500 hover:text-red-600 px-2 py-1 rounded"
+                            >
+                              <i className="fa-solid fa-trash"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Pagination */}
+            <div className="flex justify-between items-center px-6 py-4 bg-white border-t border-gray-100">
+              <div className="text-sm text-gray-600">
+                Exibindo {filteredReservations.length > 0 ? startIndex + 1 : 0} a {Math.min(endIndex, filteredReservations.length)} de {filteredReservations.length} reservas
               </div>
-              
-              {/* Pagination */}
-              <div className="flex justify-between items-center px-6 py-4 bg-white border-t border-gray-100">
-                <div className="text-sm text-gray-600">
-                  Exibindo {filteredReservations.length > 0 ? startIndex + 1 : 0} a {Math.min(endIndex, filteredReservations.length)} de {filteredReservations.length} reservas
+              {totalPages > 1 && (
+                <div className="flex space-x-1">
+                  <button 
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1 rounded-lg font-bold transition ${
+                      currentPage === 1 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                        : 'bg-gray-100 text-gray-500 hover:bg-blue-800 hover:text-white'
+                    }`}
+                  >
+                    <i className="fa-solid fa-angle-left"></i>
+                  </button>
+                  
+                  {generatePageNumbers().map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-3 py-1 rounded-lg font-bold transition ${
+                        currentPage === page
+                          ? 'bg-blue-800 text-white'
+                          : 'bg-gray-100 text-gray-800 hover:bg-blue-800 hover:text-white'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  
+                  <button 
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-1 rounded-lg font-bold transition ${
+                      currentPage === totalPages 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                        : 'bg-gray-100 text-gray-500 hover:bg-blue-800 hover:text-white'
+                    }`}
+                  >
+                    <i className="fa-solid fa-angle-right"></i>
+                  </button>
                 </div>
-                {totalPages > 1 && (
-                  <div className="flex space-x-1">
-                    <button 
-                      onClick={handlePreviousPage}
-                      disabled={currentPage === 1}
-                      className={`px-3 py-1 rounded-lg font-bold transition ${
-                        currentPage === 1 
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                          : 'bg-gray-100 text-gray-500 hover:bg-blue-800 hover:text-white'
-                      }`}
-                    >
-                      <i className="fa-solid fa-angle-left"></i>
-                    </button>
-                    
-                    {generatePageNumbers().map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        className={`px-3 py-1 rounded-lg font-bold transition ${
-                          currentPage === page
-                            ? 'bg-blue-800 text-white'
-                            : 'bg-gray-100 text-gray-800 hover:bg-blue-800 hover:text-white'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    
-                    <button 
-                      onClick={handleNextPage}
-                      disabled={currentPage === totalPages}
-                      className={`px-3 py-1 rounded-lg font-bold transition ${
-                        currentPage === totalPages 
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                          : 'bg-gray-100 text-gray-500 hover:bg-blue-800 hover:text-white'
-                      }`}
-                    >
-                      <i className="fa-solid fa-angle-right"></i>
-                    </button>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -825,7 +737,7 @@ const ReservationManager: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AdminLayout>
   );
 };
 
