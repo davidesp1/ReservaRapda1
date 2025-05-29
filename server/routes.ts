@@ -113,6 +113,24 @@ router.get("/api/users", isAuthenticated, async (req, res) => {
   }
 });
 
+// Buscar apenas usuários com role "staff"
+router.get("/api/users/staff", isAuthenticated, async (req, res) => {
+  try {
+    const staffUsers = await queryClient`
+      SELECT id, username, email, first_name, last_name, phone, role, status, 
+             loyalty_points, member_since, last_login
+      FROM users
+      WHERE role = 'staff' AND status = 'active'
+      ORDER BY last_name, first_name
+    `;
+    
+    res.json(staffUsers);
+  } catch (err: any) {
+    console.error("Erro ao buscar funcionários:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Buscar usuário por ID
 router.get("/api/users/:id", isAuthenticated, async (req, res) => {
   try {

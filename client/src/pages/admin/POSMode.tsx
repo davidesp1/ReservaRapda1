@@ -36,6 +36,7 @@ const POSMode = () => {
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
+  const [clientSearchQuery, setClientSearchQuery] = useState('');
   const [newClientData, setNewClientData] = useState({
     username: '',
     email: '',
@@ -58,9 +59,9 @@ const POSMode = () => {
     refetchIntervalInBackground: true,
   });
 
-  // Carregar clientes cadastrados
-  const { data: clients } = useQuery({
-    queryKey: ['/api/users'],
+  // Carregar apenas funcionários (staff)
+  const { data: staffClients } = useQuery({
+    queryKey: ['/api/users/staff'],
     enabled: isClientModalOpen, // Só carrega quando o modal está aberto
   });
   
@@ -913,43 +914,64 @@ Status: PAGO
             </div>
             
             <div className="mb-4">
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <input
+                  type="text"
+                  placeholder={t('Pesquisar funcionário...')}
+                  value={clientSearchQuery}
+                  onChange={(e) => setClientSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+              
               <button
                 onClick={() => setIsNewClientModalOpen(true)}
                 className="w-full p-3 border-2 border-dashed border-orange-300 rounded-lg text-orange-600 hover:bg-orange-50 transition-colors"
               >
                 <Plus className="w-5 h-5 inline mr-2" />
-                {t('Adicionar Novo Cliente')}
+                {t('Adicionar Novo Funcionário')}
               </button>
             </div>
 
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {clients && clients.length > 0 ? (
-                clients.map((client: any) => (
-                  <div
-                    key={client.id}
-                    className={`p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                      selectedClient?.id === client.id ? 'border-orange-500 bg-orange-50' : 'border-gray-300'
-                    }`}
-                    onClick={() => setSelectedClient(client)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-gray-900">
-                          {client.first_name} {client.last_name}
+              {staffClients && staffClients.length > 0 ? (
+                staffClients
+                  .filter((client: any) => {
+                    const searchLower = clientSearchQuery.toLowerCase();
+                    return (
+                      client.first_name?.toLowerCase().includes(searchLower) ||
+                      client.last_name?.toLowerCase().includes(searchLower) ||
+                      client.email?.toLowerCase().includes(searchLower) ||
+                      client.username?.toLowerCase().includes(searchLower)
+                    );
+                  })
+                  .map((client: any) => (
+                    <div
+                      key={client.id}
+                      className={`p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                        selectedClient?.id === client.id ? 'border-orange-500 bg-orange-50' : 'border-gray-300'
+                      }`}
+                      onClick={() => setSelectedClient(client)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            {client.first_name} {client.last_name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {client.email} | {client.username}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {client.email} | {client.username}
-                        </div>
+                        {selectedClient?.id === client.id && (
+                          <Check className="h-5 w-5 text-orange-500" />
+                        )}
                       </div>
-                      {selectedClient?.id === client.id && (
-                        <Check className="h-5 w-5 text-orange-500" />
-                      )}
                     </div>
-                  </div>
-                ))
+                  ))
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  {t('Nenhum cliente cadastrado')}
+                  {t('Nenhum funcionário encontrado')}
                 </div>
               )}
             </div>
