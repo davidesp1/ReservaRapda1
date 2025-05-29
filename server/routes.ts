@@ -2173,6 +2173,49 @@ router.post("/api/payments/multibanco", isAuthenticated, async (req, res) => {
 });
 
 // Rotas para configurações de impressora
+// Verificar e atualizar status das impressoras
+router.post("/api/printers/refresh", async (req, res) => {
+  try {
+    console.log('Iniciando verificação de impressoras...');
+    
+    // Obter lista atualizada de impressoras do sistema
+    const systemPrinters = await printerService.getAvailablePrinters();
+    
+    // Verificar status de cada impressora
+    const printersWithStatus = await Promise.all(
+      systemPrinters.map(async (printer) => {
+        try {
+          const connectionTest = await printerService.testPrinterConnection(printer.id);
+          return {
+            ...printer,
+            status: connectionTest.success ? 'online' : 'offline'
+          };
+        } catch (error) {
+          console.error(`Erro ao testar impressora ${printer.id}:`, error);
+          return {
+            ...printer,
+            status: 'error'
+          };
+        }
+      })
+    );
+    
+    console.log(`Verificação concluída. Encontradas ${printersWithStatus.length} impressoras.`);
+    
+    res.json({
+      success: true,
+      message: `Verificação concluída. ${printersWithStatus.length} impressoras encontradas.`,
+      printers: printersWithStatus
+    });
+  } catch (error: any) {
+    console.error('Erro ao verificar impressoras:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erro ao verificar impressoras'
+    });
+  }
+});
+
 // Buscar configurações de impressoras
 router.get("/api/printers/config", async (req, res) => {
   try {

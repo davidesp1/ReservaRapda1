@@ -15,28 +15,59 @@ export interface PrinterInfo {
 export class PrinterService {
   
   async getAvailablePrinters(): Promise<PrinterInfo[]> {
+    const printers: PrinterInfo[] = [];
+    
     try {
-      // Detectar impressoras no Linux/Unix usando lpstat
-      const { stdout } = await execAsync('lpstat -p -d 2>/dev/null || echo "No printers found"');
+      // Primeiro, tentar detectar impressoras usando lpstat (Linux/Unix)
+      const { stdout: lpstatOutput } = await execAsync('lpstat -p -d 2>/dev/null || echo "No CUPS printers"');
       
-      const printers: PrinterInfo[] = [];
-      const lines = stdout.split('\n').filter(line => line.trim());
-      
-      for (const line of lines) {
-        if (line.startsWith('printer ')) {
-          const match = line.match(/printer (\S+)\s+(.+)/);
-          if (match) {
-            const [, name, description] = match;
-            printers.push({
-              id: name,
-              name: name,
-              description: description,
-              status: description.includes('disabled') ? 'offline' : 'online',
-              type: this.determinePrinterType(description),
-              location: 'Sistema'
-            });
+      if (lpstatOutput && !lpstatOutput.includes('No CUPS printers')) {
+        const lines = lpstatOutput.split('\n').filter(line => line.trim());
+        
+        for (const line of lines) {
+          if (line.startsWith('printer ')) {
+            const match = line.match(/printer (\S+)\s+(.+)/);
+            if (match) {
+              const [, name, description] = match;
+              printers.push({
+                id: name,
+                name: name,
+                description: description,
+                status: description.includes('disabled') ? 'offline' : 'online',
+                type: this.determinePrinterType(description),
+                location: 'Sistema CUPS'
+              });
+            }
           }
         }
+      }
+      
+      // Verificar dispositivos USB/Serial para impressoras térmicas
+      try {
+        const { stdout: usbOutput } = await execAsync('lsusb 2>/dev/null || echo "No USB command"');
+        if (usbOutput && !usbOutput.includes('No USB command')) {
+          // Procurar por impressoras térmicas comuns
+          const thermalKeywords = ['printer', 'pos', 'thermal', 'receipt', 'epson', 'bematech', 'daruma', 'elgin'];
+          const usbLines = usbOutput.toLowerCase().split('\n');
+          
+          usbLines.forEach((line, index) => {
+            if (thermalKeywords.some(keyword => line.includes(keyword))) {
+              const deviceId = `usb-thermal-${index}`;
+              if (!printers.find(p => p.id === deviceId)) {
+                printers.push({
+                  id: deviceId,
+                  name: `Impressora Térmica USB`,
+                  description: `Dispositivo USB detectado: ${line.trim()}`,
+                  status: 'online',
+                  type: 'thermal',
+                  location: 'USB'
+                });
+              }
+            }
+          });
+        }
+      } catch (usbError) {
+        console.log('Comando lsusb não disponível');
       }
 
       // Se não encontrar impressoras pelo lpstat, adicionar impressoras padrão do sistema

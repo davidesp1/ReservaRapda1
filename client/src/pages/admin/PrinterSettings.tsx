@@ -31,11 +31,33 @@ export default function PrinterSettings() {
   const [isEditing, setIsEditing] = useState(false);
 
   // Fetch available printers
-  const { data: printers = [], isLoading } = useQuery<PrinterConfig[]>({
+  const { data: printers = [], isLoading, refetch } = useQuery<PrinterConfig[]>({
     queryKey: ['/api/printers/config'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/printers/config');
       return response.json();
+    },
+  });
+
+  // Refresh and verify printers
+  const refreshPrintersMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/printers/refresh');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Impressoras Verificadas',
+        description: 'A verificação de impressoras foi concluída',
+      });
+      refetch();
+    },
+    onError: () => {
+      toast({
+        title: 'Erro na Verificação',
+        description: 'Não foi possível verificar as impressoras',
+        variant: 'destructive',
+      });
     },
   });
 
@@ -152,12 +174,12 @@ export default function PrinterSettings() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/printers/config'] })}
-                  disabled={isLoading}
+                  onClick={() => refreshPrintersMutation.mutate()}
+                  disabled={refreshPrintersMutation.isPending || isLoading}
                   className="flex items-center gap-2"
                 >
                   <Settings className="h-4 w-4" />
-                  {isLoading ? 'Verificando...' : 'Verificar Impressoras'}
+                  {refreshPrintersMutation.isPending ? 'Verificando...' : 'Verificar Impressoras'}
                 </Button>
               </div>
             </CardHeader>
