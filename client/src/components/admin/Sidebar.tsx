@@ -8,7 +8,7 @@ import {
   FaUtensils, FaChartLine, FaUsers, FaBookOpen, 
   FaChair, FaCoins, FaCreditCard, FaCalendarCheck, 
   FaCog, FaSignOutAlt, FaBars, FaTimes, FaCashRegister,
-  FaMoneyBillWave
+  FaMoneyBillWave, FaPrint
 } from 'react-icons/fa';
 
 interface SidebarProps {
@@ -63,6 +63,11 @@ const AdminSidebar: React.FC<SidebarProps> = ({ isMobile = false, onClose }) => 
       path: '/admin/reservations',
       label: t('Reservations'),
       icon: <FaCalendarCheck className="w-6 text-brasil-yellow" />
+    },
+    {
+      path: '/admin/printer-settings',
+      label: 'Configurações de Impressora',
+      icon: <FaPrint className="w-6 text-brasil-yellow" />
     },
     {
       path: '/admin/settings',
