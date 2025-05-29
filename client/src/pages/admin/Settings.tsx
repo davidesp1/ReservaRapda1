@@ -171,6 +171,9 @@ const Settings: React.FC = () => {
   // Estado para controlar a aba ativa
   const [activeTab, setActiveTab] = useState(1);
   
+  // Estado para controlar sub-abas dentro da aba POS
+  const [activePOSSubTab, setActivePOSSubTab] = useState(1);
+  
   // Estado para o formulário de configurações gerais
   const [generalSettings, setGeneralSettings] = useState(generalSettingsSchema);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -949,10 +952,237 @@ const Settings: React.FC = () => {
             )}
 
             {activeTab === 6 && (
-              <div className="grid grid-cols-12 gap-6">
-                {/* Left side: Configuration panels */}
-                <div className="col-span-12 lg:col-span-7">
-                  {/* 1. Seleção de Impressora / Porta / Conexão */}
+              <div>
+                {/* Sub-tabs para Configurações POS */}
+                <div className="flex mb-6 space-x-2 border-b border-gray-200">
+                  <button 
+                    className={`px-4 py-2 -mb-px font-medium border-b-2 rounded-t-md ${
+                      activePOSSubTab === 1 
+                        ? 'text-blue-800 border-blue-800 bg-blue-50' 
+                        : 'text-gray-600 border-transparent hover:text-blue-800 hover:bg-gray-50'
+                    }`}
+                    onClick={() => setActivePOSSubTab(1)}
+                  >
+                    <i className="mr-2 fa-solid fa-print" style={{ color: '#002776' }}></i>
+                    Configurações Básicas de Impressão
+                  </button>
+                  <button 
+                    className={`px-4 py-2 -mb-px font-medium border-b-2 rounded-t-md ${
+                      activePOSSubTab === 2 
+                        ? 'text-blue-800 border-blue-800 bg-blue-50' 
+                        : 'text-gray-600 border-transparent hover:text-blue-800 hover:bg-gray-50'
+                    }`}
+                    onClick={() => setActivePOSSubTab(2)}
+                  >
+                    <i className="mr-2 fa-solid fa-sliders" style={{ color: '#009c3b' }}></i>
+                    Configurações Avançadas
+                  </button>
+                </div>
+
+                {/* Conteúdo das Sub-tabs */}
+                {activePOSSubTab === 1 && (
+                  <div className="grid grid-cols-12 gap-6">
+                    {/* Left side: Basic Print Configuration */}
+                    <div className="col-span-12 lg:col-span-8">
+                      {/* 1. Seleção de Impressora Principal */}
+                      <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                        <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                          <i className="mr-2 fa-solid fa-print" style={{ color: '#002776' }}></i>
+                          Impressora Principal
+                        </h2>
+                        
+                        <div className="mb-4">
+                          <label className="block mb-2 text-sm font-medium text-gray-700">Selecionar Impressora para Recibos</label>
+                          <PrinterSelector />
+                        </div>
+                      </div>
+
+                      {/* 2. Configurações Básicas do Recibo */}
+                      <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                        <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                          <i className="mr-2 fa-solid fa-receipt" style={{ color: '#009c3b' }}></i>
+                          Configurações do Recibo
+                        </h2>
+                        
+                        <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                          <div>
+                            <label className="block mb-2 text-sm font-medium text-gray-700">Nome do Estabelecimento</label>
+                            <input 
+                              type="text" 
+                              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" 
+                              defaultValue="Opa que delicia"
+                              placeholder="Nome do restaurante"
+                            />
+                          </div>
+                          <div>
+                            <label className="block mb-2 text-sm font-medium text-gray-700">Endereço</label>
+                            <input 
+                              type="text" 
+                              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" 
+                              placeholder="Rua, Cidade, CEP"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                          <div>
+                            <label className="block mb-2 text-sm font-medium text-gray-700">Telefone</label>
+                            <input 
+                              type="text" 
+                              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" 
+                              placeholder="+351 123 456 789"
+                            />
+                          </div>
+                          <div>
+                            <label className="block mb-2 text-sm font-medium text-gray-700">NIF/NIPC</label>
+                            <input 
+                              type="text" 
+                              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" 
+                              placeholder="123456789"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mb-4">
+                          <label className="block mb-2 text-sm font-medium text-gray-700">Mensagem de Rodapé</label>
+                          <textarea 
+                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:outline-none" 
+                            rows={3}
+                            placeholder="Obrigado pela sua visita! Volte sempre."
+                          ></textarea>
+                        </div>
+                      </div>
+
+                      {/* 3. Opções de Impressão */}
+                      <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                        <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                          <i className="mr-2 fa-solid fa-cog" style={{ color: '#ffdf00' }}></i>
+                          Opções de Impressão
+                        </h2>
+                        
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div>
+                              <h3 className="font-medium text-gray-800">Impressão Automática</h3>
+                              <p className="text-sm text-gray-600">Imprimir recibo automaticamente após pagamento</p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input type="checkbox" defaultChecked className="sr-only peer" />
+                              <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                          </div>
+
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div>
+                              <h3 className="font-medium text-gray-800">Corte Automático</h3>
+                              <p className="text-sm text-gray-600">Cortar papel automaticamente após impressão</p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input type="checkbox" defaultChecked className="sr-only peer" />
+                              <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                          </div>
+
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div>
+                              <h3 className="font-medium text-gray-800">Imprimir QR Code</h3>
+                              <p className="text-sm text-gray-600">Incluir QR code para avaliação no recibo</p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input type="checkbox" className="sr-only peer" />
+                              <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right side: Preview */}
+                    <div className="col-span-12 lg:col-span-4">
+                      <div className="p-5 bg-white border border-gray-200 rounded-lg shadow-sm sticky top-6">
+                        <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                          <i className="mr-2 fa-solid fa-eye" style={{ color: '#002776' }}></i>
+                          Pré-visualização do Recibo
+                        </h2>
+                        
+                        <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg">
+                          <div className="text-center text-xs font-mono space-y-1">
+                            <div className="font-bold">OPA QUE DELICIA</div>
+                            <div>Rua da Amoreira, 123</div>
+                            <div>1200-001 Lisboa</div>
+                            <div>Tel: +351 123 456 789</div>
+                            <div>NIF: 123456789</div>
+                            <div className="border-t border-gray-400 my-2"></div>
+                            <div className="text-left">
+                              <div>Mesa: 5</div>
+                              <div>Cliente: João Silva</div>
+                              <div>Data: 29/05/2025 17:08</div>
+                            </div>
+                            <div className="border-t border-gray-400 my-2"></div>
+                            <div className="text-left space-y-1">
+                              <div className="flex justify-between">
+                                <span>1x Francesinha</span>
+                                <span>€12.50</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>1x Sumol Laranja</span>
+                                <span>€2.50</span>
+                              </div>
+                            </div>
+                            <div className="border-t border-gray-400 my-2"></div>
+                            <div className="flex justify-between font-bold">
+                              <span>TOTAL:</span>
+                              <span>€15.00</span>
+                            </div>
+                            <div className="border-t border-gray-400 my-2"></div>
+                            <div>Pagamento: Dinheiro</div>
+                            <div>Troco: €5.00</div>
+                            <div className="border-t border-gray-400 my-2"></div>
+                            <div className="text-center">
+                              <div>████ ████ ████</div>
+                              <div>█  █ █  █ █  █</div>
+                              <div>████ ████ ████</div>
+                              <div className="text-xs mt-1">QR Code - Avalie-nos</div>
+                            </div>
+                            <div className="border-t border-gray-400 my-2"></div>
+                            <div>Obrigado pela sua visita!</div>
+                            <div>Volte sempre.</div>
+                          </div>
+                        </div>
+                        
+                        <button className="w-full mt-4 px-4 py-2 text-white rounded-md hover:bg-green-700" style={{ backgroundColor: '#009c3b' }}>
+                          <i className="mr-2 fa-solid fa-print"></i>
+                          Imprimir Teste
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activePOSSubTab === 2 && (
+                  <div className="grid grid-cols-12 gap-6">
+                    {/* Left side: Advanced Configuration panels */}
+                    <div className="col-span-12 lg:col-span-7">
+                      <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                        <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
+                          <i className="mr-2 fa-solid fa-cog" style={{ color: '#002776' }}></i>
+                          Configurações Avançadas
+                        </h2>
+                        <p className="text-gray-600">Configurações avançadas de impressão e POS em desenvolvimento...</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Settings;
                   <div className="p-5 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
                     <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-800 font-montserrat">
                       <i className="mr-2 fa-solid fa-print" style={{ color: '#002776' }}></i>
