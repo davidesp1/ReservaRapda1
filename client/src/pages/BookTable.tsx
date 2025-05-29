@@ -696,6 +696,42 @@ export default function BookTable() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Detalhes da Reserva */}
+                      <div className="bg-white rounded-2xl shadow-xl border-2 border-brasil-yellow p-6 mb-5">
+                        <h4 className="font-montserrat text-lg font-bold text-brasil-yellow mb-4 flex items-center gap-2">
+                          <i className="fa-solid fa-calendar-check text-brasil-yellow"></i> Detalhes da Reserva
+                        </h4>
+                        
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span className="font-medium text-gray-700">Data:</span>
+                            <span className="font-semibold">{form.watch('date') ? new Date(form.watch('date')).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span className="font-medium text-gray-700">Horário:</span>
+                            <span className="font-semibold">{form.watch('time') || 'N/A'}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span className="font-medium text-gray-700">Pessoas:</span>
+                            <span className="font-semibold">{form.watch('party_size')} {form.watch('party_size') === 1 ? 'pessoa' : 'pessoas'}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span className="font-medium text-gray-700">Mesa:</span>
+                            <span className="font-semibold">Mesa {availableTables.find((t: any) => t.id === form.watch('table_id'))?.number || 'N/A'}</span>
+                          </div>
+                          
+                          {form.watch('special_requests') && (
+                            <div className="p-3 bg-gray-50 rounded-lg">
+                              <span className="font-medium text-gray-700 block mb-1">Observações:</span>
+                              <p className="text-sm text-gray-600">{form.watch('special_requests')}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Payment Selection Card */}
