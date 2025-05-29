@@ -96,6 +96,8 @@ const Finance: React.FC = () => {
   const [methodFilter, setMethodFilter] = useState<string>("");
   const [filteredPayments, setFilteredPayments] = useState<PaymentWithUser[]>([]);
   const [filteredReservations, setFilteredReservations] = useState<Reservation[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [reservationsPerPage] = useState(10);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const { toast } = useToast();
 
@@ -222,6 +224,59 @@ const Finance: React.FC = () => {
   useEffect(() => {
     applyFilters();
   }, [payments, reservations, searchText, startDate, endDate, statusFilter, methodFilter]);
+
+  // Calculate pagination for reservations
+  const totalPages = Math.ceil(filteredReservations.length / reservationsPerPage);
+  const startIndex = (currentPage - 1) * reservationsPerPage;
+  const endIndex = startIndex + reservationsPerPage;
+  const currentReservations = filteredReservations.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle next page
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Handle previous page
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Generate page numbers for pagination
+  const generatePageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= maxVisiblePages; i++) {
+          pages.push(i);
+        }
+      } else if (currentPage >= totalPages - 2) {
+        for (let i = totalPages - maxVisiblePages + 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        for (let i = currentPage - 2; i <= currentPage + 2; i++) {
+          pages.push(i);
+        }
+      }
+    }
+    
+    return pages;
+  };
 
   // Calcular totais
   const totals = React.useMemo(() => {
@@ -1249,6 +1304,7 @@ const Finance: React.FC = () => {
                     setEndDate("");
                     setStatusFilter("");
                     setMethodFilter("");
+                    setCurrentPage(1);
                   }}
                   variant="outline"
                   className="flex items-center gap-2"
@@ -1265,6 +1321,9 @@ const Finance: React.FC = () => {
                     <h3 className="text-lg font-semibold text-gray-800">
                       Todas as Reservas ({filteredReservations.length})
                     </h3>
+                    <p className="text-sm text-gray-600">
+                      Exibindo {filteredReservations.length > 0 ? startIndex + 1 : 0} a {Math.min(endIndex, filteredReservations.length)} de {filteredReservations.length} reservas
+                    </p>
                   </div>
                 </div>
 
@@ -1299,7 +1358,7 @@ const Finance: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredReservations.map((reservation) => (
+                      {currentReservations.map((reservation) => (
                         <tr key={reservation.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
                             {reservation.reservation_code || `#R${reservation.id}`}
@@ -1368,7 +1427,7 @@ const Finance: React.FC = () => {
                     </tbody>
                   </table>
 
-                  {filteredReservations.length === 0 && (
+                  {currentReservations.length === 0 && (
                     <div className="text-center py-12">
                       <p className="text-gray-500">
                         Nenhuma reserva encontrada
@@ -1376,6 +1435,54 @@ const Finance: React.FC = () => {
                     </div>
                   )}
                 </div>
+                
+                {/* Paginação */}
+                {totalPages > 1 && (
+                  <div className="flex justify-between items-center px-6 py-4 bg-white border-t border-gray-200">
+                    <div className="text-sm text-gray-600">
+                      Exibindo {filteredReservations.length > 0 ? startIndex + 1 : 0} a {Math.min(endIndex, filteredReservations.length)} de {filteredReservations.length} reservas
+                    </div>
+                    <div className="flex space-x-1">
+                      <button 
+                        onClick={handlePreviousPage}
+                        disabled={currentPage === 1}
+                        className={`px-3 py-1 rounded-lg font-bold transition ${
+                          currentPage === 1 
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                            : 'bg-gray-100 text-gray-500 hover:bg-blue-600 hover:text-white'
+                        }`}
+                      >
+                        <i className="fa-solid fa-angle-left"></i>
+                      </button>
+                      
+                      {generatePageNumbers().map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`px-3 py-1 rounded-lg font-bold transition ${
+                            currentPage === page
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-800 hover:bg-blue-600 hover:text-white'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                      
+                      <button 
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages}
+                        className={`px-3 py-1 rounded-lg font-bold transition ${
+                          currentPage === totalPages 
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                            : 'bg-gray-100 text-gray-500 hover:bg-blue-600 hover:text-white'
+                        }`}
+                      >
+                        <i className="fa-solid fa-angle-right"></i>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
