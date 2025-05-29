@@ -565,7 +565,7 @@ router.get("/api/reservations", isAuthenticated, async (req, res) => {
   }
 });
 
-// Endpoint para buscar pagamentos do usuário (incluindo POS orders)
+// Endpoint para buscar pagamentos do usuário
 router.get("/api/payments", isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -576,139 +576,23 @@ router.get("/api/payments", isAuthenticated, async (req, res) => {
     
     const safeUserId = Number(userId);
     
-    // Buscar pagamentos tradicionais (reservas)
-    const reservationPayments = await queryClient`
+    // Buscar pagamentos do usuário com informações das reservas
+    const payments = await queryClient`
       SELECT 
-        'reservation' as source_type,
-        p.id,
-        p.reservation_id,
-        p.amount,
-        p.method as payment_method,
-        p.status,
-        p.payment_date as created_at,
-        p.user_id,
+        p.*,
         r.reservation_code,
         r.date as reservation_date,
-        t.number as table_number,
-        NULL as items_count
+        t.number as table_number
       FROM payments p
       LEFT JOIN reservations r ON p.reservation_id = r.id
       LEFT JOIN tables t ON r.table_id = t.id
       WHERE p.user_id = ${safeUserId}
+      ORDER BY p.payment_date DESC, p.id DESC
     `;
     
-    // Buscar pedidos POS
-    const posOrders = await queryClient`
-      SELECT 
-        'pos' as source_type,
-        o.id,
-        NULL as reservation_id,
-        o.total_amount as amount,
-        o.payment_method,
-        CASE 
-          WHEN o.payment_status = 'completed' THEN 'paid'
-          WHEN o.payment_status = 'pending' THEN 'pending'
-          ELSE o.payment_status
-        END as status,
-        o.created_at,
-        o.user_id,
-        'POS-' || o.id as reservation_code,
-        o.created_at as reservation_date,
-        'POS' as table_number,
-        jsonb_array_length(o.items) as items_count
-      FROM orders o
-      WHERE o.user_id = ${safeUserId} AND o.type = 'pos'
-    `;
-    
-    // Combinar ambos os resultados
-    const allPayments = [...reservationPayments, ...posOrders];
-    
-    // Ordenar por data de criação (mais recente primeiro)
-    allPayments.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    
-    res.json(allPayments);
+    res.json(payments);
   } catch (err: any) {
     console.error("Erro ao buscar pagamentos:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Endpoint para buscar TODOS os pagamentos (área admin) - incluindo POS orders
-router.get("/api/admin/payments", isAuthenticated, async (req, res) => {
-  try {
-    const userId = req.session.userId;
-    
-    // Verificar se o usuário é admin
-    const user = await queryClient`
-      SELECT role FROM users WHERE id = ${Number(userId)}
-    `;
-    
-    if (user.length === 0 || user[0].role !== 'admin') {
-      return res.status(403).json({ error: "Acesso negado. Apenas administradores podem acessar esta informação." });
-    }
-    
-    // Buscar pagamentos tradicionais (reservas)
-    const reservationPayments = await queryClient`
-      SELECT 
-        'reservation' as source_type,
-        p.id,
-        p.reservation_id,
-        p.amount,
-        p.method as payment_method,
-        p.status,
-        p.payment_date as created_at,
-        p.user_id,
-        u.username,
-        u.first_name,
-        u.last_name,
-        r.reservation_code,
-        r.date as reservation_date,
-        t.number as table_number,
-        NULL as items_count
-      FROM payments p
-      LEFT JOIN reservations r ON p.reservation_id = r.id
-      LEFT JOIN tables t ON r.table_id = t.id
-      LEFT JOIN users u ON p.user_id = u.id
-      ORDER BY p.payment_date DESC
-    `;
-    
-    // Buscar pedidos POS
-    const posOrders = await queryClient`
-      SELECT 
-        'pos' as source_type,
-        o.id,
-        NULL as reservation_id,
-        o.total_amount as amount,
-        o.payment_method,
-        CASE 
-          WHEN o.payment_status = 'completed' THEN 'paid'
-          WHEN o.payment_status = 'pending' THEN 'pending'
-          ELSE o.payment_status
-        END as status,
-        o.created_at,
-        o.user_id,
-        u.username,
-        u.first_name,
-        u.last_name,
-        'POS-' || o.id as reservation_code,
-        o.created_at as reservation_date,
-        'POS' as table_number,
-        jsonb_array_length(o.items) as items_count
-      FROM orders o
-      LEFT JOIN users u ON o.user_id = u.id
-      WHERE o.type = 'pos'
-      ORDER BY o.created_at DESC
-    `;
-    
-    // Combinar ambos os resultados
-    const allPayments = [...reservationPayments, ...posOrders];
-    
-    // Ordenar por data de criação (mais recente primeiro)
-    allPayments.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    
-    res.json(allPayments);
-  } catch (err: any) {
-    console.error("Erro ao buscar pagamentos administrativos:", err);
     res.status(500).json({ error: err.message });
   }
 });
