@@ -213,13 +213,64 @@ Status: PAGO
       // Gerar o recibo
       const receiptContent = generateReceipt();
       
-      // Imprimir usando as configurações POS salvas
-      if ((window as any).printReceiptWithSettings) {
-        console.log("🖨️ Usando configurações POS para impressão");
-        await (window as any).printReceiptWithSettings(receiptContent);
-      } else {
-        console.log("⚠️ Configurações POS não encontradas, usando impressão básica");
-        // Fallback com configurações básicas otimizadas
+      // Primeiro, salvar o pedido no banco de dados
+      const orderData = {
+        items: orderItems,
+        totalAmount: totalPrice,
+        paymentMethod: 'cash',
+        status: 'completed',
+        type: 'pos'
+      };
+
+      const response = await fetch('/api/pos/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        throw new Error(t('Erro ao salvar pedido'));
+      }
+
+      const orderResult = await response.json();
+      console.log('Pedido salvo com sucesso:', orderResult);
+
+      // Agora tentar imprimir usando o sistema de impressoras
+      try {
+        const printResponse = await fetch('/api/printers/print-receipt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: receiptContent,
+            orderId: orderResult.id
+          }),
+        });
+
+        if (printResponse.ok) {
+          const printResult = await printResponse.json();
+          console.log('Impressão enviada:', printResult);
+          
+          // Mostrar mensagem de sucesso
+          import('sweetalert2').then((Swal) => {
+            Swal.default.fire({
+              title: t('Sucesso!'),
+              text: t('Pedido salvo e enviado para impressão!'),
+              icon: 'success',
+              timer: 2000,
+              showConfirmButton: false
+            });
+          });
+        } else {
+          throw new Error('Falha na impressão');
+        }
+      } catch (printError) {
+        console.log("Impressão física falhou, usando impressão do navegador:", printError);
+        
+        // Fallback para impressão do navegador
         const printWindow = window.open('', '_blank');
         if (printWindow) {
           const html = `
@@ -266,18 +317,18 @@ Status: PAGO
             setTimeout(() => printWindow.close(), 1000);
           }, 500);
         }
-      }
-      
-      // Mostrar mensagem de sucesso
-      import('sweetalert2').then((Swal) => {
-        Swal.default.fire({
-          title: t('Sucesso!'),
-          text: t('Pedido gravado e enviado para impressão!'),
-          icon: 'success',
-          timer: 2000,
-          showConfirmButton: false
+
+        // Mostrar mensagem informando sobre fallback
+        import('sweetalert2').then((Swal) => {
+          Swal.default.fire({
+            title: t('Pedido Salvo!'),
+            text: t('Pedido salvo com sucesso. Impressão enviada para o navegador.'),
+            icon: 'info',
+            timer: 2000,
+            showConfirmButton: false
+          });
         });
-      });
+      }
       
       // Limpar o pedido atual
       setOrderItems([]);
@@ -287,7 +338,7 @@ Status: PAGO
       import('sweetalert2').then((Swal) => {
         Swal.default.fire({
           title: t('Erro!'),
-          text: t('Falha ao gravar e imprimir o pedido'),
+          text: t('Falha ao gravar o pedido'),
           icon: 'error',
           confirmButtonColor: '#009c3b'
         });

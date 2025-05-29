@@ -2453,4 +2453,86 @@ router.put("/api/printers/:printerId/config", async (req, res) => {
   }
 });
 
+// Imprimir recibo
+router.post("/api/printers/print-receipt", async (req, res) => {
+  try {
+    const { content, orderId } = req.body;
+    
+    console.log(`🖨️ Tentando imprimir recibo do pedido ${orderId || 'sem ID'}`);
+    
+    // Obter lista de impressoras disponíveis
+    const printers = await printerService.getAvailablePrinters();
+    
+    if (printers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Nenhuma impressora disponível'
+      });
+    }
+    
+    // Usar a primeira impressora térmica disponível, ou a primeira disponível
+    const thermalPrinter = printers.find(p => p.type === 'thermal');
+    const selectedPrinter = thermalPrinter || printers[0];
+    
+    console.log(`🖨️ Usando impressora: ${selectedPrinter.name} (${selectedPrinter.id})`);
+    
+    // Se for uma impressora de desenvolvimento, simular a impressão
+    if (selectedPrinter.id.startsWith('dev-')) {
+      console.log(`📄 Simulando impressão em ${selectedPrinter.name}`);
+      console.log('Conteúdo do recibo:', content);
+      
+      // Simular delay de impressão
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      res.json({
+        success: true,
+        message: `Recibo impresso com sucesso em ${selectedPrinter.name}`,
+        printer: selectedPrinter.name,
+        simulated: true
+      });
+    } else {
+      // Tentar impressão real
+      try {
+        // Criar arquivo temporário com o conteúdo
+        const fs = require('fs');
+        const path = require('path');
+        const tempDir = '/tmp';
+        const tempFile = path.join(tempDir, `receipt_${Date.now()}.txt`);
+        
+        fs.writeFileSync(tempFile, content);
+        
+        // Enviar para impressão usando lp
+        const { stdout } = await execAsync(`lp -d ${selectedPrinter.id} ${tempFile}`);
+        
+        // Limpar arquivo temporário
+        fs.unlinkSync(tempFile);
+        
+        console.log(`✅ Impressão enviada para ${selectedPrinter.name}:`, stdout);
+        
+        res.json({
+          success: true,
+          message: `Recibo enviado para impressão em ${selectedPrinter.name}`,
+          printer: selectedPrinter.name,
+          output: stdout.trim()
+        });
+      } catch (printError) {
+        console.error('Erro na impressão física:', printError);
+        
+        res.status(500).json({
+          success: false,
+          message: `Erro ao imprimir: ${printError.message}`,
+          printer: selectedPrinter.name
+        });
+      }
+    }
+    
+  } catch (error: any) {
+    console.error('Erro ao processar impressão:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erro interno do servidor'
+    });
+  }
+});
+
 export default router;
