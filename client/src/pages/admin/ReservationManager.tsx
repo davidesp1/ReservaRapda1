@@ -250,7 +250,7 @@ const ReservationManager: React.FC = () => {
     setCashCalculatorData({
       total,
       received: receivedAmount,
-      change: change >= 0 ? change : 0
+      change: change // Manter o valor real do troco, pode ser negativo
     });
   };
 
@@ -1515,24 +1515,24 @@ const ReservationManager: React.FC = () => {
 
               {/* Troco */}
               <div className={`p-3 rounded-lg ${
-                parseFloat(cashCalculatorData.received) < cashCalculatorData.total 
+                cashCalculatorData.change < 0 
                   ? 'bg-red-50' 
                   : 'bg-green-50'
               }`}>
                 <div className={`text-xs mb-1 ${
-                  parseFloat(cashCalculatorData.received) < cashCalculatorData.total 
+                  cashCalculatorData.change < 0 
                     ? 'text-red-600' 
                     : 'text-green-600'
                 }`}>
-                  Troco
+                  {cashCalculatorData.change < 0 ? 'Falta' : 'Troco'}
                 </div>
                 <div className={`text-lg font-bold ${
-                  parseFloat(cashCalculatorData.received) < cashCalculatorData.total 
+                  cashCalculatorData.change < 0 
                     ? 'text-red-800' 
                     : 'text-green-800'
                 }`}>
-                  {parseFloat(cashCalculatorData.received) < cashCalculatorData.total 
-                    ? `Falta ${formatPrice(cashCalculatorData.total - parseFloat(cashCalculatorData.received || '0'))}`
+                  {cashCalculatorData.change < 0 
+                    ? formatPrice(Math.abs(cashCalculatorData.change))
                     : formatPrice(cashCalculatorData.change)
                   }
                 </div>
@@ -1591,7 +1591,7 @@ const ReservationManager: React.FC = () => {
                 setShowCashCalculator(false);
                 handleCompleteReservation();
               }}
-              disabled={parseFloat(cashCalculatorData.received) < cashCalculatorData.total}
+              disabled={cashCalculatorData.change < 0}
               className="bg-green-600 hover:bg-green-700 flex-1"
             >
               Confirmar
