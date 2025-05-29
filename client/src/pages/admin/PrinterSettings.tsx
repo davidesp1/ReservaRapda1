@@ -54,6 +54,21 @@ export default function PrinterSettings() {
     },
   });
 
+  // Test print page
+  const testPrintMutation = useMutation({
+    mutationFn: async (printerId: string) => {
+      const response = await apiRequest('POST', `/api/printers/${printerId}/test-print`);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: data.success ? 'Página de Teste Enviada' : 'Erro na Impressão',
+        description: data.message,
+        variant: data.success ? 'default' : 'destructive',
+      });
+    },
+  });
+
   // Save printer configuration
   const saveConfigMutation = useMutation({
     mutationFn: async (config: PrinterConfig) => {
@@ -124,13 +139,27 @@ export default function PrinterSettings() {
           {/* Lista de Impressoras */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Printer className="h-5 w-5" />
-                Impressoras Disponíveis
-              </CardTitle>
-              <CardDescription>
-                Selecione uma impressora para configurar
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Printer className="h-5 w-5" />
+                    Impressoras Disponíveis
+                  </CardTitle>
+                  <CardDescription>
+                    Selecione uma impressora para configurar
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/printers/config'] })}
+                  disabled={isLoading}
+                  className="flex items-center gap-2"
+                >
+                  <Settings className="h-4 w-4" />
+                  {isLoading ? 'Verificando...' : 'Verificar Impressoras'}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {isLoading ? (
@@ -350,22 +379,36 @@ export default function PrinterSettings() {
                   <Separator />
 
                   {/* Ações */}
-                  <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => testConnectionMutation.mutate(selectedPrinter.id)}
-                      disabled={testConnectionMutation.isPending}
-                      className="flex-1"
-                    >
-                      {testConnectionMutation.isPending ? 'Testando...' : 'Testar Conexão'}
-                    </Button>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => testConnectionMutation.mutate(selectedPrinter.id)}
+                        disabled={testConnectionMutation.isPending}
+                        className="flex items-center gap-2"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        {testConnectionMutation.isPending ? 'Testando...' : 'Testar Conexão'}
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => testPrintMutation.mutate(selectedPrinter.id)}
+                        disabled={testPrintMutation.isPending}
+                        className="flex items-center gap-2"
+                      >
+                        <Printer className="h-4 w-4" />
+                        {testPrintMutation.isPending ? 'Imprimindo...' : 'Teste de Impressão'}
+                      </Button>
+                    </div>
 
                     {isEditing && (
                       <Button
                         onClick={handleSaveConfig}
                         disabled={saveConfigMutation.isPending}
-                        className="flex-1 bg-brasil-green hover:bg-green-700"
+                        className="w-full bg-brasil-green hover:bg-green-700 flex items-center gap-2"
                       >
+                        <Settings className="h-4 w-4" />
                         {saveConfigMutation.isPending ? 'Salvando...' : 'Salvar Configurações'}
                       </Button>
                     )}

@@ -2253,6 +2253,21 @@ router.post("/api/printers/:printerId/test", async (req, res) => {
   }
 });
 
+// Imprimir página de teste
+router.post("/api/printers/:printerId/test-print", async (req, res) => {
+  try {
+    const { printerId } = req.params;
+    const result = await printerService.printTestPage(printerId);
+    res.json(result);
+  } catch (error: any) {
+    console.error(`Erro ao imprimir teste na impressora ${req.params.printerId}:`, error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Erro ao imprimir página de teste'
+    });
+  }
+});
+
 // Salvar configuração de impressora
 router.put("/api/printers/:printerId/config", async (req, res) => {
   try {
