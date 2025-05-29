@@ -308,22 +308,7 @@ Status: PAGO
             type: 'pos'
           };
           
-          // Log para debug do método selecionado
-          console.log('🔍 FRONTEND - Método selecionado:', selectedPaymentMethod);
-          console.log('🔍 FRONTEND - Dados enviados:', orderData);
-          console.log('🔍 FRONTEND - PaymentMethod no objeto:', orderData.paymentMethod);
-          
-          // Alerta visual para confirmar o método sendo enviado
-          alert(`DEBUG ENVIO: Enviando método: ${orderData.paymentMethod}`);
-          
-          // Verificação adicional
-          if (orderData.paymentMethod !== selectedPaymentMethod) {
-            console.error('❌ ERRO: PaymentMethod diferente!', {
-              selected: selectedPaymentMethod,
-              inData: orderData.paymentMethod
-            });
-            alert(`ERRO: Selecionado ${selectedPaymentMethod}, mas enviando ${orderData.paymentMethod}`);
-          }
+
           
           // Enviar os dados para a API
           fetch('/api/pos/orders', {
