@@ -181,7 +181,39 @@ export class PrinterService {
         console.log('lpoptions não disponível');
       }
 
-      console.log(`Detecção concluída. Encontradas ${printers.length} impressoras reais no sistema.`);
+      // Se nenhuma impressora real foi encontrada, adicionar impressoras de desenvolvimento
+      if (printers.length === 0) {
+        console.log('⚠️ Nenhuma impressora física detectada. Adicionando impressoras de desenvolvimento...');
+        
+        printers.push(
+          {
+            id: 'dev-thermal-58mm',
+            name: 'Impressora Térmica 58mm (Desenvolvimento)',
+            description: 'Impressora térmica simulada para desenvolvimento - 58mm',
+            status: 'online',
+            type: 'thermal',
+            location: 'Simulada - Para desenvolvimento'
+          },
+          {
+            id: 'dev-thermal-80mm',
+            name: 'Impressora Térmica 80mm (Desenvolvimento)',
+            description: 'Impressora térmica simulada para desenvolvimento - 80mm',
+            status: 'online',
+            type: 'thermal',
+            location: 'Simulada - Para desenvolvimento'
+          },
+          {
+            id: 'dev-laser',
+            name: 'Impressora Laser (Desenvolvimento)',
+            description: 'Impressora laser simulada para desenvolvimento',
+            status: 'online',
+            type: 'laser',
+            location: 'Simulada - Para desenvolvimento'
+          }
+        );
+      }
+
+      console.log(`Detecção concluída. Encontradas ${printers.length} impressoras no sistema.`);
       return printers;
     } catch (error) {
       console.error('Erro ao detectar impressoras:', error);

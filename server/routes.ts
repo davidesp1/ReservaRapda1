@@ -9,6 +9,9 @@ import { db as drizzleDb, queryClient } from "./db";
 import { eq, gte, desc, and, sql, inArray } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import { printerService } from "./printer-service.js";
+import { promisify } from 'util';
+import { exec } from 'child_process';
+const execAsync = promisify(exec);
 
 declare module 'express-session' {
   interface SessionData {
@@ -2360,7 +2363,7 @@ router.post("/api/printers/test-system", async (req, res) => {
     // Teste 4: Verificar dispositivos USB
     try {
       const { stdout: usbTest } = await execAsync('lsusb 2>/dev/null || echo "lsusb not found"');
-      const usbCount = usbTest.split('\n').filter(line => line.trim() && !line.includes('not found')).length;
+      const usbCount = usbTest.split('\n').filter((line: string) => line.trim() && !line.includes('not found')).length;
       testResults.push(`Dispositivos USB: ${usbCount} encontrados`);
     } catch (e) {
       testResults.push('USB: Comando não disponível');
