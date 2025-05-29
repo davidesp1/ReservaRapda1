@@ -106,6 +106,21 @@ export default function PrinterSettings() {
     },
   });
 
+  // Test system printing capabilities
+  const testSystemMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/printers/test-system');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Teste do Sistema',
+        description: data.message,
+        variant: data.success ? 'default' : 'destructive',
+      });
+    },
+  });
+
   // Save printer configuration
   const saveConfigMutation = useMutation({
     mutationFn: async (config: PrinterConfig) => {
@@ -186,16 +201,29 @@ export default function PrinterSettings() {
                     Selecione uma impressora para configurar
                   </CardDescription>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => refreshPrintersMutation.mutate()}
-                  disabled={refreshPrintersMutation.isPending || isLoading}
-                  className="flex items-center gap-2"
-                >
-                  <Settings className="h-4 w-4" />
-                  {refreshPrintersMutation.isPending ? 'Verificando...' : 'Verificar Impressoras'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refreshPrintersMutation.mutate()}
+                    disabled={refreshPrintersMutation.isPending || isLoading}
+                    className="flex items-center gap-2"
+                  >
+                    <Settings className="h-4 w-4" />
+                    {refreshPrintersMutation.isPending ? 'Verificando...' : 'Verificar'}
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => testSystemMutation.mutate()}
+                    disabled={testSystemMutation.isPending}
+                    className="flex items-center gap-2 text-blue-600 border-blue-300"
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                    {testSystemMutation.isPending ? 'Testando...' : 'Teste Sistema'}
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">

@@ -2326,6 +2326,78 @@ router.post("/api/printers/:printerId/open-drawer", async (req, res) => {
   }
 });
 
+// Testar sistema de impressão
+router.post("/api/printers/test-system", async (req, res) => {
+  try {
+    console.log('🧪 Iniciando teste completo do sistema de impressão...');
+    
+    const testResults = [];
+    
+    // Teste 1: Verificar CUPS
+    try {
+      const { stdout: cupsTest } = await execAsync('which cupsd 2>/dev/null || echo "CUPS not found"');
+      testResults.push(`CUPS: ${cupsTest.includes('cupsd') ? 'Instalado' : 'Não encontrado'}`);
+    } catch (e) {
+      testResults.push('CUPS: Não disponível');
+    }
+    
+    // Teste 2: Verificar lpstat
+    try {
+      const { stdout: lpstatTest } = await execAsync('which lpstat 2>/dev/null || echo "lpstat not found"');
+      testResults.push(`lpstat: ${lpstatTest.includes('lpstat') ? 'Disponível' : 'Não encontrado'}`);
+    } catch (e) {
+      testResults.push('lpstat: Não disponível');
+    }
+    
+    // Teste 3: Verificar lp
+    try {
+      const { stdout: lpTest } = await execAsync('which lp 2>/dev/null || echo "lp not found"');
+      testResults.push(`lp: ${lpTest.includes('lp') ? 'Disponível' : 'Não encontrado'}`);
+    } catch (e) {
+      testResults.push('lp: Não disponível');
+    }
+    
+    // Teste 4: Verificar dispositivos USB
+    try {
+      const { stdout: usbTest } = await execAsync('lsusb 2>/dev/null || echo "lsusb not found"');
+      const usbCount = usbTest.split('\n').filter(line => line.trim() && !line.includes('not found')).length;
+      testResults.push(`Dispositivos USB: ${usbCount} encontrados`);
+    } catch (e) {
+      testResults.push('USB: Comando não disponível');
+    }
+    
+    // Teste 5: Verificar sistema operacional
+    try {
+      const { stdout: osTest } = await execAsync('uname -a 2>/dev/null || echo "OS not detected"');
+      testResults.push(`Sistema: ${osTest.substring(0, 50)}...`);
+    } catch (e) {
+      testResults.push('Sistema: Não identificado');
+    }
+    
+    const message = [
+      'Diagnóstico do Sistema de Impressão:',
+      ...testResults,
+      '',
+      'Para usar impressoras físicas:',
+      '1. Instale o CUPS no sistema',
+      '2. Configure suas impressoras via interface do sistema',
+      '3. Execute novamente a verificação'
+    ].join('\n');
+    
+    res.json({
+      success: true,
+      message,
+      details: testResults
+    });
+  } catch (error: any) {
+    console.error('Erro no teste do sistema:', error);
+    res.status(500).json({
+      success: false,
+      message: `Erro no teste: ${error.message}`
+    });
+  }
+});
+
 // Salvar configuração de impressora
 router.put("/api/printers/:printerId/config", async (req, res) => {
   try {
