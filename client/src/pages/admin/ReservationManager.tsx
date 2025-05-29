@@ -241,53 +241,53 @@ const ReservationManager: React.FC = () => {
     });
   };
 
-  // Calculadora de troco - versão corrigida para euros
-  const updateCashCalculationEuros = (receivedAmount: string) => {
-    const received = parseFloat(receivedAmount) || 0;
-    const totalInCents = calculateTotal(); // Total já está em cêntimos (correto)
-    const totalInEuros = totalInCents / 100; // Converter para euros para exibição
-    const change = received - totalInEuros; // Calcular troco em euros
+  // Calculadora de troco - lógica completamente reescrita
+  const updateCashCalculation = (receivedAmountStr: string) => {
+    // Converter entrada para número (em euros)
+    const receivedEuros = parseFloat(receivedAmountStr) || 0;
     
-    console.log('Calculadora debug (euros):', {
-      receivedAmount,
-      received,
-      totalInCents,
-      totalInEuros,
-      change,
-      'Debug': `Cliente deve pagar ${totalInEuros}€, entregou ${received}€, troco ${change}€`
-    });
+    // Obter total em cêntimos e converter para euros
+    const totalCents = calculateTotal();
+    const totalEuros = totalCents / 100;
+    
+    // Calcular troco
+    const changeEuros = receivedEuros - totalEuros;
+    
+    console.log('=== CALCULADORA DEBUG ===');
+    console.log('Entrada do usuário (string):', receivedAmountStr);
+    console.log('Valor recebido (euros):', receivedEuros);
+    console.log('Total em cêntimos:', totalCents);
+    console.log('Total em euros:', totalEuros);
+    console.log('Troco:', changeEuros);
+    console.log('========================');
     
     setCashCalculatorData({
-      total: totalInEuros, // Manter o total em euros para exibição
-      received: receivedAmount, // Manter como string para evitar conversões
-      change
+      total: totalEuros,
+      received: receivedAmountStr,
+      change: changeEuros
     });
   };
 
   const handleCashCalculatorDigit = (digit: string) => {
-    let newReceived = '';
+    let newInput = '';
     
     if (digit === 'clear') {
-      newReceived = '';
+      newInput = '';
     } else if (digit === 'backspace') {
-      newReceived = cashCalculatorData.received.slice(0, -1);
+      newInput = cashCalculatorData.received.slice(0, -1);
     } else if (digit === '.' && !cashCalculatorData.received.includes('.')) {
-      newReceived = cashCalculatorData.received + digit;
-    } else if (digit !== '.' && !isNaN(Number(digit))) {
-      // Simplesmente concatenar os dígitos sem conversão automática
-      newReceived = cashCalculatorData.received + digit;
+      newInput = cashCalculatorData.received + '.';
+    } else if (digit !== '.' && /^\d$/.test(digit)) {
+      newInput = cashCalculatorData.received + digit;
     } else {
-      return; // Não fazer nada para entradas inválidas
+      return;
     }
     
-    console.log('Calculadora - Novo valor recebido:', newReceived);
-    // Atualizar o cálculo automaticamente com valor em euros
-    updateCashCalculationEuros(newReceived);
+    updateCashCalculation(newInput);
   };
 
-  const handleQuickAmount = (amount: number) => {
-    // Usar diretamente em euros
-    updateCashCalculationEuros(amount.toString());
+  const handleQuickAmount = (amountEuros: number) => {
+    updateCashCalculation(amountEuros.toString());
   };
 
   // Wizard functions
@@ -1473,8 +1473,10 @@ const ReservationManager: React.FC = () => {
                     type="button"
                     onClick={() => {
                       if (wizardData.paymentMethod === 'cash') {
+                        const totalCents = calculateTotal();
+                        const totalEuros = totalCents / 100;
                         setCashCalculatorData({ 
-                          total: calculateTotal(), 
+                          total: totalEuros, 
                           received: '', 
                           change: 0 
                         });
@@ -1586,7 +1588,7 @@ const ReservationManager: React.FC = () => {
 
             <Button
               variant="outline"
-              onClick={() => updateCashCalculationEuros('')}
+              onClick={() => updateCashCalculation('')}
               className="w-full h-9 text-sm"
             >
               <i className="fa-solid fa-eraser mr-2"></i>
