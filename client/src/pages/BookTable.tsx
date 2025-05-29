@@ -102,34 +102,65 @@ export default function BookTable() {
     },
   });
 
-  // Mutation para chamar API do EuPago para Multibanco
+  // Mutation para criar reserva e processar pagamento Multibanco
   const processMultibancoMutation = useMutation({
-    mutationFn: async (data: { amount: number; reservationId?: string }) => {
-      const response = await fetch('/api/payments/multibanco', {
+    mutationFn: async (reservationData: any) => {
+      // Primeiro criar a reserva
+      const reservationResponse = await fetch('/api/reservations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reservationData),
+      });
+      
+      if (!reservationResponse.ok) {
+        throw new Error('Erro ao criar reserva');
+      }
+      
+      const reservation = await reservationResponse.json();
+      
+      // Depois processar o pagamento Multibanco com o código da reserva
+      const paymentResponse = await fetch('/api/payments/multibanco', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          amount: data.amount,
-          reservationId: data.reservationId || `TEMP-${Date.now()}`
+          amount: reservationData.total,
+          reservationId: reservation.reservation_code
         }),
       });
       
-      if (!response.ok) {
-        throw new Error('Erro na requisição');
+      if (!paymentResponse.ok) {
+        throw new Error('Erro ao processar pagamento');
       }
       
-      return response.json();
+      const paymentResult = await paymentResponse.json();
+      
+      return {
+        reservation,
+        payment: paymentResult
+      };
     },
     onSuccess: (result) => {
-      if (result.success) {
-        setMultibancoData(result);
+      if (result.payment?.success) {
+        // Combinar dados da reserva e pagamento
+        setMultibancoData({
+          ...result.payment,
+          reservationCode: result.reservation.reservation_code,
+          reservationId: result.reservation.id
+        });
         setCurrentStep(4); // Ir para tela de pagamento Multibanco
+        
+        toast({
+          title: "Reserva Criada!",
+          description: `Sua reserva ${result.reservation.reservation_code} foi criada. Complete o pagamento para confirmar.`,
+        });
       } else {
         toast({
           title: "Erro no Pagamento",
-          description: result.message || "Erro ao processar pagamento Multibanco.",
+          description: "Erro ao processar pagamento Multibanco.",
           variant: 'destructive',
         });
       }
@@ -180,9 +211,22 @@ export default function BookTable() {
     if (currentStep === 3) {
       // Verificar método de pagamento selecionado
       if (selectedPaymentMethod === 'multibanco') {
-        // Chamar API do EuPago para gerar dados do Multibanco
-        const amount = total; // Valor em euros
-        processMultibancoMutation.mutate({ amount });
+        // Criar reserva e processar pagamento Multibanco automaticamente
+        const formData = form.getValues();
+        const reservationData = {
+          date: `${formData.date} ${formData.time}:00`,
+          tableId: formData.table_id,
+          partySize: formData.party_size,
+          notes: formData.special_requests,
+          status: 'confirmed',
+          paymentMethod: 'multibanco',
+          paymentStatus: 'pending',
+          total: total,
+          duration: 120,
+          selectedItems: selectedItems
+        };
+        
+        processMultibancoMutation.mutate(reservationData);
         return;
       } else {
         // Para outros métodos, finalizar reserva automaticamente
@@ -951,6 +995,12 @@ export default function BookTable() {
                             € {multibancoData?.amount?.toFixed(2) || total.toFixed(2)}
                           </span>
                         </div>
+                        <div className="flex justify-between items-center mb-2 pt-2 border-t border-gray-200">
+                          <span className="font-montserrat text-gray-600 font-semibold">Código de Reserva:</span>
+                          <span className="font-montserrat text-brasil-blue font-bold text-right">
+                            {multibancoData?.reservationCode || 'Gerando...'}
+                          </span>
+                        </div>
                       </div>
                       <div className="bg-brasil-blue bg-opacity-5 border border-brasil-blue rounded-xl p-4 mb-4 flex items-start">
                         <i className="fa-solid fa-info-circle text-brasil-blue mr-3 mt-1"></i>
@@ -961,17 +1011,14 @@ export default function BookTable() {
                     </div>
                     <div className="flex flex-col gap-3">
                       <button 
-                        onClick={() => {
-                          const data = form.getValues();
-                          finalizeReservationMutation.mutate(data);
-                        }}
+                        onClick={() => setLocation('/reservations')}
                         className="w-full py-3 rounded-lg bg-brasil-green text-white font-montserrat font-bold text-base shadow hover:bg-brasil-yellow hover:text-brasil-blue transition"
                       >
-                        Confirmar Pagamento
+                        Ver Minhas Reservas
                       </button>
                       <button 
                         onClick={() => setCurrentStep(3)}
-                        className="w-full py-3 rounded-lg bg-brasil-red text-white font-montserrat font-bold text-base shadow hover:bg-red-700 transition"
+                        className="w-full py-3 rounded-lg bg-gray-400 text-white font-montserrat font-bold text-base shadow hover:bg-gray-500 transition"
                       >
                         Voltar
                       </button>
