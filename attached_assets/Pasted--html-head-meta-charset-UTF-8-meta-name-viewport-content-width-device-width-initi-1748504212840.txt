@@ -1,0 +1,327 @@
+<html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>::-webkit-scrollbar { display: none;}</style>
+    <script>tailwind.config = {
+  "theme": {
+    "extend": {
+      "colors": {
+        "brazil-green": "#009c3b",
+        "brazil-yellow": "#ffdf00",
+        "brazil-blue": "#002776",
+        "brazil-red": "#c8102e"
+      },
+      "fontFamily": {
+        "montserrat": [
+          "Montserrat",
+          "sans-serif"
+        ],
+        "opensans": [
+          "Open Sans",
+          "sans-serif"
+        ],
+        "sans": [
+          "Inter",
+          "sans-serif"
+        ]
+      }
+    }
+  }
+};</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap"><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="bg-gray-100 font-opensans">
+
+<div id="client-dashboard" class="flex h-[900px]">
+    <div id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-brazil-blue flex flex-col">
+        <div class="p-6">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-brazil-yellow rounded-full flex items-center justify-center mr-2">
+                    <i class="fa-solid fa-utensils text-brazil-blue"></i>
+                </div>
+                <span class="text-xl font-semibold text-white font-montserrat">
+                    Opa que delicia
+                </span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <ul>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-house text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Dashboard</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-user text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Meu Perfil</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-utensils text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Cardápio</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white bg-brazil-blue bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-calendar-check text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Reservas</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-credit-card text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Pagamentos</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-headset text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Suporte</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+        <div class="mt-auto border-t border-blue-400 p-4">
+            <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                <i class="fa-solid fa-right-from-bracket text-brazil-yellow w-6"></i>
+                <span class="ml-2 font-medium">Sair</span>
+            </span>
+        </div>
+    </div>
+    <div id="main-content" class="ml-64 flex-1 p-8 relative">
+        <div id="header" class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-800 font-montserrat">Nova Reserva</h1>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="relative">
+                        <i class="fa-regular fa-bell text-xl text-gray-600"></i>
+                        <span class="absolute -top-1 -right-1 bg-brazil-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
+                    </button>
+                </div>
+                <div class="flex items-center">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="User Avatar" class="w-10 h-10 rounded-full border-2 border-brazil-yellow">
+                    <div class="ml-2">
+                        <p class="text-sm font-medium text-gray-800">Maria Silva</p>
+                        <p class="text-xs text-gray-500">Cliente desde 2023</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="reservation-steps" class="max-w-5xl mx-auto">
+            <div id="stepper" class="flex items-center justify-between mb-10">
+                <div class="flex-1 flex items-center">
+                    <div id="step-1-indicator" class="flex flex-col items-center">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold border-4 border-brazil-green bg-white text-brazil-green text-lg step-indicator-active">
+                            1
+                        </div>
+                        <span class="mt-2 text-xs font-bold uppercase tracking-wide text-brazil-green">Data, Hora &amp; Observações</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-brazil-green mx-2"></div>
+                </div>
+                <div class="flex-1 flex items-center">
+                    <div id="step-2-indicator" class="flex flex-col items-center">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold border-4 border-brazil-yellow bg-white text-brazil-yellow text-lg">
+                            2
+                        </div>
+                        <span class="mt-2 text-xs font-bold uppercase tracking-wide text-brazil-yellow">Menu</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-brazil-yellow mx-2"></div>
+                </div>
+                <div class="flex-1 flex items-center">
+                    <div id="step-3-indicator" class="flex flex-col items-center">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold border-4 border-brazil-blue bg-brazil-blue text-white text-lg animate-pulse shadow-lg">
+                            3
+                        </div>
+                        <span class="mt-2 text-xs font-bold uppercase tracking-wide text-brazil-blue">Resumo</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-brazil-blue mx-2"></div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div id="step-4-indicator" class="w-10 h-10 rounded-full flex items-center justify-center font-bold border-4 border-brazil-red bg-white text-brazil-red text-lg">
+                        4
+                    </div>
+                    <span class="mt-2 text-xs font-bold uppercase tracking-wide text-brazil-red">Pagamento</span>
+                </div>
+            </div>
+            <div id="step-contents" class="relative bg-white rounded-xl shadow-lg p-8 transition-all min-h-[580px]">
+                <div id="step-3-content" class="">
+                    <h2 class="text-xl font-bold font-montserrat text-brazil-blue mb-8 flex items-center gap-3">
+                        <i class="fa-solid fa-clipboard-list text-brazil-blue"></i>
+                        Resumo do Pedido
+                    </h2>
+                    <div id="step-3-main-block" class="flex flex-col md:flex-row gap-9">
+                        <div id="order-summary-card" class="flex-1">
+                            <div class="bg-white rounded-2xl shadow-xl border-2 border-brazil-blue p-6 mb-7 min-h-[320px]">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="font-montserrat text-lg font-bold text-brazil-blue flex items-center gap-2">
+                                        <i class="fa-solid fa-utensils"></i> Itens Selecionados
+                                    </h3>
+                                    <button id="edit-order-btn" class="text-brazil-green hover:underline font-bold text-sm flex items-center gap-1">
+                                        <i class="fa-solid fa-pen-to-square"></i> Editar
+                                    </button>
+                                </div>
+                                <div id="selected-menu-summary" class="divide-y divide-gray-200 mb-4">
+                                    <!-- Lista de itens do pedido aparece aqui via JS -->
+                                </div>
+                                <div class="flex justify-between mt-5 mb-0 items-center">
+                                    <span class="text-gray-700 font-bold text-base">Total</span>
+                                    <span class="text-2xl font-extrabold text-brazil-green" id="order-total-summary">R$ 0,00</span>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 rounded-2xl border-l-4 border-brazil-blue px-6 py-4 flex items-start gap-4 shadow-sm mb-5">
+                                <i class="fa-solid fa-circle-info text-brazil-blue text-xl mt-1"></i>
+                                <div>
+                                    <div class="text-brazil-blue font-semibold mb-1">Política de Cancelamento</div>
+                                    <div class="text-gray-700 text-sm">
+                                        Cancelamentos até 2 horas antes do horário reservado são gratuitos. Após isso, poderá ser aplicada uma taxa. Consulte <span class="underline text-brazil-blue font-bold cursor-pointer">detalhes</span>.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="payment-selection-card" class="w-full md:w-[370px] shrink-0">
+                            <div class="bg-white rounded-2xl shadow-xl border-2 border-brazil-yellow p-7 min-h-[410px] flex flex-col justify-between">
+                                <div>
+                                    <h4 class="font-montserrat text-lg font-bold text-brazil-yellow mb-4 flex items-center gap-2">
+                                        <i class="fa-solid fa-lock text-brazil-yellow"></i> Selecione o método de pagamento
+                                    </h4>
+                                    <div id="payment-methods-list" class="space-y-4">
+                                        <label class="flex items-center gap-4 cursor-pointer border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-brazil-green transition focus-within:border-brazil-green" id="payment-option-card">
+                                            <input type="radio" name="payment-method" value="card" class="hidden peer" checked="">
+                                            <span class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200 peer-checked:ring-2 peer-checked:ring-brazil-green">
+                                                <i class="fa-solid fa-credit-card text-brazil-green text-2xl"></i>
+                                            </span>
+                                            <span class="flex-1 text-gray-800 font-bold font-montserrat">Cartão</span>
+                                            <i class="fa-solid fa-check text-brazil-green opacity-0 peer-checked:opacity-100 transition"></i>
+                                        </label>
+                                        <label class="flex items-center gap-4 cursor-pointer border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-brazil-blue transition focus-within:border-brazil-blue" id="payment-option-multibanco">
+                                            <input type="radio" name="payment-method" value="multibanco" class="hidden peer">
+                                            <span class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200 peer-checked:ring-2 peer-checked:ring-brazil-blue">
+                                                <i class="fa-solid fa-building-columns text-brazil-blue text-2xl"></i>
+                                            </span>
+                                            <span class="flex-1 text-gray-800 font-bold font-montserrat">Multibanco</span>
+                                            <i class="fa-solid fa-check text-brazil-blue opacity-0 peer-checked:opacity-100 transition"></i>
+                                        </label>
+                                        <label class="flex items-center gap-4 cursor-pointer border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-brazil-red transition focus-within:border-brazil-red" id="payment-option-mbway">
+                                            <input type="radio" name="payment-method" value="mbway" class="hidden peer">
+                                            <span class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200 peer-checked:ring-2 peer-checked:ring-brazil-red">
+                                                <i class="fa-solid fa-mobile-screen-button text-brazil-red text-2xl"></i>
+                                            </span>
+                                            <span class="flex-1 text-gray-800 font-bold font-montserrat">MB Way</span>
+                                            <i class="fa-solid fa-check text-brazil-red opacity-0 peer-checked:opacity-100 transition"></i>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between mt-9 gap-2">
+                                    <button id="back-to-step-2" class="bg-gray-200 text-gray-700 font-bold px-5 py-3 rounded-lg hover:bg-gray-300 transition flex items-center w-1/2 justify-center">
+                                        <i class="fa-solid fa-arrow-left mr-2"></i>
+                                        Voltar
+                                    </button>
+                                    <button id="to-step-4" class="bg-brazil-yellow text-brazil-blue font-bold px-7 py-3 rounded-lg shadow hover:bg-yellow-400 transition text-lg flex items-center w-1/2 justify-center">
+                                        Próximo
+                                        <i class="fa-solid fa-arrow-right ml-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-center text-xs text-gray-500 mt-4 gap-1">
+                                <i class="fa-solid fa-shield-halved text-brazil-green"></i>
+                                Ambiente seguro. Todos os pagamentos são protegidos e criptografados.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="chat-button" class="fixed bottom-6 right-6 z-40">
+    <button class="w-14 h-14 bg-brazil-green rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition">
+        <i class="fa-solid fa-comment-dots text-white text-2xl"></i>
+    </button>
+</div>
+
+<script>
+    // Simulação dos itens selecionados
+    let selectedMenu = [
+        { name: "Empada de Frango", price: 12.00, qty: 2 },
+        { name: "Moqueca de Camarão", price: 89.90, qty: 1 },
+        { name: "Brigadeiro Gourmet", price: 7.00, qty: 3 }
+    ];
+
+    function formatCurrency(n) {
+        return "R$ " + n.toFixed(2).replace('.', ',');
+    }
+
+    function updateOrderSummary() {
+        const container = document.getElementById('selected-menu-summary');
+        const totalSpan = document.getElementById('order-total-summary');
+        container.innerHTML = '';
+        let total = 0;
+        if(selectedMenu.length === 0){
+            container.innerHTML = "<span class='text-gray-400 italic text-sm'>Nenhum item adicionado.</span>";
+        } else {
+            selectedMenu.forEach((item, idx) => {
+                let li = document.createElement('div');
+                li.className = "flex items-center justify-between py-3";
+                li.innerHTML = `
+                    <span class="font-montserrat font-semibold text-gray-700 flex-1">${item.name} <span class="text-xs text-gray-400 font-normal ml-2">x${item.qty}</span></span>
+                    <span class="text-gray-600 font-bold">${formatCurrency(item.price * item.qty)}</span>
+                `;
+                container.appendChild(li);
+                total += item.price * item.qty;
+            });
+        }
+        totalSpan.textContent = formatCurrency(total);
+    }
+
+    updateOrderSummary();
+
+    document.getElementById('edit-order-btn').onclick = function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Simulação: Volta para o passo 2
+    }
+    document.getElementById('back-to-step-2').onclick = function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Simulação: Volta para o passo 2
+    }
+    document.getElementById('to-step-4').onclick = function() {
+        // Simulação: Avança para o passo 4
+        alert("Continuando para pagamento...");
+    }
+</script>
+
+</body></html>

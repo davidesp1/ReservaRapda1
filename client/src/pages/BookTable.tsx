@@ -666,17 +666,14 @@ export default function BookTable() {
                             </div>
                           ) : (
                             selectedItems.map((item) => (
-                              <div key={item.id} className="py-3 flex justify-between items-center">
-                                <div className="flex-1">
-                                  <h4 className="font-semibold text-base text-gray-800">{item.name}</h4>
-                                  <p className="text-sm text-gray-600">Quantidade: {item.quantity}</p>
-                                  <p className="text-sm text-brasil-green font-medium">{formatPrice(item.price)} cada</p>
-                                </div>
-                                <div className="text-right">
-                                  <span className="font-bold text-lg text-brasil-green">
-                                    {formatPrice(item.price * item.quantity)}
-                                  </span>
-                                </div>
+                              <div key={item.id} className="flex items-center justify-between py-3">
+                                <span className="font-montserrat font-semibold text-gray-700 flex-1">
+                                  {item.name} 
+                                  <span className="text-xs text-gray-400 font-normal ml-2">x{item.quantity}</span>
+                                </span>
+                                <span className="text-gray-600 font-bold">
+                                  {formatPrice(item.price * item.quantity)}
+                                </span>
                               </div>
                             ))
                           )}
@@ -701,60 +698,65 @@ export default function BookTable() {
                       </div>
                     </div>
 
-                    {/* Reservation Details Card */}
+                    {/* Payment Selection Card */}
                     <div className="w-full md:w-[370px] shrink-0">
                       <div className="bg-white rounded-2xl shadow-xl border-2 border-brasil-yellow p-7 min-h-[410px] flex flex-col justify-between">
                         <div>
                           <h4 className="font-montserrat text-lg font-bold text-brasil-yellow mb-4 flex items-center gap-2">
-                            <i className="fa-solid fa-calendar-check text-brasil-yellow"></i> Detalhes da Reserva
+                            <i className="fa-solid fa-lock text-brasil-yellow"></i> Selecione o método de pagamento
                           </h4>
                           
-                          <div className="space-y-4 mb-6">
-                            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                              <span className="font-medium text-gray-700">Data:</span>
-                              <span className="font-semibold">{form.watch('date') ? new Date(form.watch('date')).toLocaleDateString('pt-BR') : 'N/A'}</span>
-                            </div>
+                          <div className="space-y-4">
+                            <label className="flex items-center gap-4 cursor-pointer border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-brasil-green transition focus-within:border-brasil-green">
+                              <input type="radio" name="payment-method" value="card" className="hidden peer" defaultChecked />
+                              <span className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200 peer-checked:ring-2 peer-checked:ring-brasil-green">
+                                <i className="fa-solid fa-credit-card text-brasil-green text-2xl"></i>
+                              </span>
+                              <span className="flex-1 text-gray-800 font-bold font-montserrat">Cartão</span>
+                              <i className="fa-solid fa-check text-brasil-green opacity-0 peer-checked:opacity-100 transition"></i>
+                            </label>
                             
-                            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                              <span className="font-medium text-gray-700">Horário:</span>
-                              <span className="font-semibold">{form.watch('time') || 'N/A'}</span>
-                            </div>
+                            <label className="flex items-center gap-4 cursor-pointer border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-brasil-blue transition focus-within:border-brasil-blue">
+                              <input type="radio" name="payment-method" value="multibanco" className="hidden peer" />
+                              <span className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200 peer-checked:ring-2 peer-checked:ring-brasil-blue">
+                                <i className="fa-solid fa-building-columns text-brasil-blue text-2xl"></i>
+                              </span>
+                              <span className="flex-1 text-gray-800 font-bold font-montserrat">Multibanco</span>
+                              <i className="fa-solid fa-check text-brasil-blue opacity-0 peer-checked:opacity-100 transition"></i>
+                            </label>
                             
-                            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                              <span className="font-medium text-gray-700">Pessoas:</span>
-                              <span className="font-semibold">{form.watch('party_size')} {form.watch('party_size') === 1 ? 'pessoa' : 'pessoas'}</span>
-                            </div>
-                            
-                            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                              <span className="font-medium text-gray-700">Mesa:</span>
-                              <span className="font-semibold">Mesa {availableTables.find((t: any) => t.id === form.watch('table_id'))?.number || 'N/A'}</span>
-                            </div>
-                            
-                            {form.watch('special_requests') && (
-                              <div className="p-3 bg-gray-50 rounded-lg">
-                                <span className="font-medium text-gray-700 block mb-1">Observações:</span>
-                                <p className="text-sm text-gray-600">{form.watch('special_requests')}</p>
-                              </div>
-                            )}
+                            <label className="flex items-center gap-4 cursor-pointer border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-brasil-red transition focus-within:border-brasil-red">
+                              <input type="radio" name="payment-method" value="mbway" className="hidden peer" />
+                              <span className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200 peer-checked:ring-2 peer-checked:ring-brasil-red">
+                                <i className="fa-solid fa-mobile-screen-button text-brasil-red text-2xl"></i>
+                              </span>
+                              <span className="flex-1 text-gray-800 font-bold font-montserrat">MB Way</span>
+                              <i className="fa-solid fa-check text-brasil-red opacity-0 peer-checked:opacity-100 transition"></i>
+                            </label>
                           </div>
                         </div>
                         
-                        <div className="flex justify-between gap-3 mt-6">
+                        <div className="flex justify-between mt-9 gap-2">
                           <button 
                             onClick={prevStep}
-                            className="flex items-center justify-center w-1/2 px-4 py-3 font-bold text-gray-700 transition bg-gray-200 rounded-lg hover:bg-gray-300"
+                            className="bg-gray-200 text-gray-700 font-bold px-5 py-3 rounded-lg hover:bg-gray-300 transition flex items-center w-1/2 justify-center"
                           >
-                            <i className="mr-2 fa-solid fa-arrow-left"></i>
+                            <i className="fa-solid fa-arrow-left mr-2"></i>
                             Voltar
                           </button>
                           <button 
                             onClick={nextStep}
-                            className="flex items-center justify-center w-1/2 py-3 text-lg font-bold transition rounded-lg shadow bg-brasil-blue text-white hover:bg-brasil-blue/90"
+                            className="bg-brasil-yellow text-brasil-blue font-bold px-7 py-3 rounded-lg shadow hover:bg-yellow-400 transition text-lg flex items-center w-1/2 justify-center"
                           >
                             Próximo
-                            <i className="ml-2 fa-solid fa-arrow-right"></i>
+                            <i className="fa-solid fa-arrow-right ml-2"></i>
                           </button>
                         </div>
+                      </div>
+                      
+                      <div className="flex flex-col items-center text-xs text-gray-500 mt-4 gap-1">
+                        <i className="fa-solid fa-shield-halved text-brasil-green"></i>
+                        Ambiente seguro. Todos os pagamentos são protegidos e criptografados.
                       </div>
                     </div>
                   </div>
