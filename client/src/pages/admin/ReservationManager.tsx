@@ -244,18 +244,20 @@ const ReservationManager: React.FC = () => {
   // Calculadora de troco - versão simplificada para euros
   const updateCashCalculationEuros = (receivedAmount: string) => {
     const received = parseFloat(receivedAmount) || 0;
-    const total = calculateTotal(); // Total já em euros
-    const change = received - total;
+    const totalInCents = calculateTotal(); // Total em centavos
+    const totalInEuros = totalInCents / 100; // Converter para euros
+    const change = received - totalInEuros;
     
     console.log('Calculadora debug (euros):', {
       receivedAmount,
       received,
-      total,
+      totalInCents,
+      totalInEuros,
       change
     });
     
     setCashCalculatorData({
-      total,
+      total: totalInEuros,
       received: receivedAmount,
       change
     });
