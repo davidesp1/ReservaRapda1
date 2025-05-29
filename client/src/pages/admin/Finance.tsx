@@ -61,6 +61,30 @@ interface PaymentWithUser extends Payment {
   email?: string;
 }
 
+interface Reservation {
+  id: number;
+  user_id: number;
+  table_id: number;
+  user_name: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  reservation_code: string;
+  date: string;
+  party_size: number;
+  status: string;
+  payment_method: string;
+  payment_status: string;
+  total: number;
+  notes: string;
+  duration: number;
+  table_number: number;
+  table_capacity: number;
+  eupago_entity: string;
+  eupago_reference: string;
+}
+
 const Finance: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, isAdmin, user } = useAuth();
@@ -73,7 +97,12 @@ const Finance: React.FC = () => {
   const [filteredPayments, setFilteredPayments] = useState<PaymentWithUser[]>(
     [],
   );
+  const [filteredReservations, setFilteredReservations] = useState<Reservation[]>(
+    [],
+  );
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const { toast } = useToast();
 
   // Fetch payments com atualização em tempo real
