@@ -900,22 +900,46 @@ const ReservationManager: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
 
-          {/* Indicador de Progresso */}
-          <div className="flex justify-between mb-6">
-            {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step <= wizardStep ? 'bg-brasil-blue text-white' : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {step}
+          {/* Indicador de Progresso Moderno */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              {[
+                { step: 1, title: 'Menu', icon: 'fa-solid fa-utensils' },
+                { step: 2, title: 'Cliente', icon: 'fa-solid fa-user' },
+                { step: 3, title: 'Mesa', icon: 'fa-solid fa-chair' },
+                { step: 4, title: 'Confirmação', icon: 'fa-solid fa-check-circle' }
+              ].map((item, index) => (
+                <div key={item.step} className="flex items-center flex-1">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-medium transition-all duration-300 ${
+                      item.step < wizardStep 
+                        ? 'bg-green-500 text-white shadow-lg' 
+                        : item.step === wizardStep 
+                        ? 'bg-brasil-blue text-white shadow-lg animate-pulse' 
+                        : 'bg-gray-200 text-gray-500'
+                    }`}>
+                      {item.step < wizardStep ? (
+                        <i className="fa-solid fa-check"></i>
+                      ) : (
+                        <i className={item.icon}></i>
+                      )}
+                    </div>
+                    <span className={`mt-2 text-xs font-medium ${
+                      item.step <= wizardStep ? 'text-gray-800' : 'text-gray-500'
+                    }`}>
+                      {item.title}
+                    </span>
+                  </div>
+                  {index < 3 && (
+                    <div className="flex-1 mx-4">
+                      <div className={`h-1 rounded-full transition-all duration-500 ${
+                        item.step < wizardStep ? 'bg-green-500' : 'bg-gray-200'
+                      }`} />
+                    </div>
+                  )}
                 </div>
-                {step < 4 && (
-                  <div className={`h-1 w-16 mx-2 ${
-                    step < wizardStep ? 'bg-brasil-blue' : 'bg-gray-200'
-                  }`} />
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           {/* Etapa 1: Seleção do Menu */}
@@ -1118,65 +1142,241 @@ const ReservationManager: React.FC = () => {
 
           {/* Etapa 4: Resumo e Pagamento */}
           {wizardStep === 4 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Resumo da Reserva</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="font-medium mb-2">Informações do Cliente</h4>
-                  <div className="space-y-1 text-sm">
-                    <p><strong>Nome:</strong> {wizardData.customerInfo.name}</p>
-                    <p><strong>Email:</strong> {wizardData.customerInfo.email}</p>
-                    <p><strong>Telefone:</strong> {wizardData.customerInfo.phone}</p>
-                    <p><strong>Pessoas:</strong> {wizardData.customerInfo.partySize}</p>
+            <div className="space-y-6">
+              {/* Cabeçalho de Confirmação */}
+              <div className="text-center py-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i className="fa-solid fa-check text-white text-2xl"></i>
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Reserva Pronta para Confirmação</h3>
+                <p className="text-gray-600">Revise os detalhes antes de finalizar</p>
+              </div>
+
+              {/* Cards de Informação */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Informações do Cliente */}
+                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center mb-3">
+                    <div className="w-8 h-8 bg-brasil-blue rounded-full flex items-center justify-center mr-3">
+                      <i className="fa-solid fa-user text-white text-sm"></i>
+                    </div>
+                    <h4 className="font-semibold text-gray-800">Informações do Cliente</h4>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Nome:</span>
+                      <span className="font-medium">{wizardData.customerInfo.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Email:</span>
+                      <span className="font-medium">{wizardData.customerInfo.email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Telefone:</span>
+                      <span className="font-medium">{wizardData.customerInfo.phone || 'Não informado'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Pessoas:</span>
+                      <span className="font-medium">{wizardData.customerInfo.partySize}</span>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <h4 className="font-medium mb-2">Detalhes da Reserva</h4>
-                  <div className="space-y-1 text-sm">
-                    <p><strong>Data:</strong> {wizardData.tableSelection.date}</p>
-                    <p><strong>Hora:</strong> {wizardData.tableSelection.time}</p>
-                    <p><strong>Mesa:</strong> {tables.find(t => t.id === wizardData.tableSelection.tableId)?.number}</p>
-                    {wizardData.notes && <p><strong>Observações:</strong> {wizardData.notes}</p>}
+
+                {/* Informações da Mesa e Data */}
+                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center mb-3">
+                    <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
+                      <i className="fa-solid fa-calendar text-white text-sm"></i>
+                    </div>
+                    <h4 className="font-semibold text-gray-800">Detalhes da Reserva</h4>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Mesa:</span>
+                      <span className="font-medium">#{tables.find(t => t.id === wizardData.tableSelection.tableId)?.number}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Data:</span>
+                      <span className="font-medium">{new Date(wizardData.tableSelection.date).toLocaleDateString('pt-PT')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Hora:</span>
+                      <span className="font-medium">{wizardData.tableSelection.time}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Duração:</span>
+                      <span className="font-medium">2 horas</span>
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              <div>
-                <h4 className="font-medium mb-2">Itens Selecionados</h4>
-                <div className="space-y-2">
-                  {wizardData.selectedItems.map((item: any) => (
-                    <div key={item.id} className="flex justify-between">
-                      <span>{item.name} x{item.quantity}</span>
-                      <span>{formatPrice(item.price * item.quantity)}</span>
+
+              {/* Itens Selecionados */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                    <i className="fa-solid fa-utensils text-white text-sm"></i>
+                  </div>
+                  <h4 className="font-semibold text-gray-800">Itens do Menu</h4>
+                </div>
+                <div className="space-y-3">
+                  {wizardData.selectedItems.map((item: any, index: number) => (
+                    <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-medium text-gray-600">{item.quantity}</span>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-800">{item.name}</span>
+                          <p className="text-xs text-gray-500">{item.category?.name}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium text-gray-800">{formatPrice(item.price * item.quantity)}</div>
+                        <div className="text-xs text-gray-500">{formatPrice(item.price)} cada</div>
+                      </div>
                     </div>
                   ))}
-                  <div className="border-t pt-2">
-                    <div className="flex justify-between font-bold">
-                      <span>Total:</span>
-                      <span>{formatPrice(calculateTotal())}</span>
+                  <div className="border-t pt-3 mt-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-semibold text-gray-800">Total:</span>
+                      <span className="text-xl font-bold text-brasil-blue">{formatPrice(calculateTotal())}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="paymentMethod">Método de Pagamento</Label>
-                <Select
-                  value={wizardData.paymentMethod}
-                  onValueChange={(value) => setWizardData(prev => ({ ...prev, paymentMethod: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="multibanco">Multibanco</SelectItem>
-                    <SelectItem value="mbway">MB Way</SelectItem>
-                    <SelectItem value="card">Cartão</SelectItem>
-                    <SelectItem value="transfer">Transferência</SelectItem>
-                    <SelectItem value="cash">Dinheiro</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label className="text-base font-semibold mb-3 block">Método de Pagamento</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {[
+                    { value: 'cash', label: 'Dinheiro', icon: 'fa-solid fa-money-bills', color: 'bg-green-50 border-green-200 text-green-800 hover:bg-green-100' },
+                    { value: 'multibanco', label: 'Multibanco', icon: 'fa-solid fa-university', color: 'bg-orange-50 border-orange-200 text-orange-800 hover:bg-orange-100' },
+                    { value: 'mbway', label: 'MB Way', icon: 'fa-solid fa-mobile-screen', color: 'bg-blue-50 border-blue-200 text-blue-800 hover:bg-blue-100' },
+                    { value: 'card', label: 'Cartão', icon: 'fa-solid fa-credit-card', color: 'bg-purple-50 border-purple-200 text-purple-800 hover:bg-purple-100' },
+                    { value: 'transfer', label: 'Transferência', icon: 'fa-solid fa-exchange-alt', color: 'bg-indigo-50 border-indigo-200 text-indigo-800 hover:bg-indigo-100' }
+                  ].map((method) => (
+                    <button
+                      key={method.value}
+                      type="button"
+                      onClick={() => setWizardData(prev => ({ ...prev, paymentMethod: method.value }))}
+                      className={`
+                        relative p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer
+                        ${wizardData.paymentMethod === method.value 
+                          ? 'border-brasil-blue bg-brasil-blue/10 shadow-md scale-105' 
+                          : `${method.color} border-dashed`
+                        }
+                      `}
+                    >
+                      <div className="flex flex-col items-center space-y-2">
+                        <i className={`${method.icon} text-2xl`}></i>
+                        <span className="font-medium text-sm">{method.label}</span>
+                        {wizardData.paymentMethod === method.value && (
+                          <div className="absolute -top-2 -right-2 bg-brasil-blue text-white rounded-full w-6 h-6 flex items-center justify-center">
+                            <i className="fa-solid fa-check text-xs"></i>
+                          </div>
+                        )}
+                      </div>
+                      {method.value === 'cash' && (
+                        <div className="mt-2 text-xs text-center text-gray-600">
+                          Pagamento na entrega
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Informação adicional baseada no método selecionado */}
+                {wizardData.paymentMethod === 'cash' && (
+                  <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <i className="fa-solid fa-info-circle text-green-600 mt-0.5"></i>
+                      <div>
+                        <h4 className="font-medium text-green-800">Pagamento em Dinheiro</h4>
+                        <p className="text-sm text-green-700 mt-1">
+                          O cliente irá pagar em dinheiro no restaurante. A reserva será confirmada sem necessidade de pagamento online.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {wizardData.paymentMethod === 'multibanco' && (
+                  <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <i className="fa-solid fa-university text-orange-600 mt-0.5"></i>
+                      <div>
+                        <h4 className="font-medium text-orange-800">Referência Multibanco</h4>
+                        <p className="text-sm text-orange-700 mt-1">
+                          Será gerada uma referência Multibanco para pagamento. O cliente receberá as instruções por email.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {wizardData.paymentMethod === 'mbway' && (
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <i className="fa-solid fa-mobile-screen text-blue-600 mt-0.5"></i>
+                      <div>
+                        <h4 className="font-medium text-blue-800">MB Way</h4>
+                        <p className="text-sm text-blue-700 mt-1">
+                          Será enviado um pedido de pagamento MB Way para o número de telefone fornecido: {wizardData.customerInfo.phone || 'a definir'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* Resumo de Pagamento */}
+              <div className="bg-gradient-to-r from-brasil-blue to-blue-600 text-white rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center">
+                    <i className="fa-solid fa-credit-card text-xl mr-3"></i>
+                    <h4 className="font-semibold text-lg">Resumo do Pagamento</h4>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm opacity-90 mb-1">Método de Pagamento</div>
+                    <div className="font-medium">
+                      {wizardData.paymentMethod === 'cash' && '💰 Dinheiro'}
+                      {wizardData.paymentMethod === 'multibanco' && '🏛️ Multibanco'}
+                      {wizardData.paymentMethod === 'mbway' && '📱 MB Way'}
+                      {wizardData.paymentMethod === 'card' && '💳 Cartão'}
+                      {wizardData.paymentMethod === 'transfer' && '🔄 Transferência'}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm opacity-90 mb-1">Total a Pagar</div>
+                    <div className="text-2xl font-bold">{formatPrice(calculateTotal())}</div>
+                  </div>
+                </div>
+                
+                {wizardData.paymentMethod === 'cash' && (
+                  <div className="mt-3 p-3 bg-white/10 rounded-lg">
+                    <div className="flex items-center">
+                      <i className="fa-solid fa-info-circle mr-2"></i>
+                      <span className="text-sm">Pagamento será realizado no restaurante</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Notas adicionais */}
+              {wizardData.notes && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start">
+                    <i className="fa-solid fa-sticky-note text-yellow-600 mt-1 mr-3"></i>
+                    <div>
+                      <h4 className="font-medium text-yellow-800 mb-1">Observações</h4>
+                      <p className="text-sm text-yellow-700">{wizardData.notes}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

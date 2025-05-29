@@ -944,9 +944,20 @@ router.post("/api/complete-reservation", isAuthenticated, async (req, res) => {
       `;
     }
 
-    // Processar pagamento se não for dinheiro
+    // Processar pagamento
     let paymentResult = null;
-    if (paymentMethod !== 'cash') {
+    let paymentStatus = 'pending';
+    
+    if (paymentMethod === 'cash') {
+      // Para pagamento em dinheiro, marcar como pendente para pagamento no local
+      paymentStatus = 'pending';
+      paymentResult = { 
+        success: true, 
+        method: 'cash', 
+        message: 'Pagamento em dinheiro - a ser realizado no restaurante' 
+      };
+    } else {
+      // Para outros métodos, processar pagamento online
       try {
         paymentResult = await processPayment(paymentMethod, total, customerInfo.phone, reservationCode);
         
@@ -965,6 +976,13 @@ router.post("/api/complete-reservation", isAuthenticated, async (req, res) => {
         // Continuar sem falhar a reserva
       }
     }
+    
+    // Atualizar status de pagamento na reserva
+    await queryClient`
+      UPDATE reservations 
+      SET payment_status = ${paymentStatus}
+      WHERE id = ${reservation.id}
+    `;
 
     // Buscar reserva completa para retorno
     const completeReservation = await queryClient`
