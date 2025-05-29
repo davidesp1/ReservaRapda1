@@ -92,8 +92,8 @@ const Finance: React.FC = () => {
   const [searchText, setSearchText] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [methodFilter, setMethodFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [methodFilter, setMethodFilter] = useState<string>("all");
   const [filteredPayments, setFilteredPayments] = useState<PaymentWithUser[]>(
     [],
   );
@@ -165,12 +165,12 @@ const Finance: React.FC = () => {
     }
 
     // Filtro de status
-    if (statusFilter) {
+    if (statusFilter && statusFilter !== "all") {
       filtered = filtered.filter((payment) => payment.status === statusFilter);
     }
 
     // Filtro de método
-    if (methodFilter) {
+    if (methodFilter && methodFilter !== "all") {
       filtered = filtered.filter((payment) => payment.method === methodFilter);
     }
 
@@ -1338,7 +1338,7 @@ const Finance: React.FC = () => {
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
                       <SelectItem value="card">Cartão</SelectItem>
                       <SelectItem value="mbway">MB Way</SelectItem>
                       <SelectItem value="multibanco">Multibanco</SelectItem>
@@ -1353,8 +1353,8 @@ const Finance: React.FC = () => {
                       setSearchText("");
                       setStartDate("");
                       setEndDate("");
-                      setStatusFilter("");
-                      setMethodFilter("");
+                      setStatusFilter("all");
+                      setMethodFilter("all");
                     }}
                     variant="outline"
                     className="flex items-center gap-2"
