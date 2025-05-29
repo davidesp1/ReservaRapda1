@@ -117,6 +117,14 @@ const Finance: React.FC = () => {
     refetchIntervalInBackground: true,
   });
 
+  // Fetch reservations
+  const { data: reservations = [], isLoading: reservationsLoading } = useQuery<Reservation[]>({
+    queryKey: ['/api/admin/reservations'],
+    enabled: isAuthenticated && isAdmin,
+    refetchInterval: 10000,
+    refetchIntervalInBackground: true,
+  });
+
   // Aplicar filtros
   const applyFilters = () => {
     if (!payments) {
@@ -169,10 +177,119 @@ const Finance: React.FC = () => {
     setFilteredPayments(filtered);
   };
 
+  // Aplicar filtros para reservas
+  const applyReservationFilters = () => {
+    if (!reservations) {
+      setFilteredReservations([]);
+      return;
+    }
+
+    let filtered = [...reservations];
+
+    // Filtro de busca
+    if (searchText) {
+      filtered = filtered.filter(
+        (reservation) =>
+          reservation.user_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+          reservation.email?.toLowerCase().includes(searchText.toLowerCase()) ||
+          reservation.phone?.toLowerCase().includes(searchText.toLowerCase()) ||
+          reservation.reservation_code?.toLowerCase().includes(searchText.toLowerCase()),
+      );
+    }
+
+    // Filtro de data
+    if (startDate) {
+      filtered = filtered.filter(
+        (reservation) => new Date(reservation.date) >= new Date(startDate),
+      );
+    }
+    if (endDate) {
+      filtered = filtered.filter(
+        (reservation) => new Date(reservation.date) <= new Date(endDate + "T23:59:59"),
+      );
+    }
+
+    // Filtro de status de pagamento
+    if (statusFilter) {
+      filtered = filtered.filter((reservation) => reservation.payment_status === statusFilter);
+    }
+
+    // Filtro de método de pagamento
+    if (methodFilter) {
+      filtered = filtered.filter((reservation) => reservation.payment_method === methodFilter);
+    }
+
+    setFilteredReservations(filtered);
+  };
+
   // Aplicar filtros automaticamente quando os dados mudarem
   useEffect(() => {
     applyFilters();
-  }, [payments, searchText, startDate, endDate, statusFilter, methodFilter]);
+    applyReservationFilters();
+  }, [payments, reservations, searchText, startDate, endDate, statusFilter, methodFilter]);
+
+  // Reset pagination when changing tabs or filters
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [currentTab, searchText, startDate, endDate, statusFilter, methodFilter]);
+
+  // Paginação
+  const getCurrentItems = () => {
+    const items = currentTab === "pagamentos" ? filteredPayments : filteredReservations;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return items.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = () => {
+    const items = currentTab === "pagamentos" ? filteredPayments : filteredReservations;
+    return Math.ceil(items.length / itemsPerPage);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleNextPage = () => {
+    const totalPages = getTotalPages();
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const generatePageNumbers = () => {
+    const totalPages = getTotalPages();
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= maxVisiblePages; i++) {
+          pages.push(i);
+        }
+      } else if (currentPage >= totalPages - 2) {
+        for (let i = totalPages - maxVisiblePages + 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        for (let i = currentPage - 2; i <= currentPage + 2; i++) {
+          pages.push(i);
+        }
+      }
+    }
+    
+    return pages;
+  };
 
   // Calcular totais
   const totals = React.useMemo(() => {
@@ -838,6 +955,16 @@ const Finance: React.FC = () => {
               Pagamentos
             </button>
             <button
+              onClick={() => setCurrentTab("reservas")}
+              className={`px-6 py-3 font-semibold rounded-t-lg focus:outline-none ml-2 ${
+                currentTab === "reservas"
+                  ? "text-blue-600 border-b-2 border-blue-600 bg-white"
+                  : "text-gray-500 hover:text-blue-600 bg-white"
+              }`}
+            >
+              Reservas
+            </button>
+            <button
               onClick={() => setCurrentTab("analise")}
               className={`px-6 py-3 font-semibold rounded-t-lg focus:outline-none ml-2 ${
                 currentTab === "analise"
@@ -1091,6 +1218,287 @@ const Finance: React.FC = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Paginação para Pagamentos */}
+                {currentTab === "pagamentos" && getTotalPages() > 1 && (
+                  <div className="flex justify-between items-center px-6 py-4 bg-white border-t border-gray-100">
+                    <div className="text-sm text-gray-600">
+                      Exibindo {filteredPayments.length > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0} a {Math.min(currentPage * itemsPerPage, filteredPayments.length)} de {filteredPayments.length} pagamentos
+                    </div>
+                    <div className="flex space-x-1">
+                      <button 
+                        onClick={handlePreviousPage}
+                        disabled={currentPage === 1}
+                        className={`px-3 py-1 rounded-lg font-bold transition ${
+                          currentPage === 1 
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                            : 'bg-gray-100 text-gray-500 hover:bg-blue-800 hover:text-white'
+                        }`}
+                      >
+                        <i className="fa-solid fa-angle-left"></i>
+                      </button>
+                      
+                      {generatePageNumbers().map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`px-3 py-1 rounded-lg font-bold transition ${
+                            currentPage === page
+                              ? 'bg-blue-800 text-white'
+                              : 'bg-gray-100 text-gray-800 hover:bg-blue-800 hover:text-white'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                      
+                      <button 
+                        onClick={handleNextPage}
+                        disabled={currentPage === getTotalPages()}
+                        className={`px-3 py-1 rounded-lg font-bold transition ${
+                          currentPage === getTotalPages() 
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                            : 'bg-gray-100 text-gray-500 hover:bg-blue-800 hover:text-white'
+                        }`}
+                      >
+                        <i className="fa-solid fa-angle-right"></i>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {currentTab === "reservas" && (
+            <div className="space-y-6">
+              {/* Filtros */}
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="flex-1 min-w-[180px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">
+                    Pesquisar
+                  </label>
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      className="pl-10"
+                      placeholder="Buscar por cliente, código ou contato..."
+                    />
+                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                  </div>
+                </div>
+
+                <div className="min-w-[150px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">
+                    Data Início
+                  </label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="min-w-[150px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">
+                    Data Fim
+                  </label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="min-w-[140px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">
+                    Status Pagamento
+                  </label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="completed">Pago</SelectItem>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="cancelled">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="min-w-[140px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">
+                    Método
+                  </label>
+                  <Select value={methodFilter} onValueChange={setMethodFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="card">Cartão</SelectItem>
+                      <SelectItem value="mbway">MB Way</SelectItem>
+                      <SelectItem value="multibanco">Multibanco</SelectItem>
+                      <SelectItem value="cash">Dinheiro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Button
+                    onClick={() => {
+                      setSearchText("");
+                      setStartDate("");
+                      setEndDate("");
+                      setStatusFilter("");
+                      setMethodFilter("");
+                    }}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <Filter className="w-4 h-4" />
+                    Limpar
+                  </Button>
+                </div>
+              </div>
+
+              {/* Tabela de Reservas */}
+              <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-blue-600">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Código
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Cliente
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Data/Hora
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Mesa
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Pessoas
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Valor
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Método
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
+                          Status Pagamento
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {getCurrentItems().map((reservation: Reservation) => (
+                        <tr key={reservation.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                            {reservation.reservation_code || `#R${reservation.id}`}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <img
+                                src={`https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-${(reservation.id % 8) + 1}.jpg`}
+                                alt=""
+                                className="w-8 h-8 rounded-full border-2 border-green-600 mr-3"
+                              />
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {reservation.user_name}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {reservation.email}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {format(new Date(reservation.date), 'dd/MM/yyyy HH:mm')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            Mesa {reservation.table_number}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {reservation.party_size}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            €{(reservation.total / 100).toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getPaymentMethodBadge(reservation.payment_method)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(reservation.payment_status)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {filteredReservations.length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-gray-500">
+                        Nenhuma reserva encontrada
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Paginação para Reservas */}
+                {getTotalPages() > 1 && (
+                  <div className="flex justify-between items-center px-6 py-4 bg-white border-t border-gray-100">
+                    <div className="text-sm text-gray-600">
+                      Exibindo {filteredReservations.length > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0} a {Math.min(currentPage * itemsPerPage, filteredReservations.length)} de {filteredReservations.length} reservas
+                    </div>
+                    <div className="flex space-x-1">
+                      <button 
+                        onClick={handlePreviousPage}
+                        disabled={currentPage === 1}
+                        className={`px-3 py-1 rounded-lg font-bold transition ${
+                          currentPage === 1 
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                            : 'bg-gray-100 text-gray-500 hover:bg-blue-800 hover:text-white'
+                        }`}
+                      >
+                        <i className="fa-solid fa-angle-left"></i>
+                      </button>
+                      
+                      {generatePageNumbers().map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`px-3 py-1 rounded-lg font-bold transition ${
+                            currentPage === page
+                              ? 'bg-blue-800 text-white'
+                              : 'bg-gray-100 text-gray-800 hover:bg-blue-800 hover:text-white'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                      
+                      <button 
+                        onClick={handleNextPage}
+                        disabled={currentPage === getTotalPages()}
+                        className={`px-3 py-1 rounded-lg font-bold transition ${
+                          currentPage === getTotalPages() 
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                            : 'bg-gray-100 text-gray-500 hover:bg-blue-800 hover:text-white'
+                        }`}
+                      >
+                        <i className="fa-solid fa-angle-right"></i>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
