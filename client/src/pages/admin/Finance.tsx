@@ -111,7 +111,7 @@ const Finance: React.FC = () => {
     isLoading: paymentsLoading,
     refetch,
   } = useQuery<PaymentWithUser[]>({
-    queryKey: ["/api/payments"],
+    queryKey: ["/api/admin/payments"],
     enabled: isAuthenticated && isAdmin,
     refetchInterval: 10000, // Atualiza a cada 10 segundos para realtime
     refetchIntervalInBackground: true,
