@@ -1132,9 +1132,15 @@ router.post("/api/test-image-upload", isAuthenticated, async (req, res) => {
   }
 });
 
-// Nova rota para listar todos os pagamentos - especialmente para a página de Finanças
-router.get("/api/payments", isAuthenticated, async (req, res) => {
+// Nova rota para listar todos os pagamentos para admins - especialmente para a página de Finanças
+router.get("/api/admin/payments", isAuthenticated, async (req, res) => {
   try {
+    console.log("🔍 DEBUG: Buscando TODOS os pagamentos para admin...");
+    
+    // Verificar total de registros
+    const totalCount = await queryClient`SELECT COUNT(*) as total FROM payments`;
+    console.log(`🔍 DEBUG: Total de registros na tabela payments: ${totalCount[0]?.total}`);
+    
     const payments = await queryClient`
       SELECT 
         p.id,
@@ -1164,10 +1170,17 @@ router.get("/api/payments", isAuthenticated, async (req, res) => {
       ORDER BY COALESCE(p.payment_date, p.created_at) DESC
     `;
     
-    console.log(`Retornando ${payments.length} pagamentos (cartão, MBWay, Multibanco, transferência bancária, dinheiro e TPA)`);
+    console.log(`🔍 DEBUG: Query retornou ${payments.length} registros para admin`);
+    console.log(`🔍 DEBUG: IDs dos últimos 10 pagamentos: ${payments.slice(0, 10).map(p => `ID:${p.id}(${p.method})`).join(', ')}`);
+    
+    // Desabilitar cache
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     res.json(payments);
   } catch (err: any) {
-    console.error("Erro ao buscar pagamentos:", err);
+    console.error("Erro ao buscar pagamentos para admin:", err);
     res.status(500).json({ error: err.message });
   }
 });
