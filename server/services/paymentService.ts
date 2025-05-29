@@ -1,8 +1,8 @@
 import eupagoClient from "../integrations/eupago/client";
 import { EupagoResponse } from "../integrations/eupago/types";
 
-// Modo simulação para contingência caso a API falhe
-const SIMULATION_MODE = false;
+// Modo simulação baseado na variável de ambiente
+const SIMULATION_MODE = process.env.EUPAGO_SIMULATION === 'true';
 
 // Função para simular pagamento em modo de desenvolvimento
 function simulatePayment(method: string, amount: number, phone?: string): EupagoResponse {
@@ -60,11 +60,16 @@ export async function processPayment(
   phone?: string,
   referenceId?: string,
 ): Promise<EupagoResponse> {
-  // Ajuste importante: dividir o valor por 100 para converter de centavos para euros
-  // O valor está sendo armazenado em centavos (ex: 200 = 2€)
-  const amountInEuros = amount / 100;
+  // O valor já vem em euros do frontend
+  const amountInEuros = amount;
   
-  console.log(`Processando pagamento ${method} no valor de ${amountInEuros}€ (${amount} centavos)`);
+  console.log(`Processando pagamento ${method} no valor de ${amountInEuros}€`);
+  
+  // Verificar valor mínimo para Multibanco (€1.00)
+  if (method === "multibanco" && amountInEuros < 1.00) {
+    console.log(`[MULTIBANCO] Valor ${amountInEuros}€ abaixo do mínimo (€1.00), ativando modo simulação`);
+    return simulatePayment(method, amountInEuros, phone);
+  }
   
   // Se estamos em modo de simulação, retornar dados simulados
   if (SIMULATION_MODE) {
