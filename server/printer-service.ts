@@ -17,9 +17,13 @@ export class PrinterService {
   async getAvailablePrinters(): Promise<PrinterInfo[]> {
     const printers: PrinterInfo[] = [];
     
+    console.log('🔍 Iniciando detecção de impressoras reais...');
+    
     try {
       // Primeiro, tentar detectar impressoras usando lpstat (Linux/Unix)
+      console.log('📋 Verificando via lpstat -p...');
       const { stdout: lpstatOutput } = await execAsync('lpstat -p -d 2>/dev/null || echo "No CUPS printers"');
+      console.log('lpstat output:', lpstatOutput);
       
       if (lpstatOutput && !lpstatOutput.includes('No CUPS printers')) {
         const lines = lpstatOutput.split('\n').filter(line => line.trim());
@@ -29,6 +33,7 @@ export class PrinterService {
             const match = line.match(/printer (\S+)\s+(.+)/);
             if (match) {
               const [, name, description] = match;
+              console.log(`📄 Impressora encontrada via lpstat: ${name} - ${description}`);
               printers.push({
                 id: name,
                 name: name,
@@ -114,79 +119,73 @@ export class PrinterService {
         console.log('Comando lsusb não disponível');
       }
 
-      // Se não encontrar impressoras pelo lpstat, adicionar impressoras padrão do sistema
-      if (printers.length === 0) {
-        try {
-          const { stdout: cupsOutput } = await execAsync('lpinfo -v 2>/dev/null || echo "No CUPS printers"');
+      // Usar lpstat -a para listar impressoras aceitas (igual ao navegador)
+      console.log('🖨️ Verificando via lpstat -a...');
+      try {
+        const { stdout: acceptedPrinters } = await execAsync('lpstat -a 2>/dev/null || echo "No accepted printers"');
+        console.log('lpstat -a output:', acceptedPrinters);
+        
+        if (acceptedPrinters && !acceptedPrinters.includes('No accepted printers')) {
+          const lines = acceptedPrinters.split('\n').filter(line => line.trim());
           
-          if (cupsOutput.includes('usb://') || cupsOutput.includes('serial://')) {
-            printers.push(
-              {
-                id: 'system-thermal',
-                name: 'Impressora Térmica Sistema',
-                description: 'Impressora térmica detectada no sistema',
-                status: 'online',
-                type: 'thermal',
-                location: 'USB/Serial'
+          for (const line of lines) {
+            const match = line.match(/^(\S+)\s+(.+)/);
+            if (match) {
+              const [, printerId, description] = match;
+              console.log(`🖨️ Impressora aceita encontrada: ${printerId} - ${description}`);
+              
+              // Verificar se já existe na lista
+              if (!printers.find(p => p.id === printerId)) {
+                printers.push({
+                  id: printerId,
+                  name: printerId,
+                  description: description,
+                  status: description.includes('accepting') ? 'online' : 'offline',
+                  type: 'system',
+                  location: 'Sistema'
+                });
               }
-            );
+            }
           }
-        } catch (error) {
-          console.log('CUPS não disponível, usando impressoras simuladas para desenvolvimento');
         }
+      } catch (acceptedError) {
+        console.log('Sistema de impressão não disponível');
       }
 
-      // Adicionar impressoras comuns para desenvolvimento se nenhuma for encontrada
-      if (printers.length === 0) {
-        printers.push(
-          {
-            id: 'epson-tm-t20',
-            name: 'EPSON TM-T20',
-            description: 'Impressora térmica EPSON TM-T20 (USB)',
-            status: 'online',
-            type: 'thermal',
-            location: 'USB'
-          },
-          {
-            id: 'bematech-mp4200',
-            name: 'BEMATECH MP-4200 TH',
-            description: 'Impressora térmica BEMATECH MP-4200 TH (USB)',
-            status: 'online',
-            type: 'thermal',
-            location: 'USB'
-          },
-          {
-            id: 'daruma-dr700',
-            name: 'DARUMA DR700',
-            description: 'Impressora térmica DARUMA DR700 (Rede)',
-            status: 'online',
-            type: 'thermal',
-            location: 'Rede'
-          },
-          {
-            id: 'elgin-i9',
-            name: 'ELGIN i9',
-            description: 'Impressora térmica ELGIN i9 (Bluetooth)',
-            status: 'online',
-            type: 'thermal',
-            location: 'Bluetooth'
-          }
-        );
+      // Verificar impressoras no sistema via lpoptions (configurações de impressora)
+      try {
+        const { stdout: lpoptionsOutput } = await execAsync('lpoptions -d 2>/dev/null || lpoptions 2>/dev/null || echo "No lpoptions"');
+        
+        if (lpoptionsOutput && !lpoptionsOutput.includes('No lpoptions')) {
+          const lines = lpoptionsOutput.split('\n').filter(line => line.trim());
+          
+          lines.forEach(line => {
+            const printerMatch = line.match(/^([^\s]+)/);
+            if (printerMatch) {
+              const printerId = printerMatch[1];
+              
+              if (!printers.find(p => p.id === printerId)) {
+                printers.push({
+                  id: printerId,
+                  name: printerId,
+                  description: `Impressora configurada: ${printerId}`,
+                  status: 'online',
+                  type: 'system',
+                  location: 'Sistema'
+                });
+              }
+            }
+          });
+        }
+      } catch (lpoptionsError) {
+        console.log('lpoptions não disponível');
       }
 
+      console.log(`Detecção concluída. Encontradas ${printers.length} impressoras reais no sistema.`);
       return printers;
     } catch (error) {
       console.error('Erro ao detectar impressoras:', error);
-      return [
-        {
-          id: 'default-printer',
-          name: 'Impressora Padrão',
-          description: 'Impressora padrão do sistema',
-          status: 'online',
-          type: 'thermal',
-          location: 'Sistema'
-        }
-      ];
+      return [];
     }
   }
 
