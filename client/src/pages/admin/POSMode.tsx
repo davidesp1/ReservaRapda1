@@ -49,27 +49,27 @@ const POSMode = () => {
   const [calculatorDisplay, setCalculatorDisplay] = useState<string>('');
   
   // Carregar métodos de pagamento disponíveis com atualização automática
-  const { data: paymentSettings } = useQuery({
+  const { data: paymentSettings = {} } = useQuery({
     queryKey: ['/api/settings/payments'],
     refetchInterval: 10000, // Atualiza a cada 10 segundos
     refetchIntervalInBackground: true,
   });
   
   // Carregar produtos do menu com atualização automática
-  const { data: menuItemsData, isLoading } = useQuery({
+  const { data: menuItemsData = [], isLoading } = useQuery({
     queryKey: ['/api/menu-items'],
     refetchInterval: 15000, // Atualiza a cada 15 segundos
     refetchIntervalInBackground: true,
   });
 
   // Carregar apenas funcionários (staff)
-  const { data: staffClients } = useQuery({
+  const { data: staffClients = [] } = useQuery({
     queryKey: ['/api/users/staff'],
     enabled: isClientModalOpen, // Só carrega quando o modal está aberto
   });
   
   // Os dados já vêm agrupados por categoria, então não precisamos de uma consulta separada
-  const categories = menuItemsData ? menuItemsData.map((cat: any) => cat.category) : [];
+  const categories = Array.isArray(menuItemsData) ? menuItemsData.map((cat: any) => cat.category) : [];
   const categoriesLoading = isLoading;
   
   // Definir automaticamente a primeira categoria como ativa quando as categorias forem carregadas
