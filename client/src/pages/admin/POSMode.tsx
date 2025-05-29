@@ -44,6 +44,9 @@ const POSMode = () => {
     last_name: '',
     phone: ''
   });
+  const [isCashCalculatorOpen, setIsCashCalculatorOpen] = useState(false);
+  const [amountReceived, setAmountReceived] = useState<string>('');
+  const [calculatorDisplay, setCalculatorDisplay] = useState<string>('');
   
   // Carregar métodos de pagamento disponíveis com atualização automática
   const { data: paymentSettings } = useQuery({
@@ -366,6 +369,14 @@ Status: PAGO
       return;
     }
     
+    // Se o método selecionado for "cash", abrir calculadora de troco
+    if (selectedPaymentMethod === 'cash') {
+      setIsCashCalculatorOpen(true);
+      setAmountReceived('');
+      setCalculatorDisplay('');
+      return;
+    }
+    
     // Para outros métodos, continuar com o fluxo normal
     import('sweetalert2').then((Swal) => {
       Swal.default.fire({
@@ -573,6 +584,227 @@ Status: PAGO
       style: 'currency',
       currency: 'EUR'
     });
+  };
+
+  // Funções da calculadora de troco
+  const handleCalculatorInput = (value: string) => {
+    if (value === 'C') {
+      setCalculatorDisplay('');
+      setAmountReceived('');
+    } else if (value === '⌫') {
+      setCalculatorDisplay(prev => prev.slice(0, -1));
+    } else if (value === '.') {
+      if (!calculatorDisplay.includes('.')) {
+        setCalculatorDisplay(prev => prev + value);
+      }
+    } else {
+      setCalculatorDisplay(prev => prev + value);
+    }
+  };
+
+  const handleConfirmCashPayment = () => {
+    const receivedAmount = parseFloat(calculatorDisplay) || 0;
+    const totalAmount = totalPrice / 100;
+    
+    if (receivedAmount < totalAmount) {
+      import('sweetalert2').then((Swal) => {
+        Swal.default.fire({
+          title: t('Valor Insuficiente'),
+          text: t('O valor recebido é menor que o total do pedido.'),
+          icon: 'warning',
+          confirmButtonText: t('OK')
+        });
+      });
+      return;
+    }
+
+    setAmountReceived(calculatorDisplay);
+    setIsCashCalculatorOpen(false);
+    
+    // Continuar com o fluxo normal de finalização do pedido
+    processCashOrder(receivedAmount);
+  };
+
+  const processCashOrder = (receivedAmount: number) => {
+    import('sweetalert2').then((Swal) => {
+      const change = receivedAmount - (totalPrice / 100);
+      
+      Swal.default.fire({
+        title: t('Finalizar Pedido'),
+        html: `
+          <div class="text-left">
+            <p><strong>${t('Total')}: </strong>${formatPrice(totalPrice)}</p>
+            <p><strong>${t('Recebido')}: </strong>€${receivedAmount.toFixed(2)}</p>
+            <p><strong>${t('Troco')}: </strong>€${change.toFixed(2)}</p>
+          </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonColor: '#009c3b',
+        denyButtonColor: '#002776',
+        cancelButtonColor: '#c8102e',
+        confirmButtonText: t('Gravar'),
+        denyButtonText: t('Gravar e Imprimir'),
+        cancelButtonText: t('Cancelar')
+      }).then((result) => {
+        if (result.isConfirmed || result.isDenied) {
+          const printReceipt = result.isDenied;
+          completeCashOrder(printReceipt, receivedAmount, change);
+        }
+      });
+    });
+  };
+
+  const completeCashOrder = (printReceipt: boolean, receivedAmount: number, change: number) => {
+    // Preparar os dados do pedido para enviar para a API
+    const orderData = {
+      items: orderItems.map(item => ({
+        menuItemId: item.menuItem.id,
+        quantity: item.quantity,
+        price: item.menuItem.price,
+        notes: '',
+        modifications: []
+      })),
+      totalAmount: totalPrice,
+      paymentMethod: 'cash',
+      discount: 0,
+      tax: 0,
+      printReceipt,
+      type: 'pos',
+      cashDetails: {
+        received: receivedAmount,
+        change: change
+      }
+    };
+
+    // Enviar os dados para a API
+    fetch('/api/pos/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(orderData),
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(t('Erro ao salvar pedido'));
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (printReceipt) {
+        const receiptContent = generateReceiptWithChange(receivedAmount, change);
+        
+        if ((window as any).printReceiptWithSettings) {
+          (window as any).printReceiptWithSettings(receiptContent);
+        } else {
+          const printWindow = window.open('', '_blank');
+          if (printWindow) {
+            const html = `
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <meta charset="UTF-8">
+                  <title>Recibo - Opa que Delícia</title>
+                  <style>
+                    @page { size: 58mm auto; margin: 0; }
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { 
+                      font-family: 'Courier New', monospace; 
+                      font-size: 10px; 
+                      line-height: 12px;
+                      width: 58mm;
+                      padding: 2mm;
+                      white-space: pre-line;
+                      overflow: hidden;
+                      background: white;
+                    }
+                    @media print {
+                      body {
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                      }
+                    }
+                  </style>
+                </head>
+                <body>${receiptContent}</body>
+              </html>
+            `;
+            printWindow.document.write(html);
+            printWindow.document.close();
+            setTimeout(() => {
+              printWindow.print();
+              setTimeout(() => printWindow.close(), 1000);
+            }, 500);
+          }
+        }
+      }
+      
+      import('sweetalert2').then((Swal) => {
+        Swal.default.fire({
+          title: t('Sucesso!'),
+          text: printReceipt 
+            ? t('Pedido finalizado e enviado para impressão!') 
+            : t('Pedido finalizado com sucesso!'),
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      });
+      
+      setOrderItems([]);
+    })
+    .catch(error => {
+      import('sweetalert2').then((Swal) => {
+        Swal.default.fire({
+          title: t('Erro!'),
+          text: error.message,
+          icon: 'error',
+          confirmButtonText: t('OK')
+        });
+      });
+    });
+  };
+
+  const generateReceiptWithChange = (receivedAmount: number, change: number) => {
+    const currentDate = new Date();
+    const dateStr = currentDate.toLocaleDateString('pt-PT');
+    const timeStr = currentDate.toLocaleTimeString('pt-PT');
+    
+    let receipt = `
+================================
+         OPA QUE DELICIA        
+================================
+Data: ${dateStr}
+Hora: ${timeStr}
+--------------------------------
+ITENS:
+`;
+
+    orderItems.forEach(item => {
+      const itemTotal = (item.menuItem.price * item.quantity) / 100;
+      receipt += `
+${item.menuItem.name}
+${item.quantity}x ${formatPrice(item.menuItem.price)} = €${itemTotal.toFixed(2)}`;
+    });
+
+    const total = totalPrice / 100;
+    
+    receipt += `
+--------------------------------
+TOTAL: €${total.toFixed(2)}
+RECEBIDO: €${receivedAmount.toFixed(2)}
+TROCO: €${change.toFixed(2)}
+--------------------------------
+PAGAMENTO: DINHEIRO
+--------------------------------
+    Obrigado pela preferencia!
+      Volte sempre!
+================================
+`;
+
+    return receipt;
   };
   
   if (isLoading || categoriesLoading) {
@@ -1162,6 +1394,144 @@ Status: PAGO
                 }}
               >
                 {t('Criar Cliente')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal da Calculadora de Troco */}
+      {isCashCalculatorOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">{t('Calculadora de Troco')}</h3>
+              <button 
+                onClick={() => setIsCashCalculatorOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <div className="text-sm text-gray-600 mb-2">
+                {t('Total do Pedido')}: <span className="font-bold">{formatPrice(totalPrice)}</span>
+              </div>
+              <div className="text-lg font-bold text-center p-4 bg-gray-100 rounded-lg border-2 min-h-[60px] flex items-center justify-center">
+                €{calculatorDisplay || '0.00'}
+              </div>
+            </div>
+
+            {/* Calculadora */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {/* Primeira linha */}
+              <button 
+                onClick={() => handleCalculatorInput('7')}
+                className="h-12 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold"
+              >
+                7
+              </button>
+              <button 
+                onClick={() => handleCalculatorInput('8')}
+                className="h-12 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold"
+              >
+                8
+              </button>
+              <button 
+                onClick={() => handleCalculatorInput('9')}
+                className="h-12 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold"
+              >
+                9
+              </button>
+
+              {/* Segunda linha */}
+              <button 
+                onClick={() => handleCalculatorInput('4')}
+                className="h-12 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold"
+              >
+                4
+              </button>
+              <button 
+                onClick={() => handleCalculatorInput('5')}
+                className="h-12 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold"
+              >
+                5
+              </button>
+              <button 
+                onClick={() => handleCalculatorInput('6')}
+                className="h-12 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold"
+              >
+                6
+              </button>
+
+              {/* Terceira linha */}
+              <button 
+                onClick={() => handleCalculatorInput('1')}
+                className="h-12 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold"
+              >
+                1
+              </button>
+              <button 
+                onClick={() => handleCalculatorInput('2')}
+                className="h-12 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold"
+              >
+                2
+              </button>
+              <button 
+                onClick={() => handleCalculatorInput('3')}
+                className="h-12 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold"
+              >
+                3
+              </button>
+
+              {/* Quarta linha */}
+              <button 
+                onClick={() => handleCalculatorInput('0')}
+                className="h-12 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold col-span-2"
+              >
+                0
+              </button>
+              <button 
+                onClick={() => handleCalculatorInput('.')}
+                className="h-12 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold"
+              >
+                .
+              </button>
+
+              {/* Quinta linha - Botões de ação */}
+              <button 
+                onClick={() => handleCalculatorInput('⌫')}
+                className="h-12 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold"
+              >
+                ⌫
+              </button>
+              <button 
+                onClick={() => handleCalculatorInput('C')}
+                className="h-12 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold"
+              >
+                C
+              </button>
+              <button 
+                onClick={handleConfirmCashPayment}
+                className="h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold"
+              >
+                ✓
+              </button>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button 
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
+                onClick={() => setIsCashCalculatorOpen(false)}
+              >
+                {t('Cancelar')}
+              </button>
+              <button 
+                className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700"
+                onClick={handleConfirmCashPayment}
+              >
+                {t('Confirmar Pagamento')}
               </button>
             </div>
           </div>
