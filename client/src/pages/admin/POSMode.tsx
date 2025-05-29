@@ -709,6 +709,24 @@ Status: PAGO
               <p className="text-gray-600 mb-4">{t('Selecione o método de pagamento:')}</p>
               
               <div className="space-y-3">
+                {/* Opção Staff - Sempre disponível */}
+                <div 
+                  className={`p-3 border rounded-lg cursor-pointer flex items-center ${
+                    selectedPaymentMethod === 'staff' ? 'border-orange-500 bg-orange-50' : 'border-gray-300'
+                  }`}
+                  onClick={() => setSelectedPaymentMethod('staff')}
+                >
+                  <div className={`w-6 h-6 rounded-full border mr-3 flex items-center justify-center ${
+                    selectedPaymentMethod === 'staff' ? 'border-orange-500' : 'border-gray-300'
+                  }`}>
+                    {selectedPaymentMethod === 'staff' && <Check className="h-4 w-4 text-orange-500" />}
+                  </div>
+                  <div>
+                    <div className="font-medium text-orange-700">{t('Staff')}</div>
+                    <div className="text-sm text-orange-600">{t('Pedido de funcionário')}</div>
+                  </div>
+                </div>
+
                 {/* Opção Dinheiro - Sempre disponível */}
                 <div 
                   className={`p-3 border rounded-lg cursor-pointer flex items-center ${

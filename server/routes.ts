@@ -1252,7 +1252,7 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
     let orderPaymentMethod = orderData.paymentMethod || 'cash';
     
     // Garantir que o método é válido
-    const validMethods = ['cash', 'card', 'mbway', 'multibanco', 'transfer', 'multibanco_TPA'];
+    const validMethods = ['cash', 'card', 'mbway', 'multibanco', 'transfer', 'multibanco_TPA', 'staff'];
     if (!validMethods.includes(orderPaymentMethod)) {
       orderPaymentMethod = 'cash';
     }
@@ -1282,7 +1282,7 @@ router.post('/api/pos/orders', isAuthenticated, async (req, res) => {
       let normalizedMethod = orderData.paymentMethod || 'cash';
       
       // Garantir que o método é um dos valores aceitos
-      const validMethods = ['cash', 'card', 'mbway', 'multibanco', 'transfer', 'multibanco_TPA'];
+      const validMethods = ['cash', 'card', 'mbway', 'multibanco', 'transfer', 'multibanco_TPA', 'staff'];
       
       if (!validMethods.includes(normalizedMethod)) {
         normalizedMethod = 'cash';
