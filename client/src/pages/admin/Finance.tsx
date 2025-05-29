@@ -1398,7 +1398,7 @@ const Finance: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {getCurrentItems().map((reservation: Reservation) => (
+                      {(getCurrentItems() as Reservation[]).map((reservation) => (
                         <tr key={reservation.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
                             {reservation.reservation_code || `#R${reservation.id}`}
