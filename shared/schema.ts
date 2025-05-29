@@ -124,6 +124,9 @@ export const reservations = pgTable("reservations", {
   paymentMethod: paymentMethodEnum("payment_method").default("multibanco"),
   paymentStatus: paymentStatusEnum("payment_status").default("pending"),
   total: integer("total").default(0), // Total amount in cents
+  eupagoEntity: text("eupago_entity"), // Entidade EuPago (5 dígitos)
+  eupagoReference: text("eupago_reference"), // Referência EuPago (9 dígitos)
+  reservationCode: text("reservation_code"), // Código único da reserva gerado pelo sistema
 });
 
 export const insertReservationSchema = createInsertSchema(reservations).omit({
