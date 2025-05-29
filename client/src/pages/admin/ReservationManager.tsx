@@ -62,6 +62,26 @@ const ReservationManager: React.FC = () => {
     notes: ''
   });
 
+  // Estado para o fluxo completo de reserva
+  const [isReservationWizardOpen, setIsReservationWizardOpen] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
+  const [wizardData, setWizardData] = useState({
+    selectedItems: [] as any[],
+    customerInfo: {
+      name: '',
+      email: '',
+      phone: '',
+      partySize: 2
+    },
+    tableSelection: {
+      tableId: null as number | null,
+      date: '',
+      time: ''
+    },
+    paymentMethod: 'multibanco',
+    notes: ''
+  });
+
   // Redirect if not authenticated or not admin
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || !isAdmin)) {
@@ -97,7 +117,13 @@ const ReservationManager: React.FC = () => {
     },
   });
 
-  // Create new reservation mutation
+  // Fetch menu items for wizard
+  const { data: menuItems = [] } = useQuery<any[]>({
+    queryKey: ['/api/menu-items'],
+    enabled: isAuthenticated && isAdmin && isReservationWizardOpen,
+  });
+
+  // Create new reservation mutation (simple form)
   const createReservationMutation = useMutation({
     mutationFn: async (reservationData: any) => {
       const dateTime = `${reservationData.date}T${reservationData.time}:00`;
@@ -138,6 +164,30 @@ const ReservationManager: React.FC = () => {
     }
   });
 
+  // Create complete reservation with wizard flow
+  const createCompleteReservationMutation = useMutation({
+    mutationFn: async (completeData: any) => {
+      const response = await apiRequest('POST', '/api/complete-reservation', completeData);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Reserva Criada com Sucesso',
+        description: `Reserva ${data.reservation_code} criada. Referência de pagamento: ${data.reference}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reservations'] });
+      setIsReservationWizardOpen(false);
+      resetWizardData();
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erro ao Criar Reserva',
+        description: error.message || 'Erro ao processar reserva completa',
+        variant: 'destructive',
+      });
+    }
+  });
+
   // Delete reservation mutation
   const deleteReservationMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -161,6 +211,96 @@ const ReservationManager: React.FC = () => {
       });
     }
   });
+
+  // Reset wizard data
+  const resetWizardData = () => {
+    setWizardStep(1);
+    setWizardData({
+      selectedItems: [],
+      customerInfo: {
+        name: '',
+        email: '',
+        phone: '',
+        partySize: 2
+      },
+      tableSelection: {
+        tableId: null,
+        date: '',
+        time: ''
+      },
+      paymentMethod: 'multibanco',
+      notes: ''
+    });
+  };
+
+  // Wizard functions
+  const handleWizardNext = () => {
+    if (wizardStep < 4) {
+      setWizardStep(wizardStep + 1);
+    }
+  };
+
+  const handleWizardPrev = () => {
+    if (wizardStep > 1) {
+      setWizardStep(wizardStep - 1);
+    }
+  };
+
+  const handleAddMenuItem = (item: any) => {
+    setWizardData(prev => ({
+      ...prev,
+      selectedItems: [...prev.selectedItems.filter(i => i.id !== item.id), { ...item, quantity: 1 }]
+    }));
+  };
+
+  const handleRemoveMenuItem = (itemId: number) => {
+    setWizardData(prev => ({
+      ...prev,
+      selectedItems: prev.selectedItems.filter(i => i.id !== itemId)
+    }));
+  };
+
+  const handleUpdateItemQuantity = (itemId: number, quantity: number) => {
+    if (quantity <= 0) {
+      handleRemoveMenuItem(itemId);
+      return;
+    }
+    setWizardData(prev => ({
+      ...prev,
+      selectedItems: prev.selectedItems.map(i => 
+        i.id === itemId ? { ...i, quantity } : i
+      )
+    }));
+  };
+
+  const calculateTotal = () => {
+    return wizardData.selectedItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  };
+
+  const formatPrice = (price: number) => {
+    return (price / 100).toLocaleString('pt-PT', {
+      style: 'currency',
+      currency: 'EUR'
+    });
+  };
+
+  const handleCompleteReservation = async () => {
+    const total = calculateTotal();
+    const dateTime = `${wizardData.tableSelection.date}T${wizardData.tableSelection.time}:00`;
+    
+    const completeData = {
+      customerInfo: wizardData.customerInfo,
+      selectedItems: wizardData.selectedItems,
+      tableId: wizardData.tableSelection.tableId,
+      date: dateTime,
+      paymentMethod: wizardData.paymentMethod,
+      total,
+      notes: wizardData.notes,
+      adminCreated: true
+    };
+
+    createCompleteReservationMutation.mutate(completeData);
+  };
 
   // Handle new reservation form
   const handleNewReservationSubmit = () => {
@@ -346,13 +486,22 @@ const ReservationManager: React.FC = () => {
         {/* Header */}
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">Gestão de Reservas</h1>
-          <Button
-            onClick={() => setIsNewReservationModalOpen(true)}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold flex items-center space-x-2"
-          >
-            <i className="fa-solid fa-plus"></i>
-            <span>Nova Reserva</span>
-          </Button>
+          <div className="flex space-x-3">
+            <Button
+              onClick={() => setIsReservationWizardOpen(true)}
+              className="bg-brasil-blue hover:bg-brasil-blue/90 text-white font-bold flex items-center space-x-2"
+            >
+              <i className="fa-solid fa-magic"></i>
+              <span>Nova Reserva Completa</span>
+            </Button>
+            <Button
+              onClick={() => setIsNewReservationModalOpen(true)}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold flex items-center space-x-2"
+            >
+              <i className="fa-solid fa-plus"></i>
+              <span>Reserva Simples</span>
+            </Button>
+          </div>
         </div>
 
         {/* Main Content */}
@@ -734,6 +883,346 @@ const ReservationManager: React.FC = () => {
             >
               {deleteReservationMutation.isPending ? 'Deletando...' : 'Deletar'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Wizard de Reserva Completa */}
+      <Dialog open={isReservationWizardOpen} onOpenChange={setIsReservationWizardOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nova Reserva Completa - Etapa {wizardStep} de 4</DialogTitle>
+            <DialogDescription>
+              {wizardStep === 1 && "Selecione os itens do menu para a reserva"}
+              {wizardStep === 2 && "Informações do cliente"}
+              {wizardStep === 3 && "Escolha da mesa e horário"}
+              {wizardStep === 4 && "Resumo e confirmação"}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Indicador de Progresso */}
+          <div className="flex justify-between mb-6">
+            {[1, 2, 3, 4].map((step) => (
+              <div key={step} className="flex items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  step <= wizardStep ? 'bg-brasil-blue text-white' : 'bg-gray-200 text-gray-600'
+                }`}>
+                  {step}
+                </div>
+                {step < 4 && (
+                  <div className={`h-1 w-16 mx-2 ${
+                    step < wizardStep ? 'bg-brasil-blue' : 'bg-gray-200'
+                  }`} />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Etapa 1: Seleção do Menu */}
+          {wizardStep === 1 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Itens do Menu</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+                {menuItems.map((categoryData: any) => (
+                  <div key={categoryData.category.id} className="space-y-2">
+                    <h4 className="font-medium text-gray-800">{categoryData.category.name}</h4>
+                    {categoryData.items?.map((item: any) => (
+                      <div key={item.id} className="flex justify-between items-center p-3 border rounded-lg">
+                        <div>
+                          <div className="font-medium">{item.name}</div>
+                          <div className="text-sm text-gray-600">{formatPrice(item.price)}</div>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => handleAddMenuItem(item)}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          Adicionar
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Itens Selecionados */}
+              {wizardData.selectedItems.length > 0 && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium mb-2">Itens Selecionados</h4>
+                  {wizardData.selectedItems.map((item: any) => (
+                    <div key={item.id} className="flex justify-between items-center py-2">
+                      <span>{item.name}</span>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleUpdateItemQuantity(item.id, item.quantity - 1)}
+                        >
+                          -
+                        </Button>
+                        <span className="w-8 text-center">{item.quantity}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleUpdateItemQuantity(item.id, item.quantity + 1)}
+                        >
+                          +
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleRemoveMenuItem(item.id)}
+                        >
+                          Remover
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="border-t pt-2 mt-2">
+                    <strong>Total: {formatPrice(calculateTotal())}</strong>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Etapa 2: Informações do Cliente */}
+          {wizardStep === 2 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Informações do Cliente</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="customerName">Nome Completo</Label>
+                  <Input
+                    id="customerName"
+                    value={wizardData.customerInfo.name}
+                    onChange={(e) => setWizardData(prev => ({
+                      ...prev,
+                      customerInfo: { ...prev.customerInfo, name: e.target.value }
+                    }))}
+                    placeholder="Nome do cliente"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="customerEmail">Email</Label>
+                  <Input
+                    id="customerEmail"
+                    type="email"
+                    value={wizardData.customerInfo.email}
+                    onChange={(e) => setWizardData(prev => ({
+                      ...prev,
+                      customerInfo: { ...prev.customerInfo, email: e.target.value }
+                    }))}
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="customerPhone">Telefone</Label>
+                  <Input
+                    id="customerPhone"
+                    value={wizardData.customerInfo.phone}
+                    onChange={(e) => setWizardData(prev => ({
+                      ...prev,
+                      customerInfo: { ...prev.customerInfo, phone: e.target.value }
+                    }))}
+                    placeholder="+351 999 999 999"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="partySize">Número de Pessoas</Label>
+                  <Select
+                    value={wizardData.customerInfo.partySize.toString()}
+                    onValueChange={(value) => setWizardData(prev => ({
+                      ...prev,
+                      customerInfo: { ...prev.customerInfo, partySize: parseInt(value) }
+                    }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num} {num === 1 ? 'pessoa' : 'pessoas'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Etapa 3: Seleção de Mesa */}
+          {wizardStep === 3 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Escolha da Mesa e Horário</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="reservationDate">Data</Label>
+                  <Input
+                    id="reservationDate"
+                    type="date"
+                    value={wizardData.tableSelection.date}
+                    onChange={(e) => setWizardData(prev => ({
+                      ...prev,
+                      tableSelection: { ...prev.tableSelection, date: e.target.value }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="reservationTime">Hora</Label>
+                  <Input
+                    id="reservationTime"
+                    type="time"
+                    value={wizardData.tableSelection.time}
+                    onChange={(e) => setWizardData(prev => ({
+                      ...prev,
+                      tableSelection: { ...prev.tableSelection, time: e.target.value }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tableSelect">Mesa</Label>
+                  <Select
+                    value={wizardData.tableSelection.tableId?.toString() || ''}
+                    onValueChange={(value) => setWizardData(prev => ({
+                      ...prev,
+                      tableSelection: { ...prev.tableSelection, tableId: parseInt(value) }
+                    }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecionar mesa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tables.map((table: any) => (
+                        <SelectItem key={table.id} value={table.id.toString()}>
+                          Mesa {table.number} (Cap: {table.capacity})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="wizardNotes">Observações (opcional)</Label>
+                <Textarea
+                  id="wizardNotes"
+                  value={wizardData.notes}
+                  onChange={(e) => setWizardData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Observações especiais para a reserva..."
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Etapa 4: Resumo e Pagamento */}
+          {wizardStep === 4 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Resumo da Reserva</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium mb-2">Informações do Cliente</h4>
+                  <div className="space-y-1 text-sm">
+                    <p><strong>Nome:</strong> {wizardData.customerInfo.name}</p>
+                    <p><strong>Email:</strong> {wizardData.customerInfo.email}</p>
+                    <p><strong>Telefone:</strong> {wizardData.customerInfo.phone}</p>
+                    <p><strong>Pessoas:</strong> {wizardData.customerInfo.partySize}</p>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Detalhes da Reserva</h4>
+                  <div className="space-y-1 text-sm">
+                    <p><strong>Data:</strong> {wizardData.tableSelection.date}</p>
+                    <p><strong>Hora:</strong> {wizardData.tableSelection.time}</p>
+                    <p><strong>Mesa:</strong> {tables.find(t => t.id === wizardData.tableSelection.tableId)?.number}</p>
+                    {wizardData.notes && <p><strong>Observações:</strong> {wizardData.notes}</p>}
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="font-medium mb-2">Itens Selecionados</h4>
+                <div className="space-y-2">
+                  {wizardData.selectedItems.map((item: any) => (
+                    <div key={item.id} className="flex justify-between">
+                      <span>{item.name} x{item.quantity}</span>
+                      <span>{formatPrice(item.price * item.quantity)}</span>
+                    </div>
+                  ))}
+                  <div className="border-t pt-2">
+                    <div className="flex justify-between font-bold">
+                      <span>Total:</span>
+                      <span>{formatPrice(calculateTotal())}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="paymentMethod">Método de Pagamento</Label>
+                <Select
+                  value={wizardData.paymentMethod}
+                  onValueChange={(value) => setWizardData(prev => ({ ...prev, paymentMethod: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="multibanco">Multibanco</SelectItem>
+                    <SelectItem value="mbway">MB Way</SelectItem>
+                    <SelectItem value="card">Cartão</SelectItem>
+                    <SelectItem value="transfer">Transferência</SelectItem>
+                    <SelectItem value="cash">Dinheiro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <div className="flex justify-between w-full">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsReservationWizardOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <div className="flex space-x-2">
+                {wizardStep > 1 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleWizardPrev}
+                  >
+                    Anterior
+                  </Button>
+                )}
+                {wizardStep < 4 ? (
+                  <Button
+                    type="button"
+                    onClick={handleWizardNext}
+                    disabled={
+                      (wizardStep === 1 && wizardData.selectedItems.length === 0) ||
+                      (wizardStep === 2 && (!wizardData.customerInfo.name || !wizardData.customerInfo.email)) ||
+                      (wizardStep === 3 && (!wizardData.tableSelection.date || !wizardData.tableSelection.time || !wizardData.tableSelection.tableId))
+                    }
+                  >
+                    Próximo
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={handleCompleteReservation}
+                    disabled={createCompleteReservationMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {createCompleteReservationMutation.isPending ? 'Criando...' : 'Criar Reserva'}
+                  </Button>
+                )}
+              </div>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
