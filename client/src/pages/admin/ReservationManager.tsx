@@ -244,20 +244,20 @@ const ReservationManager: React.FC = () => {
   // Calculadora de troco
   const updateCashCalculation = (receivedAmount: string) => {
     const received = parseFloat(receivedAmount) || 0;
-    const total = calculateTotal();
+    const total = calculateTotal() * 100; // Converter total para centavos
     const change = received - total;
     
     console.log('Calculadora debug:', {
       receivedAmount,
       received,
-      total,
-      change
+      total: total / 100, // Mostrar em euros no log
+      change: change / 100 // Mostrar em euros no log
     });
     
     setCashCalculatorData({
-      total,
+      total: total / 100, // Armazenar em euros
       received: receivedAmount,
-      change: change // Manter o valor real do troco, pode ser negativo
+      change: change / 100 // Armazenar em euros
     });
   };
 
@@ -282,7 +282,9 @@ const ReservationManager: React.FC = () => {
   };
 
   const handleQuickAmount = (amount: number) => {
-    updateCashCalculation(amount.toString());
+    // Converter para centavos para manter consistência com o total
+    const amountInCents = amount * 100;
+    updateCashCalculation(amountInCents.toString());
   };
 
   // Wizard functions
