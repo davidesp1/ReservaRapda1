@@ -242,7 +242,7 @@ const ReservationManager: React.FC = () => {
   };
 
   // Calculadora de troco
-  const handleCashCalculation = (receivedAmount: string) => {
+  const updateCashCalculation = (receivedAmount: string) => {
     const received = parseFloat(receivedAmount) || 0;
     const total = calculateTotal();
     const change = received - total;
@@ -250,23 +250,31 @@ const ReservationManager: React.FC = () => {
     setCashCalculatorData({
       total,
       received: receivedAmount,
-      change: Math.max(0, change)
+      change: change >= 0 ? change : 0
     });
   };
 
   const handleCashCalculatorDigit = (digit: string) => {
+    let newReceived = '';
+    
     if (digit === 'clear') {
-      setCashCalculatorData(prev => ({ ...prev, received: '', change: 0 }));
+      newReceived = '';
     } else if (digit === 'backspace') {
-      const newReceived = cashCalculatorData.received.slice(0, -1);
-      handleCashCalculation(newReceived);
+      newReceived = cashCalculatorData.received.slice(0, -1);
     } else if (digit === '.' && !cashCalculatorData.received.includes('.')) {
-      const newReceived = cashCalculatorData.received + digit;
-      handleCashCalculation(newReceived);
+      newReceived = cashCalculatorData.received + digit;
     } else if (digit !== '.' && !isNaN(Number(digit))) {
-      const newReceived = cashCalculatorData.received + digit;
-      handleCashCalculation(newReceived);
+      newReceived = cashCalculatorData.received + digit;
+    } else {
+      return; // Não fazer nada para entradas inválidas
     }
+    
+    // Atualizar o cálculo automaticamente
+    updateCashCalculation(newReceived);
+  };
+
+  const handleQuickAmount = (amount: number) => {
+    updateCashCalculation(amount.toString());
   };
 
   // Wizard functions
@@ -1506,14 +1514,28 @@ const ReservationManager: React.FC = () => {
               </div>
 
               {/* Troco */}
-              <div className="bg-green-50 p-3 rounded-lg">
-                <div className="text-xs text-green-600 mb-1">Troco</div>
-                <div className="text-lg font-bold text-green-800">
-                  {formatPrice(cashCalculatorData.change)}
+              <div className={`p-3 rounded-lg ${
+                parseFloat(cashCalculatorData.received) < cashCalculatorData.total 
+                  ? 'bg-red-50' 
+                  : 'bg-green-50'
+              }`}>
+                <div className={`text-xs mb-1 ${
+                  parseFloat(cashCalculatorData.received) < cashCalculatorData.total 
+                    ? 'text-red-600' 
+                    : 'text-green-600'
+                }`}>
+                  Troco
                 </div>
-                {cashCalculatorData.change < 0 && (
-                  <div className="text-xs text-red-500 mt-1">Insuficiente</div>
-                )}
+                <div className={`text-lg font-bold ${
+                  parseFloat(cashCalculatorData.received) < cashCalculatorData.total 
+                    ? 'text-red-800' 
+                    : 'text-green-800'
+                }`}>
+                  {parseFloat(cashCalculatorData.received) < cashCalculatorData.total 
+                    ? `Falta ${formatPrice(cashCalculatorData.total - parseFloat(cashCalculatorData.received || '0'))}`
+                    : formatPrice(cashCalculatorData.change)
+                  }
+                </div>
               </div>
             </div>
 
@@ -1538,7 +1560,7 @@ const ReservationManager: React.FC = () => {
                   key={amount}
                   variant="outline"
                   size="sm"
-                  onClick={() => handleCashCalculation(amount.toString())}
+                  onClick={() => handleQuickAmount(amount)}
                   className="text-xs h-8"
                 >
                   €{amount}
@@ -1548,7 +1570,7 @@ const ReservationManager: React.FC = () => {
 
             <Button
               variant="outline"
-              onClick={() => setCashCalculatorData(prev => ({ ...prev, received: '', change: 0 }))}
+              onClick={() => updateCashCalculation('')}
               className="w-full h-9 text-sm"
             >
               <i className="fa-solid fa-eraser mr-2"></i>
