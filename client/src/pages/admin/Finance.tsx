@@ -298,7 +298,7 @@ const Finance: React.FC = () => {
     return pages;
   };
 
-  // Calcular totais
+  // Calcular totais baseados nos pagamentos filtrados
   const totals = React.useMemo(() => {
     if (!payments)
       return {
@@ -308,11 +308,22 @@ const Finance: React.FC = () => {
         failedPayments: 0,
       };
 
-    const completed = payments.filter((p) => p.status === "completed");
-    const pending = payments.filter((p) => p.status === "pending");
-    const failed = payments.filter((p) => p.status === "failed");
+    // Se não há filtros ativos, usar todos os pagamentos
+    const hasActiveFilters = searchText || startDate || endDate || 
+                            (statusFilter && statusFilter !== "all") || 
+                            (methodFilter && methodFilter !== "all");
+    
+    const paymentsToCalculate = hasActiveFilters ? filteredPayments : payments;
 
-    const totalRevenue = completed.reduce((sum, p) => sum + p.amount, 0);
+    const completed = paymentsToCalculate.filter((p) => p.status === "completed");
+    const pending = paymentsToCalculate.filter((p) => p.status === "pending");
+    const failed = paymentsToCalculate.filter((p) => p.status === "failed");
+
+    // Para receita total, incluir todos os status quando não há filtros
+    // Quando há filtros, incluir apenas os que passaram pelo filtro
+    const totalRevenue = hasActiveFilters 
+      ? paymentsToCalculate.reduce((sum, p) => sum + p.amount, 0)
+      : payments.reduce((sum, p) => sum + p.amount, 0);
 
     return {
       totalRevenue,
@@ -320,7 +331,7 @@ const Finance: React.FC = () => {
       pendingPayments: pending.length,
       failedPayments: failed.length,
     };
-  }, [payments]);
+  }, [payments, filteredPayments, searchText, startDate, endDate, statusFilter, methodFilter]);
 
   // Formato de preço
   const formatPrice = (price: number) => {
