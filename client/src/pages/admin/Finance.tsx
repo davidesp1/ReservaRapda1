@@ -1154,6 +1154,232 @@ const Finance: React.FC = () => {
             </div>
           )}
 
+          {currentTab === "reservas" && (
+            <div className="space-y-6">
+              {/* Filtros para Reservas - Mesmo design dos filtros de pagamentos */}
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="flex-1 min-w-[180px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">
+                    Pesquisar
+                  </label>
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      className="pl-10"
+                      placeholder="Buscar por cliente, código ou telefone..."
+                    />
+                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                  </div>
+                </div>
+
+                <div className="min-w-[150px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">
+                    Data Início
+                  </label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="min-w-[150px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">
+                    Data Fim
+                  </label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="min-w-[150px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">
+                    Status Pagamento
+                  </label>
+                  <Select
+                    value={statusFilter || "all"}
+                    onValueChange={(value) =>
+                      setStatusFilter(value === "all" ? "" : value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="completed">Pago</SelectItem>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="cancelled">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="min-w-[150px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">
+                    Método Pagamento
+                  </label>
+                  <Select
+                    value={methodFilter || "all"}
+                    onValueChange={(value) =>
+                      setMethodFilter(value === "all" ? "" : value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="card">Cartão</SelectItem>
+                      <SelectItem value="mbway">MBWay</SelectItem>
+                      <SelectItem value="multibanco">Multibanco</SelectItem>
+                      <SelectItem value="cash">Dinheiro</SelectItem>
+                      <SelectItem value="transfer">Transferência</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button
+                  onClick={() => {
+                    setSearchText("");
+                    setStartDate("");
+                    setEndDate("");
+                    setStatusFilter("");
+                    setMethodFilter("");
+                  }}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Filter className="w-4 h-4" />
+                  Limpar Filtros
+                </Button>
+              </div>
+
+              {/* Tabela de Reservas */}
+              <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                <div className="p-6 border-b border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Todas as Reservas ({filteredReservations.length})
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Código
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Cliente
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Data/Hora
+                        </th>
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Mesa
+                        </th>
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Pessoas
+                        </th>
+                        <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Valor
+                        </th>
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Método
+                        </th>
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Status Pagamento
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredReservations.map((reservation) => (
+                        <tr key={reservation.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                            {reservation.reservation_code || `#R${reservation.id}`}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-gray-900">
+                                {reservation.user_name}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {reservation.email}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {format(new Date(reservation.date), 'dd/MM/yyyy HH:mm')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
+                            Mesa {reservation.table_number}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
+                            {reservation.party_size}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                            €{(reservation.total / 100).toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <div className="flex items-center justify-center">
+                              {reservation.payment_method === 'card' && <CreditCard className="w-4 h-4 mr-1" />}
+                              {reservation.payment_method === 'mbway' && <Smartphone className="w-4 h-4 mr-1" />}
+                              {reservation.payment_method === 'multibanco' && <Building className="w-4 h-4 mr-1" />}
+                              {reservation.payment_method === 'cash' && <Banknote className="w-4 h-4 mr-1" />}
+                              {reservation.payment_method === 'transfer' && <ArrowLeftRight className="w-4 h-4 mr-1" />}
+                              <span className="text-xs text-gray-600 ml-1">
+                                {reservation.payment_method === 'card' && 'Cartão'}
+                                {reservation.payment_method === 'mbway' && 'MBWay'}
+                                {reservation.payment_method === 'multibanco' && 'Multibanco'}
+                                {reservation.payment_method === 'cash' && 'Dinheiro'}
+                                {reservation.payment_method === 'transfer' && 'Transferência'}
+                                {!reservation.payment_method && 'N/A'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            {reservation.payment_status === 'completed' && (
+                              <Badge className="bg-green-100 text-green-800 border-green-200">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Pago
+                              </Badge>
+                            )}
+                            {reservation.payment_status === 'pending' && (
+                              <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                                <Clock className="w-3 h-3 mr-1" />
+                                Pendente
+                              </Badge>
+                            )}
+                            {reservation.payment_status === 'cancelled' && (
+                              <Badge className="bg-red-100 text-red-800 border-red-200">
+                                <XCircle className="w-3 h-3 mr-1" />
+                                Cancelado
+                              </Badge>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {filteredReservations.length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-gray-500">
+                        Nenhuma reserva encontrada
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {currentTab === "analise" && (
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Análise Financeira</h3>
