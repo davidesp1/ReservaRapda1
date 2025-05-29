@@ -227,13 +227,13 @@ const Finance: React.FC = () => {
     if (payments) {
       applyFilters();
     }
-  }, [payments, searchText, startDate, endDate, statusFilter, methodFilter]);
+  }, [payments?.length, searchText, startDate, endDate, statusFilter, methodFilter]);
 
   useEffect(() => {
     if (reservations) {
       applyReservationFilters();
     }
-  }, [reservations, searchText, startDate, endDate, statusFilter, methodFilter]);
+  }, [reservations?.length, searchText, startDate, endDate, statusFilter, methodFilter]);
 
   // Reset pagination when changing tabs or filters
   useEffect(() => {
@@ -1428,22 +1428,22 @@ const Finance: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {format(new Date(reservation.date), 'dd/MM/yyyy HH:mm')}
+                            {reservation.date ? format(new Date(reservation.date), 'dd/MM/yyyy HH:mm') : '-'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            Mesa {reservation.table_number}
+                            Mesa {reservation.table_number || 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {reservation.party_size}
+                            {reservation.party_size || 0} pessoas
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            €{(reservation.total / 100).toFixed(2)}
+                            €{((reservation.total || 0) / 100).toFixed(2)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {getPaymentMethodBadge(reservation.payment_method)}
+                            {getPaymentMethodBadge(reservation.payment_method || 'cash')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {getStatusBadge(reservation.payment_status)}
+                            {getStatusBadge(reservation.payment_status || 'pending')}
                           </td>
                         </tr>
                       ))}
