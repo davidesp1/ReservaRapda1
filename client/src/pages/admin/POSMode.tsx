@@ -677,14 +677,7 @@ Status: PAGO
                 {t('Finalizar Pedido')}
               </button>
               
-              <button 
-                className="py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={orderItems.length === 0}
-                onClick={handleSaveAndPrint}
-              >
-                <Check className="mr-2 h-5 w-5" />
-                {t('Gravar e Imprimir')}
-              </button>
+
               
               <button 
                 className="py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-bold hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
