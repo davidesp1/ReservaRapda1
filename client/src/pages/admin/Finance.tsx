@@ -105,13 +105,13 @@ const Finance: React.FC = () => {
   const [itemsPerPage] = useState(10);
   const { toast } = useToast();
 
-  // Fetch payments com atualização em tempo real
+  // Fetch payments com atualização em tempo real (incluindo POS orders)
   const {
     data: payments,
     isLoading: paymentsLoading,
     refetch,
   } = useQuery<PaymentWithUser[]>({
-    queryKey: ["/api/payments"],
+    queryKey: ["/api/admin/payments"],
     enabled: isAuthenticated && isAdmin,
     refetchInterval: 10000, // Atualiza a cada 10 segundos para realtime
     refetchIntervalInBackground: true,
