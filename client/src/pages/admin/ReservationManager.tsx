@@ -65,6 +65,12 @@ const ReservationManager: React.FC = () => {
   // Estado para o fluxo completo de reserva
   const [isReservationWizardOpen, setIsReservationWizardOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
+  const [showCashCalculator, setShowCashCalculator] = useState(false);
+  const [cashCalculatorData, setCashCalculatorData] = useState({
+    total: 0,
+    received: '',
+    change: 0
+  });
   const [wizardData, setWizardData] = useState({
     selectedItems: [] as any[],
     customerInfo: {
@@ -215,6 +221,8 @@ const ReservationManager: React.FC = () => {
   // Reset wizard data
   const resetWizardData = () => {
     setWizardStep(1);
+    setShowCashCalculator(false);
+    setCashCalculatorData({ total: 0, received: '', change: 0 });
     setWizardData({
       selectedItems: [],
       customerInfo: {
@@ -231,6 +239,34 @@ const ReservationManager: React.FC = () => {
       paymentMethod: 'multibanco',
       notes: ''
     });
+  };
+
+  // Calculadora de troco
+  const handleCashCalculation = (receivedAmount: string) => {
+    const received = parseFloat(receivedAmount) || 0;
+    const total = calculateTotal();
+    const change = received - total;
+    
+    setCashCalculatorData({
+      total,
+      received: receivedAmount,
+      change: Math.max(0, change)
+    });
+  };
+
+  const handleCashCalculatorDigit = (digit: string) => {
+    if (digit === 'clear') {
+      setCashCalculatorData(prev => ({ ...prev, received: '', change: 0 }));
+    } else if (digit === 'backspace') {
+      const newReceived = cashCalculatorData.received.slice(0, -1);
+      handleCashCalculation(newReceived);
+    } else if (digit === '.' && !cashCalculatorData.received.includes('.')) {
+      const newReceived = cashCalculatorData.received + digit;
+      handleCashCalculation(newReceived);
+    } else if (digit !== '.' && !isNaN(Number(digit))) {
+      const newReceived = cashCalculatorData.received + digit;
+      handleCashCalculation(newReceived);
+    }
   };
 
   // Wizard functions
@@ -1414,15 +1450,134 @@ const ReservationManager: React.FC = () => {
                 ) : (
                   <Button
                     type="button"
-                    onClick={handleCompleteReservation}
+                    onClick={() => {
+                      if (wizardData.paymentMethod === 'cash') {
+                        setCashCalculatorData({ 
+                          total: calculateTotal(), 
+                          received: '', 
+                          change: 0 
+                        });
+                        setShowCashCalculator(true);
+                      } else {
+                        handleCompleteReservation();
+                      }
+                    }}
                     disabled={createCompleteReservationMutation.isPending}
                     className="bg-green-600 hover:bg-green-700"
                   >
-                    {createCompleteReservationMutation.isPending ? 'Criando...' : 'Criar Reserva'}
+                    {createCompleteReservationMutation.isPending ? 'Criando...' : 
+                     wizardData.paymentMethod === 'cash' ? 'Calcular Troco' : 'Criar Reserva'}
                   </Button>
                 )}
               </div>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal da Calculadora de Troco */}
+      <Dialog open={showCashCalculator} onOpenChange={setShowCashCalculator}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <i className="fa-solid fa-calculator mr-2 text-green-600"></i>
+              Calculadora de Troco
+            </DialogTitle>
+            <DialogDescription>
+              Calcule o troco para o pagamento em dinheiro
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Valor Total */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="text-center">
+                <div className="text-sm text-gray-600 mb-1">Total da Conta</div>
+                <div className="text-2xl font-bold text-gray-800">{formatPrice(cashCalculatorData.total)}</div>
+              </div>
+            </div>
+
+            {/* Valor Recebido */}
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="text-center">
+                <div className="text-sm text-blue-600 mb-1">Valor Recebido</div>
+                <div className="text-2xl font-bold text-blue-800">
+                  €{cashCalculatorData.received || '0.00'}
+                </div>
+              </div>
+            </div>
+
+            {/* Troco */}
+            <div className="bg-green-50 p-4 rounded-lg">
+              <div className="text-center">
+                <div className="text-sm text-green-600 mb-1">Troco</div>
+                <div className="text-2xl font-bold text-green-800">
+                  {formatPrice(cashCalculatorData.change)}
+                </div>
+                {cashCalculatorData.change < 0 && (
+                  <div className="text-xs text-red-500 mt-1">
+                    Valor insuficiente
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Teclado Numérico */}
+            <div className="grid grid-cols-3 gap-2">
+              {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'].map((key) => (
+                <Button
+                  key={key}
+                  variant="outline"
+                  className="h-12 text-lg font-medium"
+                  onClick={() => handleCashCalculatorDigit(key === '⌫' ? 'backspace' : key)}
+                >
+                  {key}
+                </Button>
+              ))}
+            </div>
+
+            {/* Botões de Valor Rápido */}
+            <div className="grid grid-cols-4 gap-2">
+              {[5, 10, 20, 50].map((amount) => (
+                <Button
+                  key={amount}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCashCalculation(amount.toString())}
+                  className="text-xs"
+                >
+                  €{amount}
+                </Button>
+              ))}
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setCashCalculatorData(prev => ({ ...prev, received: '', change: 0 }))}
+              className="w-full"
+            >
+              <i className="fa-solid fa-eraser mr-2"></i>
+              Limpar
+            </Button>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCashCalculator(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                setShowCashCalculator(false);
+                handleCompleteReservation();
+              }}
+              disabled={parseFloat(cashCalculatorData.received) < cashCalculatorData.total}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Confirmar Reserva
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
