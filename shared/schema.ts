@@ -312,3 +312,29 @@ export const insertSettingsSchema = createInsertSchema(settings).omit({
 
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingsSchema>;
+
+// Printer Configurations
+export const printerConfigurations = pgTable("printer_configurations", {
+  id: serial("id").primaryKey(),
+  printerId: text("printer_id").notNull().unique(),
+  name: text("name").notNull(),
+  type: text("type").notNull().default("thermal"), // thermal, inkjet, laser
+  connection: text("connection").notNull().default("usb"), // usb, network, bluetooth
+  ipAddress: text("ip_address"),
+  port: integer("port"),
+  enabled: boolean("enabled").notNull().default(false),
+  autocut: boolean("autocut").notNull().default(true),
+  paperWidth: integer("paper_width").notNull().default(80), // em mm
+  baudRate: integer("baud_rate"), // para conexões seriais
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertPrinterConfigurationSchema = createInsertSchema(printerConfigurations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type PrinterConfiguration = typeof printerConfigurations.$inferSelect;
+export type InsertPrinterConfiguration = z.infer<typeof insertPrinterConfigurationSchema>;

@@ -2172,4 +2172,137 @@ router.post("/api/payments/multibanco", isAuthenticated, async (req, res) => {
   }
 });
 
+// Rotas para configurações de impressora
+// Buscar configurações de impressoras
+router.get("/api/printers/config", async (req, res) => {
+  try {
+    const printers = await printerService.getAvailablePrinters();
+    
+    // Buscar configurações salvas do banco para cada impressora
+    const enrichedPrinters = await Promise.all(
+      printers.map(async (printer) => {
+        try {
+          const config = await queryClient`
+            SELECT * FROM printer_configurations 
+            WHERE printer_id = ${printer.id}
+          `;
+          
+          if (config.length > 0) {
+            const dbConfig = config[0];
+            return {
+              id: printer.id,
+              name: dbConfig.name || printer.name,
+              type: dbConfig.type || 'thermal',
+              connection: dbConfig.connection || 'usb',
+              ipAddress: dbConfig.ip_address,
+              port: dbConfig.port,
+              enabled: dbConfig.enabled || false,
+              autocut: dbConfig.autocut || true,
+              paperWidth: dbConfig.paper_width || 80,
+              baudRate: dbConfig.baud_rate,
+              status: printer.status
+            };
+          } else {
+            // Configuração padrão se não existe no banco
+            return {
+              id: printer.id,
+              name: printer.name,
+              type: 'thermal',
+              connection: 'usb',
+              enabled: false,
+              autocut: true,
+              paperWidth: 80,
+              status: printer.status
+            };
+          }
+        } catch (error) {
+          console.error(`Erro ao buscar configuração da impressora ${printer.id}:`, error);
+          return {
+            id: printer.id,
+            name: printer.name,
+            type: 'thermal',
+            connection: 'usb',
+            enabled: false,
+            autocut: true,
+            paperWidth: 80,
+            status: 'offline'
+          };
+        }
+      })
+    );
+    
+    res.json(enrichedPrinters);
+  } catch (error: any) {
+    console.error('Erro ao buscar configurações de impressora:', error);
+    res.status(500).json({ error: error.message || 'Erro ao buscar impressoras' });
+  }
+});
+
+// Testar conexão com impressora
+router.post("/api/printers/:printerId/test", async (req, res) => {
+  try {
+    const { printerId } = req.params;
+    const result = await printerService.testPrinterConnection(printerId);
+    res.json(result);
+  } catch (error: any) {
+    console.error(`Erro ao testar impressora ${req.params.printerId}:`, error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Erro ao testar conexão'
+    });
+  }
+});
+
+// Salvar configuração de impressora
+router.put("/api/printers/:printerId/config", async (req, res) => {
+  try {
+    const { printerId } = req.params;
+    const config = req.body;
+    
+    // Verificar se a configuração já existe
+    const existing = await queryClient`
+      SELECT id FROM printer_configurations 
+      WHERE printer_id = ${printerId}
+    `;
+    
+    if (existing.length > 0) {
+      // Atualizar configuração existente
+      await queryClient`
+        UPDATE printer_configurations SET
+          name = ${config.name},
+          type = ${config.type},
+          connection = ${config.connection},
+          ip_address = ${config.ipAddress || null},
+          port = ${config.port || null},
+          enabled = ${config.enabled},
+          autocut = ${config.autocut},
+          paper_width = ${config.paperWidth},
+          baud_rate = ${config.baudRate || null},
+          updated_at = NOW()
+        WHERE printer_id = ${printerId}
+      `;
+    } else {
+      // Criar nova configuração
+      await queryClient`
+        INSERT INTO printer_configurations (
+          printer_id, name, type, connection, ip_address, port,
+          enabled, autocut, paper_width, baud_rate
+        ) VALUES (
+          ${printerId}, ${config.name}, ${config.type}, ${config.connection},
+          ${config.ipAddress || null}, ${config.port || null}, ${config.enabled},
+          ${config.autocut}, ${config.paperWidth}, ${config.baudRate || null}
+        )
+      `;
+    }
+    
+    res.json({ success: true, message: 'Configuração salva com sucesso' });
+  } catch (error: any) {
+    console.error(`Erro ao salvar configuração da impressora ${req.params.printerId}:`, error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Erro ao salvar configuração'
+    });
+  }
+});
+
 export default router;
