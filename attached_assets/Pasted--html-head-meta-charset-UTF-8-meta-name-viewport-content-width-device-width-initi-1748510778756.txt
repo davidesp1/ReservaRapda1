@@ -1,0 +1,430 @@
+<html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>::-webkit-scrollbar { display: none;}</style>
+    <script>tailwind.config = {
+  "theme": {
+    "extend": {
+      "colors": {
+        "brazil-green": "#009c3b",
+        "brazil-yellow": "#ffdf00",
+        "brazil-blue": "#002776",
+        "brazil-red": "#c8102e"
+      },
+      "fontFamily": {
+        "montserrat": [
+          "Montserrat",
+          "sans-serif"
+        ],
+        "opensans": [
+          "Open Sans",
+          "sans-serif"
+        ],
+        "sans": [
+          "Inter",
+          "sans-serif"
+        ]
+      }
+    }
+  }
+};</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap"><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="bg-gray-100 font-opensans">
+
+<div id="admin-dashboard" class="flex h-[900px]">
+    <div id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-brazil-blue flex flex-col">
+        <div class="p-6">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-brazil-yellow rounded-full flex items-center justify-center mr-2">
+                    <i class="fa-solid fa-utensils text-brazil-blue"></i>
+                </div>
+                <span class="text-xl font-semibold text-white font-montserrat">
+                    Opa que delicia
+                </span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <ul>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-chart-line text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Dashboard</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-users text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão de Clientes</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-book-open text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão do Menu</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-chair text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão das Mesas</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-coins text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Gestão Financeira</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-credit-card text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Pagamentos</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white bg-brazil-blue bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-calendar-check text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Reservas</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+        <div class="mt-auto border-t border-blue-400 p-4">
+            <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                <i class="fa-solid fa-gear text-brazil-yellow w-6"></i>
+                <span class="ml-2 font-medium">Configurações</span>
+            </span>
+            <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 mt-2 cursor-pointer">
+                <i class="fa-solid fa-right-from-bracket text-brazil-yellow w-6"></i>
+                <span class="ml-2 font-medium">Sair</span>
+            </span>
+        </div>
+    </div>
+
+    <div id="main-content" class="ml-64 flex-1 p-8 relative">
+        <div id="header" class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-800 font-montserrat">Gestão de Reservas</h1>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="relative">
+                        <i class="fa-regular fa-bell text-xl text-gray-600"></i>
+                        <span class="absolute -top-1 -right-1 bg-brazil-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">2</span>
+                    </button>
+                </div>
+                <div class="flex items-center">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User Avatar" class="w-10 h-10 rounded-full border-2 border-brazil-yellow">
+                    <div class="ml-2">
+                        <p class="text-sm font-medium text-gray-800">Carlos Silva</p>
+                        <p class="text-xs text-gray-500">Administrador</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="reservas-section" class="bg-white rounded-2xl shadow-lg p-8 flex flex-col h-[760px]">
+            <div id="reservas-filtros" class="flex flex-col md:flex-row md:items-end md:space-x-6 space-y-3 md:space-y-0 mb-6">
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">Buscar Reserva</label>
+                    <div class="relative">
+                        <input id="reservas-search" type="text" placeholder="Nome do cliente, contato ou código" class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brazil-blue bg-white text-gray-800 font-medium transition">
+                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">Método de Pagamento</label>
+                    <select id="reservas-metodo-filter" class="w-full md:w-44 border border-gray-200 rounded-lg py-2 px-3 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-brazil-blue">
+                        <option value="">Todos</option>
+                        <option value="dinheiro">Dinheiro</option>
+                        <option value="cartao">Cartão</option>
+                        <option value="pix">PIX</option>
+                        <option value="vale-refeicao">Vale Refeição</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1 text-gray-700 font-montserrat">Status de Pagamento</label>
+                    <select id="reservas-pagamento-filter" class="w-full md:w-44 border border-gray-200 rounded-lg py-2 px-3 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-brazil-blue">
+                        <option value="">Todos</option>
+                        <option value="pago">Pago</option>
+                        <option value="pendente">Pendente</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                </div>
+                <div>
+                    <button id="reservas-clean-filters" class="bg-brazil-yellow text-brazil-blue font-semibold rounded-lg px-4 py-2 shadow hover:bg-yellow-200 transition mt-2 md:mt-0">
+                        Limpar
+                    </button>
+                </div>
+                <div class="ml-auto">
+                    <button id="nova-reserva-btn" class="bg-brazil-green hover:bg-green-700 text-white font-bold px-6 py-2 rounded-lg shadow transition flex items-center space-x-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Nova Reserva</span>
+                    </button>
+                </div>
+            </div>
+            <div id="reservas-table-card" class="flex-1 flex flex-col overflow-hidden rounded-xl border border-gray-100 shadow bg-white">
+                <div class="overflow-x-auto flex-1">
+                    <table id="gestion-reservas-table" class="min-w-full divide-y divide-gray-100">
+                        <thead class="bg-brazil-blue">
+                            <tr>
+                                <th class="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">Código</th>
+                                <th class="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">Cliente</th>
+                                <th class="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">Contato</th>
+                                <th class="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">Mesa</th>
+                                <th class="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">Data</th>
+                                <th class="px-4 py-4 text-left text-xs font-bold text-white tracking-wider font-montserrat">Hora</th>
+                                <th class="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">Status de Pagamento</th>
+                                <th class="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">Método</th>
+                                <th class="px-4 py-4 text-center text-xs font-bold text-white tracking-wider font-montserrat">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gestion-reservas-tbody" class="bg-white divide-y divide-gray-100 text-gray-800 font-medium">
+                            <tr>
+                                <td class="px-4 py-4 font-semibold text-brazil-blue">#R3251</td>
+                                <td class="px-4 py-4 flex items-center">
+                                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="" class="w-8 h-8 rounded-full border-2 border-brazil-green mr-3">
+                                    João Pereira
+                                </td>
+                                <td class="px-4 py-4">+55 11 91234-5678</td>
+                                <td class="px-4 py-4 text-center">8</td>
+                                <td class="px-4 py-4">10/05/2024</td>
+                                <td class="px-4 py-4">20:00</td>
+                                <td class="px-4 py-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-green-100 text-brazil-green rounded">
+                                        <i class="fa-solid fa-circle-check mr-1"></i> Pago
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-gray-100 text-brazil-blue rounded">
+                                        <i class="fa-solid fa-credit-card mr-1"></i> Cartão
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 text-center space-x-1">
+                                    <button class="text-brazil-blue hover:text-brazil-green px-2 py-1 rounded">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button class="text-brazil-yellow hover:text-yellow-600 px-2 py-1 rounded">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button class="text-brazil-red hover:text-red-600 px-2 py-1 rounded">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-4 font-semibold text-brazil-blue">#R3252</td>
+                                <td class="px-4 py-4 flex items-center">
+                                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" alt="" class="w-8 h-8 rounded-full border-2 border-brazil-yellow mr-3">
+                                    Ana Julia
+                                </td>
+                                <td class="px-4 py-4">+55 21 98765-4321</td>
+                                <td class="px-4 py-4 text-center">3</td>
+                                <td class="px-4 py-4">09/05/2024</td>
+                                <td class="px-4 py-4">19:00</td>
+                                <td class="px-4 py-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-yellow-100 text-brazil-yellow rounded">
+                                        <i class="fa-solid fa-clock mr-1"></i> Pendente
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-gray-100 text-brazil-blue rounded">
+                                        <i class="fa-solid fa-money-bill-wave mr-1"></i> Dinheiro
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 text-center space-x-1">
+                                    <button class="text-brazil-blue hover:text-brazil-green px-2 py-1 rounded">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button class="text-brazil-yellow hover:text-yellow-600 px-2 py-1 rounded">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button class="text-brazil-red hover:text-red-600 px-2 py-1 rounded">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-4 font-semibold text-brazil-blue">#R3253</td>
+                                <td class="px-4 py-4 flex items-center">
+                                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="" class="w-8 h-8 rounded-full border-2 border-brazil-green mr-3">
+                                    Beatriz Souza
+                                </td>
+                                <td class="px-4 py-4">+55 31 91234-9999</td>
+                                <td class="px-4 py-4 text-center">7</td>
+                                <td class="px-4 py-4">08/05/2024</td>
+                                <td class="px-4 py-4">18:45</td>
+                                <td class="px-4 py-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-green-100 text-brazil-green rounded">
+                                        <i class="fa-solid fa-circle-check mr-1"></i> Pago
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-gray-100 text-brazil-blue rounded">
+                                        <i class="fa-brands fa-pix mr-1"></i> PIX
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 text-center space-x-1">
+                                    <button class="text-brazil-blue hover:text-brazil-green px-2 py-1 rounded">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button class="text-brazil-yellow hover:text-yellow-600 px-2 py-1 rounded">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button class="text-brazil-red hover:text-red-600 px-2 py-1 rounded">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-4 font-semibold text-brazil-blue">#R3254</td>
+                                <td class="px-4 py-4 flex items-center">
+                                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg" alt="" class="w-8 h-8 rounded-full border-2 border-brazil-green mr-3">
+                                    Pedro Santos
+                                </td>
+                                <td class="px-4 py-4">+55 51 92222-8888</td>
+                                <td class="px-4 py-4 text-center">5</td>
+                                <td class="px-4 py-4">08/05/2024</td>
+                                <td class="px-4 py-4">20:00</td>
+                                <td class="px-4 py-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-red-100 text-brazil-red rounded">
+                                        <i class="fa-solid fa-circle-xmark mr-1"></i> Cancelado
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-gray-100 text-brazil-blue rounded">
+                                        <i class="fa-solid fa-money-check-dollar mr-1"></i> Vale Refeição
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 text-center space-x-1">
+                                    <button class="text-brazil-blue hover:text-brazil-green px-2 py-1 rounded">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button class="text-brazil-yellow hover:text-yellow-600 px-2 py-1 rounded">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button class="text-brazil-red hover:text-red-600 px-2 py-1 rounded">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-4 font-semibold text-brazil-blue">#R3255</td>
+                                <td class="px-4 py-4 flex items-center">
+                                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="" class="w-8 h-8 rounded-full border-2 border-gray-200 mr-3">
+                                    Marcos Oliveira
+                                </td>
+                                <td class="px-4 py-4">+55 71 90000-1234</td>
+                                <td class="px-4 py-4 text-center">4</td>
+                                <td class="px-4 py-4">06/05/2024</td>
+                                <td class="px-4 py-4">20:30</td>
+                                <td class="px-4 py-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-yellow-100 text-brazil-yellow rounded">
+                                        <i class="fa-solid fa-clock mr-1"></i> Pendente
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-gray-100 text-brazil-blue rounded">
+                                        <i class="fa-solid fa-credit-card mr-1"></i> Cartão
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 text-center space-x-1">
+                                    <button class="text-brazil-blue hover:text-brazil-green px-2 py-1 rounded">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button class="text-brazil-yellow hover:text-yellow-600 px-2 py-1 rounded">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button class="text-brazil-red hover:text-red-600 px-2 py-1 rounded">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-4 font-semibold text-brazil-blue">#R3256</td>
+                                <td class="px-4 py-4 flex items-center">
+                                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="" class="w-8 h-8 rounded-full border-2 border-brazil-yellow mr-3">
+                                    Juliana Costa
+                                </td>
+                                <td class="px-4 py-4">+55 34 98888-4444</td>
+                                <td class="px-4 py-4 text-center">6</td>
+                                <td class="px-4 py-4">07/05/2024</td>
+                                <td class="px-4 py-4">18:30</td>
+                                <td class="px-4 py-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-green-100 text-brazil-green rounded">
+                                        <i class="fa-solid fa-circle-check mr-1"></i> Pago
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-gray-100 text-brazil-blue rounded">
+                                        <i class="fa-brands fa-pix mr-1"></i> PIX
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 text-center space-x-1">
+                                    <button class="text-brazil-blue hover:text-brazil-green px-2 py-1 rounded">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button class="text-brazil-yellow hover:text-yellow-600 px-2 py-1 rounded">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button class="text-brazil-red hover:text-red-600 px-2 py-1 rounded">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="reservas-pagination" class="flex justify-between items-center px-6 py-4 bg-white border-t border-gray-100">
+                    <div class="text-sm text-gray-600">
+                        Exibindo 1 a 6 de 10 reservas
+                    </div>
+                    <div class="flex space-x-1">
+                        <button class="px-3 py-1 rounded-lg bg-gray-100 text-gray-500 hover:bg-brazil-blue hover:text-white font-bold transition">
+                            <i class="fa-solid fa-angle-left"></i>
+                        </button>
+                        <button class="px-3 py-1 rounded-lg bg-brazil-blue text-white font-bold">1</button>
+                        <button class="px-3 py-1 rounded-lg bg-gray-100 text-gray-800 hover:bg-brazil-blue hover:text-white font-bold transition">2</button>
+                        <button class="px-3 py-1 rounded-lg bg-gray-100 text-gray-500 hover:bg-brazil-blue hover:text-white font-bold transition">
+                            <i class="fa-solid fa-angle-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body></html>

@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +22,7 @@ import {
   Edit,
   Eye,
   Filter,
+  Plus,
   Search,
   Trash2,
   User,
@@ -49,12 +52,16 @@ type Reservation = {
   reservation_code: string;
   date: string;
   party_size: number;
-  status: 'confirmed' | 'pending' | 'cancelled' | 'completed';
+  status: string;
   payment_method: string;
   payment_status: string;
   total: number;
+  notes: string;
+  duration: number;
   table_number: number;
   table_capacity: number;
+  eupago_entity: string;
+  eupago_reference: string;
 };
 
 const ReservationManager: React.FC = () => {
@@ -69,6 +76,15 @@ const ReservationManager: React.FC = () => {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [reservationToDelete, setReservationToDelete] = useState<number | null>(null);
+  const [isNewReservationModalOpen, setIsNewReservationModalOpen] = useState(false);
+  const [newReservationData, setNewReservationData] = useState({
+    user_id: '',
+    table_id: '',
+    date: '',
+    time: '',
+    party_size: '',
+    notes: ''
+  });
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -77,26 +93,73 @@ const ReservationManager: React.FC = () => {
     }
   }, [isAuthenticated, isAdmin, isLoading, setLocation]);
 
-  // Fetch reservations - Com atualização automática a cada 10 segundos
+  // Fetch reservations
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery<Reservation[]>({
     queryKey: ['/api/admin/reservations', { date: dateFilter, status: statusFilter !== 'all' ? statusFilter : undefined }],
     enabled: isAuthenticated && isAdmin,
-    refetchInterval: 10000, // Refetch a cada 10 segundos para ter dados em tempo real
-    refetchIntervalInBackground: true, // Continua atualizando mesmo quando a aba não está em foco
+    refetchInterval: 10000,
+    refetchIntervalInBackground: true,
   });
 
-  // Fetch tables for reference - Com atualização a cada 30 segundos
-  const { data: tables = [] } = useQuery<any[]>({
-    queryKey: ['/api/tables'],
-    enabled: isAuthenticated && isAdmin,
-    refetchInterval: 30000, // Refetch a cada 30 segundos
-  });
-
-  // Fetch users for reference - Com atualização a cada minuto
+  // Fetch users for new reservation form
   const { data: users = [] } = useQuery<any[]>({
     queryKey: ['/api/users'],
     enabled: isAuthenticated && isAdmin,
-    refetchInterval: 60000, // Refetch a cada 60 segundos
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/users');
+      return response.json();
+    },
+  });
+
+  // Fetch tables for new reservation form
+  const { data: tables = [] } = useQuery<any[]>({
+    queryKey: ['/api/tables'],
+    enabled: isAuthenticated && isAdmin,
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/tables');
+      return response.json();
+    },
+  });
+
+  // Create new reservation mutation
+  const createReservationMutation = useMutation({
+    mutationFn: async (reservationData: any) => {
+      const dateTime = `${reservationData.date}T${reservationData.time}:00`;
+      const payload = {
+        user_id: parseInt(reservationData.user_id),
+        table_id: parseInt(reservationData.table_id),
+        date: dateTime,
+        party_size: parseInt(reservationData.party_size),
+        notes: reservationData.notes,
+        status: 'confirmed',
+        payment_status: 'pending'
+      };
+      const response = await apiRequest('POST', '/api/reservations', payload);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: t('ReservationCreated'),
+        description: t('ReservationCreatedMessage'),
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reservations'] });
+      setIsNewReservationModalOpen(false);
+      setNewReservationData({
+        user_id: '',
+        table_id: '',
+        date: '',
+        time: '',
+        party_size: '',
+        notes: ''
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t('ReservationCreateError'),
+        description: error.message || t('ReservationCreateErrorMessage'),
+        variant: 'destructive',
+      });
+    }
   });
 
   // Update reservation status mutation
@@ -110,7 +173,7 @@ const ReservationManager: React.FC = () => {
         title: t('ReservationUpdated'),
         description: t('ReservationStatusUpdatedMessage'),
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reservations'] });
       setIsDetailsModalOpen(false);
     },
     onError: (error: any) => {
@@ -146,54 +209,47 @@ const ReservationManager: React.FC = () => {
     }
   });
 
+  // Handle new reservation form
+  const handleNewReservationSubmit = () => {
+    if (!newReservationData.user_id || !newReservationData.table_id || !newReservationData.date || !newReservationData.time || !newReservationData.party_size) {
+      toast({
+        title: t('ValidationError'),
+        description: t('PleaseCompleteAllFields'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    createReservationMutation.mutate(newReservationData);
+  };
+
   // Handle reservation status update
   const handleStatusUpdate = (id: number, status: string) => {
     updateReservationStatusMutation.mutate({ id, status });
   };
 
-  // Handle reservation deletion
-  const handleDeleteConfirm = () => {
-    if (!reservationToDelete) return;
-    deleteReservationMutation.mutate(reservationToDelete);
+  // Handle delete reservation
+  const handleDeleteReservation = (id: number) => {
+    setReservationToDelete(id);
+    setIsDeleteModalOpen(true);
   };
 
-  // Filter reservations based on search text
-  const filteredReservations = React.useMemo(() => {
-    if (!reservations) return [];
-    
-    return reservations.filter((reservation: any) => {
-      const searchLower = searchText.toLowerCase();
-      
-      // Include reservations that match the search text
-      const matchesSearch = 
-        (reservation.reservation_code && reservation.reservation_code.toLowerCase().includes(searchLower)) ||
-        (reservation.user_name && reservation.user_name.toLowerCase().includes(searchLower));
-      
-      return matchesSearch;
-    });
-  }, [reservations, searchText]);
-
-  // Get table details
-  const getTableDetails = (tableId: number) => {
-    const table = tables.find((t: any) => t.id === tableId);
-    return table ? `${t('Table')} ${table.number} (${table.capacity} ${t('Seats')})` : `${t('Table')} ${tableId}`;
-  };
-
-  // Get user details
-  const getUserDetails = (userId: number) => {
-    const user = users.find((u: any) => u.id === userId);
-    return user ? `${user.firstName} ${user.lastName}` : `${t('User')} ${userId}`;
-  };
-
-  // Format date and time
-  const formatDateTime = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return format(date, 'dd/MM/yyyy HH:mm');
-    } catch (error) {
-      return dateString;
+  const confirmDelete = () => {
+    if (reservationToDelete) {
+      deleteReservationMutation.mutate(reservationToDelete);
     }
   };
+
+  // Filter reservations based on search and filters
+  const filteredReservations = reservations.filter((reservation) => {
+    const matchesSearch = searchText === '' || 
+      reservation.user_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      reservation.email?.toLowerCase().includes(searchText.toLowerCase()) ||
+      reservation.reservation_code?.toLowerCase().includes(searchText.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || reservation.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   // Status badge component
   const StatusBadge = ({ status }: { status: string }) => {
@@ -247,6 +303,13 @@ const ReservationManager: React.FC = () => {
     <AdminLayout title={t('ReservationManagement')}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-montserrat font-bold">{t('ReservationManagement')}</h1>
+        <Button 
+          onClick={() => setIsNewReservationModalOpen(true)}
+          className="bg-brasil-green hover:bg-green-700 text-white"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          {t('NewReservation')}
+        </Button>
       </div>
 
       <Card className="mb-6">
@@ -279,10 +342,10 @@ const ReservationManager: React.FC = () => {
                 onValueChange={setStatusFilter}
               >
                 <SelectTrigger className="w-40">
-                  <SelectValue placeholder={t('Status')} />
+                  <SelectValue placeholder={t('SelectStatus')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t('AllStatuses')}</SelectItem>
+                  <SelectItem value="all">{t('All')}</SelectItem>
                   <SelectItem value="confirmed">{t('Confirmed')}</SelectItem>
                   <SelectItem value="pending">{t('Pending')}</SelectItem>
                   <SelectItem value="cancelled">{t('Cancelled')}</SelectItem>
@@ -292,127 +355,76 @@ const ReservationManager: React.FC = () => {
             </div>
           </div>
 
-          <div className="border rounded-md">
+          <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Código da reserva</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead>Mesa</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Hora</TableHead>
-                  <TableHead>Status do pagamento</TableHead>
-                  <TableHead>Método de pagamento</TableHead>
+                  <TableHead>{t('ReservationCode')}</TableHead>
+                  <TableHead>{t('Client')}</TableHead>
+                  <TableHead>{t('Table')}</TableHead>
+                  <TableHead>{t('Date')}</TableHead>
+                  <TableHead>{t('Guests')}</TableHead>
+                  <TableHead>{t('Status')}</TableHead>
+                  <TableHead>{t('Total')}</TableHead>
                   <TableHead className="text-right">{t('Actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredReservations.length > 0 ? (
-                  filteredReservations.map((reservation: Reservation) => (
+                {filteredReservations.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                      {t('NoReservationsFound')}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredReservations.map((reservation) => (
                     <TableRow key={reservation.id}>
                       <TableCell className="font-medium">
-                        {reservation.reservation_code || 'N/A'}
+                        {reservation.reservation_code || `RES-${reservation.id}`}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center">
-                          <User className="mr-2 h-4 w-4 text-gray-400" />
-                          <div>
-                            <p className="font-medium">{reservation.first_name} {reservation.last_name}</p>
-                            <p className="text-sm text-gray-500">@{reservation.user_name}</p>
-                          </div>
+                        <div className="flex items-center space-x-2">
+                          <User className="w-4 h-4 text-gray-400" />
+                          <span>{reservation.user_name || `${reservation.first_name} ${reservation.last_name}`}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>Mesa {reservation.table_number}</TableCell>
+                      <TableCell>
+                        {format(new Date(reservation.date), 'dd/MM/yyyy HH:mm')}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-1">
+                          <Users className="w-4 h-4 text-gray-400" />
+                          <span>{reservation.party_size}</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center">
-                          <span className="text-sm">{reservation.phone}</span>
-                        </div>
+                        <StatusBadge status={reservation.status} />
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <span className="font-medium">Mesa {reservation.table_number}</span>
-                          <span className="text-sm text-gray-500 ml-2">({reservation.table_capacity} lugares)</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(reservation.date), 'dd/MM/yyyy')}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(reservation.date), 'HH:mm')}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          {reservation.payment_status === 'completed' ? (
-                            <Badge className="bg-green-100 text-green-800">
-                              <CheckCircle2 className="w-3 h-3 mr-1" />
-                              Pago
-                            </Badge>
-                          ) : reservation.payment_status === 'pending' ? (
-                            <Badge className="bg-yellow-100 text-yellow-800">
-                              <Clock className="w-3 h-3 mr-1" />
-                              Pendente
-                            </Badge>
-                          ) : reservation.payment_status === 'refunded' ? (
-                            <Badge className="bg-purple-100 text-purple-800">
-                              <XCircle className="w-3 h-3 mr-1" />
-                              Reembolsado
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-red-100 text-red-800">
-                              <XCircle className="w-3 h-3 mr-1" />
-                              Falhado
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <span className="capitalize text-sm font-medium">
-                            {reservation.payment_method === 'multibanco' ? 'Multibanco' : 
-                             reservation.payment_method === 'mbway' ? 'MB Way' :
-                             reservation.payment_method === 'card' ? 'Cartão' :
-                             reservation.payment_method === 'cash' ? 'Dinheiro' :
-                             reservation.payment_method === 'transfer' ? 'Transferência' :
-                             reservation.payment_method}
-                          </span>
-                        </div>
-                      </TableCell>
+                      <TableCell>€{(reservation.total / 100).toFixed(2)}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
+                        <div className="flex items-center justify-end space-x-2">
                           <Button
                             variant="ghost"
-                            size="icon"
+                            size="sm"
                             onClick={() => {
                               setSelectedReservation(reservation);
                               setIsDetailsModalOpen(true);
                             }}
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setReservationToDelete(reservation.id);
-                              setIsDeleteModalOpen(true);
-                            }}
+                            size="sm"
+                            onClick={() => handleDeleteReservation(reservation.id)}
                           >
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </TableCell>
                     </TableRow>
                   ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      <div className="flex flex-col items-center justify-center text-gray-500">
-                        <Calendar className="h-12 w-12 mb-2 opacity-20" />
-                        <p className="text-lg font-medium">{t('NoReservationsFound')}</p>
-                        <p className="text-sm">{t('TryChangingFilters')}</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
                 )}
               </TableBody>
             </Table>
@@ -420,84 +432,164 @@ const ReservationManager: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Reservation Details Modal */}
-      <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
-        <DialogContent className="sm:max-w-md">
+      {/* New Reservation Modal */}
+      <Dialog open={isNewReservationModalOpen} onOpenChange={setIsNewReservationModalOpen}>
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>{t('ReservationDetails')}</DialogTitle>
+            <DialogTitle>{t('NewReservation')}</DialogTitle>
             <DialogDescription>
-              {t('ReservationDetailsDescription')}
+              {t('CreateNewReservationDescription')}
             </DialogDescription>
           </DialogHeader>
-          
-          {selectedReservation && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">{t('Code')}</p>
-                  <p className="font-medium">{selectedReservation.reservation_code}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">{t('Status')}</p>
-                  <StatusBadge status={selectedReservation.status} />
-                </div>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="client">{t('Client')}</Label>
+                <Select
+                  value={newReservationData.user_id}
+                  onValueChange={(value) => setNewReservationData(prev => ({ ...prev, user_id: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('SelectClient')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map((user: any) => (
+                      <SelectItem key={user.id} value={user.id.toString()}>
+                        {user.username || `${user.first_name} ${user.last_name}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              
-              <div>
-                <p className="text-sm font-medium text-gray-500">{t('Guest')}</p>
-                <p className="font-medium">{selectedReservation.user_name || getUserDetails(selectedReservation.user_id)}</p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">{t('Date')}</p>
-                  <p className="font-medium">{formatDateTime(selectedReservation.date)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">{t('PartySize')}</p>
-                  <p className="font-medium">{selectedReservation.party_size} {t('People')}</p>
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-gray-500">{t('Table')}</p>
-                <p className="font-medium">{getTableDetails(selectedReservation.table_id)}</p>
-              </div>
-              
-              <div className="border-t pt-4">
-                <p className="text-sm font-medium mb-2">{t('UpdateStatus')}</p>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant={selectedReservation.status === 'confirmed' ? 'default' : 'outline'}
-                    className={selectedReservation.status === 'confirmed' ? 'bg-green-600' : ''}
-                    onClick={() => handleStatusUpdate(selectedReservation.id, 'confirmed')}
-                  >
-                    <Check className="mr-1 h-4 w-4" /> {t('Confirm')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={selectedReservation.status === 'completed' ? 'default' : 'outline'}
-                    className={selectedReservation.status === 'completed' ? 'bg-blue-600' : ''}
-                    onClick={() => handleStatusUpdate(selectedReservation.id, 'completed')}
-                  >
-                    <CheckCircle2 className="mr-1 h-4 w-4" /> {t('Complete')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={selectedReservation.status === 'cancelled' ? 'default' : 'outline'}
-                    className={selectedReservation.status === 'cancelled' ? 'bg-red-600' : ''}
-                    onClick={() => handleStatusUpdate(selectedReservation.id, 'cancelled')}
-                  >
-                    <X className="mr-1 h-4 w-4" /> {t('Cancel')}
-                  </Button>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="table">{t('Table')}</Label>
+                <Select
+                  value={newReservationData.table_id}
+                  onValueChange={(value) => setNewReservationData(prev => ({ ...prev, table_id: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('SelectTable')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tables.map((table: any) => (
+                      <SelectItem key={table.id} value={table.id.toString()}>
+                        Mesa {table.number} - {table.capacity} lugares
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          )}
-
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date">{t('Date')}</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={newReservationData.date}
+                  onChange={(e) => setNewReservationData(prev => ({ ...prev, date: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="time">{t('Time')}</Label>
+                <Input
+                  id="time"
+                  type="time"
+                  value={newReservationData.time}
+                  onChange={(e) => setNewReservationData(prev => ({ ...prev, time: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="party_size">{t('PartySize')}</Label>
+              <Input
+                id="party_size"
+                type="number"
+                min="1"
+                max="20"
+                value={newReservationData.party_size}
+                onChange={(e) => setNewReservationData(prev => ({ ...prev, party_size: e.target.value }))}
+                placeholder={t('NumberOfGuests')}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notes">{t('Notes')}</Label>
+              <Textarea
+                id="notes"
+                value={newReservationData.notes}
+                onChange={(e) => setNewReservationData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder={t('AdditionalNotes')}
+                rows={3}
+              />
+            </div>
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDetailsModalOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsNewReservationModalOpen(false)}
+            >
+              {t('Cancel')}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleNewReservationSubmit}
+              disabled={createReservationMutation.isPending}
+            >
+              {createReservationMutation.isPending ? t('Creating') : t('CreateReservation')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reservation Details Modal */}
+      <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{t('ReservationDetails')}</DialogTitle>
+          </DialogHeader>
+          {selectedReservation && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <strong>{t('Client')}:</strong> {selectedReservation.user_name}
+                </div>
+                <div>
+                  <strong>{t('Email')}:</strong> {selectedReservation.email}
+                </div>
+                <div>
+                  <strong>{t('Phone')}:</strong> {selectedReservation.phone}
+                </div>
+                <div>
+                  <strong>{t('Table')}:</strong> Mesa {selectedReservation.table_number}
+                </div>
+                <div>
+                  <strong>{t('Date')}:</strong> {format(new Date(selectedReservation.date), 'dd/MM/yyyy HH:mm')}
+                </div>
+                <div>
+                  <strong>{t('Guests')}:</strong> {selectedReservation.party_size}
+                </div>
+                <div>
+                  <strong>{t('Status')}:</strong> <StatusBadge status={selectedReservation.status} />
+                </div>
+                <div>
+                  <strong>{t('Total')}:</strong> €{(selectedReservation.total / 100).toFixed(2)}
+                </div>
+              </div>
+              {selectedReservation.notes && (
+                <div>
+                  <strong>{t('Notes')}:</strong>
+                  <p className="mt-1 text-sm text-gray-600">{selectedReservation.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDetailsModalOpen(false)}
+            >
               {t('Close')}
             </Button>
           </DialogFooter>
@@ -506,23 +598,28 @@ const ReservationManager: React.FC = () => {
 
       {/* Delete Confirmation Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('ConfirmDeletion')}</DialogTitle>
+            <DialogTitle>{t('DeleteReservation')}</DialogTitle>
             <DialogDescription>
               {t('DeleteReservationConfirmation')}
             </DialogDescription>
           </DialogHeader>
-          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteModalOpen(false)}
+            >
               {t('Cancel')}
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleDeleteConfirm}
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleteReservationMutation.isPending}
             >
-              {t('Delete')}
+              {deleteReservationMutation.isPending ? t('Deleting') : t('Delete')}
             </Button>
           </DialogFooter>
         </DialogContent>
