@@ -50,6 +50,8 @@ const ReservationManager: React.FC = () => {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [reservationToDelete, setReservationToDelete] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [reservationsPerPage] = useState(10);
   const [newReservationData, setNewReservationData] = useState({
     user_id: '',
     table_id: '',
@@ -189,6 +191,7 @@ const ReservationManager: React.FC = () => {
     setSearchText('');
     setPaymentMethodFilter('');
     setPaymentStatusFilter('');
+    setCurrentPage(1); // Reset to first page when clearing filters
   };
 
   // Filter reservations based on search and filters
@@ -204,6 +207,59 @@ const ReservationManager: React.FC = () => {
     
     return matchesSearch && matchesPaymentMethod && matchesPaymentStatus;
   });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredReservations.length / reservationsPerPage);
+  const startIndex = (currentPage - 1) * reservationsPerPage;
+  const endIndex = startIndex + reservationsPerPage;
+  const currentReservations = filteredReservations.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle next page
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Handle previous page
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Generate page numbers for pagination
+  const generatePageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= maxVisiblePages; i++) {
+          pages.push(i);
+        }
+      } else if (currentPage >= totalPages - 2) {
+        for (let i = totalPages - maxVisiblePages + 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        for (let i = currentPage - 2; i <= currentPage + 2; i++) {
+          pages.push(i);
+        }
+      }
+    }
+    
+    return pages;
+  };
 
   // Format payment method display
   const formatPaymentMethod = (method: string) => {
@@ -461,14 +517,14 @@ const ReservationManager: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100 text-gray-800 font-medium">
-                    {filteredReservations.length === 0 ? (
+                    {currentReservations.length === 0 ? (
                       <tr>
                         <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                           Nenhuma reserva encontrada
                         </td>
                       </tr>
                     ) : (
-                      filteredReservations.map((reservation) => {
+                      currentReservations.map((reservation) => {
                         const statusDisplay = getPaymentStatusDisplay(reservation.payment_status);
                         return (
                           <tr key={reservation.id}>
@@ -528,18 +584,49 @@ const ReservationManager: React.FC = () => {
               {/* Pagination */}
               <div className="flex justify-between items-center px-6 py-4 bg-white border-t border-gray-100">
                 <div className="text-sm text-gray-600">
-                  Exibindo 1 a {filteredReservations.length} de {reservations.length} reservas
+                  Exibindo {filteredReservations.length > 0 ? startIndex + 1 : 0} a {Math.min(endIndex, filteredReservations.length)} de {filteredReservations.length} reservas
                 </div>
-                <div className="flex space-x-1">
-                  <button className="px-3 py-1 rounded-lg bg-gray-100 text-gray-500 hover:bg-blue-800 hover:text-white font-bold transition">
-                    <i className="fa-solid fa-angle-left"></i>
-                  </button>
-                  <button className="px-3 py-1 rounded-lg bg-blue-800 text-white font-bold">1</button>
-                  <button className="px-3 py-1 rounded-lg bg-gray-100 text-gray-800 hover:bg-blue-800 hover:text-white font-bold transition">2</button>
-                  <button className="px-3 py-1 rounded-lg bg-gray-100 text-gray-500 hover:bg-blue-800 hover:text-white font-bold transition">
-                    <i className="fa-solid fa-angle-right"></i>
-                  </button>
-                </div>
+                {totalPages > 1 && (
+                  <div className="flex space-x-1">
+                    <button 
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
+                      className={`px-3 py-1 rounded-lg font-bold transition ${
+                        currentPage === 1 
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-500 hover:bg-blue-800 hover:text-white'
+                      }`}
+                    >
+                      <i className="fa-solid fa-angle-left"></i>
+                    </button>
+                    
+                    {generatePageNumbers().map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-1 rounded-lg font-bold transition ${
+                          currentPage === page
+                            ? 'bg-blue-800 text-white'
+                            : 'bg-gray-100 text-gray-800 hover:bg-blue-800 hover:text-white'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    
+                    <button 
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                      className={`px-3 py-1 rounded-lg font-bold transition ${
+                        currentPage === totalPages 
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-500 hover:bg-blue-800 hover:text-white'
+                      }`}
+                    >
+                      <i className="fa-solid fa-angle-right"></i>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
