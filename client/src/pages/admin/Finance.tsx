@@ -210,12 +210,12 @@ const Finance: React.FC = () => {
     }
 
     // Filtro de status de pagamento
-    if (statusFilter) {
+    if (statusFilter && statusFilter !== "all") {
       filtered = filtered.filter((reservation) => reservation.payment_status === statusFilter);
     }
 
     // Filtro de método de pagamento
-    if (methodFilter) {
+    if (methodFilter && methodFilter !== "all") {
       filtered = filtered.filter((reservation) => reservation.payment_method === methodFilter);
     }
 
@@ -1321,7 +1321,7 @@ const Finance: React.FC = () => {
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
                       <SelectItem value="completed">Pago</SelectItem>
                       <SelectItem value="pending">Pendente</SelectItem>
                       <SelectItem value="cancelled">Cancelado</SelectItem>
