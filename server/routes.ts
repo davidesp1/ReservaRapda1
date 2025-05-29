@@ -262,6 +262,107 @@ router.get("/api/tables/available", async (req, res) => {
   }
 });
 
+// Criar mesa
+router.post("/api/tables", isAuthenticated, async (req, res) => {
+  try {
+    const { number, capacity, category, available } = req.body;
+    
+    if (!number || !capacity) {
+      return res.status(400).json({ error: "Número da mesa e capacidade são obrigatórios" });
+    }
+    
+    // Verificar se já existe mesa com este número
+    const existingTable = await queryClient`
+      SELECT id FROM tables WHERE number = ${number}
+    `;
+    
+    if (existingTable.length > 0) {
+      return res.status(400).json({ error: "Já existe uma mesa com este número" });
+    }
+    
+    const result = await queryClient`
+      INSERT INTO tables (number, capacity, category, available)
+      VALUES (${number}, ${capacity}, ${category || 'Standard'}, ${available !== false})
+      RETURNING *
+    `;
+    
+    res.status(201).json(result[0]);
+  } catch (err: any) {
+    console.error("Erro ao criar mesa:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Atualizar mesa
+router.put("/api/tables/:id", isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { number, capacity, category, available } = req.body;
+    
+    if (!number || !capacity) {
+      return res.status(400).json({ error: "Número da mesa e capacidade são obrigatórios" });
+    }
+    
+    // Verificar se já existe mesa com este número (exceto a atual)
+    const existingTable = await queryClient`
+      SELECT id FROM tables WHERE number = ${number} AND id != ${parseInt(id)}
+    `;
+    
+    if (existingTable.length > 0) {
+      return res.status(400).json({ error: "Já existe uma mesa com este número" });
+    }
+    
+    const result = await queryClient`
+      UPDATE tables
+      SET number = ${number}, capacity = ${capacity}, category = ${category || 'Standard'}, available = ${available !== false}
+      WHERE id = ${parseInt(id)}
+      RETURNING *
+    `;
+    
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Mesa não encontrada" });
+    }
+    
+    res.json(result[0]);
+  } catch (err: any) {
+    console.error("Erro ao atualizar mesa:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Excluir mesa
+router.delete("/api/tables/:id", isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Verificar se existem reservas associadas a esta mesa
+    const reservations = await queryClient`
+      SELECT COUNT(*) as count FROM reservations WHERE table_id = ${parseInt(id)}
+    `;
+    
+    if (reservations[0].count > 0) {
+      return res.status(400).json({ 
+        error: "Não é possível excluir a mesa pois existem reservas associadas a ela" 
+      });
+    }
+    
+    const result = await queryClient`
+      DELETE FROM tables
+      WHERE id = ${parseInt(id)}
+      RETURNING *
+    `;
+    
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Mesa não encontrada" });
+    }
+    
+    res.json({ message: "Mesa excluída com sucesso" });
+  } catch (err: any) {
+    console.error("Erro ao excluir mesa:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // As rotas de pagamento estão implementadas abaixo
 
 // Rotas para categorias do menu
