@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -132,6 +132,13 @@ export default function BookTable() {
         });
         return;
       }
+    }
+
+    if (currentStep === 3) {
+      // Finalizar reserva automaticamente e ir para tela de agradecimento
+      const data = form.getValues();
+      finalizeReservationMutation.mutate(data);
+      return;
     }
     
     if (currentStep < 4) {
@@ -799,48 +806,80 @@ export default function BookTable() {
                 </div>
               )}
 
-              {/* Step 4: Pagamento */}
+              {/* Step 4: Agradecimento */}
               {currentStep === 4 && (
-                <div className="flex-1">
-                  <h2 className="mb-6 text-xl font-bold font-montserrat text-brasil-red flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    Confirmação Final
-                  </h2>
-                  
-                  <div className="text-center py-8">
-                    <p className="text-lg mb-6">Sua reserva está pronta para ser confirmada!</p>
-                    <p className="text-gray-600 mb-8">
-                      Clique em "Confirmar Reserva" para finalizar o processo.
+                <div className="w-full flex flex-col items-center px-8 py-16">
+                  <div className="flex flex-col items-center justify-center gap-5">
+                    <div className="bg-brasil-green rounded-full w-24 h-24 flex items-center justify-center mb-6 shadow-md border-8 border-brasil-yellow animate-bounce">
+                      <i className="fa-solid fa-check text-white text-5xl"></i>
+                    </div>
+                    
+                    <h2 className="text-3xl md:text-4xl font-bold font-montserrat text-brasil-green mb-2 text-center">
+                      Obrigado pela sua reserva!
+                    </h2>
+                    
+                    <p className="text-lg text-gray-700 font-semibold mb-4 text-center max-w-xl">
+                      Sua reserva foi confirmada com sucesso! Estamos ansiosos para recebê-lo no <span className="text-brasil-blue font-bold">Opa que delicia</span> e proporcionar uma experiência única de sabores brasileiros.
                     </p>
-                  </div>
-
-                  <div className="flex justify-between mt-10">
-                    <Button
-                      type="button"
-                      onClick={prevStep}
-                      variant="outline"
-                      className="flex items-center px-8 py-3 text-lg font-bold"
-                    >
-                      <ArrowLeft className="mr-2 h-5 w-5" />
-                      Anterior
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={finalizeReservationMutation.isPending}
-                      className="flex items-center px-8 py-3 text-lg font-bold text-white bg-brasil-red hover:bg-brasil-red/90"
-                    >
-                      {finalizeReservationMutation.isPending ? (
-                        <>
-                          <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                          Confirmando...
-                        </>
-                      ) : (
-                        <>
-                          <Check className="mr-2 h-5 w-5" />
-                          Confirmar Reserva
-                        </>
+                    
+                    <div className="flex flex-col items-center gap-2 mb-5">
+                      <div className="flex items-center gap-2 text-brasil-blue text-base font-semibold">
+                        <i className="fa-solid fa-calendar-days"></i>
+                        <span>{form.watch('date') ? new Date(form.watch('date')).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                        <span className="mx-1">|</span>
+                        <i className="fa-solid fa-clock"></i>
+                        <span>{form.watch('time') || 'N/A'}</span>
+                        <span className="mx-1">|</span>
+                        <i className="fa-solid fa-users"></i>
+                        <span>{form.watch('party_size')} {form.watch('party_size') === 1 ? 'pessoa' : 'pessoas'}</span>
+                      </div>
+                      
+                      {form.watch('special_requests') && (
+                        <div className="flex items-center gap-2 text-brasil-green text-base font-medium">
+                          <i className="fa-solid fa-comment"></i>
+                          <span>{form.watch('special_requests')}</span>
+                        </div>
                       )}
-                    </Button>
+                    </div>
+                    
+                    <div className="bg-brasil-yellow/10 border-l-4 border-brasil-yellow p-4 rounded-xl flex flex-col items-center mb-4 max-w-xl">
+                      <div className="flex items-center gap-2 text-brasil-blue font-bold text-base mb-1">
+                        <i className="fa-solid fa-envelope-open-text"></i>
+                        Confirmação enviada por e-mail!
+                      </div>
+                      <div className="text-gray-700 text-sm text-center max-w-xs">
+                        Você receberá todos os detalhes da sua reserva no seu e-mail cadastrado. Se precisar alterar ou cancelar, acesse <span className="underline text-brasil-blue cursor-pointer">Minhas Reservas</span>.
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-row flex-wrap gap-4 mt-2 mb-6">
+                      <button 
+                        onClick={() => window.location.href = '/'}
+                        className="bg-brasil-green text-white font-bold px-8 py-3 rounded-lg shadow-lg hover:bg-emerald-700 transition flex items-center gap-2 text-lg"
+                      >
+                        <i className="fa-solid fa-house"></i>
+                        Ir para Dashboard
+                      </button>
+                      <button 
+                        onClick={() => window.location.href = '/reservations'}
+                        className="bg-brasil-yellow text-brasil-blue font-bold px-8 py-3 rounded-lg shadow-lg hover:bg-yellow-400 transition flex items-center gap-2 text-lg"
+                      >
+                        <i className="fa-solid fa-calendar-check"></i>
+                        Ver Minhas Reservas
+                      </button>
+                      <button 
+                        onClick={() => window.location.href = '/menu'}
+                        className="bg-brasil-blue text-white font-bold px-8 py-3 rounded-lg shadow-lg hover:bg-blue-900 transition flex items-center gap-2 text-lg"
+                      >
+                        <i className="fa-solid fa-utensils"></i>
+                        Explorar Cardápio
+                      </button>
+                    </div>
+                    
+                    <div className="flex flex-col items-center gap-1 text-brasil-green mt-2">
+                      <span className="font-montserrat text-lg font-bold">Até breve! 😃</span>
+                      <span className="text-sm text-gray-600">Aproveite o melhor da culinária brasileira.</span>
+                    </div>
                   </div>
                 </div>
               )}

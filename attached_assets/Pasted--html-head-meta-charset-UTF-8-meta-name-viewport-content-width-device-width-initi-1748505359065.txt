@@ -1,0 +1,234 @@
+<html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>::-webkit-scrollbar { display: none;}</style>
+    <script>tailwind.config = {
+  "theme": {
+    "extend": {
+      "colors": {
+        "brazil-green": "#009c3b",
+        "brazil-yellow": "#ffdf00",
+        "brazil-blue": "#002776",
+        "brazil-red": "#c8102e"
+      },
+      "fontFamily": {
+        "montserrat": [
+          "Montserrat",
+          "sans-serif"
+        ],
+        "opensans": [
+          "Open Sans",
+          "sans-serif"
+        ],
+        "sans": [
+          "Inter",
+          "sans-serif"
+        ]
+      }
+    }
+  }
+};</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&amp;display=swap"><style>
+      body {
+        font-family: 'Inter', sans-serif !important;
+      }
+      
+      /* Preserve Font Awesome icons */
+      .fa, .fas, .far, .fal, .fab {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      }
+    </style><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="bg-gray-100 font-opensans">
+
+<div id="client-dashboard" class="flex h-[900px]">
+    <div id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-brazil-blue flex flex-col">
+        <div class="p-6">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-brazil-yellow rounded-full flex items-center justify-center mr-2">
+                    <i class="fa-solid fa-utensils text-brazil-blue"></i>
+                </div>
+                <span class="text-xl font-semibold text-white font-montserrat">
+                    Opa que delicia
+                </span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <ul>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-house text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Dashboard</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-user text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Meu Perfil</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-utensils text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Cardápio</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white bg-brazil-blue bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-calendar-check text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Reservas</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-credit-card text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Pagamentos</span>
+                    </span>
+                </li>
+                <li class="px-6 py-3">
+                    <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                        <i class="fa-solid fa-headset text-brazil-yellow w-6"></i>
+                        <span class="ml-2 font-medium">Suporte</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+        <div class="mt-auto border-t border-blue-400 p-4">
+            <span class="flex items-center text-white hover:bg-brazil-blue hover:bg-opacity-40 rounded-lg p-2 cursor-pointer">
+                <i class="fa-solid fa-right-from-bracket text-brazil-yellow w-6"></i>
+                <span class="ml-2 font-medium">Sair</span>
+            </span>
+        </div>
+    </div>
+    <div id="main-content" class="ml-64 flex-1 p-8 relative">
+        <div id="header" class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-800 font-montserrat">Nova Reserva</h1>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="relative">
+                        <i class="fa-regular fa-bell text-xl text-gray-600"></i>
+                        <span class="absolute -top-1 -right-1 bg-brazil-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
+                    </button>
+                </div>
+                <div class="flex items-center">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="User Avatar" class="w-10 h-10 rounded-full border-2 border-brazil-yellow">
+                    <div class="ml-2">
+                        <p class="text-sm font-medium text-gray-800">Maria Silva</p>
+                        <p class="text-xs text-gray-500">Cliente desde 2023</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="reservation-steps" class="max-w-5xl mx-auto">
+            <div id="step-contents" class="relative bg-white rounded-xl shadow-lg flex flex-col items-center justify-center min-h-[650px] p-0">
+                <div id="thank-you-block" class="w-full flex flex-col items-center px-8 py-16">
+                    <div class="flex flex-col items-center justify-center gap-5">
+                        <div class="bg-brazil-green rounded-full w-24 h-24 flex items-center justify-center mb-6 shadow-md border-8 border-brazil-yellow animate-bounce">
+                            <i class="fa-solid fa-check text-white text-5xl"></i>
+                        </div>
+                        <h2 class="text-3xl md:text-4xl font-bold font-montserrat text-brazil-green mb-2 text-center">
+                            Obrigado pela sua reserva!
+                        </h2>
+                        <p class="text-lg text-gray-700 font-semibold mb-4 text-center max-w-xl">
+                            Sua reserva foi confirmada com sucesso! Estamos ansiosos para recebê-lo no <span class="text-brazil-blue font-bold">Opa que delicia</span> e proporcionar uma experiência única de sabores brasileiros.
+                        </p>
+                        <div class="flex flex-col items-center gap-2 mb-5">
+                            <div class="flex items-center gap-2 text-brazil-blue text-base font-semibold">
+                                <i class="fa-solid fa-calendar-days"></i>
+                                <span id="resumo-data-check">23/06/2024</span>
+                                <span class="mx-1">|</span>
+                                <i class="fa-solid fa-clock"></i>
+                                <span id="resumo-hora-check">19:00</span>
+                                <span class="mx-1">|</span>
+                                <i class="fa-solid fa-users"></i>
+                                <span id="resumo-pessoas-check">4 pessoas</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-brazil-yellow text-base font-semibold">
+                                <i class="fa-solid fa-star"></i>
+                                <span id="resumo-ocasiao-check">Aniversário</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-brazil-green text-base font-medium">
+                                <i class="fa-solid fa-comment"></i>
+                                <span id="resumo-obs-check">Mesa perto da janela, 1 vegano</span>
+                            </div>
+                        </div>
+                        <div class="bg-brazil-yellow/10 border-l-4 border-brazil-yellow p-4 rounded-xl flex flex-col items-center mb-4 max-w-xl">
+                            <div class="flex items-center gap-2 text-brazil-blue font-bold text-base mb-1">
+                                <i class="fa-solid fa-envelope-open-text"></i>
+                                Confirmação enviada por e-mail!
+                            </div>
+                            <div class="text-gray-700 text-sm text-center max-w-xs">
+                                Você receberá todos os detalhes da sua reserva no seu e-mail cadastrado. Se precisar alterar ou cancelar, acesse <span class="underline text-brazil-blue cursor-pointer">Minhas Reservas</span>.
+                            </div>
+                        </div>
+                        <div class="flex flex-row flex-wrap gap-4 mt-2 mb-6">
+                            <span class="bg-brazil-green text-white font-bold px-8 py-3 rounded-lg shadow-lg hover:bg-emerald-700 transition flex items-center gap-2 text-lg cursor-pointer">
+                                <i class="fa-solid fa-house"></i>
+                                Ir para Dashboard
+                            </span>
+                            <span class="bg-brazil-yellow text-brazil-blue font-bold px-8 py-3 rounded-lg shadow-lg hover:bg-yellow-400 transition flex items-center gap-2 text-lg cursor-pointer">
+                                <i class="fa-solid fa-calendar-check"></i>
+                                Ver Minhas Reservas
+                            </span>
+                            <span class="bg-brazil-blue text-white font-bold px-8 py-3 rounded-lg shadow-lg hover:bg-blue-900 transition flex items-center gap-2 text-lg cursor-pointer">
+                                <i class="fa-solid fa-utensils"></i>
+                                Explorar Cardápio
+                            </span>
+                        </div>
+                        <div class="flex flex-col items-center gap-1 text-brazil-green mt-2">
+                            <span class="font-montserrat text-lg font-bold">Até breve! 😃</span>
+                            <span class="text-sm text-gray-600">Aproveite o melhor da culinária brasileira.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="chat-button" class="fixed bottom-6 right-6 z-40">
+    <button class="w-14 h-14 bg-brazil-green rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition">
+        <i class="fa-solid fa-comment-dots text-white text-2xl"></i>
+    </button>
+</div>
+
+<script>
+    // Dados simulados da reserva
+    let reservationDetails = {
+        data: "23/06/2024",
+        hora: "19:00",
+        pessoas: 4,
+        ocasiao: "Aniversário",
+        obs: "Mesa perto da janela, 1 vegano"
+    };
+
+    document.getElementById('resumo-data-check').textContent = reservationDetails.data;
+    document.getElementById('resumo-hora-check').textContent = reservationDetails.hora;
+    document.getElementById('resumo-pessoas-check').textContent = reservationDetails.pessoas + (reservationDetails.pessoas == 1 ? " pessoa" : " pessoas");
+    document.getElementById('resumo-ocasiao-check').textContent = reservationDetails.ocasiao;
+    document.getElementById('resumo-obs-check').textContent = reservationDetails.obs;
+</script>
+
+</body></html>
