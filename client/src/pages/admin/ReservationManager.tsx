@@ -241,23 +241,23 @@ const ReservationManager: React.FC = () => {
     });
   };
 
-  // Calculadora de troco
-  const updateCashCalculation = (receivedAmount: string) => {
+  // Calculadora de troco - versão simplificada para euros
+  const updateCashCalculationEuros = (receivedAmount: string) => {
     const received = parseFloat(receivedAmount) || 0;
-    const total = calculateTotal() * 100; // Converter total para centavos
+    const total = calculateTotal(); // Total já em euros
     const change = received - total;
     
-    console.log('Calculadora debug:', {
+    console.log('Calculadora debug (euros):', {
       receivedAmount,
       received,
-      total: total / 100, // Mostrar em euros no log
-      change: change / 100 // Mostrar em euros no log
+      total,
+      change
     });
     
     setCashCalculatorData({
-      total: total / 100, // Armazenar em euros
+      total,
       received: receivedAmount,
-      change: change / 100 // Armazenar em euros
+      change
     });
   };
 
@@ -271,20 +271,26 @@ const ReservationManager: React.FC = () => {
     } else if (digit === '.' && !cashCalculatorData.received.includes('.')) {
       newReceived = cashCalculatorData.received + digit;
     } else if (digit !== '.' && !isNaN(Number(digit))) {
+      // Para entrada manual, tratar como entrada em euros, não centavos
       newReceived = cashCalculatorData.received + digit;
+      // Converter string de entrada para formato decimal correto
+      const numericValue = parseFloat(newReceived) || 0;
+      // Se não tem ponto decimal, dividir por 100 para converter centavos em euros
+      if (!newReceived.includes('.')) {
+        newReceived = (numericValue / 100).toFixed(2);
+      }
     } else {
       return; // Não fazer nada para entradas inválidas
     }
     
     console.log('Calculadora - Novo valor recebido:', newReceived);
-    // Atualizar o cálculo automaticamente
-    updateCashCalculation(newReceived);
+    // Atualizar o cálculo automaticamente com valor em euros
+    updateCashCalculationEuros(newReceived);
   };
 
   const handleQuickAmount = (amount: number) => {
-    // Converter para centavos para manter consistência com o total
-    const amountInCents = amount * 100;
-    updateCashCalculation(amountInCents.toString());
+    // Usar diretamente em euros
+    updateCashCalculationEuros(amount.toString());
   };
 
   // Wizard functions
@@ -1583,7 +1589,7 @@ const ReservationManager: React.FC = () => {
 
             <Button
               variant="outline"
-              onClick={() => updateCashCalculation('')}
+              onClick={() => updateCashCalculationEuros('')}
               className="w-full h-9 text-sm"
             >
               <i className="fa-solid fa-eraser mr-2"></i>
