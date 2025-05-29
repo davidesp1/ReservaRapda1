@@ -1796,4 +1796,48 @@ router.post("/api/printers/:printerId/print-test", isAuthenticated, async (req, 
   }
 });
 
+// Rota para processar pagamento Multibanco com EuPago
+router.post("/api/payments/multibanco", isAuthenticated, async (req, res) => {
+  try {
+    const { amount, reservationId } = req.body;
+    
+    console.log(`[Multibanco] Processando pagamento: ${amount}€ para reserva ${reservationId}`);
+    
+    // Importar o serviço de pagamento
+    const { processPayment } = await import('./services/paymentService');
+    
+    // Chamar a API do EuPago para gerar referência Multibanco
+    const paymentResult = await processPayment(
+      'multibanco',
+      amount,
+      undefined, // phone não é necessário para Multibanco
+      reservationId
+    );
+    
+    console.log('[Multibanco] Resultado do pagamento:', paymentResult);
+    
+    if (paymentResult.success) {
+      res.json({
+        success: true,
+        entity: paymentResult.entity,
+        reference: paymentResult.reference,
+        amount: paymentResult.amount || amount,
+        expirationDate: paymentResult.expirationDate,
+        method: 'multibanco'
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: paymentResult.message || 'Erro ao processar pagamento'
+      });
+    }
+  } catch (error: any) {
+    console.error('Erro ao processar pagamento Multibanco:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erro interno do servidor'
+    });
+  }
+});
+
 export default router;

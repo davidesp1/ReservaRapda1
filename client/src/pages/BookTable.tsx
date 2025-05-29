@@ -37,6 +37,7 @@ export default function BookTable() {
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('card');
+  const [multibancoData, setMultibancoData] = useState<any>(null);
 
   // Form setup
   const form = useForm<ReservationForm>({
@@ -101,6 +102,47 @@ export default function BookTable() {
     },
   });
 
+  // Mutation para chamar API do EuPago para Multibanco
+  const processMultibancoMutation = useMutation({
+    mutationFn: async (data: { amount: number; reservationId?: string }) => {
+      const response = await fetch('/api/payments/multibanco', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: data.amount,
+          reservationId: data.reservationId || `TEMP-${Date.now()}`
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erro na requisição');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (result) => {
+      if (result.success) {
+        setMultibancoData(result);
+        setCurrentStep(4); // Ir para tela de pagamento Multibanco
+      } else {
+        toast({
+          title: "Erro no Pagamento",
+          description: result.message || "Erro ao processar pagamento Multibanco.",
+          variant: 'destructive',
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro na API de Pagamento",
+        description: error.message || "Erro ao conectar com o serviço de pagamento.",
+        variant: 'destructive',
+      });
+    },
+  });
+
   const onSubmit = (data: ReservationForm) => {
     // Só deve finalizar a reserva se estiver no step 4 (Pagamento)
     if (currentStep === 4) {
@@ -138,8 +180,9 @@ export default function BookTable() {
     if (currentStep === 3) {
       // Verificar método de pagamento selecionado
       if (selectedPaymentMethod === 'multibanco') {
-        // Ir para tela de pagamento Multibanco
-        setCurrentStep(4);
+        // Chamar API do EuPago para gerar dados do Multibanco
+        const amount = total; // Valor em euros
+        processMultibancoMutation.mutate({ amount });
         return;
       } else {
         // Para outros métodos, finalizar reserva automaticamente
@@ -818,10 +861,20 @@ export default function BookTable() {
                           </button>
                           <button 
                             onClick={nextStep}
-                            className="bg-brasil-yellow text-brasil-blue font-bold px-7 py-3 rounded-lg shadow hover:bg-yellow-400 transition text-lg flex items-center w-1/2 justify-center"
+                            disabled={processMultibancoMutation.isPending}
+                            className="bg-brasil-yellow text-brasil-blue font-bold px-7 py-3 rounded-lg shadow hover:bg-yellow-400 transition text-lg flex items-center w-1/2 justify-center disabled:opacity-50"
                           >
-                            Próximo
-                            <i className="fa-solid fa-arrow-right ml-2"></i>
+                            {processMultibancoMutation.isPending ? (
+                              <>
+                                <div className="animate-spin h-5 w-5 border-2 border-brasil-blue border-t-transparent rounded-full mr-2"></div>
+                                Processando...
+                              </>
+                            ) : (
+                              <>
+                                Próximo
+                                <i className="fa-solid fa-arrow-right ml-2"></i>
+                              </>
+                            )}
                           </button>
                         </div>
                       </div>
@@ -882,15 +935,21 @@ export default function BookTable() {
                       <div className="mb-5">
                         <div className="flex justify-between items-center mb-2">
                           <span className="font-montserrat text-gray-600 font-semibold">Entidade:</span>
-                          <span className="font-montserrat text-gray-900 font-bold text-right">25879</span>
+                          <span className="font-montserrat text-gray-900 font-bold text-right">
+                            {multibancoData?.entity || 'Carregando...'}
+                          </span>
                         </div>
                         <div className="flex justify-between items-center mb-2">
                           <span className="font-montserrat text-gray-600 font-semibold">Referência:</span>
-                          <span className="font-montserrat text-gray-900 font-bold text-right">879 458 563</span>
+                          <span className="font-montserrat text-gray-900 font-bold text-right">
+                            {multibancoData?.reference || 'Carregando...'}
+                          </span>
                         </div>
                         <div className="flex justify-between items-center mb-2">
                           <span className="font-montserrat text-gray-600 font-semibold">Valor total:</span>
-                          <span className="font-montserrat text-brasil-green font-bold text-xl text-right">€ {total.toFixed(2)}</span>
+                          <span className="font-montserrat text-brasil-green font-bold text-xl text-right">
+                            € {multibancoData?.amount?.toFixed(2) || total.toFixed(2)}
+                          </span>
                         </div>
                       </div>
                       <div className="bg-brasil-blue bg-opacity-5 border border-brasil-blue rounded-xl p-4 mb-4 flex items-start">
