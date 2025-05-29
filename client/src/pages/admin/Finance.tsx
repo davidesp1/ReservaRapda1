@@ -224,9 +224,16 @@ const Finance: React.FC = () => {
 
   // Aplicar filtros automaticamente quando os dados mudarem
   useEffect(() => {
-    applyFilters();
-    applyReservationFilters();
-  }, [payments, reservations, searchText, startDate, endDate, statusFilter, methodFilter]);
+    if (payments) {
+      applyFilters();
+    }
+  }, [payments, searchText, startDate, endDate, statusFilter, methodFilter]);
+
+  useEffect(() => {
+    if (reservations) {
+      applyReservationFilters();
+    }
+  }, [reservations, searchText, startDate, endDate, statusFilter, methodFilter]);
 
   // Reset pagination when changing tabs or filters
   useEffect(() => {
