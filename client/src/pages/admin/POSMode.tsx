@@ -1438,10 +1438,79 @@ PAGAMENTO: DINHEIRO
               <button 
                 className="px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50"
                 disabled={!newClientData.first_name || !newClientData.email}
-                onClick={() => {
-                  // TODO: Implementar criação de novo cliente
-                  console.log('Criar novo cliente:', newClientData);
-                  setIsNewClientModalOpen(false);
+                onClick={async () => {
+                  try {
+                    // Criar username automaticamente a partir do nome e sobrenome
+                    const username = `${newClientData.first_name} ${newClientData.last_name}`.trim();
+                    
+                    // Preparar dados para criação com role staff
+                    const userData = {
+                      username,
+                      email: newClientData.email,
+                      first_name: newClientData.first_name,
+                      last_name: newClientData.last_name,
+                      phone: newClientData.phone,
+                      role: 'staff' // Automaticamente definir como staff
+                    };
+
+                    console.log('Criando novo funcionário:', userData);
+
+                    // Fazer chamada para a API
+                    const response = await fetch('/api/users', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify(userData)
+                    });
+
+                    if (!response.ok) {
+                      throw new Error('Erro ao criar funcionário');
+                    }
+
+                    const newUser = await response.json();
+                    console.log('Funcionário criado com sucesso:', newUser);
+
+                    // Selecionar automaticamente o novo usuário criado
+                    setSelectedClient(newUser);
+                    
+                    // Fechar modal de criação
+                    setIsNewClientModalOpen(false);
+                    
+                    // Limpar dados do formulário
+                    setNewClientData({
+                      username: '',
+                      email: '',
+                      first_name: '',
+                      last_name: '',
+                      phone: ''
+                    });
+
+                    // Atualizar lista de staff (usar useQueryClient)
+                    // A lista será atualizada automaticamente na próxima busca
+
+                    // Mostrar mensagem de sucesso
+                    import('sweetalert2').then((Swal) => {
+                      Swal.default.fire({
+                        title: 'Sucesso!',
+                        text: `Funcionário ${username} criado e selecionado`,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                      });
+                    });
+
+                  } catch (error) {
+                    console.error('Erro ao criar funcionário:', error);
+                    import('sweetalert2').then((Swal) => {
+                      Swal.default.fire({
+                        title: 'Erro',
+                        text: 'Erro ao criar funcionário. Tente novamente.',
+                        icon: 'error',
+                        confirmButtonColor: '#f97316'
+                      });
+                    });
+                  }
                 }}
               >
                 {t('Criar Cliente')}
