@@ -273,14 +273,8 @@ const ReservationManager: React.FC = () => {
     } else if (digit === '.' && !cashCalculatorData.received.includes('.')) {
       newReceived = cashCalculatorData.received + digit;
     } else if (digit !== '.' && !isNaN(Number(digit))) {
-      // Para entrada manual, tratar como entrada em euros, não centavos
+      // Simplesmente concatenar os dígitos sem conversão automática
       newReceived = cashCalculatorData.received + digit;
-      // Converter string de entrada para formato decimal correto
-      const numericValue = parseFloat(newReceived) || 0;
-      // Se não tem ponto decimal, dividir por 100 para converter centavos em euros
-      if (!newReceived.includes('.')) {
-        newReceived = (numericValue / 100).toFixed(2);
-      }
     } else {
       return; // Não fazer nada para entradas inválidas
     }
