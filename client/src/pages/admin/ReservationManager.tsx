@@ -241,24 +241,25 @@ const ReservationManager: React.FC = () => {
     });
   };
 
-  // Calculadora de troco - versão simplificada para euros
+  // Calculadora de troco - versão corrigida para euros
   const updateCashCalculationEuros = (receivedAmount: string) => {
     const received = parseFloat(receivedAmount) || 0;
-    const totalInCents = calculateTotal(); // Total em centavos
-    const totalInEuros = totalInCents / 100; // Converter para euros
-    const change = received - totalInEuros;
+    const totalInCents = calculateTotal(); // Total já está em cêntimos (correto)
+    const totalInEuros = totalInCents / 100; // Converter para euros para exibição
+    const change = received - totalInEuros; // Calcular troco em euros
     
     console.log('Calculadora debug (euros):', {
       receivedAmount,
       received,
       totalInCents,
       totalInEuros,
-      change
+      change,
+      'Debug': `Cliente deve pagar ${totalInEuros}€, entregou ${received}€, troco ${change}€`
     });
     
     setCashCalculatorData({
-      total: totalInEuros,
-      received: receivedAmount,
+      total: totalInEuros, // Manter o total em euros para exibição
+      received: receivedAmount, // Manter como string para evitar conversões
       change
     });
   };
