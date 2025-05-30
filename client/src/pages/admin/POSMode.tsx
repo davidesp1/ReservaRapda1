@@ -812,16 +812,22 @@ Status: PAGO
                   <meta charset="UTF-8">
                   <title>Recibo - Opa que Delícia</title>
                   <style>
-                    @page { size: 58mm auto; margin: 0; }
+                    @page { size: 80mm auto; margin: 5mm; }
                     * { margin: 0; padding: 0; box-sizing: border-box; }
                     body { 
                       font-family: 'Courier New', monospace; 
-                      font-size: 10px; 
-                      line-height: 12px;
-                      width: 58mm;
-                      padding: 2mm;
+                      font-size: 16px; 
+                      font-weight: 900;
+                      line-height: 20px;
+                      width: 80mm;
+                      padding: 3mm;
                       white-space: pre-line;
                       overflow: hidden;
+                      background: white;
+                      color: #000;
+                      text-rendering: optimizeLegibility;
+                      -webkit-font-smoothing: none;
+                      text-shadow: 0.5px 0.5px 0px #000;
                       background: white;
                     }
                     @media print {
