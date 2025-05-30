@@ -1682,11 +1682,64 @@ const Finance: React.FC = () => {
                       <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-6 text-white">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-orange-100 text-sm font-medium">Clientes Únicos</p>
-                            <p className="text-2xl font-bold">{analyticsData.topCustomers.length}</p>
+                            <p className="text-orange-100 text-sm font-medium">Crescimento</p>
+                            <p className="text-2xl font-bold">
+                              {analyticsData.revenueGrowth > 0 ? '+' : ''}
+                              {analyticsData.revenueGrowth.toFixed(1)}%
+                            </p>
+                            <p className="text-orange-100 text-xs">vs período anterior</p>
                           </div>
-                          <Users className="w-8 h-8 text-orange-200" />
+                          <TrendingUp className="w-8 h-8 text-orange-200" />
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Filtros Adicionais */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                      <div className="bg-white rounded-lg border border-gray-200 p-4">
+                        <h5 className="font-semibold text-gray-700 mb-2">Análise por Categoria</h5>
+                        <Select onValueChange={(value) => console.log('Filtro categoria:', value)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Todas as categorias" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todas as categorias</SelectItem>
+                            {analyticsData.categoryRevenue.map((cat) => (
+                              <SelectItem key={cat.category} value={cat.category}>
+                                {cat.category}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="bg-white rounded-lg border border-gray-200 p-4">
+                        <h5 className="font-semibold text-gray-700 mb-2">Tipo de Análise</h5>
+                        <Select defaultValue="all">
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Análise Geral</SelectItem>
+                            <SelectItem value="products">Produtos</SelectItem>
+                            <SelectItem value="customers">Clientes</SelectItem>
+                            <SelectItem value="time">Horários</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="bg-white rounded-lg border border-gray-200 p-4">
+                        <h5 className="font-semibold text-gray-700 mb-2">Ordenar por</h5>
+                        <Select defaultValue="revenue">
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="revenue">Receita</SelectItem>
+                            <SelectItem value="quantity">Quantidade</SelectItem>
+                            <SelectItem value="orders">Pedidos</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
@@ -1791,6 +1844,204 @@ const Finance: React.FC = () => {
                               }
                             }}
                           />
+                        </div>
+                      </div>
+
+                      {/* Gráfico de Categorias de Produtos */}
+                      <div className="bg-gray-50 rounded-lg p-6">
+                        <h4 className="text-lg font-semibold mb-4 flex items-center">
+                          <BarChart3 className="w-5 h-5 mr-2 text-purple-600" />
+                          Receita por Categoria
+                        </h4>
+                        <div className="h-64">
+                          <Bar
+                            data={{
+                              labels: analyticsData.categoryRevenue.map(cat => cat.category || 'Sem categoria'),
+                              datasets: [{
+                                label: 'Receita (€)',
+                                data: analyticsData.categoryRevenue.map(cat => cat.revenue / 100),
+                                backgroundColor: [
+                                  'rgba(139, 92, 246, 0.8)',
+                                  'rgba(34, 197, 94, 0.8)',
+                                  'rgba(59, 130, 246, 0.8)',
+                                  'rgba(245, 158, 11, 0.8)',
+                                  'rgba(239, 68, 68, 0.8)',
+                                  'rgba(6, 182, 212, 0.8)'
+                                ],
+                                borderColor: [
+                                  'rgb(139, 92, 246)',
+                                  'rgb(34, 197, 94)',
+                                  'rgb(59, 130, 246)',
+                                  'rgb(245, 158, 11)',
+                                  'rgb(239, 68, 68)',
+                                  'rgb(6, 182, 212)'
+                                ],
+                                borderWidth: 2
+                              }]
+                            }}
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: false,
+                              scales: {
+                                y: {
+                                  beginAtZero: true,
+                                  ticks: {
+                                    callback: function(value) {
+                                      return '€' + Number(value).toFixed(2);
+                                    }
+                                  }
+                                }
+                              },
+                              plugins: {
+                                legend: {
+                                  display: false
+                                },
+                                tooltip: {
+                                  callbacks: {
+                                    label: function(context) {
+                                      return 'Receita: €' + Number(context.parsed.y).toFixed(2);
+                                    }
+                                  }
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Gráfico de Horários de Pico */}
+                      <div className="bg-gray-50 rounded-lg p-6">
+                        <h4 className="text-lg font-semibold mb-4 flex items-center">
+                          <Calendar className="w-5 h-5 mr-2 text-orange-600" />
+                          Vendas por Horário
+                        </h4>
+                        <div className="h-64">
+                          <Line
+                            data={{
+                              labels: analyticsData.hourlyAnalysis.map(hour => `${hour.hour}:00`),
+                              datasets: [{
+                                label: 'Transações',
+                                data: analyticsData.hourlyAnalysis.map(hour => hour.transaction_count),
+                                borderColor: 'rgb(245, 158, 11)',
+                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                              }]
+                            }}
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: false,
+                              scales: {
+                                y: {
+                                  beginAtZero: true
+                                }
+                              },
+                              plugins: {
+                                tooltip: {
+                                  callbacks: {
+                                    label: function(context) {
+                                      const hourData = analyticsData.hourlyAnalysis[context.dataIndex];
+                                      return [
+                                        `Transações: ${context.parsed.y}`,
+                                        `Receita: €${(hourData.revenue / 100).toFixed(2)}`
+                                      ];
+                                    }
+                                  }
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Análise de Produtos */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                      {/* Top Produtos */}
+                      <div className="bg-white rounded-lg border border-gray-200 p-6">
+                        <h4 className="text-lg font-semibold mb-4 flex items-center">
+                          <Target className="w-5 h-5 mr-2 text-green-600" />
+                          Produtos Mais Vendidos
+                        </h4>
+                        <div className="space-y-4">
+                          {analyticsData.topProducts.slice(0, 8).map((product, index) => (
+                            <div key={`${product.product_name}-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <div className="flex items-center">
+                                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                  <span className="text-sm font-semibold text-green-600">
+                                    #{index + 1}
+                                  </span>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-900">{product.product_name}</p>
+                                  <p className="text-sm text-gray-500">{product.category}</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-semibold text-green-600">
+                                  {product.total_quantity} un.
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  €{(product.total_revenue / 100).toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Estatísticas de Produtos */}
+                      <div className="bg-white rounded-lg border border-gray-200 p-6">
+                        <h4 className="text-lg font-semibold mb-4 flex items-center">
+                          <BarChart3 className="w-5 h-5 mr-2 text-blue-600" />
+                          Estatísticas de Produtos
+                        </h4>
+                        <div className="space-y-6">
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm font-medium text-gray-700">Total de Categorias</span>
+                              <span className="text-sm font-bold text-blue-600">
+                                {analyticsData.categoryRevenue.length}
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div className="bg-blue-600 h-2 rounded-full" style={{width: '100%'}}></div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm font-medium text-gray-700">Produtos Únicos</span>
+                              <span className="text-sm font-bold text-green-600">
+                                {analyticsData.topProducts.length}
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div className="bg-green-600 h-2 rounded-full" style={{width: '85%'}}></div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm font-medium text-gray-700">Categoria Líder</span>
+                              <span className="text-sm font-bold text-purple-600">
+                                {analyticsData.categoryRevenue[0]?.category || 'N/A'}
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div className="bg-purple-600 h-2 rounded-full" style={{width: '90%'}}></div>
+                            </div>
+                          </div>
+
+                          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 mt-4">
+                            <h5 className="font-semibold text-gray-800 mb-2">Produto Destaque</h5>
+                            <p className="text-lg font-bold text-indigo-600">
+                              {analyticsData.topProducts[0]?.product_name || 'Nenhum produto'}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {analyticsData.topProducts[0]?.total_quantity} unidades vendidas
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
