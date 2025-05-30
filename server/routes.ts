@@ -104,7 +104,7 @@ router.get("/api/users", isAuthenticated, async (req, res) => {
   try {
     const users = await queryClient`
       SELECT id, username, email, first_name, last_name, phone, role, status, 
-             loyalty_points, member_since, last_login
+             loyalty_points, member_since, last_login, balance
       FROM users
       ORDER BY last_name, first_name
     `;
