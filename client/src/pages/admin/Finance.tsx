@@ -139,6 +139,25 @@ interface AnalyticsData {
     total_spent: number;
     transaction_count: number;
   }[];
+  topProducts: {
+    product_name: string;
+    category: string;
+    total_quantity: number;
+    total_revenue: number;
+    order_count: number;
+  }[];
+  categoryRevenue: {
+    category: string;
+    revenue: number;
+    quantity: number;
+  }[];
+  hourlyAnalysis: {
+    hour: number;
+    transaction_count: number;
+    revenue: number;
+  }[];
+  revenueGrowth: number;
+  previousPeriodRevenue: number;
   period: number;
 }
 

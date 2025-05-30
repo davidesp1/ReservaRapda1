@@ -1507,12 +1507,79 @@ router.get("/api/admin/analytics", isAuthenticated, async (req, res) => {
       LIMIT 10
     `;
 
+    // Análise de produtos mais vendidos (baseado nos detalhes dos pagamentos)
+    const topProducts = await queryClient`
+      SELECT 
+        items->>'name' as product_name,
+        items->>'category' as category,
+        SUM((items->>'quantity')::int) as total_quantity,
+        SUM((items->>'price')::int * (items->>'quantity')::int) as total_revenue,
+        COUNT(DISTINCT p.id) as order_count
+      FROM payments p,
+      jsonb_array_elements(p.details->'items') as items
+      WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
+        AND p.status = 'completed'
+        AND p.details ? 'items'
+      GROUP BY items->>'name', items->>'category'
+      ORDER BY SUM((items->>'quantity')::int) DESC
+      LIMIT 10
+    `;
+
+    // Receita por categoria de produtos
+    const categoryRevenue = await queryClient`
+      SELECT 
+        items->>'category' as category,
+        SUM((items->>'price')::int * (items->>'quantity')::int) as revenue,
+        SUM((items->>'quantity')::int) as quantity
+      FROM payments p,
+      jsonb_array_elements(p.details->'items') as items
+      WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
+        AND p.status = 'completed'
+        AND p.details ? 'items'
+      GROUP BY items->>'category'
+      ORDER BY SUM((items->>'price')::int * (items->>'quantity')::int) DESC
+    `;
+
+    // Análise de horários de pico
+    const hourlyAnalysis = await queryClient`
+      SELECT 
+        EXTRACT(HOUR FROM COALESCE(p.payment_date, p.created_at)) as hour,
+        COUNT(*) as transaction_count,
+        SUM(p.amount) as revenue
+      FROM payments p
+      WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
+        AND p.status = 'completed'
+      GROUP BY EXTRACT(HOUR FROM COALESCE(p.payment_date, p.created_at))
+      ORDER BY hour
+    `;
+
+    // Comparação com período anterior
+    const previousStartDate = new Date(startDate);
+    previousStartDate.setDate(previousStartDate.getDate() - days);
+    
+    const previousPeriodRevenue = await queryClient`
+      SELECT SUM(amount) as total
+      FROM payments 
+      WHERE COALESCE(payment_date, created_at) >= ${previousStartDate.toISOString()}
+        AND COALESCE(payment_date, created_at) < ${startDate.toISOString()}
+        AND status = 'completed'
+    `;
+
+    const revenueGrowth = totalRevenue[0]?.total && previousPeriodRevenue[0]?.total 
+      ? ((totalRevenue[0].total - previousPeriodRevenue[0].total) / previousPeriodRevenue[0].total) * 100
+      : 0;
+
     res.json({
       revenueByDay,
       paymentMethods,
       totalRevenue: totalRevenue[0]?.total || 0,
       totalTransactions: totalTransactions[0]?.count || 0,
       topCustomers,
+      topProducts,
+      categoryRevenue,
+      hourlyAnalysis,
+      revenueGrowth,
+      previousPeriodRevenue: previousPeriodRevenue[0]?.total || 0,
       period: days
     });
   } catch (error) {
