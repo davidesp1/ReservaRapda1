@@ -398,14 +398,14 @@ Status: PAGO
                 <meta charset="UTF-8">
                 <title>Recibo Staff - Opa que Delícia</title>
                 <style>
-                  @page { size: 58mm auto; margin: 0; }
+                  @page { size: 80mm auto; margin: 5mm; }
                   * { margin: 0; padding: 0; box-sizing: border-box; }
                   body { 
                     font-family: 'Courier New', monospace; 
-                    font-size: 10px; 
-                    line-height: 12px;
-                    width: 58mm;
-                    padding: 2mm;
+                    font-size: 12px; 
+                    line-height: 16px;
+                    width: 80mm;
+                    padding: 3mm;
                     white-space: pre-line;
                     overflow: hidden;
                     background: white;
@@ -544,8 +544,8 @@ Status: PAGO
                         <title>Recibo - Opa que Delícia</title>
                         <style>
                           @page {
-                            size: A4;
-                            margin: 15mm;
+                            size: 80mm auto;
+                            margin: 5mm;
                           }
                           * {
                             margin: 0;
@@ -554,15 +554,13 @@ Status: PAGO
                           }
                           body { 
                             font-family: 'Courier New', monospace; 
-                            font-size: 14px; 
-                            line-height: 18px;
-                            width: 100%;
-                            max-width: 80mm;
-                            padding: 5mm;
+                            font-size: 12px; 
+                            line-height: 16px;
+                            width: 80mm;
+                            padding: 3mm;
                             white-space: pre-line;
                             overflow: hidden;
                             background: white;
-                            margin: 0 auto;
                           }
                           @media print {
                             body {
