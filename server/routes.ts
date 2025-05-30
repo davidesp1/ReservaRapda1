@@ -222,42 +222,6 @@ router.put("/api/users/:id", isAuthenticated, async (req, res) => {
   }
 });
 
-// Rota para criar novo usuário
-router.post("/api/users", isAuthenticated, async (req, res) => {
-  try {
-    const { username, email, first_name, last_name, phone, role = 'customer' } = req.body;
-    
-    if (!username || !email || !first_name) {
-      return res.status(400).json({ error: "Nome de usuário, email e nome são obrigatórios" });
-    }
-
-    // Verificar se o email já existe
-    const existingUser = await queryClient`
-      SELECT id FROM users WHERE email = ${email}
-    `;
-    
-    if (existingUser.length > 0) {
-      return res.status(400).json({ error: "Email já está em uso" });
-    }
-
-    // Criar novo usuário
-    const result = await queryClient`
-      INSERT INTO users (username, email, first_name, last_name, phone, role, status, member_since)
-      VALUES (${username}, ${email}, ${first_name}, ${last_name || ''}, ${phone || ''}, ${role}, 'active', NOW())
-      RETURNING id, username, email, first_name, last_name, phone, role, status, member_since
-    `;
-    
-    if (result.length === 0) {
-      return res.status(500).json({ error: "Erro ao criar usuário" });
-    }
-    
-    res.status(201).json(result[0]);
-  } catch (err: any) {
-    console.error("Erro ao criar usuário:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // Rotas de mesas usando queryClient para SQL direto
 router.get("/api/tables", async (req, res) => {
   try {
