@@ -24,14 +24,13 @@ export function POSSettingsContent() {
             padding: 0 !important;
             font-family: 'Courier New', monospace !important;
             font-size: 16px !important;
-            font-weight: 900 !important;
+            font-weight: 1000 !important;
             line-height: 20px !important;
             white-space: pre-wrap !important;
             background: white !important;
             color: #000 !important;
             text-rendering: optimizeLegibility !important;
             -webkit-font-smoothing: none !important;
-            text-shadow: 0.5px 0.5px 0px #000 !important;
           }
         }
         
@@ -40,14 +39,13 @@ export function POSSettingsContent() {
           padding: 0;
           font-family: 'Courier New', monospace;
           font-size: 16px;
-          font-weight: 900;
+          font-weight: 1000;
           line-height: 20px;
           white-space: pre-wrap;
           background: white;
           color: #000;
           text-rendering: optimizeLegibility;
           -webkit-font-smoothing: none;
-          text-shadow: 0.5px 0.5px 0px #000;
         }
       `;
 

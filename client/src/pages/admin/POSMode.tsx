@@ -403,7 +403,7 @@ Status: PAGO
                   body { 
                     font-family: 'Courier New', monospace; 
                     font-size: 16px; 
-                    font-weight: 900;
+                    font-weight: 1000;
                     line-height: 20px;
                     width: 80mm;
                     padding: 3mm;
@@ -413,7 +413,6 @@ Status: PAGO
                     color: #000;
                     text-rendering: optimizeLegibility;
                     -webkit-font-smoothing: none;
-                    text-shadow: 0.5px 0.5px 0px #000;
                   }
                 </style>
               </head>
@@ -560,7 +559,7 @@ Status: PAGO
                           body { 
                             font-family: 'Courier New', monospace; 
                             font-size: 16px; 
-                            font-weight: 900;
+                            font-weight: 1000;
                             line-height: 20px;
                             width: 80mm;
                             padding: 3mm;
@@ -570,7 +569,6 @@ Status: PAGO
                             color: #000;
                             text-rendering: optimizeLegibility;
                             -webkit-font-smoothing: none;
-                            text-shadow: 0.5px 0.5px 0px #000;
                           }
                           @media print {
                             body {
@@ -817,7 +815,7 @@ Status: PAGO
                     body { 
                       font-family: 'Courier New', monospace; 
                       font-size: 16px; 
-                      font-weight: 900;
+                      font-weight: 1000;
                       line-height: 20px;
                       width: 80mm;
                       padding: 3mm;
@@ -827,7 +825,6 @@ Status: PAGO
                       color: #000;
                       text-rendering: optimizeLegibility;
                       -webkit-font-smoothing: none;
-                      text-shadow: 0.5px 0.5px 0px #000;
                       background: white;
                     }
                     @media print {
