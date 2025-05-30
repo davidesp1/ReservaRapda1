@@ -47,6 +47,32 @@ import {
   Target,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from 'chart.js';
+
+// Registrar componentes do Chart.js
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 interface Payment {
   id: number;
@@ -91,6 +117,31 @@ interface Reservation {
   eupago_reference: string;
 }
 
+interface AnalyticsData {
+  revenueByDay: {
+    date: string;
+    revenue: number;
+    count: number;
+  }[];
+  paymentMethods: {
+    method: string;
+    count: number;
+    revenue: number;
+  }[];
+  totalRevenue: number;
+  totalTransactions: number;
+  topCustomers: {
+    user_id: number;
+    username: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    total_spent: number;
+    transaction_count: number;
+  }[];
+  period: number;
+}
+
 const Finance: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, isAdmin, user } = useAuth();
@@ -109,6 +160,7 @@ const Finance: React.FC = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [analyticsPeriod, setAnalyticsPeriod] = useState("30");
   const { toast } = useToast();
 
   // Fetch payments com atualização em tempo real
@@ -129,6 +181,13 @@ const Finance: React.FC = () => {
     enabled: isAuthenticated && isAdmin,
     refetchInterval: 10000,
     refetchIntervalInBackground: true,
+  });
+
+  // Fetch analytics data
+  const { data: analyticsData, isLoading: analyticsLoading } = useQuery<AnalyticsData>({
+    queryKey: ['/api/admin/analytics', analyticsPeriod],
+    enabled: isAuthenticated && isAdmin && currentTab === 'analise',
+    refetchInterval: 30000,
   });
 
   // Aplicar filtros
@@ -1526,11 +1585,259 @@ const Finance: React.FC = () => {
           )}
 
           {currentTab === "analise" && (
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Análise Financeira</h3>
-              <p className="text-gray-600">
-                Gráficos e análises detalhadas serão implementados aqui.
-              </p>
+            <div className="space-y-6">
+              {/* Filtros de Período */}
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-800 flex items-center">
+                    <BarChart3 className="w-6 h-6 mr-2 text-blue-600" />
+                    Análise Financeira
+                  </h3>
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium text-gray-700">Período:</label>
+                    <Select value={analyticsPeriod} onValueChange={setAnalyticsPeriod}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="7">7 dias</SelectItem>
+                        <SelectItem value="30">30 dias</SelectItem>
+                        <SelectItem value="90">90 dias</SelectItem>
+                        <SelectItem value="365">1 ano</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {analyticsLoading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : analyticsData ? (
+                  <>
+                    {/* Métricas Principais */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-blue-100 text-sm font-medium">Receita Total</p>
+                            <p className="text-2xl font-bold">
+                              {(analyticsData.totalRevenue / 100).toLocaleString('pt-PT', {
+                                style: 'currency',
+                                currency: 'EUR'
+                              })}
+                            </p>
+                          </div>
+                          <Euro className="w-8 h-8 text-blue-200" />
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-green-100 text-sm font-medium">Total de Transações</p>
+                            <p className="text-2xl font-bold">{analyticsData.totalTransactions}</p>
+                          </div>
+                          <CreditCard className="w-8 h-8 text-green-200" />
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-purple-100 text-sm font-medium">Ticket Médio</p>
+                            <p className="text-2xl font-bold">
+                              {analyticsData.totalTransactions > 0 
+                                ? ((analyticsData.totalRevenue / analyticsData.totalTransactions) / 100).toLocaleString('pt-PT', {
+                                    style: 'currency',
+                                    currency: 'EUR'
+                                  })
+                                : '€0,00'
+                              }
+                            </p>
+                          </div>
+                          <Target className="w-8 h-8 text-purple-200" />
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-6 text-white">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-orange-100 text-sm font-medium">Clientes Únicos</p>
+                            <p className="text-2xl font-bold">{analyticsData.topCustomers.length}</p>
+                          </div>
+                          <Users className="w-8 h-8 text-orange-200" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Gráficos */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                      {/* Gráfico de Receita por Dia */}
+                      <div className="bg-gray-50 rounded-lg p-6">
+                        <h4 className="text-lg font-semibold mb-4 flex items-center">
+                          <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+                          Receita por Dia
+                        </h4>
+                        <div className="h-64">
+                          <Line
+                            data={{
+                              labels: analyticsData.revenueByDay.map(item => 
+                                new Date(item.date).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' })
+                              ),
+                              datasets: [{
+                                label: 'Receita (€)',
+                                data: analyticsData.revenueByDay.map(item => item.revenue / 100),
+                                borderColor: 'rgb(59, 130, 246)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                              }]
+                            }}
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: false,
+                              scales: {
+                                y: {
+                                  beginAtZero: true,
+                                  ticks: {
+                                    callback: function(value) {
+                                      return '€' + Number(value).toFixed(2);
+                                    }
+                                  }
+                                }
+                              },
+                              plugins: {
+                                tooltip: {
+                                  callbacks: {
+                                    label: function(context) {
+                                      return 'Receita: €' + Number(context.parsed.y).toFixed(2);
+                                    }
+                                  }
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Gráfico de Métodos de Pagamento */}
+                      <div className="bg-gray-50 rounded-lg p-6">
+                        <h4 className="text-lg font-semibold mb-4 flex items-center">
+                          <PieChart className="w-5 h-5 mr-2 text-green-600" />
+                          Métodos de Pagamento
+                        </h4>
+                        <div className="h-64">
+                          <Doughnut
+                            data={{
+                              labels: analyticsData.paymentMethods.map(method => {
+                                const methodNames = {
+                                  cash: 'Dinheiro',
+                                  card: 'Cartão',
+                                  mbway: 'MB Way',
+                                  multibanco: 'Multibanco',
+                                  multibanco_TPA: 'Multibanco (TPA)',
+                                  transfer: 'Transferência'
+                                };
+                                return methodNames[method.method as keyof typeof methodNames] || method.method;
+                              }),
+                              datasets: [{
+                                data: analyticsData.paymentMethods.map(method => method.revenue / 100),
+                                backgroundColor: [
+                                  '#10b981',
+                                  '#3b82f6',
+                                  '#8b5cf6',
+                                  '#f59e0b',
+                                  '#ef4444',
+                                  '#06b6d4'
+                                ],
+                                borderWidth: 2,
+                                borderColor: '#ffffff'
+                              }]
+                            }}
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: false,
+                              plugins: {
+                                tooltip: {
+                                  callbacks: {
+                                    label: function(context) {
+                                      const value = Number(context.parsed);
+                                      const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                                      const percentage = ((value / total) * 100).toFixed(1);
+                                      return `${context.label}: €${value.toFixed(2)} (${percentage}%)`;
+                                    }
+                                  }
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Top Clientes */}
+                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                      <h4 className="text-lg font-semibold mb-4 flex items-center">
+                        <Users className="w-5 h-5 mr-2 text-purple-600" />
+                        Top Clientes (Últimos {analyticsPeriod} dias)
+                      </h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                              <th className="text-left py-3 px-2 font-semibold text-gray-700">Cliente</th>
+                              <th className="text-left py-3 px-2 font-semibold text-gray-700">Email</th>
+                              <th className="text-center py-3 px-2 font-semibold text-gray-700">Transações</th>
+                              <th className="text-right py-3 px-2 font-semibold text-gray-700">Total Gasto</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {analyticsData.topCustomers.map((customer, index) => (
+                              <tr key={customer.user_id} className="border-b border-gray-100 hover:bg-gray-50">
+                                <td className="py-3 px-2">
+                                  <div className="flex items-center">
+                                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                      <span className="text-sm font-semibold text-blue-600">
+                                        #{index + 1}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-gray-900">
+                                        {customer.first_name || customer.last_name 
+                                          ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim()
+                                          : customer.username
+                                        }
+                                      </p>
+                                      <p className="text-sm text-gray-500">@{customer.username}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-2 text-gray-600">{customer.email}</td>
+                                <td className="py-3 px-2 text-center">
+                                  <Badge variant="secondary">{customer.transaction_count}</Badge>
+                                </td>
+                                <td className="py-3 px-2 text-right font-semibold text-green-600">
+                                  {(customer.total_spent / 100).toLocaleString('pt-PT', {
+                                    style: 'currency',
+                                    currency: 'EUR'
+                                  })}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500 text-lg">Nenhum dado disponível para análise</p>
+                    <p className="text-gray-400 text-sm">Tente ajustar o período ou verificar se há transações registradas</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
