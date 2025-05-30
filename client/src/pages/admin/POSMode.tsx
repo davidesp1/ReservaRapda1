@@ -12,6 +12,7 @@ interface MenuItem {
   price: number;
   categoryId: number;
   image: string;
+  stock: number;
   category: {
     id: number;
     name: string;
@@ -129,9 +130,36 @@ const POSMode = () => {
   };
   
   const handleAddItem = (item: MenuItem) => {
+    // Verificar stock disponível
+    if (item.stock <= 0) {
+      import('sweetalert2').then((Swal) => {
+        Swal.default.fire({
+          title: 'Stock Esgotado',
+          text: `O item "${item.name}" não tem stock disponível.`,
+          icon: 'warning',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#f97316'
+        });
+      });
+      return;
+    }
+
     setOrderItems(prev => {
       const existingItem = prev.find(i => i.menuItem.id === item.id);
       if (existingItem) {
+        // Verificar se a quantidade no carrinho + 1 não excede o stock
+        if (existingItem.quantity >= item.stock) {
+          import('sweetalert2').then((Swal) => {
+            Swal.default.fire({
+              title: 'Stock Insuficiente',
+              text: `Apenas ${item.stock} unidades disponíveis de "${item.name}".`,
+              icon: 'warning',
+              confirmButtonText: 'OK',
+              confirmButtonColor: '#f97316'
+            });
+          });
+          return prev;
+        }
         return prev.map(i => 
           i.menuItem.id === item.id 
             ? { ...i, quantity: i.quantity + 1 } 
@@ -1023,36 +1051,61 @@ PAGAMENTO: DINHEIRO
               <div key={categoryData.category.id} className="mb-8">
                 <h2 className="text-lg font-semibold text-gray-700 mb-3">{categoryData.category.name}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {categoryData.items && categoryData.items.map((item: any) => (
-                    <div 
-                      key={item.id} 
-                      className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition"
-                      onClick={() => handleAddItem({
-                        ...item,
-                        category: categoryData.category
-                      })}
-                    >
-                      <div className="h-32 w-full overflow-hidden">
-                        {item.image_url ? (
-                          <img 
-                            src={item.image_url} 
-                            alt={item.name} 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center h-full bg-gray-200 text-gray-500">
-                            {t('Sem imagem')}
+                  {categoryData.items && categoryData.items.map((item: any) => {
+                    const isOutOfStock = item.stock <= 0;
+                    return (
+                      <div 
+                        key={item.id} 
+                        className={`bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm transition relative ${
+                          isOutOfStock 
+                            ? 'opacity-60 cursor-not-allowed' 
+                            : 'hover:shadow-md cursor-pointer'
+                        }`}
+                        onClick={() => {
+                          if (!isOutOfStock) {
+                            handleAddItem({
+                              ...item,
+                              category: categoryData.category
+                            });
+                          }
+                        }}
+                      >
+                        <div className="h-32 w-full overflow-hidden relative">
+                          {item.image_url ? (
+                            <img 
+                              src={item.image_url} 
+                              alt={item.name} 
+                              className={`w-full h-full object-cover ${isOutOfStock ? 'grayscale' : ''}`}
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full bg-gray-200 text-gray-500">
+                              {t('Sem imagem')}
+                            </div>
+                          )}
+                          {isOutOfStock && (
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                              <span className="text-white font-bold text-sm bg-red-600 px-2 py-1 rounded">
+                                SEM STOCK
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-3">
+                          <h3 className={`font-medium ${isOutOfStock ? 'text-gray-500' : 'text-gray-800'}`}>
+                            {item.name}
+                          </h3>
+                          <div className="flex justify-between items-center mt-2">
+                            <span className={`font-bold ${isOutOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                              {formatPrice(item.price)}
+                            </span>
+                            <span className={`text-xs ${isOutOfStock ? 'text-red-500' : 'text-gray-500'}`}>
+                              Stock: {item.stock}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                      <div className="p-3">
-                        <h3 className="font-medium text-gray-800">{item.name}</h3>
-                        <div className="flex justify-between items-center mt-2">
-                          <span className="font-bold text-primary">{formatPrice(item.price)}</span>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))
