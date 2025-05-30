@@ -185,16 +185,13 @@ Recibo: #${receiptNumber}
 ITENS DO PEDIDO:
 ----------------------------------------
 ${orderItems.map(item => {
-  const itemTotal = (item.menuItem.price * item.quantity / 100).toFixed(2);
-  const itemName = item.menuItem.name.length > 18 ? 
-    item.menuItem.name.substring(0, 18) + '...' : 
+  const itemName = item.menuItem.name.length > 20 ? 
+    item.menuItem.name.substring(0, 20) + '...' : 
     item.menuItem.name;
-  return `${item.quantity}x ${itemName.padEnd(20)} €${itemTotal}`;
+  return `${item.quantity}x ${itemName}`;
 }).join('\n')}
 ----------------------------------------
-Subtotal:               €${(totalPrice / 100).toFixed(2)}
-IVA (23%):              €${(totalPrice * 0.23 / 100).toFixed(2)}
-TOTAL:                  €${(totalPrice * 1.23 / 100).toFixed(2)}
+TOTAL:                  €${(totalPrice / 100).toFixed(2)}
 
 Pagamento: ${selectedPaymentMethod?.toUpperCase() || 'N/A'}
 Status: PAGO
@@ -895,16 +892,13 @@ Recibo: #${receiptNumber}
 ITENS DO PEDIDO:
 ----------------------------------------
 ${orderItems.map(item => {
-  const itemTotal = (item.menuItem.price * item.quantity / 100).toFixed(2);
-  const itemName = item.menuItem.name.length > 18 ? 
-    item.menuItem.name.substring(0, 18) + '...' : 
+  const itemName = item.menuItem.name.length > 20 ? 
+    item.menuItem.name.substring(0, 20) + '...' : 
     item.menuItem.name;
-  return `${item.quantity}x ${itemName.padEnd(20)} €${itemTotal}`;
+  return `${item.quantity}x ${itemName}`;
 }).join('\n')}
 ----------------------------------------
-Subtotal:               €${(totalPrice / 100).toFixed(2)}
-IVA (23%):              €${(totalPrice * 0.23 / 100).toFixed(2)}
-TOTAL:                  €${(totalPrice * 1.23 / 100).toFixed(2)}
+TOTAL:                  €${(totalPrice / 100).toFixed(2)}
 
 Pagamento: STAFF
 Status: PENDENTE
@@ -933,10 +927,9 @@ ITENS:
 `;
 
     orderItems.forEach(item => {
-      const itemTotal = (item.menuItem.price * item.quantity) / 100;
       receipt += `
 ${item.menuItem.name}
-${item.quantity}x ${formatPrice(item.menuItem.price)} = €${itemTotal.toFixed(2)}`;
+${item.quantity}x`;
     });
 
     const total = totalPrice / 100;
