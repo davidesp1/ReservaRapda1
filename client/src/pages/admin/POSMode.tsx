@@ -144,22 +144,27 @@ const POSMode = () => {
       return;
     }
 
+    // Verificar quantidade atual no carrinho
+    const existingItem = orderItems.find(i => i.menuItem.id === item.id);
+    const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
+    
+    // Verificar se adicionar mais 1 unidade ultrapassaria o stock
+    if (currentQuantityInCart >= item.stock) {
+      import('sweetalert2').then((Swal) => {
+        Swal.default.fire({
+          title: 'Stock Insuficiente',
+          text: `Apenas ${item.stock} unidades disponíveis de "${item.name}". Já tem ${currentQuantityInCart} no carrinho.`,
+          icon: 'warning',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#f97316'
+        });
+      });
+      return;
+    }
+
     setOrderItems(prev => {
       const existingItem = prev.find(i => i.menuItem.id === item.id);
       if (existingItem) {
-        // Verificar se a quantidade no carrinho + 1 não excede o stock
-        if (existingItem.quantity >= item.stock) {
-          import('sweetalert2').then((Swal) => {
-            Swal.default.fire({
-              title: 'Stock Insuficiente',
-              text: `Apenas ${item.stock} unidades disponíveis de "${item.name}".`,
-              icon: 'warning',
-              confirmButtonText: 'OK',
-              confirmButtonColor: '#f97316'
-            });
-          });
-          return prev;
-        }
         return prev.map(i => 
           i.menuItem.id === item.id 
             ? { ...i, quantity: i.quantity + 1 } 
