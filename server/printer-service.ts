@@ -187,17 +187,17 @@ export class PrinterService {
         
         printers.push(
           {
-            id: 'dev-thermal-58mm',
-            name: 'Impressora Térmica 58mm (Desenvolvimento)',
-            description: 'Impressora térmica simulada para desenvolvimento - 58mm',
+            id: 'dev-thermal-80mm',
+            name: 'Impressora Térmica 80mm (Desenvolvimento)',
+            description: 'Impressora térmica simulada para desenvolvimento - 80mm',
             status: 'online',
             type: 'thermal',
             location: 'Simulada - Para desenvolvimento'
           },
           {
-            id: 'dev-thermal-80mm',
-            name: 'Impressora Térmica 80mm (Desenvolvimento)',
-            description: 'Impressora térmica simulada para desenvolvimento - 80mm',
+            id: 'dev-thermal-58mm',
+            name: 'Impressora Térmica 58mm (Desenvolvimento)',
+            description: 'Impressora térmica simulada para desenvolvimento - 58mm',
             status: 'online',
             type: 'thermal',
             location: 'Simulada - Para desenvolvimento'

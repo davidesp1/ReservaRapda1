@@ -415,14 +415,14 @@ Status: PAGO
                     <meta charset="UTF-8">
                     <title>Recibo Staff - Opa que Delícia</title>
                     <style>
-                      @page { size: 58mm auto; margin: 0; }
+                      @page { size: 80mm auto; margin: 0; }
                       * { margin: 0; padding: 0; box-sizing: border-box; }
                       body { 
                         font-family: 'Courier New', monospace; 
-                        font-size: 10px; 
-                        line-height: 12px;
-                        width: 58mm;
-                        padding: 2mm;
+                        font-size: 12px; 
+                        line-height: 14px;
+                        width: 80mm;
+                        padding: 3mm;
                         white-space: pre-line;
                         overflow: hidden;
                         background: white;
