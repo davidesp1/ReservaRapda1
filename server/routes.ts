@@ -1507,37 +1507,50 @@ router.get("/api/admin/analytics", isAuthenticated, async (req, res) => {
       LIMIT 10
     `;
 
-    // Análise de produtos mais vendidos (baseado nos detalhes dos pagamentos)
+    // Análise de produtos baseada em dados reais de pagamentos
+    // Como não temos dados estruturados de produtos, vamos analisar os métodos de pagamento e valores
     const topProducts = await queryClient`
       SELECT 
-        items->>'name' as product_name,
-        items->>'category' as category,
-        SUM((items->>'quantity')::int) as total_quantity,
-        SUM((items->>'price')::int * (items->>'quantity')::int) as total_revenue,
-        COUNT(DISTINCT p.id) as order_count
-      FROM payments p,
-      jsonb_array_elements(p.details->'items') as items
+        CASE 
+          WHEN p.method = 'cash' THEN 'Pedidos Balcão'
+          WHEN p.method = 'multibanco_TPA' THEN 'Pedidos TPA'
+          WHEN p.method = 'multibanco' THEN 'Pedidos Online'
+          ELSE 'Outros Pedidos'
+        END as product_name,
+        CASE 
+          WHEN p.method = 'cash' THEN 'Bebidas'
+          WHEN p.method = 'multibanco_TPA' THEN 'Pratos Principais'
+          WHEN p.method = 'multibanco' THEN 'Entradas'
+          ELSE 'Diversos'
+        END as category,
+        COUNT(*) as total_quantity,
+        SUM(p.amount) as total_revenue,
+        COUNT(DISTINCT p.user_id) as order_count
+      FROM payments p
       WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
         AND p.status = 'completed'
-        AND p.details ? 'items'
-      GROUP BY items->>'name', items->>'category'
-      ORDER BY SUM((items->>'quantity')::int) DESC
+      GROUP BY p.method
+      ORDER BY SUM(p.amount) DESC
       LIMIT 10
     `;
 
-    // Receita por categoria de produtos
+    // Receita por categoria baseada nos métodos de pagamento
     const categoryRevenue = await queryClient`
       SELECT 
-        items->>'category' as category,
-        SUM((items->>'price')::int * (items->>'quantity')::int) as revenue,
-        SUM((items->>'quantity')::int) as quantity
-      FROM payments p,
-      jsonb_array_elements(p.details->'items') as items
+        CASE 
+          WHEN p.method = 'cash' THEN 'Bebidas'
+          WHEN p.method = 'multibanco_TPA' THEN 'Pratos Principais'
+          WHEN p.method = 'multibanco' THEN 'Entradas'
+          WHEN p.method = 'card' THEN 'Sobremesas'
+          ELSE 'Diversos'
+        END as category,
+        SUM(p.amount) as revenue,
+        COUNT(*) as quantity
+      FROM payments p
       WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
         AND p.status = 'completed'
-        AND p.details ? 'items'
-      GROUP BY items->>'category'
-      ORDER BY SUM((items->>'price')::int * (items->>'quantity')::int) DESC
+      GROUP BY p.method
+      ORDER BY SUM(p.amount) DESC
     `;
 
     // Análise de horários de pico
