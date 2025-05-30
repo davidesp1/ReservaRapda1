@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, UserPlus, Eye, Edit, Trash2, Key, Lock } from 'lucide-react';
+import { Search, UserPlus, Eye, Edit, Trash2, Key, Lock, Plus, Minus, Euro } from 'lucide-react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -47,6 +47,9 @@ const Customers: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
+  const [balanceAmount, setBalanceAmount] = useState('');
+  const [balanceOperation, setBalanceOperation] = useState<'add' | 'remove'>('add');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -214,6 +217,7 @@ const Customers: React.FC = () => {
                   <TableHead>{t('Email')}</TableHead>
                   <TableHead>{t('Username')}</TableHead>
                   <TableHead>{t('Phone')}</TableHead>
+                  <TableHead className="text-center">{t('Balance')}</TableHead>
                   <TableHead className="text-right">{t('Actions')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -227,6 +231,29 @@ const Customers: React.FC = () => {
                       <TableCell>{customer.email}</TableCell>
                       <TableCell>{customer.username}</TableCell>
                       <TableCell>{customer.phone || '-'}</TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center space-x-2">
+                          <span className="font-medium">€{((customer.balance || 0) / 100).toFixed(2)}</span>
+                          <div className="flex space-x-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleBalanceOperation(customer, 'add')}
+                              className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleBalanceOperation(customer, 'remove')}
+                              className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
                           <Button variant="ghost" size="icon" onClick={() => handleViewCustomer(customer)}>
