@@ -118,6 +118,34 @@ const Customers: React.FC = () => {
       });
     }
   });
+
+  // Mutation para atualizar saldo do cliente
+  const updateBalanceMutation = useMutation({
+    mutationFn: async ({ userId, amount, operation }: { userId: number, amount: number, operation: 'add' | 'remove' }) => {
+      const response = await apiRequest('POST', '/api/users/balance', { userId, amount, operation });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao atualizar saldo');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: t('Success'),
+        description: balanceOperation === 'add' ? t('BalanceAdded') : t('BalanceRemoved'),
+      });
+      setIsBalanceModalOpen(false);
+      setBalanceAmount('');
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t('Error'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  });
   
   // Abrir modal de visualização do cliente
   const handleViewCustomer = (customer: any) => {
@@ -146,6 +174,14 @@ const Customers: React.FC = () => {
     setSelectedCustomer(customer);
     setIsDeleteModalOpen(true);
   };
+
+  // Função para abrir modal de saldo
+  const handleBalanceOperation = (customer: any, operation: 'add' | 'remove') => {
+    setSelectedCustomer(customer);
+    setBalanceOperation(operation);
+    setBalanceAmount('');
+    setIsBalanceModalOpen(true);
+  };
   
   // Enviar o formulário de edição
   const onSubmit = (data: any) => {
@@ -165,6 +201,28 @@ const Customers: React.FC = () => {
     };
     
     updateUserMutation.mutate(userData);
+  };
+
+  // Função para processar alteração de saldo
+  const handleBalanceSubmit = () => {
+    const amount = parseFloat(balanceAmount);
+    if (!amount || amount <= 0) {
+      toast({
+        title: t('Error'),
+        description: 'Por favor, insira um valor válido',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Converter para centavos
+    const amountInCents = Math.round(amount * 100);
+
+    updateBalanceMutation.mutate({
+      userId: selectedCustomer.id,
+      amount: amountInCents,
+      operation: balanceOperation
+    });
   };
   
   if (customersLoading) {
@@ -575,6 +633,83 @@ const Customers: React.FC = () => {
               }}
             >
               {t('DeleteCustomer')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Balance Management Dialog */}
+      <Dialog open={isBalanceModalOpen} onOpenChange={setIsBalanceModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Euro className="h-5 w-5 text-green-600" />
+              <span>
+                {balanceOperation === 'add' ? 'Adicionar Saldo' : 'Remover Saldo'}
+              </span>
+            </DialogTitle>
+            <DialogDescription>
+              {selectedCustomer && `Cliente: ${selectedCustomer.first_name} ${selectedCustomer.last_name}`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {selectedCustomer && (
+              <div className="bg-gray-50 p-3 rounded-md">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">Saldo Atual:</span>
+                  <span className="text-lg font-bold text-gray-900">
+                    €{((selectedCustomer.balance || 0) / 100).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            <div>
+              <Label htmlFor="balanceAmount">
+                {balanceOperation === 'add' ? 'Valor a Adicionar' : 'Valor a Remover'} (€)
+              </Label>
+              <Input
+                id="balanceAmount"
+                type="number"
+                step="0.01"
+                min="0.01"
+                placeholder="0.00"
+                value={balanceAmount}
+                onChange={(e) => setBalanceAmount(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            
+            <div className={`p-3 rounded-md ${balanceOperation === 'add' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+              <div className="flex items-center">
+                {balanceOperation === 'add' ? (
+                  <Plus className="h-4 w-4 text-green-600 mr-2" />
+                ) : (
+                  <Minus className="h-4 w-4 text-red-600 mr-2" />
+                )}
+                <span className={`text-sm font-medium ${balanceOperation === 'add' ? 'text-green-800' : 'text-red-800'}`}>
+                  {balanceOperation === 'add' 
+                    ? 'O valor será adicionado ao saldo do cliente' 
+                    : 'O valor será removido do saldo do cliente'
+                  }
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter className="pt-4">
+            <Button variant="outline" onClick={() => setIsBalanceModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleBalanceSubmit}
+              disabled={updateBalanceMutation.isPending}
+              className={balanceOperation === 'add' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+            >
+              {updateBalanceMutation.isPending ? 'Processando...' : (
+                balanceOperation === 'add' ? 'Adicionar Saldo' : 'Remover Saldo'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
