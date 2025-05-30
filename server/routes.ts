@@ -2535,4 +2535,108 @@ router.post("/api/printers/print-receipt", async (req, res) => {
   }
 });
 
+// Admin: Financial Analytics Data
+app.get('/api/admin/analytics', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { period = '30' } = req.query;
+    const days = parseInt(period as string);
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Receita por período
+    const revenueByDay = await db
+      .select({
+        date: sql<string>`DATE(${payments.created_at})`,
+        revenue: sql<number>`SUM(${payments.amount})`,
+        count: sql<number>`COUNT(*)`
+      })
+      .from(payments)
+      .where(
+        and(
+          gte(payments.created_at, startDate),
+          eq(payments.status, 'completed')
+        )
+      )
+      .groupBy(sql`DATE(${payments.created_at})`)
+      .orderBy(sql`DATE(${payments.created_at})`);
+
+    // Métodos de pagamento populares
+    const paymentMethods = await db
+      .select({
+        method: payments.method,
+        count: sql<number>`COUNT(*)`,
+        revenue: sql<number>`SUM(${payments.amount})`
+      })
+      .from(payments)
+      .where(
+        and(
+          gte(payments.created_at, startDate),
+          eq(payments.status, 'completed')
+        )
+      )
+      .groupBy(payments.method)
+      .orderBy(desc(sql`COUNT(*)`));
+
+    // Estatísticas gerais
+    const totalRevenue = await db
+      .select({
+        total: sql<number>`SUM(${payments.amount})`
+      })
+      .from(payments)
+      .where(
+        and(
+          gte(payments.created_at, startDate),
+          eq(payments.status, 'completed')
+        )
+      );
+
+    const totalTransactions = await db
+      .select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(payments)
+      .where(
+        and(
+          gte(payments.created_at, startDate),
+          eq(payments.status, 'completed')
+        )
+      );
+
+    // Top clientes
+    const topCustomers = await db
+      .select({
+        user_id: payments.user_id,
+        username: users.username,
+        first_name: users.first_name,
+        last_name: users.last_name,
+        email: users.email,
+        total_spent: sql<number>`SUM(${payments.amount})`,
+        transaction_count: sql<number>`COUNT(*)`
+      })
+      .from(payments)
+      .leftJoin(users, eq(payments.user_id, users.id))
+      .where(
+        and(
+          gte(payments.created_at, startDate),
+          eq(payments.status, 'completed')
+        )
+      )
+      .groupBy(payments.user_id, users.username, users.first_name, users.last_name, users.email)
+      .orderBy(desc(sql`SUM(${payments.amount})`))
+      .limit(10);
+
+    res.json({
+      revenueByDay,
+      paymentMethods,
+      totalRevenue: totalRevenue[0]?.total || 0,
+      totalTransactions: totalTransactions[0]?.count || 0,
+      topCustomers,
+      period: days
+    });
+  } catch (error) {
+    console.error('Erro ao buscar dados de análise:', error);
+    res.status(500).json({ message: 'Erro interno do servidor' });
+  }
+});
+
 export default router;

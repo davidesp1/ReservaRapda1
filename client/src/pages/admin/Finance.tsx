@@ -39,6 +39,12 @@ import {
   FileText,
   FileSpreadsheet,
   FileType,
+  BarChart3,
+  PieChart,
+  Users,
+  Euro,
+  Calendar,
+  Target,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
