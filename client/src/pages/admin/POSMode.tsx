@@ -384,63 +384,44 @@ Status: PAGO
       // Imprimir automaticamente o recibo do pedido staff
       const receiptContent = generateStaffReceipt();
       
-      // Tentar primeiro com as configurações de impressora POS
       if ((window as any).printReceiptWithSettings) {
-        console.log("🖨️ Imprimindo recibo staff automaticamente via POS");
+        console.log("🖨️ Imprimindo recibo staff automaticamente");
         (window as any).printReceiptWithSettings(receiptContent);
       } else {
-        // Usar API de impressão do servidor
-        console.log("🖨️ Enviando para impressão via servidor");
-        fetch('/api/printers/print-receipt', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            content: receiptContent,
-            orderId: result.order?.id || 'staff-order'
-          })
-        }).then(printResponse => {
-          if (printResponse.ok) {
-            console.log("✅ Recibo enviado para impressão com sucesso");
-          } else {
-            console.log("⚠️ Erro na impressão via servidor, usando fallback");
-            // Fallback para impressão no navegador
-            const printWindow = window.open('', '_blank');
-            if (printWindow) {
-              const html = `
-                <!DOCTYPE html>
-                <html>
-                  <head>
-                    <meta charset="UTF-8">
-                    <title>Recibo Staff - Opa que Delícia</title>
-                    <style>
-                      @page { size: 80mm auto; margin: 0; }
-                      * { margin: 0; padding: 0; box-sizing: border-box; }
-                      body { 
-                        font-family: 'Courier New', monospace; 
-                        font-size: 12px; 
-                        line-height: 14px;
-                        width: 80mm;
-                        padding: 3mm;
-                        white-space: pre-line;
-                        overflow: hidden;
-                        background: white;
-                      }
-                    </style>
-                  </head>
-                  <body>${receiptContent}</body>
-                </html>
-              `;
-              printWindow.document.write(html);
-              printWindow.document.close();
-              printWindow.print();
-              printWindow.close();
-            }
-          }
-        }).catch(error => {
-          console.error("Erro na impressão:", error);
-        });
+        // Fallback para impressão básica
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          const html = `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="UTF-8">
+                <title>Recibo Staff - Opa que Delícia</title>
+                <style>
+                  @page { size: 58mm auto; margin: 0; }
+                  * { margin: 0; padding: 0; box-sizing: border-box; }
+                  body { 
+                    font-family: 'Courier New', monospace; 
+                    font-size: 10px; 
+                    line-height: 12px;
+                    width: 58mm;
+                    padding: 2mm;
+                    white-space: pre-line;
+                    overflow: hidden;
+                    background: white;
+                  }
+                </style>
+              </head>
+              <body>${receiptContent}</body>
+            </html>
+          `;
+          printWindow.document.write(html);
+          printWindow.document.close();
+          setTimeout(() => {
+            printWindow.print();
+            setTimeout(() => printWindow.close(), 1000);
+          }, 500);
+        }
       }
 
       // Mostrar confirmação de sucesso

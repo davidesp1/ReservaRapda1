@@ -2617,11 +2617,9 @@ router.post("/api/printers/print-receipt", async (req, res) => {
       });
     }
     
-    // Priorizar impressoras térmicas de 80mm, depois 58mm, depois qualquer térmica
-    const thermal80mm = printers.find(p => p.type === 'thermal' && p.description.includes('80mm'));
-    const thermal58mm = printers.find(p => p.type === 'thermal' && p.description.includes('58mm'));
-    const anyThermal = printers.find(p => p.type === 'thermal');
-    const selectedPrinter = thermal80mm || thermal58mm || anyThermal || printers[0];
+    // Usar a primeira impressora térmica disponível, ou a primeira disponível
+    const thermalPrinter = printers.find(p => p.type === 'thermal');
+    const selectedPrinter = thermalPrinter || printers[0];
     
     console.log(`🖨️ Usando impressora: ${selectedPrinter.name} (${selectedPrinter.id})`);
     
