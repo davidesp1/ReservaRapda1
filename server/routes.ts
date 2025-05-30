@@ -1507,12 +1507,73 @@ router.get("/api/admin/analytics", isAuthenticated, async (req, res) => {
       LIMIT 10
     `;
 
+    // Análise de produtos mais vendidos (baseado nos detalhes das reservas)
+    const productAnalysis = await queryClient`
+      SELECT 
+        item_name,
+        SUM(quantity) as total_quantity,
+        SUM(quantity * price) as total_revenue,
+        COUNT(DISTINCT reservation_id) as orders_count,
+        AVG(price) as avg_price
+      FROM (
+        SELECT 
+          r.id as reservation_id,
+          jsonb_array_elements(r.selected_items) ->> 'name' as item_name,
+          (jsonb_array_elements(r.selected_items) ->> 'quantity')::integer as quantity,
+          (jsonb_array_elements(r.selected_items) ->> 'price')::integer as price
+        FROM reservations r
+        WHERE r.created_at >= ${startDate.toISOString()}
+          AND jsonb_array_length(r.selected_items) > 0
+      ) as items_data
+      GROUP BY item_name
+      ORDER BY total_quantity DESC
+      LIMIT 10
+    `;
+
+    // Categorias mais vendidas
+    const categoryAnalysis = await queryClient`
+      SELECT 
+        category_name,
+        SUM(quantity) as total_quantity,
+        SUM(quantity * price) as total_revenue,
+        COUNT(DISTINCT reservation_id) as orders_count
+      FROM (
+        SELECT 
+          r.id as reservation_id,
+          jsonb_array_elements(r.selected_items) ->> 'category' ->> 'name' as category_name,
+          (jsonb_array_elements(r.selected_items) ->> 'quantity')::integer as quantity,
+          (jsonb_array_elements(r.selected_items) ->> 'price')::integer as price
+        FROM reservations r
+        WHERE r.created_at >= ${startDate.toISOString()}
+          AND jsonb_array_length(r.selected_items) > 0
+      ) as items_data
+      WHERE category_name IS NOT NULL
+      GROUP BY category_name
+      ORDER BY total_quantity DESC
+    `;
+
+    // Horários de pico de vendas
+    const hourlyAnalysis = await queryClient`
+      SELECT 
+        EXTRACT(HOUR FROM COALESCE(payment_date, created_at)) as hour,
+        COUNT(*) as transaction_count,
+        SUM(amount) as revenue
+      FROM payments 
+      WHERE COALESCE(payment_date, created_at) >= ${startDate.toISOString()}
+        AND status = 'completed'
+      GROUP BY EXTRACT(HOUR FROM COALESCE(payment_date, created_at))
+      ORDER BY hour
+    `;
+
     res.json({
       revenueByDay,
       paymentMethods,
       totalRevenue: totalRevenue[0]?.total || 0,
       totalTransactions: totalTransactions[0]?.count || 0,
       topCustomers,
+      productAnalysis,
+      categoryAnalysis,
+      hourlyAnalysis,
       period: days
     });
   } catch (error) {

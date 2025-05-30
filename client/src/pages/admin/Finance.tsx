@@ -139,6 +139,24 @@ interface AnalyticsData {
     total_spent: number;
     transaction_count: number;
   }[];
+  productAnalysis: {
+    item_name: string;
+    total_quantity: number;
+    total_revenue: number;
+    orders_count: number;
+    avg_price: number;
+  }[];
+  categoryAnalysis: {
+    category_name: string;
+    total_quantity: number;
+    total_revenue: number;
+    orders_count: number;
+  }[];
+  hourlyAnalysis: {
+    hour: number;
+    transaction_count: number;
+    revenue: number;
+  }[];
   period: number;
 }
 
@@ -1671,7 +1689,7 @@ const Finance: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Gráficos */}
+                    {/* Gráficos - Linha 1: Receita e Pagamentos */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                       {/* Gráfico de Receita por Dia */}
                       <div className="bg-gray-50 rounded-lg p-6">
@@ -1775,6 +1793,188 @@ const Finance: React.FC = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Gráficos - Linha 2: Produtos e Categorias */}
+                    {analyticsData.productAnalysis && analyticsData.productAnalysis.length > 0 && (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        {/* Produtos Mais Vendidos */}
+                        <div className="bg-gray-50 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold mb-4 flex items-center">
+                            <BarChart3 className="w-5 h-5 mr-2 text-purple-600" />
+                            Produtos Mais Vendidos
+                          </h4>
+                          <div className="h-64">
+                            <Bar
+                              data={{
+                                labels: analyticsData.productAnalysis.slice(0, 8).map(item => 
+                                  item.item_name.length > 15 ? item.item_name.substring(0, 15) + '...' : item.item_name
+                                ),
+                                datasets: [{
+                                  label: 'Quantidade Vendida',
+                                  data: analyticsData.productAnalysis.slice(0, 8).map(item => item.total_quantity),
+                                  backgroundColor: 'rgba(147, 51, 234, 0.8)',
+                                  borderColor: 'rgb(147, 51, 234)',
+                                  borderWidth: 1
+                                }]
+                              }}
+                              options={{
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                  y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                      stepSize: 1
+                                    }
+                                  }
+                                },
+                                plugins: {
+                                  tooltip: {
+                                    callbacks: {
+                                      afterLabel: function(context) {
+                                        const item = analyticsData.productAnalysis[context.dataIndex];
+                                        return [
+                                          `Receita: €${(item.total_revenue / 100).toFixed(2)}`,
+                                          `Pedidos: ${item.orders_count}`
+                                        ];
+                                      }
+                                    }
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Categorias Mais Vendidas */}
+                        <div className="bg-gray-50 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold mb-4 flex items-center">
+                            <PieChart className="w-5 h-5 mr-2 text-orange-600" />
+                            Categorias Populares
+                          </h4>
+                          <div className="h-64">
+                            <Doughnut
+                              data={{
+                                labels: analyticsData.categoryAnalysis?.map(cat => cat.category_name) || [],
+                                datasets: [{
+                                  data: analyticsData.categoryAnalysis?.map(cat => cat.total_quantity) || [],
+                                  backgroundColor: [
+                                    '#f59e0b',
+                                    '#10b981',
+                                    '#3b82f6',
+                                    '#8b5cf6',
+                                    '#ef4444',
+                                    '#06b6d4',
+                                    '#84cc16',
+                                    '#f97316'
+                                  ],
+                                  borderWidth: 2,
+                                  borderColor: '#ffffff'
+                                }]
+                              }}
+                              options={{
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                  tooltip: {
+                                    callbacks: {
+                                      label: function(context) {
+                                        const cat = analyticsData.categoryAnalysis?.[context.dataIndex];
+                                        return [
+                                          `${context.label}: ${context.parsed} itens`,
+                                          `Receita: €${cat ? (cat.total_revenue / 100).toFixed(2) : '0.00'}`
+                                        ];
+                                      }
+                                    }
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Gráfico - Linha 3: Horários de Pico */}
+                    {analyticsData.hourlyAnalysis && analyticsData.hourlyAnalysis.length > 0 && (
+                      <div className="bg-gray-50 rounded-lg p-6 mb-8">
+                        <h4 className="text-lg font-semibold mb-4 flex items-center">
+                          <Clock className="w-5 h-5 mr-2 text-indigo-600" />
+                          Horários de Pico de Vendas
+                        </h4>
+                        <div className="h-64">
+                          <Line
+                            data={{
+                              labels: Array.from({length: 24}, (_, i) => `${i.toString().padStart(2, '0')}:00`),
+                              datasets: [{
+                                label: 'Transações',
+                                data: Array.from({length: 24}, (_, hour) => {
+                                  const hourData = analyticsData.hourlyAnalysis?.find(h => h.hour === hour);
+                                  return hourData ? hourData.transaction_count : 0;
+                                }),
+                                borderColor: 'rgb(99, 102, 241)',
+                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                              }, {
+                                label: 'Receita (€)',
+                                data: Array.from({length: 24}, (_, hour) => {
+                                  const hourData = analyticsData.hourlyAnalysis?.find(h => h.hour === hour);
+                                  return hourData ? hourData.revenue / 100 : 0;
+                                }),
+                                borderColor: 'rgb(234, 179, 8)',
+                                backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                                tension: 0.4,
+                                yAxisID: 'y1'
+                              }]
+                            }}
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: false,
+                              scales: {
+                                y: {
+                                  beginAtZero: true,
+                                  position: 'left',
+                                  title: {
+                                    display: true,
+                                    text: 'Transações'
+                                  }
+                                },
+                                y1: {
+                                  beginAtZero: true,
+                                  position: 'right',
+                                  title: {
+                                    display: true,
+                                    text: 'Receita (€)'
+                                  },
+                                  grid: {
+                                    drawOnChartArea: false,
+                                  },
+                                  ticks: {
+                                    callback: function(value) {
+                                      return '€' + Number(value).toFixed(2);
+                                    }
+                                  }
+                                }
+                              },
+                              plugins: {
+                                tooltip: {
+                                  callbacks: {
+                                    label: function(context) {
+                                      if (context.datasetIndex === 0) {
+                                        return `Transações: ${context.parsed.y}`;
+                                      } else {
+                                        return `Receita: €${Number(context.parsed.y).toFixed(2)}`;
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {/* Top Clientes */}
                     <div className="bg-white rounded-lg border border-gray-200 p-6">
