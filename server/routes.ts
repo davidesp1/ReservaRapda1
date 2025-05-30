@@ -1517,7 +1517,7 @@ router.get("/api/admin/analytics", isAuthenticated, async (req, res) => {
           WHEN 'multibanco_TPA' THEN 'Vendas TPA'
           WHEN 'multibanco' THEN 'Vendas Multibanco'
           WHEN 'card' THEN 'Vendas Cartão'
-          ELSE CONCAT('Vendas ', UPPER(p.method))
+          ELSE 'Outras Vendas'
         END as product_name,
         'Método de Pagamento' as category,
         COUNT(*) as total_quantity,
