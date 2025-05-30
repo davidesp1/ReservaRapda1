@@ -403,7 +403,7 @@ Status: PAGO
                   body { 
                     font-family: 'Courier New', monospace; 
                     font-size: 16px; 
-                    font-weight: bold;
+                    font-weight: 900;
                     line-height: 20px;
                     width: 80mm;
                     padding: 3mm;
@@ -412,6 +412,8 @@ Status: PAGO
                     background: white;
                     color: #000;
                     text-rendering: optimizeLegibility;
+                    -webkit-font-smoothing: none;
+                    text-shadow: 0.5px 0.5px 0px #000;
                   }
                 </style>
               </head>
@@ -558,7 +560,7 @@ Status: PAGO
                           body { 
                             font-family: 'Courier New', monospace; 
                             font-size: 16px; 
-                            font-weight: bold;
+                            font-weight: 900;
                             line-height: 20px;
                             width: 80mm;
                             padding: 3mm;
@@ -567,6 +569,8 @@ Status: PAGO
                             background: white;
                             color: #000;
                             text-rendering: optimizeLegibility;
+                            -webkit-font-smoothing: none;
+                            text-shadow: 0.5px 0.5px 0px #000;
                           }
                           @media print {
                             body {
