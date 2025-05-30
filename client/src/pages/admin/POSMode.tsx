@@ -403,12 +403,15 @@ Status: PAGO
                   body { 
                     font-family: 'Courier New', monospace; 
                     font-size: 16px; 
+                    font-weight: bold;
                     line-height: 20px;
                     width: 80mm;
                     padding: 3mm;
                     white-space: pre-line;
                     overflow: hidden;
                     background: white;
+                    color: #000;
+                    text-rendering: optimizeLegibility;
                   }
                 </style>
               </head>
@@ -555,12 +558,15 @@ Status: PAGO
                           body { 
                             font-family: 'Courier New', monospace; 
                             font-size: 16px; 
+                            font-weight: bold;
                             line-height: 20px;
                             width: 80mm;
                             padding: 3mm;
                             white-space: pre-line;
                             overflow: hidden;
                             background: white;
+                            color: #000;
+                            text-rendering: optimizeLegibility;
                           }
                           @media print {
                             body {
