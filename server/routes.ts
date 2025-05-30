@@ -1511,7 +1511,7 @@ router.get("/api/admin/analytics", isAuthenticated, async (req, res) => {
     const topProducts = await queryClient`
       SELECT 
         mi.name as product_name,
-        c.name as category,
+        mc.name as category,
         -- Estimar vendas baseado no preço e popularidade
         CASE 
           WHEN mi.price >= 1500 THEN 15 -- Produtos caros vendem menos
@@ -1534,7 +1534,7 @@ router.get("/api/admin/analytics", isAuthenticated, async (req, res) => {
           ELSE 25
         END as order_count
       FROM menu_items mi
-      JOIN categories c ON mi.category_id = c.id
+      JOIN menu_categories mc ON mi.category_id = mc.id
       WHERE mi.is_available = true
       ORDER BY total_revenue DESC
       LIMIT 10
@@ -1543,7 +1543,7 @@ router.get("/api/admin/analytics", isAuthenticated, async (req, res) => {
     // Receita por categoria baseada nos produtos do menu
     const categoryRevenue = await queryClient`
       SELECT 
-        c.name as category,
+        mc.name as category,
         SUM(CASE 
           WHEN mi.price >= 1500 THEN 15 * mi.price
           WHEN mi.price >= 1000 THEN 25 * mi.price
@@ -1557,9 +1557,9 @@ router.get("/api/admin/analytics", isAuthenticated, async (req, res) => {
           ELSE 45
         END) as quantity
       FROM menu_items mi
-      JOIN categories c ON mi.category_id = c.id
+      JOIN menu_categories mc ON mi.category_id = mc.id
       WHERE mi.is_available = true
-      GROUP BY c.id, c.name
+      GROUP BY mc.id, mc.name
       ORDER BY revenue DESC
     `;
 
