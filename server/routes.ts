@@ -1507,60 +1507,47 @@ router.get("/api/admin/analytics", isAuthenticated, async (req, res) => {
       LIMIT 10
     `;
 
-    // Análise de produtos baseada em dados reais do menu e pagamentos
+    // Análise de produtos baseada APENAS em dados reais de vendas registradas
+    // Como não temos dados detalhados de produtos vendidos nos pagamentos,
+    // vamos mostrar apenas os dados reais de pagamentos por método
     const topProducts = await queryClient`
       SELECT 
-        mi.name as product_name,
-        mc.name as category,
-        -- Estimar vendas baseado no preço e popularidade
-        CASE 
-          WHEN mi.price >= 1500 THEN 15 -- Produtos caros vendem menos
-          WHEN mi.price >= 1000 THEN 25
-          WHEN mi.price >= 500 THEN 35
-          ELSE 45 -- Produtos baratos vendem mais
-        END as total_quantity,
-        -- Receita = quantidade estimada * preço
-        (CASE 
-          WHEN mi.price >= 1500 THEN 15
-          WHEN mi.price >= 1000 THEN 25
-          WHEN mi.price >= 500 THEN 35
-          ELSE 45
-        END * mi.price) as total_revenue,
-        -- Número de pedidos diferentes
-        CASE 
-          WHEN mi.price >= 1500 THEN 8
-          WHEN mi.price >= 1000 THEN 12
-          WHEN mi.price >= 500 THEN 18
-          ELSE 25
-        END as order_count
-      FROM menu_items mi
-      JOIN menu_categories mc ON mi.category_id = mc.id
-      WHERE mi.is_available = true
-      ORDER BY total_revenue DESC
+        CASE p.method
+          WHEN 'cash' THEN 'Vendas Dinheiro'
+          WHEN 'multibanco_TPA' THEN 'Vendas TPA'
+          WHEN 'multibanco' THEN 'Vendas Multibanco'
+          WHEN 'card' THEN 'Vendas Cartão'
+          ELSE CONCAT('Vendas ', UPPER(p.method))
+        END as product_name,
+        'Método de Pagamento' as category,
+        COUNT(*) as total_quantity,
+        SUM(p.amount) as total_revenue,
+        COUNT(DISTINCT p.user_id) as order_count
+      FROM payments p
+      WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
+        AND p.status = 'completed'
+      GROUP BY p.method
+      ORDER BY SUM(p.amount) DESC
       LIMIT 10
     `;
 
-    // Receita por categoria baseada nos produtos do menu
+    // Receita por categoria baseada APENAS nos dados reais de pagamentos
     const categoryRevenue = await queryClient`
       SELECT 
-        mc.name as category,
-        SUM(CASE 
-          WHEN mi.price >= 1500 THEN 15 * mi.price
-          WHEN mi.price >= 1000 THEN 25 * mi.price
-          WHEN mi.price >= 500 THEN 35 * mi.price
-          ELSE 45 * mi.price
-        END) as revenue,
-        SUM(CASE 
-          WHEN mi.price >= 1500 THEN 15
-          WHEN mi.price >= 1000 THEN 25
-          WHEN mi.price >= 500 THEN 35
-          ELSE 45
-        END) as quantity
-      FROM menu_items mi
-      JOIN menu_categories mc ON mi.category_id = mc.id
-      WHERE mi.is_available = true
-      GROUP BY mc.id, mc.name
-      ORDER BY revenue DESC
+        CASE p.method
+          WHEN 'cash' THEN 'Pagamentos Físicos'
+          WHEN 'multibanco_TPA' THEN 'Pagamentos TPA'
+          WHEN 'multibanco' THEN 'Pagamentos Online'
+          WHEN 'card' THEN 'Pagamentos Cartão'
+          ELSE 'Outros Pagamentos'
+        END as category,
+        SUM(p.amount) as revenue,
+        COUNT(*) as quantity
+      FROM payments p
+      WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
+        AND p.status = 'completed'
+      GROUP BY p.method
+      ORDER BY SUM(p.amount) DESC
     `;
 
     // Análise de horários de pico
