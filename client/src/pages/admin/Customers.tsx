@@ -329,7 +329,7 @@ const Customers: React.FC = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-6 text-gray-500">
+                    <TableCell colSpan={6} className="text-center py-6 text-gray-500">
                       {searchText ? t('NoCustomersFound') : t('NoCustomers')}
                     </TableCell>
                   </TableRow>

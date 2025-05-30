@@ -222,6 +222,69 @@ router.put("/api/users/:id", isAuthenticated, async (req, res) => {
   }
 });
 
+// Rota para atualizar saldo do cliente
+router.post("/api/users/balance", isAuthenticated, async (req, res) => {
+  try {
+    const { userId, amount, operation } = req.body;
+    
+    if (!userId || !amount || !operation) {
+      return res.status(400).json({ error: "ID do usuário, valor e operação são obrigatórios" });
+    }
+    
+    if (operation !== 'add' && operation !== 'remove') {
+      return res.status(400).json({ error: "Operação deve ser 'add' ou 'remove'" });
+    }
+    
+    if (amount <= 0) {
+      return res.status(400).json({ error: "Valor deve ser positivo" });
+    }
+    
+    // Buscar saldo atual do usuário
+    const currentUser = await queryClient`
+      SELECT id, username, first_name, last_name, balance
+      FROM users 
+      WHERE id = ${parseInt(userId)}
+    `;
+    
+    if (currentUser.length === 0) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+    
+    const currentBalance = currentUser[0].balance || 0;
+    let newBalance;
+    
+    if (operation === 'add') {
+      newBalance = currentBalance + amount;
+    } else {
+      newBalance = currentBalance - amount;
+      if (newBalance < 0) {
+        return res.status(400).json({ error: "Saldo insuficiente para remoção" });
+      }
+    }
+    
+    // Atualizar saldo do usuário
+    const result = await queryClient`
+      UPDATE users 
+      SET balance = ${newBalance}
+      WHERE id = ${parseInt(userId)}
+      RETURNING id, username, first_name, last_name, balance
+    `;
+    
+    res.json({
+      success: true,
+      user: result[0],
+      operation,
+      amount,
+      previousBalance: currentBalance,
+      newBalance
+    });
+    
+  } catch (err: any) {
+    console.error("Erro ao atualizar saldo:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Rotas de mesas usando queryClient para SQL direto
 router.get("/api/tables", async (req, res) => {
   try {
