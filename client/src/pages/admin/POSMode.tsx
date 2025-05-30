@@ -381,11 +381,54 @@ Status: PAGO
 
       const result = await response.json();
 
+      // Imprimir automaticamente o recibo do pedido staff
+      const receiptContent = generateStaffReceipt();
+      
+      if ((window as any).printReceiptWithSettings) {
+        console.log("🖨️ Imprimindo recibo staff automaticamente");
+        (window as any).printReceiptWithSettings(receiptContent);
+      } else {
+        // Fallback para impressão básica
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          const html = `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="UTF-8">
+                <title>Recibo Staff - Opa que Delícia</title>
+                <style>
+                  @page { size: 58mm auto; margin: 0; }
+                  * { margin: 0; padding: 0; box-sizing: border-box; }
+                  body { 
+                    font-family: 'Courier New', monospace; 
+                    font-size: 10px; 
+                    line-height: 12px;
+                    width: 58mm;
+                    padding: 2mm;
+                    white-space: pre-line;
+                    overflow: hidden;
+                    background: white;
+                  }
+                </style>
+              </head>
+              <body>${receiptContent}</body>
+            </html>
+          `;
+          printWindow.document.write(html);
+          printWindow.document.close();
+          setTimeout(() => {
+            printWindow.print();
+            setTimeout(() => printWindow.close(), 1000);
+          }, 500);
+        }
+      }
+
       // Mostrar confirmação de sucesso
       import('sweetalert2').then((Swal) => {
         Swal.default.fire({
           title: t('Pedido Registrado!'),
-          text: t('Pedido staff registrado com pagamento pendente para {{name}}', { 
+          text: t('Pedido staff registrado e enviado para impressão para {{name}}', { 
             name: `${selectedClient.first_name} ${selectedClient.last_name}` 
           }),
           icon: 'success',
@@ -816,6 +859,49 @@ Status: PAGO
         });
       });
     });
+  };
+
+  // Função para gerar recibo de pedido staff
+  const generateStaffReceipt = () => {
+    const receiptNumber = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    const currentDate = new Date();
+    const dateStr = currentDate.toLocaleDateString('pt-PT');
+    const timeStr = currentDate.toLocaleTimeString('pt-PT');
+    
+    const receiptContent = `
+========================================
+           OPA QUE DELÍCIA
+       Rua do Sabor, 123 - Lisboa
+        Tel: 21 123 4567
+        NIF: 123456789
+========================================
+Data: ${dateStr}        Hora: ${timeStr}
+Funcionário: ${selectedClient?.first_name} ${selectedClient?.last_name}
+Recibo: #${receiptNumber}
+
+ITENS DO PEDIDO:
+----------------------------------------
+${orderItems.map(item => {
+  const itemTotal = (item.menuItem.price * item.quantity / 100).toFixed(2);
+  const itemName = item.menuItem.name.length > 18 ? 
+    item.menuItem.name.substring(0, 18) + '...' : 
+    item.menuItem.name;
+  return `${item.quantity}x ${itemName.padEnd(20)} €${itemTotal}`;
+}).join('\n')}
+----------------------------------------
+Subtotal:               €${(totalPrice / 100).toFixed(2)}
+IVA (23%):              €${(totalPrice * 0.23 / 100).toFixed(2)}
+TOTAL:                  €${(totalPrice * 1.23 / 100).toFixed(2)}
+
+Pagamento: STAFF
+Status: PENDENTE
+
+========================================
+       Pedido para Funcionário
+       Pagamento a ser processado
+========================================`;
+    
+    return receiptContent;
   };
 
   const generateReceiptWithChange = (receivedAmount: number, change: number) => {
