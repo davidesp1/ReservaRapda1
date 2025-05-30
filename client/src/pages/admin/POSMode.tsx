@@ -1293,8 +1293,6 @@ PAGAMENTO: DINHEIRO
                       selectedPaymentMethod === 'multibanco_TPA' ? 'border-primary bg-primary/5' : 'border-gray-300'
                     }`}
                     onClick={() => {
-                      console.log('🔍 DEBUG - Selecionando Multibanco TPA');
-                      alert('DEBUG: Selecionou Multibanco TPA');
                       setSelectedPaymentMethod('multibanco_TPA');
                     }}
                   >
