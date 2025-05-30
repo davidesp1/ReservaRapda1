@@ -48,6 +48,7 @@ export const users = pgTable("users", {
   }>(),
   memberSince: timestamp("member_since").defaultNow(),
   lastLogin: timestamp("last_login"),
+  balance: integer("balance").default(0).notNull(), // Saldo em centavos
   status: text("status").default("active"),
   loyaltyPoints: integer("loyalty_points").default(0),
 });

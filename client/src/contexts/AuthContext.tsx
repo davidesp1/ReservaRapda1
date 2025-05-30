@@ -70,8 +70,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [sessionTimer, setSessionTimer] = useState<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
-  // Configuração de timeout da sessão (5 minutos)
-  const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutos em milissegundos
+  // Configuração de timeout da sessão (1 hora)
+  const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 hora em milissegundos
 
   // Função para resetar o timer de sessão
   const resetSessionTimer = () => {
