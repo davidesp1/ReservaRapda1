@@ -130,15 +130,15 @@ const POSMode = () => {
   };
   
   const handleAddItem = (item: MenuItem) => {
-    // VERIFICAÇÃO ABSOLUTA: Stock deve ser maior que 0
+    // Verificar stock disponível
     if (item.stock <= 0) {
       import('sweetalert2').then((Swal) => {
         Swal.default.fire({
-          title: 'Artigo Indisponível',
-          text: `O artigo "${item.name}" não tem stock disponível. Stock atual: ${item.stock}`,
-          icon: 'error',
+          title: 'Stock Esgotado',
+          text: `O item "${item.name}" não tem stock disponível.`,
+          icon: 'warning',
           confirmButtonText: 'OK',
-          confirmButtonColor: '#dc2626'
+          confirmButtonColor: '#f97316'
         });
       });
       return;
@@ -148,12 +148,12 @@ const POSMode = () => {
     const existingItem = orderItems.find(i => i.menuItem.id === item.id);
     const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
     
-    // PROTEÇÃO ABSOLUTA: Nunca permitir que carrinho + 1 exceda o stock
-    if (currentQuantityInCart + 1 > item.stock) {
+    // Verificar se adicionar mais 1 unidade ultrapassaria o stock
+    if (currentQuantityInCart >= item.stock) {
       import('sweetalert2').then((Swal) => {
         Swal.default.fire({
-          title: 'Limite de Stock Atingido',
-          text: `Stock máximo: ${item.stock} unidades de "${item.name}". Carrinho atual: ${currentQuantityInCart}. Não é possível adicionar mais.`,
+          title: 'Stock Insuficiente',
+          text: `Apenas ${item.stock} unidades disponíveis de "${item.name}". Já tem ${currentQuantityInCart} no carrinho.`,
           icon: 'warning',
           confirmButtonText: 'OK',
           confirmButtonColor: '#f97316'
@@ -162,25 +162,16 @@ const POSMode = () => {
       return;
     }
 
-    // Só adiciona se todas as verificações passaram
     setOrderItems(prev => {
       const existingItem = prev.find(i => i.menuItem.id === item.id);
       if (existingItem) {
-        // Dupla verificação antes de incrementar
-        if (existingItem.quantity + 1 <= item.stock) {
-          return prev.map(i => 
-            i.menuItem.id === item.id 
-              ? { ...i, quantity: i.quantity + 1 } 
-              : i
-          );
-        }
-        return prev; // Não altera se exceder
+        return prev.map(i => 
+          i.menuItem.id === item.id 
+            ? { ...i, quantity: i.quantity + 1 } 
+            : i
+        );
       } else {
-        // Só adiciona se stock > 0
-        if (item.stock > 0) {
-          return [...prev, { menuItem: item, quantity: 1 }];
-        }
-        return prev; // Não adiciona se stock <= 0
+        return [...prev, { menuItem: item, quantity: 1 }];
       }
     });
   };
