@@ -168,6 +168,9 @@ const Finance: React.FC = () => {
   const [searchText, setSearchText] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [userFilter, setUserFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [methodFilter, setMethodFilter] = useState<string>("all");
   const [filteredPayments, setFilteredPayments] = useState<PaymentWithUser[]>(
@@ -209,6 +212,12 @@ const Finance: React.FC = () => {
     refetchInterval: 30000,
   });
 
+  // Fetch unique users for filter dropdown
+  const { data: uniqueUsers = [] } = useQuery<{id: number, username: string, first_name: string, last_name: string}[]>({
+    queryKey: ['/api/admin/users'],
+    enabled: isAuthenticated && isAdmin,
+  });
+
   // Aplicar filtros
   const applyFilters = () => {
     if (!payments) {
@@ -246,6 +255,27 @@ const Finance: React.FC = () => {
         (payment) =>
           new Date(payment.payment_date) <= new Date(endDate + "T23:59:59"),
       );
+    }
+
+    // Filtro de hora início
+    if (startTime) {
+      filtered = filtered.filter((payment) => {
+        const paymentTime = new Date(payment.payment_date).toTimeString().slice(0, 5);
+        return paymentTime >= startTime;
+      });
+    }
+
+    // Filtro de hora fim
+    if (endTime) {
+      filtered = filtered.filter((payment) => {
+        const paymentTime = new Date(payment.payment_date).toTimeString().slice(0, 5);
+        return paymentTime <= endTime;
+      });
+    }
+
+    // Filtro de usuário
+    if (userFilter && userFilter !== "all") {
+      filtered = filtered.filter((payment) => payment.user_id?.toString() === userFilter);
     }
 
     // Filtro de status
@@ -311,7 +341,7 @@ const Finance: React.FC = () => {
     if (payments) {
       applyFilters();
     }
-  }, [payments?.length, searchText, startDate, endDate, statusFilter, methodFilter]);
+  }, [payments?.length, searchText, startDate, endDate, startTime, endTime, userFilter, statusFilter, methodFilter]);
 
   useEffect(() => {
     if (reservations) {
@@ -322,7 +352,7 @@ const Finance: React.FC = () => {
   // Reset pagination when changing tabs or filters
   useEffect(() => {
     setCurrentPage(1);
-  }, [currentTab, searchText, startDate, endDate, statusFilter, methodFilter]);
+  }, [currentTab, searchText, startDate, endDate, startTime, endTime, userFilter, statusFilter, methodFilter]);
 
   // Paginação
   const getCurrentItems = () => {
@@ -1118,6 +1148,47 @@ const Finance: React.FC = () => {
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                   />
+                </div>
+
+                <div className="min-w-[130px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">
+                    Hora Início
+                  </label>
+                  <Input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                  />
+                </div>
+
+                <div className="min-w-[130px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">
+                    Hora Fim
+                  </label>
+                  <Input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                  />
+                </div>
+
+                <div className="min-w-[150px]">
+                  <label className="block text-xs text-gray-600 mb-1 font-semibold">
+                    Usuário
+                  </label>
+                  <Select value={userFilter} onValueChange={setUserFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {uniqueUsers.map((user) => (
+                        <SelectItem key={user.id} value={user.id.toString()}>
+                          {user.username} ({user.first_name} {user.last_name})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="min-w-[150px]">
