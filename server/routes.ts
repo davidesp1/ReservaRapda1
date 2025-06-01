@@ -819,6 +819,38 @@ router.get("/api/admin/reservations", isAuthenticated, async (req, res) => {
   }
 });
 
+// Rota para buscar usuários únicos (para filtros)
+router.get("/api/admin/users", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Usuário não autenticado" });
+    }
+
+    // Verificar se é admin
+    const currentUser = await queryClient`
+      SELECT role FROM users WHERE id = ${userId}
+    `;
+    
+    if (!currentUser.length || currentUser[0].role !== 'admin') {
+      return res.status(403).json({ error: "Acesso negado. Apenas administradores podem acessar esta rota." });
+    }
+
+    // Buscar usuários únicos que fizeram pagamentos
+    const users = await queryClient`
+      SELECT DISTINCT u.id, u.username, u.first_name, u.last_name
+      FROM users u
+      INNER JOIN payments p ON u.id = p.user_id
+      ORDER BY u.username
+    `;
+    
+    res.json(users);
+  } catch (err: any) {
+    console.error("Erro ao buscar usuários únicos:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Rota para criar nova reserva
 router.post("/api/reservations", isAuthenticated, async (req, res) => {
   try {

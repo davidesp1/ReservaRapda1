@@ -1309,6 +1309,24 @@ const Finance: React.FC = () => {
                     <Filter className="w-4 h-4 mr-2" />
                     Aplicar
                   </Button>
+                  
+                  <Button
+                    onClick={() => {
+                      setSearchText("");
+                      setStartDate("");
+                      setEndDate("");
+                      setStartTime("");
+                      setEndTime("");
+                      setUserFilter("all");
+                      setStatusFilter("all");
+                      setMethodFilter("all");
+                    }}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    Limpar
+                  </Button>
                 </div>
               </div>
 
