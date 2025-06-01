@@ -1602,21 +1602,25 @@ router.get("/api/admin/analytics", isAuthenticated, async (req, res) => {
       LIMIT 10
     `;
 
-    // Análise de produtos reais da tabela menu_items com dados simplificados
+    // Produtos mais vendidos baseados APENAS em pedidos reais
     const topProducts = await queryClient`
       SELECT 
         mi.name as product_name,
         mc.name as category,
-        -- Quantidade baseada no ID do produto para variar os dados
-        (mi.id % 10 + 5) as total_quantity,
-        -- Receita baseada no preço real do produto
-        mi.price * (mi.id % 10 + 5) as total_revenue,
-        -- Número de pedidos
-        (mi.id % 5 + 2) as order_count
-      FROM menu_items mi
+        SUM((order_item->>'quantity')::integer) as total_quantity,
+        SUM((order_item->>'price')::integer * (order_item->>'quantity')::integer) as total_revenue,
+        COUNT(DISTINCT o.id) as order_count
+      FROM payments p
+      JOIN orders o ON p.reservation_id = o.id
+      JOIN json_array_elements(o.items) as order_item ON true
+      JOIN menu_items mi ON (order_item->>'menuItemId')::integer = mi.id
       JOIN menu_categories mc ON mi.category_id = mc.id
-      WHERE mi.is_available = true
-      ORDER BY (mi.price * (mi.id % 10 + 5)) DESC
+      WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
+        AND p.status = 'completed'
+        AND o.items IS NOT NULL
+        AND json_array_length(o.items) > 0
+      GROUP BY mi.id, mi.name, mc.name
+      ORDER BY total_quantity DESC
       LIMIT 10
     `;
 
