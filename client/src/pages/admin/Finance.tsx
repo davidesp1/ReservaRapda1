@@ -1807,28 +1807,140 @@ const Finance: React.FC = () => {
 
           {currentTab === "analise" && (
             <div className="space-y-6">
-              {/* Filtros de Período */}
+              {/* Filtros Completos para Análise */}
               <div className="bg-white rounded-xl shadow-md p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold text-gray-800 flex items-center">
                     <BarChart3 className="w-6 h-6 mr-2 text-blue-600" />
                     Análise Financeira
                   </h3>
-                  <div className="flex items-center gap-4">
-                    <label className="text-sm font-medium text-gray-700">Período:</label>
-                    <Select value={analyticsPeriod} onValueChange={setAnalyticsPeriod}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="7">7 dias</SelectItem>
-                        <SelectItem value="30">30 dias</SelectItem>
-                        <SelectItem value="90">90 dias</SelectItem>
-                        <SelectItem value="365">1 ano</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
+
+                {/* Filtros de Data e Busca */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  <Input
+                    placeholder="Buscar por ID ou referência..."
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    className="text-sm"
+                  />
+
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="text-sm"
+                      placeholder="Data início"
+                    />
+                    <Input
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className="text-sm"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="text-sm"
+                      placeholder="Data fim"
+                    />
+                    <Input
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className="text-sm"
+                    />
+                  </div>
+
+                  <Select value={analyticsPeriod} onValueChange={setAnalyticsPeriod}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue placeholder="Período rápido" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">7 dias</SelectItem>
+                      <SelectItem value="30">30 dias</SelectItem>
+                      <SelectItem value="90">90 dias</SelectItem>
+                      <SelectItem value="365">1 ano</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Filtros de Status, Método e Usuário */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os status</SelectItem>
+                      <SelectItem value="completed">Concluído</SelectItem>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="failed">Falha</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={methodFilter} onValueChange={setMethodFilter}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue placeholder="Método" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os métodos</SelectItem>
+                      <SelectItem value="cash">Dinheiro</SelectItem>
+                      <SelectItem value="card">Cartão</SelectItem>
+                      <SelectItem value="mbway">MB Way</SelectItem>
+                      <SelectItem value="multibanco">Multibanco</SelectItem>
+                      <SelectItem value="multibanco_TPA">Multibanco (TPA)</SelectItem>
+                      <SelectItem value="transfer">Transferência</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={userFilter} onValueChange={setUserFilter}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue placeholder="Usuário" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os usuários</SelectItem>
+                      {uniqueUsers?.map((user) => (
+                        <SelectItem key={user.id} value={user.id.toString()}>
+                          {user.first_name} {user.last_name} ({user.username})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Botões de Ação */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button onClick={applyFilters} variant="outline">
+                    <Filter className="w-4 h-4 mr-2" />
+                    Aplicar Filtros
+                  </Button>
+                  
+                  <Button
+                    onClick={() => {
+                      setSearchText("");
+                      setStartDate("");
+                      setEndDate("");
+                      setStartTime("");
+                      setEndTime("");
+                      setUserFilter("all");
+                      setStatusFilter("all");
+                      setMethodFilter("all");
+                      setAnalyticsPeriod("30");
+                    }}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    Limpar Filtros
+                  </Button>
+                </div>
+              </div>
 
                 {analyticsLoading ? (
                   <div className="flex items-center justify-center h-64">
