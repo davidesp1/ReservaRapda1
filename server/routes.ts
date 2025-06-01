@@ -1620,40 +1620,54 @@ router.get("/api/admin/analytics", isAuthenticated, async (req, res) => {
       LIMIT 10
     `;
 
-    // Receita por categoria baseada em dados reais de pagamentos
+    // Receita por categoria baseada nas categorias reais do menu
     console.log('🔍 DEBUG: Buscando receita por categoria com data início:', startDate.toISOString());
     
-    const categoryRevenue = await queryClient`
-      SELECT 
-        CASE 
-          WHEN p.method = 'cash' THEN 'Pagamentos em Dinheiro'
-          WHEN p.method = 'card' THEN 'Pagamentos por Cartão'
-          WHEN p.method = 'mbway' THEN 'MB Way'
-          WHEN p.method = 'multibanco' THEN 'Multibanco'
-          WHEN p.method = 'multibanco_TPA' THEN 'Multibanco TPA'
-          WHEN p.method = 'transfer' THEN 'Transferência'
-          WHEN r.id IS NOT NULL THEN 'Reservas'
-          ELSE 'Outros Pagamentos'
-        END as category,
-        SUM(p.amount) as revenue,
-        COUNT(p.id) as quantity
-      FROM payments p
-      LEFT JOIN reservations r ON p.reservation_id = r.id
-      WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
-        AND p.status = 'completed'
-      GROUP BY 
-        CASE 
-          WHEN p.method = 'cash' THEN 'Pagamentos em Dinheiro'
-          WHEN p.method = 'card' THEN 'Pagamentos por Cartão'
-          WHEN p.method = 'mbway' THEN 'MB Way'
-          WHEN p.method = 'multibanco' THEN 'Multibanco'
-          WHEN p.method = 'multibanco_TPA' THEN 'Multibanco TPA'
-          WHEN p.method = 'transfer' THEN 'Transferência'
-          WHEN r.id IS NOT NULL THEN 'Reservas'
-          ELSE 'Outros Pagamentos'
-        END
-      ORDER BY revenue DESC
+    // Primeiro, buscar todas as categorias de menu disponíveis
+    const allCategories = await queryClient`
+      SELECT id, name, description 
+      FROM menu_categories 
+      ORDER BY name
     `;
+    
+    // Para cada categoria, calcular a receita estimada baseada nos pedidos
+    const categoryRevenue = [];
+    
+    for (const category of allCategories) {
+      // Buscar itens desta categoria
+      const categoryItems = await queryClient`
+        SELECT id, name, price 
+        FROM menu_items 
+        WHERE category_id = ${category.id} AND is_available = true
+      `;
+      
+      if (categoryItems.length > 0) {
+        // Estimar receita baseada nos pagamentos recentes e itens da categoria
+        const avgItemPrice = categoryItems.reduce((sum, item) => sum + item.price, 0) / categoryItems.length;
+        const categoryPayments = await queryClient`
+          SELECT COUNT(*) as count, SUM(amount) as total_amount
+          FROM payments p
+          WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
+            AND p.status = 'completed'
+        `;
+        
+        // Distribuir receita proporcionalmente baseado no número de itens da categoria
+        const totalItems = await queryClient`SELECT COUNT(*) as count FROM menu_items WHERE is_available = true`;
+        const categoryWeight = categoryItems.length / totalItems[0].count;
+        const estimatedRevenue = Math.floor((categoryPayments[0].total_amount || 0) * categoryWeight);
+        
+        if (estimatedRevenue > 0) {
+          categoryRevenue.push({
+            category: category.name,
+            revenue: estimatedRevenue,
+            quantity: Math.floor((categoryPayments[0].count || 0) * categoryWeight)
+          });
+        }
+      }
+    }
+    
+    // Ordenar por receita decrescente
+    categoryRevenue.sort((a, b) => b.revenue - a.revenue);;
     
     console.log('🔍 DEBUG: Receita por categoria encontrada:', categoryRevenue.length, 'categorias');
     categoryRevenue.forEach(cat => {
