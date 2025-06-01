@@ -955,8 +955,31 @@ const Finance: React.FC = () => {
     <AdminLayout title="Finanças">
       <div className="space-y-8">
         {/* Header */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">Finanças</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold text-gray-800 font-montserrat">Finanças</h1>
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <button className="relative">
+                <i className="text-xl text-gray-600 fa-regular fa-bell"></i>
+                <span className="absolute flex items-center justify-center w-4 h-4 text-xs text-white rounded-full -top-1 -right-1" style={{ backgroundColor: '#c8102e' }}>3</span>
+              </button>
+            </div>
+            <div className="flex items-center">
+              {user?.profilePicture ? (
+                <img src={user.profilePicture} alt="User Avatar" className="w-10 h-10 border-2 rounded-full" style={{ borderColor: '#ffdf00' }} />
+              ) : (
+                <div className="w-10 h-10 rounded-full border-2 bg-brasil-blue text-white flex items-center justify-center" style={{ borderColor: '#ffdf00' }}>
+                  <span className="font-semibold">
+                    {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
+                  </span>
+                </div>
+              )}
+              <div className="ml-2">
+                <p className="text-sm font-medium text-gray-800">{user?.firstName} {user?.lastName}</p>
+                <p className="text-xs text-gray-500">Administrador</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Metrics Cards */}
