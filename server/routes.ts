@@ -1620,18 +1620,43 @@ router.get("/api/admin/analytics", isAuthenticated, async (req, res) => {
       LIMIT 10
     `;
 
-    // Receita por categoria baseada nos produtos reais do menu
+    // Receita por categoria baseada em vendas reais
+    console.log('🔍 DEBUG: Buscando receita por categoria com data início:', startDate.toISOString());
+    
     const categoryRevenue = await queryClient`
       SELECT 
-        mc.name as category,
-        SUM(mi.price * (mi.id % 10 + 5)) as revenue,
-        SUM(mi.id % 10 + 5) as quantity
-      FROM menu_items mi
-      JOIN menu_categories mc ON mi.category_id = mc.id
-      WHERE mi.is_available = true
+        COALESCE(mc.name, 'Outros') as category,
+        SUM(oi.price * oi.quantity) as revenue,
+        SUM(oi.quantity) as quantity
+      FROM order_items oi
+      JOIN orders o ON oi.order_id = o.id
+      JOIN payments p ON o.id = p.order_id
+      LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
+      LEFT JOIN menu_categories mc ON mi.category_id = mc.id
+      WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
+        AND p.status = 'completed'
       GROUP BY mc.id, mc.name
-      ORDER BY SUM(mi.price * (mi.id % 10 + 5)) DESC
+      
+      UNION ALL
+      
+      -- Incluir vendas diretas sem categoria específica
+      SELECT 
+        'Vendas Diretas' as category,
+        SUM(p.amount) as revenue,
+        COUNT(p.id) as quantity
+      FROM payments p
+      LEFT JOIN orders o ON p.order_id = o.id
+      WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
+        AND p.status = 'completed'
+        AND o.id IS NULL
+      
+      ORDER BY revenue DESC
     `;
+    
+    console.log('🔍 DEBUG: Receita por categoria encontrada:', categoryRevenue.length, 'categorias');
+    categoryRevenue.forEach(cat => {
+      console.log(`🔍 DEBUG: Categoria "${cat.category}": €${(cat.revenue / 100).toFixed(2)} (${cat.quantity} itens)`);
+    });
 
     // Análise de horários de pico
     const hourlyAnalysis = await queryClient`
