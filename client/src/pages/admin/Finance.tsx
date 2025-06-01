@@ -551,6 +551,35 @@ const Finance: React.FC = () => {
     const currentDate = new Date().toLocaleDateString('pt-PT');
     const totalAmount = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
     
+    // Identificar filtros ativos
+    const activeFilters = [];
+    if (searchText) activeFilters.push(`Busca: "${searchText}"`);
+    if (startDate) activeFilters.push(`Data início: ${format(new Date(startDate), 'dd/MM/yyyy')}`);
+    if (endDate) activeFilters.push(`Data fim: ${format(new Date(endDate), 'dd/MM/yyyy')}`);
+    if (startTime) activeFilters.push(`Hora início: ${startTime}`);
+    if (endTime) activeFilters.push(`Hora fim: ${endTime}`);
+    if (userFilter && userFilter !== 'all') {
+      const selectedUser = uniqueUsers?.find((u: any) => u.id.toString() === userFilter);
+      if (selectedUser) {
+        activeFilters.push(`Usuário: ${selectedUser.first_name} ${selectedUser.last_name}`);
+      }
+    }
+    if (statusFilter && statusFilter !== 'all') {
+      const statusLabel = statusFilter === 'completed' ? 'Concluído' :
+                         statusFilter === 'pending' ? 'Pendente' :
+                         statusFilter === 'failed' ? 'Falhado' : statusFilter;
+      activeFilters.push(`Status: ${statusLabel}`);
+    }
+    if (methodFilter && methodFilter !== 'all') {
+      const methodLabel = methodFilter === 'cash' ? 'Dinheiro' :
+                         methodFilter === 'card' ? 'Cartão' :
+                         methodFilter === 'mbway' ? 'MB Way' :
+                         methodFilter === 'multibanco' ? 'Multibanco' :
+                         methodFilter === 'multibanco_TPA' ? 'Multibanco (TPA)' :
+                         methodFilter === 'transfer' ? 'Transferência' : methodFilter;
+      activeFilters.push(`Método: ${methodLabel}`);
+    }
+    
     const headers = ['Data', 'Transação', 'Referência', 'Valor', 'Método', 'Usuário', 'Status'];
     
     const data = filteredPayments.map(payment => [
@@ -570,14 +599,14 @@ const Finance: React.FC = () => {
       payment.status === 'failed' ? 'Falhado' : payment.status
     ]);
 
-    return { headers, data, currentDate, totalAmount };
+    return { headers, data, currentDate, totalAmount, activeFilters };
   };
 
   // Exportar para Excel
   const exportToExcel = async () => {
     try {
       const XLSX = await import('xlsx');
-      const { headers, data, currentDate, totalAmount } = prepareExportData();
+      const { headers, data, currentDate, totalAmount, activeFilters } = prepareExportData();
 
       // Criar workbook
       const workbook = XLSX.utils.book_new();
@@ -589,9 +618,20 @@ const Finance: React.FC = () => {
         [`Total de registros: ${filteredPayments.length}`],
         [`Valor total: ${formatPrice(totalAmount)}`],
         [], // Linha vazia
-        headers,
-        ...data
       ];
+
+      // Adicionar filtros aplicados se houver
+      if (activeFilters.length > 0) {
+        worksheetData.push(['Filtros aplicados:']);
+        activeFilters.forEach(filter => {
+          worksheetData.push([filter]);
+        });
+        worksheetData.push([]); // Linha vazia
+      }
+
+      // Adicionar cabeçalhos e dados
+      worksheetData.push(headers);
+      worksheetData.push(...data);
 
       // Criar worksheet
       const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
@@ -605,7 +645,7 @@ const Finance: React.FC = () => {
 
       toast({
         title: "Exportação concluída",
-        description: `Arquivo Excel ${fileName} foi baixado com sucesso.`,
+        description: `Arquivo Excel ${fileName} foi baixado com ${filteredPayments.length} registros.`,
       });
 
       setIsExportModalOpen(false);
@@ -622,7 +662,7 @@ const Finance: React.FC = () => {
   // Exportar para CSV
   const exportToCSV = () => {
     try {
-      const { headers, data, currentDate, totalAmount } = prepareExportData();
+      const { headers, data, currentDate, totalAmount, activeFilters } = prepareExportData();
 
       // Criar conteúdo CSV
       const csvContent = [
@@ -630,6 +670,12 @@ const Finance: React.FC = () => {
         `Total de registros: ${filteredPayments.length}`,
         `Valor total: ${formatPrice(totalAmount)}`,
         '',
+        // Adicionar filtros aplicados se houver
+        ...(activeFilters.length > 0 ? [
+          'Filtros aplicados:',
+          ...activeFilters,
+          ''
+        ] : []),
         headers.join(','),
         ...data.map(row => row.join(','))
       ].join('\n');
@@ -647,7 +693,7 @@ const Finance: React.FC = () => {
 
       toast({
         title: "Exportação concluída",
-        description: "Arquivo CSV baixado com sucesso.",
+        description: `Arquivo CSV baixado com ${filteredPayments.length} registros.`,
       });
 
       setIsExportModalOpen(false);
@@ -669,7 +715,7 @@ const Finance: React.FC = () => {
         description: "Gerando relatório com design corporativo...",
       });
 
-      const { headers, data, currentDate, totalAmount } = prepareExportData();
+      const { headers, data, currentDate, totalAmount, activeFilters } = prepareExportData();
       
       const [{ jsPDF }, autoTable] = await Promise.all([
         import('jspdf'),
