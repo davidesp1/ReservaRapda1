@@ -793,6 +793,32 @@ const Finance: React.FC = () => {
       doc.text(formatPrice(totalAmount), 75, yPos + 21);
       
       yPos += 45;
+
+      // =================== FILTROS APLICADOS ===================
+      if (activeFilters.length > 0) {
+        doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('FILTROS APLICADOS', 20, yPos);
+        
+        yPos += 15;
+        
+        // Box de filtros com fundo
+        const filtersHeight = (activeFilters.length * 8) + 10;
+        doc.setFillColor(250, 250, 250);
+        doc.roundedRect(15, yPos - 5, pageWidth - 30, filtersHeight, 3, 3, 'F');
+        
+        // Listar filtros
+        doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        
+        activeFilters.forEach((filter, index) => {
+          doc.text(`• ${filter}`, 25, yPos + 5 + (index * 8));
+        });
+        
+        yPos += filtersHeight + 10;
+      }
       
       // =================== TABELA PRINCIPAL ===================
       // Título da tabela
@@ -923,7 +949,7 @@ const Finance: React.FC = () => {
         
         toast({
           title: "Relatório profissional criado!",
-          description: `${fileName} baixado com sucesso.`,
+          description: `${fileName} baixado com ${filteredPayments.length} registros.`,
         });
         
         setIsExportModalOpen(false);
