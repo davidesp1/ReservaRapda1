@@ -829,6 +829,8 @@ const Finance: React.FC = () => {
       
       yPos += 12;
       
+      // Garantir que todos os dados sejam processados
+      console.log(`Preparando PDF com ${filteredPayments.length} registros filtrados`);
       const tableData = data.map(row => [
         row[0], // Data
         row[1], // Transação
@@ -838,86 +840,93 @@ const Finance: React.FC = () => {
         row[5], // Usuário
         row[6]  // Status
       ]);
+      console.log(`TableData contém ${tableData.length} linhas`);
       
-      // Criar tabela com espaçamento melhorado e paginação automática
+      // Configurar autoTable com todas as opções necessárias para múltiplas páginas
       try {
         (doc as any).autoTable({
           head: [headers],
           body: tableData,
           startY: yPos,
-          margin: { left: 15, right: 15 },
+          margin: { left: 15, right: 15, bottom: 30 }, // Margem inferior para rodapé
           pageBreak: 'auto',
           showHead: 'everyPage',
+          rowPageBreak: 'avoid',
+          theme: 'grid',
           
           styles: {
-            fontSize: 9,
-            cellPadding: { top: 6, right: 4, bottom: 6, left: 4 },
+            fontSize: 8,
+            cellPadding: { top: 4, right: 3, bottom: 4, left: 3 },
             textColor: [31, 41, 55],
             lineColor: [209, 213, 219],
-            lineWidth: 0.5,
-            overflow: 'linebreak'
+            lineWidth: 0.3,
+            overflow: 'linebreak',
+            halign: 'center'
           },
           
           headStyles: {
             fillColor: [59, 130, 246],
             textColor: [255, 255, 255],
             fontStyle: 'bold',
-            fontSize: 10,
+            fontSize: 9,
             halign: 'center',
             valign: 'middle',
-            cellPadding: { top: 10, right: 4, bottom: 10, left: 4 }
+            cellPadding: { top: 8, right: 3, bottom: 8, left: 3 }
           },
           
           columnStyles: {
-            0: { cellWidth: 24, halign: 'center' },    // Data
-            1: { cellWidth: 36, halign: 'left' },      // Transação
-            2: { cellWidth: 22, halign: 'center' },    // Referência
+            0: { cellWidth: 22, halign: 'center' },    // Data
+            1: { cellWidth: 32, halign: 'left' },      // Transação
+            2: { cellWidth: 20, halign: 'center' },    // Referência
             3: { 
-              cellWidth: 28, 
+              cellWidth: 25, 
               halign: 'right', 
               fontStyle: 'bold', 
               textColor: [34, 197, 94] 
             },                                          // Valor
-            4: { cellWidth: 28, halign: 'center' },    // Método
-            5: { cellWidth: 32, halign: 'left' },      // Usuário
-            6: { cellWidth: 22, halign: 'center' }     // Status
+            4: { cellWidth: 25, halign: 'center' },    // Método
+            5: { cellWidth: 30, halign: 'left' },      // Usuário
+            6: { cellWidth: 20, halign: 'center' }     // Status
           },
           
           alternateRowStyles: {
             fillColor: [248, 250, 252]
           },
 
-          // Callback para adicionar cabeçalho e rodapé em todas as páginas
+          // Callback executado após cada página ser desenhada
           didDrawPage: function(data: any) {
-            // Cabeçalho para páginas adicionais (não a primeira)
+            console.log(`Página ${data.pageNumber} desenhada com ${data.table.body.length} linhas`);
+            
+            // Cabeçalho para páginas adicionais
             if (data.pageNumber > 1) {
               doc.setFillColor(45, 55, 72);
-              doc.rect(0, 0, pageWidth, 30, 'F');
+              doc.rect(0, 0, pageWidth, 25, 'F');
               
               doc.setTextColor(255, 255, 255);
-              doc.setFontSize(12);
+              doc.setFontSize(10);
               doc.setFont('helvetica', 'bold');
-              doc.text('RESTAURANTE OPA QUE DELICIA', 20, 15);
+              doc.text('RESTAURANTE OPA QUE DELICIA', 20, 12);
               
               doc.setTextColor(34, 197, 94);
-              doc.setFontSize(10);
-              doc.text('CONTROLE FINANCEIRO', pageWidth - 20, 15, { align: 'right' });
+              doc.setFontSize(8);
+              doc.text('CONTROLE FINANCEIRO', pageWidth - 20, 12, { align: 'right' });
+              doc.text(`Continuação...`, pageWidth - 20, 20, { align: 'right' });
             }
             
-            // Rodapé para todas as páginas
+            // Rodapé em todas as páginas
             doc.setFillColor(45, 55, 72);
-            doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
+            doc.rect(0, pageHeight - 15, pageWidth, 15, 'F');
             
             doc.setTextColor(255, 255, 255);
-            doc.setFontSize(8);
+            doc.setFontSize(7);
             doc.setFont('helvetica', 'normal');
-            doc.text(`Página ${data.pageNumber}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
-            doc.text(`Gerado em: ${new Date().toLocaleString('pt-PT')}`, 20, pageHeight - 10);
+            doc.text(`Página ${data.pageNumber}`, pageWidth - 20, pageHeight - 8, { align: 'right' });
+            doc.text(`${new Date().toLocaleDateString('pt-PT')}`, 20, pageHeight - 8);
           },
           
-          // Personalização adicional de células
+          // Personalização de células
           didParseCell: function(data: any) {
-            // Status com cores
+            // Status com cores específicas
             if (data.column.index === 6) {
               const status = data.cell.text[0].toLowerCase();
               if (status.includes('concluído') || status.includes('completed')) {
@@ -937,6 +946,12 @@ const Finance: React.FC = () => {
               data.cell.styles.fontStyle = 'bold';
               data.cell.styles.textColor = [99, 102, 241];
             }
+          },
+
+          // Callback após completar a tabela
+          didDrawTable: function(data: any) {
+            console.log(`Tabela completa! Total de páginas: ${data.pageNumber}`);
+            console.log(`Última linha da tabela na posição Y: ${data.finalY}`);
           }
         });
         
