@@ -839,13 +839,15 @@ const Finance: React.FC = () => {
         row[6]  // Status
       ]);
       
-      // Criar tabela com espaçamento melhorado
+      // Criar tabela com espaçamento melhorado e paginação automática
       try {
         (doc as any).autoTable({
           head: [headers],
           body: tableData,
           startY: yPos,
           margin: { left: 15, right: 15 },
+          pageBreak: 'auto',
+          showHead: 'everyPage',
           
           styles: {
             fontSize: 9,
@@ -884,6 +886,34 @@ const Finance: React.FC = () => {
           alternateRowStyles: {
             fillColor: [248, 250, 252]
           },
+
+          // Callback para adicionar cabeçalho e rodapé em todas as páginas
+          didDrawPage: function(data: any) {
+            // Cabeçalho para páginas adicionais (não a primeira)
+            if (data.pageNumber > 1) {
+              doc.setFillColor(45, 55, 72);
+              doc.rect(0, 0, pageWidth, 30, 'F');
+              
+              doc.setTextColor(255, 255, 255);
+              doc.setFontSize(12);
+              doc.setFont('helvetica', 'bold');
+              doc.text('RESTAURANTE OPA QUE DELICIA', 20, 15);
+              
+              doc.setTextColor(34, 197, 94);
+              doc.setFontSize(10);
+              doc.text('CONTROLE FINANCEIRO', pageWidth - 20, 15, { align: 'right' });
+            }
+            
+            // Rodapé para todas as páginas
+            doc.setFillColor(45, 55, 72);
+            doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Página ${data.pageNumber}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
+            doc.text(`Gerado em: ${new Date().toLocaleString('pt-PT')}`, 20, pageHeight - 10);
+          },
           
           // Personalização adicional de células
           didParseCell: function(data: any) {
@@ -910,38 +940,38 @@ const Finance: React.FC = () => {
           }
         });
         
-        // =================== RODAPÉ CORPORATIVO ===================
-        const finalY = (doc as any).lastAutoTable.finalY + 50;
+        // =================== RESUMO FINAL ===================
+        const finalY = (doc as any).lastAutoTable.finalY + 30;
         
-        // Linha de assinatura
-        doc.setDrawColor(31, 41, 55);
-        doc.setLineWidth(0.5);
-        doc.line(20, finalY, 100, finalY);
-        
-        // Nome do responsável
-        doc.setTextColor(31, 41, 55);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Gestor Financeiro', 20, finalY + 10);
-        
-        // =================== FUNDO DECORATIVO ===================
-        // Fundo azul escuro no rodapé
-        doc.setFillColor(45, 55, 72);
-        doc.rect(0, pageHeight - 40, pageWidth, 40, 'F');
-        
-        // Texto do rodapé
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.text('* Documento gerado automaticamente pelo sistema', 20, pageHeight - 25);
-        doc.text(`${new Date().toLocaleString('pt-PT')}`, 20, pageHeight - 15);
-        
-        // Prazo para disputas (como no exemplo)
-        doc.setTextColor(34, 197, 94);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.text('* Prazo para disputas ou ajustes:', pageWidth - 20, pageHeight - 25, { align: 'right' });
-        doc.text('30 dias apos o envio deste relatorio', pageWidth - 20, pageHeight - 15, { align: 'right' });
+        // Verificar se há espaço na página atual, senão criar nova página
+        if (finalY > pageHeight - 60) {
+          doc.addPage();
+          const newPageY = 40;
+          
+          // Adicionar resumo final na nova página
+          doc.setTextColor(31, 41, 55);
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.text('RESUMO FINAL', 20, newPageY);
+          
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Total de registros processados: ${filteredPayments.length}`, 20, newPageY + 15);
+          doc.text(`Valor total: ${formatPrice(totalAmount)}`, 20, newPageY + 25);
+          doc.text(`Documento gerado em: ${new Date().toLocaleString('pt-PT')}`, 20, newPageY + 35);
+        } else {
+          // Adicionar resumo final na página atual
+          doc.setTextColor(31, 41, 55);
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.text('RESUMO FINAL', 20, finalY);
+          
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Total de registros processados: ${filteredPayments.length}`, 20, finalY + 15);
+          doc.text(`Valor total: ${formatPrice(totalAmount)}`, 20, finalY + 25);
+          doc.text(`Documento gerado em: ${new Date().toLocaleString('pt-PT')}`, 20, finalY + 35);
+        }
         
         // Salvar arquivo
         const fileName = `controle-financeiro-${currentDate.replace(/\//g, '-')}.pdf`;
