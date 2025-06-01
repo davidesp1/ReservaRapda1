@@ -1620,54 +1620,26 @@ router.get("/api/admin/analytics", isAuthenticated, async (req, res) => {
       LIMIT 10
     `;
 
-    // Receita por categoria baseada nas categorias reais do menu
-    console.log('🔍 DEBUG: Buscando receita por categoria com data início:', startDate.toISOString());
+    // Receita por categoria baseada APENAS em dados reais dos pedidos
+    console.log('🔍 DEBUG: Buscando receita por categoria com dados reais do banco');
     
-    // Primeiro, buscar todas as categorias de menu disponíveis
-    const allCategories = await queryClient`
-      SELECT id, name, description 
-      FROM menu_categories 
-      ORDER BY name
+    const categoryRevenue = await queryClient`
+      SELECT 
+        COALESCE(mc.name, 'Sem Categoria') as category,
+        SUM((order_item->>'price')::integer * (order_item->>'quantity')::integer) as revenue,
+        SUM((order_item->>'quantity')::integer) as quantity
+      FROM payments p
+      JOIN orders o ON p.reservation_id = o.id
+      JOIN json_array_elements(o.items) as order_item ON true
+      JOIN menu_items mi ON (order_item->>'menuItemId')::integer = mi.id
+      JOIN menu_categories mc ON mi.category_id = mc.id
+      WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
+        AND p.status = 'completed'
+        AND o.items IS NOT NULL
+        AND json_array_length(o.items) > 0
+      GROUP BY mc.id, mc.name
+      ORDER BY revenue DESC
     `;
-    
-    // Para cada categoria, calcular a receita estimada baseada nos pedidos
-    const categoryRevenue = [];
-    
-    for (const category of allCategories) {
-      // Buscar itens desta categoria
-      const categoryItems = await queryClient`
-        SELECT id, name, price 
-        FROM menu_items 
-        WHERE category_id = ${category.id} AND is_available = true
-      `;
-      
-      if (categoryItems.length > 0) {
-        // Estimar receita baseada nos pagamentos recentes e itens da categoria
-        const avgItemPrice = categoryItems.reduce((sum, item) => sum + item.price, 0) / categoryItems.length;
-        const categoryPayments = await queryClient`
-          SELECT COUNT(*) as count, SUM(amount) as total_amount
-          FROM payments p
-          WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
-            AND p.status = 'completed'
-        `;
-        
-        // Distribuir receita proporcionalmente baseado no número de itens da categoria
-        const totalItems = await queryClient`SELECT COUNT(*) as count FROM menu_items WHERE is_available = true`;
-        const categoryWeight = categoryItems.length / totalItems[0].count;
-        const estimatedRevenue = Math.floor((categoryPayments[0].total_amount || 0) * categoryWeight);
-        
-        if (estimatedRevenue > 0) {
-          categoryRevenue.push({
-            category: category.name,
-            revenue: estimatedRevenue,
-            quantity: Math.floor((categoryPayments[0].count || 0) * categoryWeight)
-          });
-        }
-      }
-    }
-    
-    // Ordenar por receita decrescente
-    categoryRevenue.sort((a, b) => b.revenue - a.revenue);;
     
     console.log('🔍 DEBUG: Receita por categoria encontrada:', categoryRevenue.length, 'categorias');
     categoryRevenue.forEach(cat => {
