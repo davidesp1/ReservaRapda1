@@ -1620,42 +1620,44 @@ router.get("/api/admin/analytics", isAuthenticated, async (req, res) => {
       LIMIT 10
     `;
 
-    // Receita por categoria baseada em vendas reais
+    // Receita por categoria baseada em dados reais de pagamentos
     console.log('🔍 DEBUG: Buscando receita por categoria com data início:', startDate.toISOString());
     
     const categoryRevenue = await queryClient`
       SELECT 
-        COALESCE(mc.name, 'Outros') as category,
-        SUM(oi.price * oi.quantity) as revenue,
-        SUM(oi.quantity) as quantity
-      FROM order_items oi
-      JOIN orders o ON oi.order_id = o.id
-      JOIN payments p ON o.id = p.order_id
-      LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
-      LEFT JOIN menu_categories mc ON mi.category_id = mc.id
-      WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
-        AND p.status = 'completed'
-      GROUP BY mc.id, mc.name
-      
-      UNION ALL
-      
-      -- Incluir vendas diretas sem categoria específica
-      SELECT 
-        'Vendas Diretas' as category,
+        CASE 
+          WHEN p.method = 'cash' THEN 'Pagamentos em Dinheiro'
+          WHEN p.method = 'card' THEN 'Pagamentos por Cartão'
+          WHEN p.method = 'mbway' THEN 'MB Way'
+          WHEN p.method = 'multibanco' THEN 'Multibanco'
+          WHEN p.method = 'multibanco_TPA' THEN 'Multibanco TPA'
+          WHEN p.method = 'transfer' THEN 'Transferência'
+          WHEN r.id IS NOT NULL THEN 'Reservas'
+          ELSE 'Outros Pagamentos'
+        END as category,
         SUM(p.amount) as revenue,
         COUNT(p.id) as quantity
       FROM payments p
-      LEFT JOIN orders o ON p.order_id = o.id
+      LEFT JOIN reservations r ON p.reservation_id = r.id
       WHERE COALESCE(p.payment_date, p.created_at) >= ${startDate.toISOString()}
         AND p.status = 'completed'
-        AND o.id IS NULL
-      
+      GROUP BY 
+        CASE 
+          WHEN p.method = 'cash' THEN 'Pagamentos em Dinheiro'
+          WHEN p.method = 'card' THEN 'Pagamentos por Cartão'
+          WHEN p.method = 'mbway' THEN 'MB Way'
+          WHEN p.method = 'multibanco' THEN 'Multibanco'
+          WHEN p.method = 'multibanco_TPA' THEN 'Multibanco TPA'
+          WHEN p.method = 'transfer' THEN 'Transferência'
+          WHEN r.id IS NOT NULL THEN 'Reservas'
+          ELSE 'Outros Pagamentos'
+        END
       ORDER BY revenue DESC
     `;
     
     console.log('🔍 DEBUG: Receita por categoria encontrada:', categoryRevenue.length, 'categorias');
     categoryRevenue.forEach(cat => {
-      console.log(`🔍 DEBUG: Categoria "${cat.category}": €${(cat.revenue / 100).toFixed(2)} (${cat.quantity} itens)`);
+      console.log(`🔍 DEBUG: Categoria "${cat.category}": €${(cat.revenue / 100).toFixed(2)} (${cat.quantity} transações)`);
     });
 
     // Análise de horários de pico
