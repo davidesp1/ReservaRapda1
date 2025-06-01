@@ -954,25 +954,6 @@ const Finance: React.FC = () => {
   return (
     <AdminLayout title="Finanças">
       <div className="space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-gray-800 font-montserrat">Finanças</h1>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <button className="relative">
-                <i className="text-xl text-gray-600 fa-regular fa-bell"></i>
-                <span className="absolute flex items-center justify-center w-4 h-4 text-xs text-white rounded-full -top-1 -right-1" style={{ backgroundColor: '#c8102e' }}>3</span>
-              </button>
-            </div>
-            <div className="flex items-center">
-              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User Avatar" className="w-10 h-10 border-2 rounded-full" style={{ borderColor: '#ffdf00' }} />
-              <div className="ml-2">
-                <p className="text-sm font-medium text-gray-800">{user?.firstName} {user?.lastName}</p>
-                <p className="text-xs text-gray-500">Administrador</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
