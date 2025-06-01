@@ -965,15 +965,7 @@ const Finance: React.FC = () => {
               </button>
             </div>
             <div className="flex items-center">
-              {user?.profilePicture ? (
-                <img src={user.profilePicture} alt="User Avatar" className="w-10 h-10 border-2 rounded-full" style={{ borderColor: '#ffdf00' }} />
-              ) : (
-                <div className="w-10 h-10 rounded-full border-2 bg-brasil-blue text-white flex items-center justify-center" style={{ borderColor: '#ffdf00' }}>
-                  <span className="font-semibold">
-                    {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
-                  </span>
-                </div>
-              )}
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User Avatar" className="w-10 h-10 border-2 rounded-full" style={{ borderColor: '#ffdf00' }} />
               <div className="ml-2">
                 <p className="text-sm font-medium text-gray-800">{user?.firstName} {user?.lastName}</p>
                 <p className="text-xs text-gray-500">Administrador</p>
